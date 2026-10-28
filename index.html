@@ -1,0 +1,743 @@
+
+<!doctype html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#087b50">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MUGHAL'S PURE WATER">
+<title>MUGHAL'S PURE WATER</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f2f7f4;color:#183128;font-family:system-ui,sans-serif}
+header{background:#087b50;color:white;padding:18px}
+.wrap{max-width:850px;margin:auto;padding:14px}
+.card{background:white;padding:16px;border-radius:16px;margin:12px 0;box-shadow:0 3px 14px #0001}
+h1,h2,h3,p{margin:0 0 10px}
+input,select,button,textarea{width:100%;padding:12px;margin:5px 0;border-radius:10px;border:1px solid #ccd8d0;font-size:16px}
+button{background:#087b50;color:white;border:0;font-weight:bold;cursor:pointer}
+.secondary{background:#e6f3eb;color:#087b50}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{padding:18px;border-radius:14px;color:white;font-weight:bold;min-height:80px;display:flex;align-items:flex-end;cursor:pointer}
+.blue{background:#2868a9}.orange{background:#d97706}.purple{background:#7844b8}
+.teal{background:#087f7a}.red{background:#c43d3d}.green{background:#16834f}
+.gray{background:#52635b}.yellow{background:#b38b08}
+.hidden{display:none!important}.muted{color:#65756b;font-size:13px}
+.error{color:#b42318;white-space:pre-wrap}.success{color:#087b50;white-space:pre-wrap}
+table{width:100%;border-collapse:collapse}td,th{padding:9px;border-bottom:1px solid #e4ebe6;text-align:right}
+.tablewrap{overflow:auto}.stat{background:#f0f7f2;border-radius:10px;padding:12px;margin:7px 0}
+.total{font-size:20px;font-weight:bold}.warning{background:#fff3cf;padding:10px;border-radius:10px;margin:8px 0}
+</style>
+</head>
+<body>
+<header><div class="wrap" style="padding:0">
+<h1>MUGHAL'S PURE WATER</h1>
+<div>دکان اور واٹر بزنس مینجمنٹ</div>
+</div></header>
+
+<main class="wrap">
+<section id="login" class="card">
+<div id="loginForm">
+<h2>لاگ اِن</h2>
+<input id="email" type="email" autocomplete="email" placeholder="ای میل">
+<input id="password" type="password" autocomplete="current-password" placeholder="پاس ورڈ">
+<button id="loginButton" type="button" onclick="handleLoginClick()">لاگ اِن</button>
+<button class="secondary" type="button" onclick="showSignup()">نیا کسٹمر اکاؤنٹ بنائیں</button>
+</div>
+<div id="signupForm" class="hidden">
+<h2>نیا کسٹمر اکاؤنٹ</h2>
+<p class="muted">اپنی درست معلومات درج کریں۔ Customer ID خودکار بنے گی۔</p>
+<input id="signupName" type="text" autocomplete="name" maxlength="120" placeholder="پورا نام">
+<input id="signupMobile" type="tel" autocomplete="tel" maxlength="30" placeholder="موبائل نمبر">
+<input id="signupAddress" type="text" autocomplete="street-address" maxlength="300" placeholder="مکمل پتہ">
+<input id="signupEmail" type="email" autocomplete="email" maxlength="254" placeholder="ای میل">
+<input id="signupPassword" type="password" autocomplete="new-password" minlength="8" placeholder="پاس ورڈ (کم از کم 8 حروف)">
+<button id="signupButton" type="button" onclick="signupCustomer()">اکاؤنٹ بنائیں</button>
+<button class="secondary" type="button" onclick="showLogin()">واپس لاگ اِن</button>
+</div>
+<p id="loginMsg" class="error"></p>
+</section>
+
+<section id="app" class="hidden">
+<div class="card">
+<strong id="welcome">خوش آمدید</strong>
+<span id="role" class="muted"></span>
+<button class="secondary" onclick="logout()">لاگ آؤٹ</button>
+</div>
+
+<div id="adminPanel" class="hidden">
+<div id="homeTiles" class="grid">
+<div class="tile blue" onclick="openModule('customers')">گاہک</div>
+<div class="tile orange" onclick="openModule('delivery')">19L ڈلیوری</div>
+<div class="tile yellow" onclick="openModule('raw')">خام مال</div>
+<div class="tile purple" onclick="openModule('finished')">تیار مال</div>
+<div class="tile teal" onclick="openModule('sales')">سیل / مال کا اخراج</div>
+<div class="tile red" onclick="openModule('expenses')">اخراجات</div>
+<div class="tile green" onclick="openModule('income')">آمدن</div>
+<div class="tile gray" onclick="openModule('billing')">ماہانہ بل</div>
+<div class="tile blue" onclick="openModule('reports')">رپورٹس</div>
+</div>
+
+<div id="dashboard" class="card">
+<h2>آج کا خلاصہ</h2>
+<div id="todaySummary">خلاصہ لوڈ ہو رہا ہے...</div>
+<button class="secondary" onclick="loadTodaySummary()">خلاصہ تازہ کریں</button>
+</div>
+
+<div id="module" class="card hidden">
+<button class="secondary" onclick="backHome()">← واپس</button>
+<h2 id="moduleTitle"></h2>
+<div id="moduleBody"></div>
+<p id="moduleMsg" class="error"></p>
+<div id="moduleTable" class="tablewrap"></div>
+</div>
+</div>
+
+<div id="customerPanel" class="hidden">
+<div class="card"><h2>میرا اکاؤنٹ</h2><div id="myAccount"></div></div>
+<div class="card"><h2>میرا ماہانہ بل</h2><div id="myBill"></div></div>
+<div class="card"><h2>میری ڈلیوری</h2><div id="myDeliveries"></div></div>
+</div>
+</section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>window.addEventListener("error",function(e){const m=document.getElementById("loginMsg");if(m)m.textContent="ایپ میں خرابی: "+(e.message||"JavaScript شروع نہیں ہوا");});</script>
+<script>
+const SUPABASE_URL="https://tosxnmnqlufeuknrhxzr.supabase.co";
+const KEY="sb_publishable_edl9mCjqKVsDEMmEWxN_ew_JQK1MYtN";
+var db=null;
+let supabaseLoadPromise=null;
+function ensureSupabase(){
+ if(window.supabase && !db){ db=window.supabase.createClient(SUPABASE_URL,KEY); }
+ if(db) return Promise.resolve(db);
+ if(supabaseLoadPromise) return supabaseLoadPromise;
+ supabaseLoadPromise=new Promise((resolve,reject)=>{
+  const sources=["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2","https://unpkg.com/@supabase/supabase-js@2"];
+  let i=0;
+  const tryNext=()=>{
+   if(window.supabase){try{db=window.supabase.createClient(SUPABASE_URL,KEY);resolve(db);return}catch(e){reject(e);return}}
+   if(i>=sources.length){reject(new Error("Supabase لائبریری انٹرنیٹ سے لوڈ نہیں ہوئی۔ انٹرنیٹ چیک کرکے دوبارہ کوشش کریں۔"));return}
+   const script=document.createElement("script");script.src=sources[i++];script.onload=()=>{if(window.supabase){try{db=window.supabase.createClient(SUPABASE_URL,KEY);resolve(db)}catch(e){reject(e)}}else tryNext()};script.onerror=tryNext;document.head.appendChild(script);
+  };
+  tryNext();
+ });
+ return supabaseLoadPromise;
+}
+try { if(window.supabase) db=window.supabase.createClient(SUPABASE_URL,KEY); } catch(initError) { console.error("Supabase initialization failed",initError); }
+
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>{let d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const monthNow=()=>today().slice(0,7)+"-01";
+const money=n=>"Rs. "+(Number(n)||0).toLocaleString("en-PK");
+let user=null, myCustomer=null, customerList=[], currentModule="", editingId=null;
+
+function msg(t,ok=false){$("moduleMsg").className=ok?"success":"error";$("moduleMsg").textContent=t}
+function setTitle(t){$("moduleTitle").textContent=t;$("moduleMsg").textContent="";$("moduleTable").innerHTML=""}
+
+function showSignup(){
+ $("loginForm").classList.add("hidden");
+ $("signupForm").classList.remove("hidden");
+ $("loginMsg").textContent="";
+}
+function showLogin(){
+ $("signupForm").classList.add("hidden");
+ $("loginForm").classList.remove("hidden");
+ $("loginMsg").textContent="";
+}
+function handleLoginClick(){
+ const m=document.getElementById("loginMsg");
+ if(typeof login!=="function"){m.textContent="لاگ اِن کوڈ شروع نہیں ہوا۔ فائل دوبارہ کھولیں۔";return;}
+ login();
+}
+
+async function signupCustomer(){
+ const name=$("signupName").value.trim();
+ const mobile=$("signupMobile").value.trim();
+ const address=$("signupAddress").value.trim();
+ const email=$("signupEmail").value.trim();
+ const password=$("signupPassword").value;
+ const button=$("signupButton");
+ if(!name||!mobile||!address||!email||!password){$("loginMsg").textContent="تمام معلومات درج کریں۔";return}
+ if(password.length<8){$("loginMsg").textContent="پاس ورڈ کم از کم 8 حروف کا ہونا چاہیے۔";return}
+ button.disabled=true;button.textContent="اکاؤنٹ بنایا جا رہا ہے...";
+ $("loginMsg").textContent="";
+ try{
+  await ensureSupabase();
+  const {data,error}=await db.auth.signUp({
+   email,password,
+   options:{data:{full_name:name,mobile,address}}
+  });
+  if(error)throw error;
+  if(data?.session){
+   await loadApp();
+   if(!$("app").classList.contains("hidden")) return;
+  }
+  showLogin();
+  $("loginMsg").className="success";
+  $("loginMsg").textContent="رجسٹریشن موصول ہوگئی۔ اگر ای میل تصدیق مانگی جائے تو اپنے ای میل کا لنک کھولیں، پھر لاگ اِن کریں۔ آپ کا Customer ID خودکار بنے گا۔";
+ }catch(e){
+  $("loginMsg").className="error";
+  $("loginMsg").textContent="رجسٹریشن ناکام: "+(e?.message||String(e));
+ }finally{
+  button.disabled=false;button.textContent="اکاؤنٹ بنائیں";
+ }
+}
+
+async function login(){
+ $("loginMsg").textContent="لاگ اِن کی کوشش جاری ہے...";
+ const email=$("email").value.trim(),password=$("password").value;
+ if(!email||!password){$("loginMsg").textContent="Email اور Password درج کریں۔";return}
+ try{
+  await ensureSupabase();
+  const {error}=await db.auth.signInWithPassword({email,password});
+  if(error){$("loginMsg").textContent="لاگ اِن ناکام: "+error.message;return}
+  await loadApp();
+ }catch(e){$("loginMsg").textContent="لاگ اِن میں خرابی: "+(e?.message||String(e));}
+}
+
+async function loadApp(){
+ const {data,error}=await db.auth.getUser();
+ if(error||!data.user)return;
+ user=data.user;
+ myCustomer=null;
+ // پہلے trusted profile role چیک کریں تاکہ ایڈمن کو customer record کی وجہ سے غلط پینل نہ ملے۔
+ const p=await db.from("profiles").select("role,full_name").eq("id",user.id).maybeSingle();
+ if(p.error){
+  await db.auth.signOut();
+  $("loginMsg").textContent="اکاؤنٹ کی اجازت چیک نہیں ہوسکی؛ سیکیورٹی کے لیے رسائی روک دی گئی ہے۔";
+  return;
+ }
+ const isAdmin=p.data?.role==="admin";
+ if(!isAdmin){
+  const r=await db.from("customers").select("id,name,customer_code,mobile,address,auth_user_id").eq("auth_user_id",user.id).maybeSingle();
+  if(r.error){
+   await db.auth.signOut();
+   $("loginMsg").textContent="کسٹمر اکاؤنٹ کی تصدیق نہیں ہوسکی؛ رسائی روک دی گئی ہے۔";
+   return;
+  }
+  myCustomer=r.data;
+  if(!myCustomer){
+   await db.auth.signOut();
+   $("loginMsg").textContent="اس اکاؤنٹ کو کسٹمر یا ایڈمن رسائی حاصل نہیں۔ منتظم سے رابطہ کریں۔";
+   return;
+  }
+ }
+ $("login").classList.add("hidden");$("app").classList.remove("hidden");
+ if(myCustomer){
+  $("welcome").textContent="خوش آمدید، "+myCustomer.name;
+  $("role").textContent=" | گاہک";
+  $("adminPanel").classList.add("hidden");$("customerPanel").classList.remove("hidden");
+  await loadCustomerPanel();
+ }else{
+  $("welcome").textContent="MUGHAL'S PURE WATER";
+  $("role").textContent=" | انتظامی پینل";
+  $("customerPanel").classList.add("hidden");$("adminPanel").classList.remove("hidden");
+  await loadTodaySummary();
+ }
+}
+
+// محفوظ Supabase سیشن کی بحالی: ایپ دوبارہ کھولنے پر لاگ اِن اسکرین پر نہ رکے۔
+async function restoreSavedSession(){
+ try{
+  await ensureSupabase();
+  const {data,error}=await db.auth.getSession();
+  if(error)throw error;
+  if(data?.session)await loadApp();
+ }catch(e){
+  $("loginMsg").textContent="سیشن بحال نہیں ہوسکا: "+(e?.message||String(e));
+ }
+}
+window.addEventListener("load",restoreSavedSession,{once:true});
+
+async function logout(){if(!db)return;await db.auth.signOut();location.reload()}
+
+function backHome(){
+ $("module").classList.add("hidden");$("homeTiles").classList.remove("hidden");$("dashboard").classList.remove("hidden");editingId=null;
+ loadTodaySummary();
+}
+
+async function openModule(name){
+ currentModule=name;editingId=null;
+ $("homeTiles").classList.add("hidden");$("dashboard").classList.add("hidden");$("module").classList.remove("hidden");
+ setTitle("");
+ if(name==="customers")return customersModule();
+ if(name==="delivery")return deliveryModule();
+ if(name==="billing")return billingModule();
+ if(name==="raw")return stockModule("raw");
+ if(name==="finished")return stockModule("finished");
+ if(name==="sales")return salesModule();
+ if(name==="expenses")return moneyModule("expenses");
+ if(name==="income")return moneyModule("income");
+ if(name==="reports")return reportsModule();
+}
+
+/* گاہک */
+async function customersModule(){
+ setTitle("گاہکوں کا ریکارڈ");
+ $("moduleBody").innerHTML=`
+ <p class="muted">نئے گاہک خود ایپ سے رجسٹریشن کریں گے۔ یہاں صرف موجودہ گاہکوں کا ریکارڈ دیکھیں اور درست کریں۔</p>
+ <input id="customerSearch" placeholder="نام، Customer ID یا موبائل تلاش کریں" oninput="renderCustomers()">
+ <button class="secondary" onclick="loadCustomers()">فہرست تازہ کریں</button>
+ <div id="customerEditForm" class="card hidden">
+  <h3>گاہک کی معلومات میں ترمیم</h3>
+  <label>Customer ID</label><input id="cCode" readonly>
+  <label>نام</label><input id="cName" maxlength="120" placeholder="گاہک کا نام">
+  <label>موبائل</label><input id="cMobile" maxlength="30" placeholder="موبائل نمبر">
+  <label>مکمل پتہ</label><input id="cAddress" maxlength="300" placeholder="پتہ">
+  <button onclick="saveCustomer()">تبدیلیاں محفوظ کریں</button>
+  <button class="secondary" onclick="cancelCustomerEdit()">منسوخ کریں</button>
+ </div>`;
+ await loadCustomers();
+}
+
+async function loadCustomers(){
+ const {data,error}=await db.from("customers").select("id,name,customer_code,mobile,address,is_active").order("name");
+ if(error){msg("گاہک لوڈ نہیں ہوئے: "+error.message);return}
+ customerList=data||[];renderCustomers();
+}
+
+function renderCustomers(){
+ const q=($("customerSearch")?.value||"").toLowerCase();
+ const rows=customerList.filter(c=>[c.name,c.customer_code,c.mobile].some(x=>String(x||"").toLowerCase().includes(q)));
+ $("moduleTable").innerHTML="<table><tr><th>نام</th><th>ID</th><th>موبائل</th><th>ترمیم</th></tr>"+
+ rows.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td><button onclick="editCustomer(${c.id})">ترمیم</button></td></tr>`).join("")+"</table>";
+}
+
+function editCustomer(id){
+ const c=customerList.find(x=>Number(x.id)===Number(id));if(!c)return;
+ editingId=id;$("cName").value=c.name||"";$("cCode").value=c.customer_code||"";
+ $("cMobile").value=c.mobile||"";$("cAddress").value=c.address||"";
+ $("customerEditForm").classList.remove("hidden");
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function cancelCustomerEdit(){
+ editingId=null;
+ $("customerEditForm")?.classList.add("hidden");
+}
+
+async function saveCustomer(){
+ if(!editingId){msg("ترمیم کے لیے پہلے فہرست سے گاہک منتخب کریں۔");return}
+ const name=$("cName").value.trim();
+ if(!name){msg("گاہک کا نام لازمی ہے۔");return}
+ const payload={name,mobile:$("cMobile").value.trim()||null,address:$("cAddress").value.trim()||null};
+ const r=await db.from("customers").update(payload).eq("id",editingId);
+ if(r.error){msg("تبدیلیاں محفوظ نہیں ہوئیں: "+r.error.message);return}
+ editingId=null;msg("گاہک کی معلومات اپڈیٹ ہوگئیں۔",true);await customersModule();
+}
+
+/* مشترکہ گاہک فہرست — ماہانہ بل اور ڈلیوری دونوں اسی سے بھرتے ہیں */
+async function getActiveCustomers(){
+ const {data,error}=await db.from("customers").select("id,name,customer_code,is_active").order("name");
+ if(error)throw error;
+ customerList=data||[];
+ return customerList.filter(c=>c.is_active!==false);
+}
+function customerOptions(list){
+ return `<option value="">گاہک منتخب کریں</option>`+list.map(c=>`<option value="${c.id}">${esc(c.name)} — ${esc(c.customer_code)}</option>`).join("");
+}
+
+/* 19L ڈلیوری */
+async function deliveryModule(){
+ setTitle("19L ڈلیوری");
+ let list;
+ try{list=await getActiveCustomers()}catch(e){msg("گاہک لوڈ نہیں ہوئے: "+e.message);return}
+ $("moduleBody").innerHTML=`
+ <p class="muted">ہر گاہک کی ایک دن میں ایک انٹری۔ کمپنی کی بوتلیں فروخت نہیں ہوتیں۔</p>
+ <select id="dCustomer" onchange="loadSelectedDelivery()">${customerOptions(list)}</select>
+ <input id="dDate" type="date" value="${today()}" onchange="loadSelectedDelivery()">
+ <input id="dOut" type="number" min="0" placeholder="دی گئی بھری بوتلیں" oninput="calcDelivery()">
+ <input id="dBack" type="number" min="0" placeholder="اسی لوڈ کی واپس خالی بوتلیں" oninput="calcDelivery()">
+ <input id="dCaps" type="number" min="0" step="1" placeholder="خراب ڈھکنوں کی تعداد (ہر ڈھکن Rs.10)" oninput="calcDelivery()">
+ <div class="stat">خراب ڈھکنوں کی رقم: <b id="dCapAmount">Rs. 0</b></div>
+ <div class="stat">کامیاب بوتلیں: <b id="dSuccess">0</b></div>
+ <div class="stat">بوتلوں کا فرق: <b id="dDiff">0</b></div>
+ <div class="stat">ڈلیوری مزدوری: <b id="dLabor">Rs. 0</b></div>
+ <div id="dWarn" class="warning hidden">بوتلوں میں فرق ہے؛ اسی دن جانچیں۔</div>
+ <button onclick="saveDelivery()">ڈلیوری محفوظ کریں</button>
+ <button class="secondary" onclick="loadDailyDeliveries()">تمام ڈلیوریاں تازہ کریں</button>`;
+ await loadDailyDeliveries();
+}
+
+function calcDelivery(){
+ const out=Number($("dOut").value)||0,back=Number($("dBack").value)||0;
+ const caps=Number($("dCaps")?.value)||0;
+ const success=Math.min(out,back),diff=Math.max(0,out-back);
+ $("dSuccess").textContent=success;$("dDiff").textContent=back>out?"غلط اندراج":diff;
+ $("dLabor").textContent=money(success*20);
+ if($("dCapAmount"))$("dCapAmount").textContent=money(caps*10);
+ $("dWarn").classList.toggle("hidden",diff===0);
+ return {out,back,caps,capAmount:caps*10,success,diff,labor:success*20,invalid:back>out};
+}
+
+async function loadSelectedDelivery(){
+ if(!$("dCustomer").value)return;
+ const date=$("dDate").value,id=$("dCustomer").value;
+ const {data,error}=await db.from("customer_19l_deliveries").select("*").eq("customer_id",id).eq("delivery_date",date).maybeSingle();
+ if(error){msg("ڈلیوری لوڈ نہیں ہوئی: "+error.message);return}
+ $("dOut").value=data?.bottles_delivered??"";
+ $("dBack").value=data?.empty_bottles_returned??"";
+ $("dCaps").value=data?.damaged_caps??0;
+ calcDelivery();
+}
+
+async function saveDelivery(){
+ const id=$("dCustomer").value,date=$("dDate").value,c=calcDelivery();
+ if(!id||!date){msg("گاہک اور تاریخ منتخب کریں۔");return}
+ if(c.invalid){msg("واپس آنے والی خالی بوتلیں دی گئی بوتلوں سے زیادہ نہیں ہوسکتیں۔");return}
+ if(!Number.isInteger(c.out)||!Number.isInteger(c.back)||c.out<=0||c.back<0){msg("دی گئی اور واپس آنے والی بوتلوں کی تعداد مکمل عدد میں درج کریں۔");return}
+ if(!Number.isInteger(c.caps)||c.caps<0){msg("خراب ڈھکنوں کی تعداد صحیح عدد میں درج کریں۔");return}
+ if(c.diff>0&&!confirm("بوتلوں میں "+c.diff+" کا فرق ہے۔ کیا محفوظ کرنا ہے؟"))return;
+ if(c.caps>0&&!confirm(c.caps+" خراب ڈھکن × Rs.10 = "+money(c.capAmount)+". کیا محفوظ کرنا ہے؟"))return;
+ const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,bottle_difference:c.diff,damaged_caps:c.caps};
+ const {data:old,error:e}=await db.from("customer_19l_deliveries").select("id").eq("customer_id",id).eq("delivery_date",date).maybeSingle();
+ if(e){msg(e.message);return}
+ const r=old?await db.from("customer_19l_deliveries").update(payload).eq("id",old.id):await db.from("customer_19l_deliveries").insert(payload);
+ if(r.error){msg("محفوظ نہیں ہوا: "+r.error.message);return}
+ let billSyncWarning="";
+ try{await syncBillBottles(Number(id),date.slice(0,7)+"-01")}
+ catch(e){billSyncWarning=" ڈلیوری محفوظ ہے، مگر ماہانہ بل اپڈیٹ نہیں ہوا: "+e.message}
+ msg("ڈلیوری محفوظ ہوگئی۔ مزدوری "+money(c.labor)+billSyncWarning,!billSyncWarning);
+ await loadDailyDeliveries();await loadTodaySummary();
+}
+
+async function loadDailyDeliveries(){
+ if(!$("dDate"))return;
+ const date=$("dDate").value;
+ const {data,error}=await db.from("customer_19l_deliveries").select("*").order("delivery_date",{ascending:false}).order("id",{ascending:false});
+ if(error){$("moduleTable").textContent=error.message;return}
+ const names=await getActiveCustomers().catch(()=>customerList);
+ $("moduleTable").innerHTML="<h3>تمام ڈلیوریاں (نئی تاریخ پہلے)</h3><table><tr><th>تاریخ</th><th>گاہک</th><th>دی گئیں</th><th>واپس</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th><th>مزدوری</th></tr>"+
+ (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${d.empty_bottles_returned}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${money(d.delivery_labor)}</td></tr>`}).join("")+"</table>";
+}
+
+/* ماہانہ بل */
+async function billingModule(){
+ setTitle("ماہانہ بل");
+ let list;
+ try{list=await getActiveCustomers()}catch(e){msg("گاہک لوڈ نہیں ہوئے: "+e.message);return}
+ $("moduleBody").innerHTML=`
+ <p class="muted">19L بوتل Rs.100، خراب Cap Rs.10۔ کامیاب ڈلیوریوں کی تعداد خودکار طور پر شامل ہوگی۔</p>
+ <select id="bCustomer" onchange="loadSelectedBill()">${customerOptions(list)}</select>
+ <input id="bMonth" type="month" value="${today().slice(0,7)}" onchange="loadSelectedBill()">
+ <input id="bBottles" type="number" min="0" placeholder="19L بوتلیں (ڈلیوری سے خودکار)" readonly>
+ <input id="bCaps" type="number" min="0" placeholder="خراب ڈھکن (ڈلیوری سے خودکار)" readonly>
+ <input id="bPrev" type="number" min="0" placeholder="پچھلا بقایا" oninput="calcBill()">
+ <input id="bPaid" type="number" min="0" placeholder="وصول شدہ رقم" oninput="calcBill()">
+ <input id="bAdvance" type="number" min="0" placeholder="استعمال شدہ ایڈوانس" oninput="calcBill()">
+ <div class="stat">بوتلوں کی رقم: <b id="bBottleAmt">Rs. 0</b></div>
+ <div class="stat">Cap کی رقم: <b id="bCapAmt">Rs. 0</b></div>
+ <div class="total">قابل ادائیگی: <span id="bDue">Rs. 0</span></div>
+ <button onclick="saveBill()">بل محفوظ کریں</button>
+ <h3>اس مہینے کی تاریخ وار ڈلیوری ہسٹری</h3>
+ <div id="billDeliveryHistory" class="tablewrap">گاہک منتخب کریں۔</div>`;
+}
+
+async function syncBillBottles(customerId,month){
+ const next=month.slice(0,5)+String(Number(month.slice(5,7))+1).padStart(2,"0")+"-01";
+ const start=new Date(month+"T00:00:00");
+ start.setMonth(start.getMonth()+1);
+ const end=start.getFullYear()+"-"+String(start.getMonth()+1).padStart(2,"0")+"-01";
+ const {data,error}=await db.from("customer_19l_deliveries").select("successful_bottles,damaged_caps").eq("customer_id",customerId).gte("delivery_date",month).lt("delivery_date",end);
+ if(error)throw error;
+ const bottles=(data||[]).reduce((s,r)=>s+(Number(r.successful_bottles)||0),0);
+ const caps=(data||[]).reduce((s,r)=>s+(Number(r.damaged_caps)||0),0);
+ const {data:old,error:oldError}=await db.from("customer_monthly_bills").select("*").eq("customer_id",customerId).eq("bill_month",month).maybeSingle();
+ if(oldError)throw oldError;
+ const prev=Number(old?.previous_balance)||0,paid=Number(old?.payments)||0,advance=Number(old?.advance_used)||0;
+ const total=prev+bottles*100+caps*10-paid-advance;
+ const r=await db.from("customer_monthly_bills").upsert({customer_id:customerId,bill_month:month,bottles_19l:bottles,bottle_amount:bottles*100,damaged_caps:caps,cap_amount:caps*10,previous_balance:prev,payments:paid,advance_used:advance,current_due:Math.max(0,total),closing_advance:Math.max(0,-total)},{onConflict:"customer_id,bill_month"});
+ if(r.error)throw r.error;
+ return bottles;
+}
+
+async function loadBillDeliveryHistory(customerId,month){
+ const box=$("billDeliveryHistory");
+ if(!box)return;
+ const start=month+"-01";
+ const d=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),1);
+ const end=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-01";
+ box.textContent="ہسٹری لوڈ ہو رہی ہے...";
+ const {data,error}=await db.from("customer_19l_deliveries")
+  .select("delivery_date,successful_bottles,delivery_labor")
+  .eq("customer_id",customerId).gte("delivery_date",start).lt("delivery_date",end)
+  .order("delivery_date",{ascending:true});
+ if(error){box.textContent="ہسٹری لوڈ نہیں ہوئی: "+error.message;return}
+ const rows=data||[];
+ if(!rows.length){box.textContent="اس مہینے کی کوئی ڈلیوری درج نہیں۔";return}
+ const total=rows.reduce((n,r)=>n+(Number(r.successful_bottles)||0),0);
+ box.innerHTML="<table><tr><th>ڈلیوری کی تاریخ</th><th>کامیاب 19L بوتلیں</th><th>اس دن کی قیمت</th></tr>"+
+  rows.map(r=>{const count=Number(r.successful_bottles)||0;return `<tr><td>${esc(r.delivery_date)}</td><td>${count}</td><td>${money(count*100)}</td></tr>`}).join("")+
+  `<tr><th>کل</th><th>${total}</th><th>${money(total*100)}</th></tr></table>`;
+}
+
+async function loadSelectedBill(){
+ const id=$("bCustomer").value,month=$("bMonth").value;
+ if(!id||!month)return;
+ const m=month.slice(0,7)+"-01";
+ try{
+  await syncBillBottles(Number(id),m);
+  await loadBillDeliveryHistory(Number(id),month.slice(0,7));
+ }catch(e){msg("ڈلیوری سے بوتلوں کا حساب نہیں آیا: "+e.message);return}
+ const {data,error}=await db.from("customer_monthly_bills").select("*").eq("customer_id",id).eq("bill_month",m).maybeSingle();
+ if(error){msg(error.message);return}
+ $("bBottles").value=data?.bottles_19l??0;$("bCaps").value=data?.damaged_caps??0;
+ $("bPrev").value=data?.previous_balance??0;$("bPaid").value=data?.payments??0;$("bAdvance").value=data?.advance_used??0;
+ calcBill();
+}
+
+function calcBill(){
+ const bottles=Number($("bBottles").value)||0,caps=Number($("bCaps").value)||0,prev=Number($("bPrev").value)||0,paid=Number($("bPaid").value)||0,adv=Number($("bAdvance").value)||0;
+ const bottleAmt=bottles*100,capAmt=caps*10,total=prev+bottleAmt+capAmt-paid-adv;
+ $("bBottleAmt").textContent=money(bottleAmt);$("bCapAmt").textContent=money(capAmt);$("bDue").textContent=money(Math.max(0,total));
+ return {bottles,caps,prev,paid,adv,bottleAmt,capAmt,total};
+}
+
+async function saveBill(){
+ const id=$("bCustomer").value,month=$("bMonth").value;
+ if(!id||!month){msg("گاہک اور مہینہ منتخب کریں۔");return}
+ const c=calcBill();
+ if([c.bottles,c.caps,c.prev,c.paid,c.adv].some(n=>n<0)){msg("منفی رقم درج نہیں ہوسکتی۔");return}
+ if(!Number.isInteger(c.bottles)||!Number.isInteger(c.caps)){msg("بوتلوں اور ڈھکنوں کی تعداد مکمل عدد میں درج کریں۔");return}
+ const r=await db.from("customer_monthly_bills").upsert({customer_id:Number(id),bill_month:month.slice(0,7)+"-01",bottles_19l:c.bottles,bottle_amount:c.bottleAmt,damaged_caps:c.caps,cap_amount:c.capAmt,previous_balance:c.prev,payments:c.paid,advance_used:c.adv,current_due:Math.max(0,c.total),closing_advance:Math.max(0,-c.total)},{onConflict:"customer_id,bill_month"});
+ if(r.error){msg("بل محفوظ نہیں ہوا: "+r.error.message);return}
+ msg("ماہانہ بل محفوظ ہوگیا۔",true);
+}
+
+/* خام مال اور تیار مال */
+async function stockModule(type){
+ const raw=type==="raw";
+ setTitle(raw?"خام مال":"تیار مال");
+ $("moduleBody").innerHTML=`
+ <h3>${raw?"نئی خام مال انٹری":"نیا تیار مال"}</h3>
+ <input id="sDate" type="date" value="${today()}">
+ <select id="sType">
+ ${raw?'<option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option>':'<option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option>'}
+ </select>
+ <input id="sQty" type="number" min="1" step="1" placeholder="${raw?'خام مال کی مقدار کارٹن میں':'تیار مقدار؛ کارٹن یا 6L بوتلیں'}">
+ <input id="sNote" placeholder="تفصیل (اختیاری)">
+ <button onclick="saveStock('${type}')">ریکارڈ محفوظ کریں</button>
+ ${raw?"":`<div class="card"><h3>اسٹاک میں درستگی</h3>
+ <input id="adjDate" type="date" value="${today()}">
+ <select id="adjType"><option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
+ <select id="adjDirection"><option value="increase">اسٹاک میں اضافہ</option><option value="decrease">اسٹاک میں کمی</option></select>
+ <input id="adjQty" type="number" min="1" step="1" placeholder="درستگی کی مقدار">
+ <input id="adjReason" maxlength="250" placeholder="وجہ لازمی درج کریں">
+ <button onclick="saveFinishedAdjustment()">درستگی محفوظ کریں</button></div>`}
+ <button class="secondary" onclick="loadStock('${type}')">ریکارڈ تازہ کریں</button>`;
+ await loadStock(type);
+}
+
+async function saveFinishedAdjustment(){
+ const product=$("adjType").value,qty=Number($("adjQty").value),direction=$("adjDirection").value,reason=$("adjReason").value.trim();
+ if(!Number.isInteger(qty)||qty<=0||!reason){msg("درست مقدار اور وجہ لازمی درج کریں۔");return}
+ const r=await db.from("finished_stock_adjustments").insert({product_type:product,quantity:qty,adjustment_type:direction,adjustment_date:$("adjDate").value,reason,entered_by:user.id});
+ if(r.error){msg("اسٹاک درستگی محفوظ نہیں ہوئی: "+r.error.message);return}
+ msg("اسٹاک درستگی محفوظ ہوگئی۔",true);$("adjQty").value="";$("adjReason").value="";await loadStock("finished");await loadTodaySummary();
+}
+
+async function saveStock(type){
+ const raw=type==="raw",table=raw?"raw_material_stock":"finished_goods",product=$("sType").value,qty=Number($("sQty").value);
+ if(!Number.isInteger(qty)||qty<=0){msg("کارٹن یا بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
+ const payload=raw?{entry_date:$("sDate").value,product_type:product,cartons:qty,notes:$("sNote").value.trim()||null}:{entry_date:$("sDate").value,product_type:product,quantity:qty,unit:product==="6L"?"bottle":"carton",notes:$("sNote").value.trim()||null};
+ const r=await db.from(table).insert(payload);
+ if(r.error){msg("محفوظ نہیں ہوا: "+r.error.message);return}
+ msg("ریکارڈ محفوظ ہوگیا۔",true);$("sQty").value="";await loadStock(type);await loadTodaySummary();
+}
+
+async function loadStock(type){
+ const raw=type==="raw",table=raw?"raw_material_stock":"finished_goods";
+ const {data,error}=await db.from(table).select("*").order("entry_date",{ascending:false}).limit(1000);
+ if(error){$("moduleTable").textContent=error.message;return}
+ if(raw){
+  $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>یونٹ</th></tr>"+
+   (data||[]).map(r=>`<tr><td>${esc(r.entry_date)}</td><td>${esc(r.product_type)}</td><td>${r.cartons}</td><td>کارٹن</td></tr>`).join("")+"</table>";
+  return;
+ }
+ const [{data:sales,error:se},{data:adjustments,error:ae}]=await Promise.all([
+  db.from("product_sales").select("product_type,quantity,unit").limit(1000),
+  db.from("finished_stock_adjustments").select("product_type,quantity,adjustment_type,adjustment_date,reason").order("adjustment_date",{ascending:false}).limit(1000)
+ ]);
+ if(se||ae){$("moduleTable").textContent="اسٹاک کا مکمل حساب لوڈ نہیں ہوا: "+(se||ae).message;return}
+ const products=["500ml","1.5L","6L"];
+ const summaries=products.map(product=>{
+  const unit=product==="6L"?"bottle":"carton";
+  const made=(data||[]).filter(r=>r.product_type===product&&r.unit===unit).reduce((n,r)=>n+(Number(r.quantity)||0),0);
+  const sold=(sales||[]).filter(r=>r.product_type===product&&r.unit===unit).reduce((n,r)=>n+(Number(r.quantity)||0),0);
+  const adj=(adjustments||[]).filter(r=>r.product_type===product).reduce((n,r)=>n+(r.adjustment_type==="increase"?1:r.adjustment_type==="decrease"?-1:0)*(Number(r.quantity)||0),0);
+  return `<tr><td>${product}</td><td>${made}</td><td>${sold}</td><td>${adj}</td><td><b>${made-sold+adj}</b></td><td>${unit==="bottle"?"بوتل":"کارٹن"}</td></tr>`;
+ }).join("");
+ $("moduleTable").innerHTML="<h3>موجودہ تیار مال کا خلاصہ</h3><table><tr><th>پروڈکٹ</th><th>تیار</th><th>فروخت</th><th>درستگی</th><th>باقی</th><th>یونٹ</th></tr>"+summaries+"</table>"+
+ "<h3>تیار مال کی تازہ انٹریاں</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>یونٹ</th></tr>"+
+ (data||[]).map(r=>`<tr><td>${esc(r.entry_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity}</td><td>${esc(r.unit)}</td></tr>`).join("")+"</table>"+
+ "<h3>اسٹاک درستگی کی ہسٹری</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>قسم</th><th>مقدار</th><th>وجہ</th></tr>"+
+ (adjustments||[]).map(r=>`<tr><td>${esc(r.adjustment_date)}</td><td>${esc(r.product_type)}</td><td>${r.adjustment_type==="increase"?"اضافہ":r.adjustment_type==="decrease"?"کمی":"نامعلوم"}</td><td>${r.quantity}</td><td>${esc(r.reason)}</td></tr>`).join("")+"</table>";
+}
+
+/* سیل / مال کا اخراج */
+async function salesModule(){
+ setTitle("سیل / مال کا اخراج");
+ $("moduleBody").innerHTML=`
+ <input id="saleDate" type="date" value="${today()}">
+ <select id="saleType" onchange="salePricePreview()">
+ <option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
+ <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview()">
+ <div class="stat">فی یونٹ قیمت: <b id="salePrice">Rs. 280</b></div>
+ <div class="total">کل رقم: <span id="saleTotal">Rs. 0</span></div>
+ <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ 100 کارٹن پر ہی Rs.270 فی کارٹن۔ 6L بوتل Rs.55۔</p>
+ <button onclick="saveSale()">سیل محفوظ کریں</button>
+ <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button>`;
+ await loadSales();
+}
+function getSaleCalc(){
+ const type=$("saleType").value,qty=Number($("saleQty").value)||0;
+ const price=type==="6L"?55:(qty===100?270:280);
+ return {type,qty,price,total:qty*price,unit:type==="6L"?"bottle":"carton"};
+}
+function salePricePreview(){
+ const c=getSaleCalc();$("salePrice").textContent=money(c.price);$("saleTotal").textContent=money(c.total);
+}
+async function saveSale(){
+ const c=getSaleCalc(),button=document.querySelector('button[onclick="saveSale()"]');
+ if(!Number.isInteger(c.qty)||c.qty<=0){msg("کارٹن یا 6L بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
+ if(button)button.disabled=true;
+ try{
+  const {data,error}=await db.rpc("record_product_sale",{
+   p_sale_date:$('saleDate').value,
+   p_product_type:c.type,
+   p_quantity:c.qty
+  });
+  if(error)throw error;
+  if(!data||!data.sale_id)throw new Error("ڈیٹابیس سے سیل کی تصدیق موصول نہیں ہوئی۔");
+  msg("سیل اور متعلقہ مزدوری ایک ساتھ محفوظ ہوگئی: "+money(data.total_amount),true);
+  $("saleQty").value="";salePricePreview();
+  await loadSales();await loadTodaySummary();
+ }catch(e){msg("سیل محفوظ نہیں ہوئی: "+(e?.message||String(e)))}
+ finally{if(button)button.disabled=false}
+}
+async function loadSales(){
+ const {data,error}=await db.from("product_sales").select("*").order("sale_date",{ascending:false}).limit(100);
+ if(error){$("moduleTable").textContent=error.message;return}
+ $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>فی یونٹ</th><th>کل</th></tr>"+
+ (data||[]).map(r=>`<tr><td>${esc(r.sale_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity} ${esc(r.unit)}</td><td>${money(r.unit_price)}</td><td>${money(r.total_amount)}</td></tr>`).join("")+"</table>";
+}
+
+/* اخراجات اور آمدن */
+async function moneyModule(type){
+ const exp=type==="expenses",table=exp?"business_expenses":"business_income";
+ setTitle(exp?"اخراجات":"آمدن");
+ $("moduleBody").innerHTML=`
+ <input id="mDate" type="date" value="${today()}">
+ <input id="mCategory" placeholder="${exp?'خرچ کی مد':'آمدن کی مد'}">
+ <input id="mAmount" type="number" min="1" placeholder="رقم">
+ <textarea id="mDetails" placeholder="تفصیل (اختیاری)"></textarea>
+ <button onclick="saveMoney('${type}')">محفوظ کریں</button>
+ <button class="secondary" onclick="loadMoney('${type}')">ریکارڈ تازہ کریں</button>`;
+ await loadMoney(type);
+}
+async function saveMoney(type){
+ const exp=type==="expenses",table=exp?"business_expenses":"business_income",amount=Number($("mAmount").value),category=$("mCategory").value.trim();
+ if(!category||amount<=0){msg("مد اور درست رقم درج کریں۔");return}
+ const payload=exp?{expense_date:$("mDate").value,category,amount,details:$("mDetails").value.trim()||null}:{income_date:$("mDate").value,category,amount,details:$("mDetails").value.trim()||null};
+ const r=await db.from(table).insert(payload);
+ if(r.error){msg("محفوظ نہیں ہوا: "+r.error.message);return}
+ msg("ریکارڈ محفوظ ہوگیا۔",true);$("mAmount").value="";$("mDetails").value="";await loadMoney(type);await loadTodaySummary();
+}
+async function loadMoney(type){
+ const exp=type==="expenses",table=exp?"business_expenses":"business_income",datecol=exp?"expense_date":"income_date";
+ const {data,error}=await db.from(table).select("*").order(datecol,{ascending:false}).limit(100);
+ if(error){$("moduleTable").textContent=error.message;return}
+ $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>مد</th><th>تفصیل</th><th>رقم</th></tr>"+
+ (data||[]).map(r=>`<tr><td>${esc(r[datecol])}</td><td>${esc(r.category)}</td><td>${esc(r.details)}</td><td>${money(r.amount)}</td></tr>`).join("")+"</table>";
+}
+
+/* آج کا خلاصہ اور رپورٹس */
+async function sumTable(table,column,datecol,date){
+ const {data,error}=await db.from(table).select("*").eq(datecol,date);
+ if(error)throw error;
+ return (data||[]).reduce((s,r)=>s+(Number(r[column])||0),0);
+}
+async function loadTodaySummary(){
+ const el=$("todaySummary");if(!el)return;
+ try{
+  const date=today();
+  const {data:d,error:de}=await db.from("customer_19l_deliveries").select("*").eq("delivery_date",date);
+  if(de)throw de;
+  const bottles=(d||[]).reduce((s,r)=>s+(Number(r.successful_bottles)||0),0);
+  const diff=(d||[]).reduce((s,r)=>s+(Number(r.bottle_difference)||0),0);
+  const labor=(d||[]).reduce((s,r)=>s+(Number(r.delivery_labor)||0),0);
+  const sales=await sumTable("product_sales","total_amount","sale_date",date);
+  const expenses=await sumTable("business_expenses","amount","expense_date",date);
+  const income=await sumTable("business_income","amount","income_date",date);
+  el.innerHTML=`<div class="stat">تاریخ: ${date}</div>
+  <div class="stat">19L کامیاب بوتلیں: <b>${bottles}</b></div>
+  <div class="stat">بوتلوں کا فرق: <b>${diff}</b></div>
+  <div class="stat">19L ڈلیوری مزدوری: <b>${money(labor)}</b></div>
+  <div class="stat">چھوٹے پیک کی سیل: <b>${money(sales)}</b></div>
+  <div class="stat">اخراجات: <b>${money(expenses)}</b></div>
+  <div class="stat">درج شدہ آمدن: <b>${money(income)}</b></div>`;
+ }catch(e){el.textContent="خلاصہ لوڈ نہیں ہوا: "+e.message}
+}
+
+async function reportsModule(){
+ setTitle("رپورٹس");
+ $("moduleBody").innerHTML=`
+ <input id="rStart" type="date" value="${monthNow()}">
+ <input id="rEnd" type="date" value="${today()}">
+ <button onclick="runReport()">رپورٹ دکھائیں</button>`;
+ await runReport();
+}
+async function runReport(){
+ const start=$("rStart").value,end=$("rEnd").value;
+ if(!start||!end||start>end){msg("تاریخ کی حد درست منتخب کریں۔");return}
+ try{
+  const {data:d,error:de}=await db.from("customer_19l_deliveries").select("*").gte("delivery_date",start).lte("delivery_date",end);
+  if(de)throw de;
+  const {data:s,error:se}=await db.from("product_sales").select("*").gte("sale_date",start).lte("sale_date",end);
+  if(se)throw se;
+  const {data:e,error:ee}=await db.from("business_expenses").select("*").gte("expense_date",start).lte("expense_date",end);
+  if(ee)throw ee;
+  const {data:i,error:ie}=await db.from("business_income").select("*").gte("income_date",start).lte("income_date",end);
+  if(ie)throw ie;
+  const {data:f,error:fe}=await db.from("finished_goods").select("*").gte("entry_date",start).lte("entry_date",end);
+  if(fe)throw fe;
+  const sum=(rows,key)=>(rows||[]).reduce((n,r)=>n+(Number(r[key])||0),0);
+  const sold=sum(s,"total_amount"),exp=sum(e,"amount"),inc=sum(i,"amount"),labor=sum(d,"delivery_labor");
+  $("moduleTable").innerHTML=`<h3>${start} سے ${end} تک</h3>
+  <div class="stat">19L کامیاب بوتلیں: <b>${sum(d,"successful_bottles")}</b></div>
+  <div class="stat">بوتلوں کا فرق: <b>${sum(d,"bottle_difference")}</b></div>
+  <div class="stat">19L ڈلیوری مزدوری: <b>${money(labor)}</b></div>
+  <div class="stat">چھوٹے پیک کی سیل: <b>${money(sold)}</b></div>
+  <div class="stat">اخراجات: <b>${money(exp)}</b></div>
+  <div class="stat">درج شدہ آمدن: <b>${money(inc)}</b></div>
+  <div class="stat">تیار مال کی انٹریاں: <b>${(f||[]).length}</b></div>
+  <div class="stat">چھوٹے پیک کی سیل منفی درج شدہ کاروباری اخراجات: <b>${money(sold-exp)}</b></div>
+  <p class="muted">یہ صرف چھوٹے پیک کی سیل اور business_expenses کا فرق ہے؛ اس میں 19L بوتلوں کی رقم، 19L ڈلیوری مزدوری، خام مال کی لاگت اور دیگر غیر درج شدہ اخراجات شامل نہیں۔ اسے مکمل خالص منافع نہ سمجھیں۔</p>`;
+ }catch(e){msg("رپورٹ نہیں بنی: "+e.message)}
+}
+
+/* گاہک کو صرف اس کا اپنا اکاؤنٹ دکھائیں */
+async function loadCustomerPanel(){
+ $("myAccount").innerHTML=`<p>نام: <b>${esc(myCustomer.name)}</b></p>
+ <p>Customer ID: <b>${esc(myCustomer.customer_code)}</b></p>
+ <p>موبائل: ${esc(myCustomer.mobile||"درج نہیں")}</p>
+ <p>پتہ: ${esc(myCustomer.address||"درج نہیں")}</p>`;
+ const {data:b,error}=await db.from("customer_monthly_bills").select("*").eq("customer_id",myCustomer.id).order("bill_month",{ascending:false}).limit(1);
+ $("myBill").innerHTML=error?"بل لوڈ نہیں ہوا":!b?.length?"ابھی بل موجود نہیں":`<p>مہینہ: ${esc(b[0].bill_month)}</p><p>19L بوتلیں: ${b[0].bottles_19l||0}</p><p>بوتل رقم: ${money(b[0].bottle_amount)}</p><p>خراب Caps: ${b[0].damaged_caps||0}</p><p>پچھلا بقایا: ${money(b[0].previous_balance)}</p><p>وصول شدہ رقم: ${money(b[0].payments)}</p><h3>قابل ادائیگی: ${money(b[0].current_due)}</h3>`;
+ const {data:d,error:de}=await db.from("customer_19l_deliveries").select("*").eq("customer_id",myCustomer.id).order("delivery_date",{ascending:false}).limit(30);
+ $("myDeliveries").innerHTML=de?"ڈلیوری لوڈ نہیں ہوئی":`<table><tr><th>تاریخ</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>بوتل رقم</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th></tr>${(d||[]).map(r=>`<tr><td>${esc(r.delivery_date)}</td><td>${r.bottles_delivered}</td><td>${r.empty_bottles_returned}</td><td>${Number(r.successful_bottles)||0}</td><td>${money((Number(r.successful_bottles)||0)*100)}</td><td>${r.bottle_difference}</td><td>${Number(r.damaged_caps)||0}</td><td>${money((Number(r.damaged_caps)||0)*10)}</td></tr>`).join("")}</table>`;
+}
+</script>
+<script>
+// PWA service worker is available only on HTTPS or localhost (not file://).
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+ window.addEventListener("load", () => {
+  navigator.serviceWorker.register("./SW.js").catch(err => console.error("PWA setup:", err));
+ }, {once:true});
+}
+</script>
+</body>
+</html>
