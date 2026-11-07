@@ -5,9 +5,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#087b50">
+<meta name="description" content="MUGHAL'S PURE WATER — واٹر بزنس مینجمنٹ">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="MUGHAL'S PURE WATER">
 <title>MUGHAL'S PURE WATER</title>
 <style>
 *{box-sizing:border-box}
@@ -585,36 +584,65 @@ async function salesModule(){
  <select id="saleType" onchange="salePricePreview()">
  <option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
  <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview()">
+ <label for="saleUnitPrice">فی کارٹن قیمت (کم از کم Rs.280)</label>
+ <input id="saleUnitPrice" type="number" min="280" step="1" value="280" inputmode="decimal" oninput="salePricePreview()">
  <div class="stat">فی یونٹ قیمت: <b id="salePrice">Rs. 280</b></div>
  <div class="total">کل رقم: <span id="saleTotal">Rs. 0</span></div>
- <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ 100 کارٹن پر ہی Rs.270 فی کارٹن۔ 6L بوتل Rs.55۔</p>
+ <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ کم از کم Rs.280 فی کارٹن؛ ایڈمن اس سے زیادہ قیمت درج کر سکتا ہے۔ 6L بوتل Rs.55۔</p>
  <button onclick="saveSale()">سیل محفوظ کریں</button>
  <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button>`;
  await loadSales();
 }
 function getSaleCalc(){
  const type=$("saleType").value,qty=Number($("saleQty").value)||0;
- const price=type==="6L"?55:(qty===100?270:280);
+ const entered=Number($("saleUnitPrice")?.value)||280;
+ const price=type==="6L"?55:entered;
  return {type,qty,price,total:qty*price,unit:type==="6L"?"bottle":"carton"};
 }
 function salePricePreview(){
- const c=getSaleCalc();$("salePrice").textContent=money(c.price);$("saleTotal").textContent=money(c.total);
+ const c=getSaleCalc();
+ const priceInput=$("saleUnitPrice");
+ const priceLabel=document.querySelector('label[for="saleUnitPrice"]');
+ if(priceInput){priceInput.disabled=c.type==="6L";if(c.type==="6L")priceInput.value=55;else if(Number(priceInput.value)<280)priceInput.value=280;}
+ if(priceLabel)priceLabel.textContent=c.type==="6L"?"6L فی بوتل قیمت (مقررہ Rs.55)":"فی کارٹن قیمت (کم از کم Rs.280)";
+ $("salePrice").textContent=money(c.price);$("saleTotal").textContent=money(c.total);
 }
 async function saveSale(){
  const c=getSaleCalc(),button=document.querySelector('button[onclick="saveSale()"]');
  if(!Number.isInteger(c.qty)||c.qty<=0){msg("کارٹن یا 6L بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
+ if(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<280)){msg("500ml اور 1.5L کارٹن کی قیمت کم از کم Rs.280 ہونی چاہیے۔");return}
  if(button)button.disabled=true;
  try{
-  const {data,error}=await db.rpc("record_product_sale",{
-   p_sale_date:$('saleDate').value,
+  const [{data:stock,error:e},{data:sold,error:se},{data:adjustments,error:ae}]=await Promise.all([
+   db.from("finished_goods").select("quantity,unit").eq("product_type",c.type).limit(1000),
+   db.from("product_sales").select("quantity,unit").eq("product_type",c.type).limit(1000),
+   db.from("finished_stock_adjustments").select("quantity,adjustment_type").eq("product_type",c.type).limit(1000)
+  ]);
+  if(e||se||ae)throw (e||se||ae);
+  const made=(stock||[]).filter(r=>r.unit===c.unit).reduce((s,r)=>s+(Number(r.quantity)||0),0);
+  const out=(sold||[]).filter(r=>r.unit===c.unit).reduce((s,r)=>s+(Number(r.quantity)||0),0);
+  const adj=(adjustments||[]).reduce((s,r)=>s+(r.adjustment_type==="increase"?1:r.adjustment_type==="decrease"?-1:0)*(Number(r.quantity)||0),0);
+  const available=made-out+adj;
+  if(c.qty>available){msg("تیار مال کا اسٹاک کم ہے۔ موجودہ دستیاب مقدار: "+Math.max(0,available));return}
+  const r=await db.rpc("record_product_sale",{
+   p_sale_date:$("saleDate").value,
    p_product_type:c.type,
-   p_quantity:c.qty
+   p_quantity:c.qty,
+   p_worker_id:null,
+   p_unit_price:c.price
   });
-  if(error)throw error;
-  if(!data||!data.sale_id)throw new Error("ڈیٹابیس سے سیل کی تصدیق موصول نہیں ہوئی۔");
-  msg("سیل اور متعلقہ مزدوری ایک ساتھ محفوظ ہوگئی: "+money(data.total_amount),true);
-  $("saleQty").value="";salePricePreview();
-  await loadSales();await loadTodaySummary();
+  if(r.error)throw r.error;
+  const saleId=r.data?.sale_id;
+  if(c.type!=="6L"){
+   const labor=c.qty*10;
+   const er=await db.from("business_expenses").insert({expense_date:$("saleDate").value,category:"کارٹن تیار کرنے کی مزدوری",amount:labor,details:c.type+" کے "+c.qty+" کارٹن × Rs.10"});
+   if(er.error){
+    const rollback=saleId?await db.from("product_sales").delete().eq("id",saleId):{error:new Error("RPC sale id unavailable")};
+    if(rollback.error)throw new Error("سیل درج ہوگئی مگر مزدوری بھی محفوظ نہ ہوئی اور سیل واپس بھی نہ ہوسکی۔ سیل ID: "+(saleId||"نامعلوم")+"؛ مزدوری: "+er.error.message+"؛ واپسی: "+rollback.error.message);
+    throw new Error("مزدوری محفوظ نہ ہونے کی وجہ سے سیل انٹری واپس کردی گئی: "+er.error.message);
+   }
+  }
+  msg("سیل اور متعلقہ مزدوری محفوظ ہوگئی: "+money(c.total),true);await loadSales();await loadTodaySummary();
  }catch(e){msg("سیل محفوظ نہیں ہوئی: "+(e?.message||String(e)))}
  finally{if(button)button.disabled=false}
 }
@@ -732,11 +760,8 @@ async function loadCustomerPanel(){
 }
 </script>
 <script>
-// PWA service worker is available only on HTTPS or localhost (not file://).
-if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
- window.addEventListener("load", () => {
-  navigator.serviceWorker.register("./SW.js").catch(err => console.error("PWA setup:", err));
- }, {once:true});
+if ('serviceWorker' in navigator) {
+ window.addEventListener('load',()=>navigator.serviceWorker.register('./SW.js').catch(err=>console.warn('Service worker registration failed',err)));
 }
 </script>
 </body>
