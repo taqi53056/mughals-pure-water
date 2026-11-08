@@ -41,9 +41,10 @@ Supabase live verification:
 - تین trigger/legacy RPC function search_path درست کیا اور دوبارہ verify کیا۔
 - 16 unindexed foreign-key columns کے indexes شامل کیے؛ verification میں missing FK indexes صفر۔
 - customer-scoped policies میں auth.uid() کو statement-level subquery میں wrap کیا۔
-- rollback-only billing calculation test میں 3 بوتلیں، 2 خراب ڈھکن، Rs.80 خالص ادائیگی، Rs.20 سابقہ ایڈوانس اور Rs.50 سابقہ بقایا سے Rs.270 بقایا درست نکلا؛ تمام test rows rollback ہو گئیں۔
+- rollback-only billing tests میں درست mutually-exclusive opening states verify ہوئیں: (الف) سابقہ بقایا Rs.50، advance صفر، 3 بوتلیں، 2 خراب ڈھکن، Rs.80 ادائیگی → Rs.290 بقایا؛ (ب) سابقہ advance Rs.20، بقایا صفر، وہی charges/payment → Rs.220 بقایا اور Rs.20 advance استعمال۔ تمام test rows rollback ہو گئیں۔
 - خالی customer table میں اگلا customer code rollback-only test سے C001 verify ہوا۔
 - پروڈکشن allocation کا rollback-only test پاس: 10 کارٹن پر generated allocation labor Rs.100، worker ledger Rs.100، اور production labor Rs.100؛ تمام test rows rollback ہو گئیں۔
+- 19L delivery guard کا rollback-only test پاس: 3 دی گئی، 2 خالی واپس، 2 کامیاب، فرق 1، ایک خراب ڈھکن؛ مالک کی delivery labor صفر رہی۔ خالی بوتلیں دی گئی بوتلوں سے زیادہ رکھنے والی انٹری رد ہوئی۔
 - سیل RPC کا rollback-only test پاس: ایک 500ml کارٹن Rs.300 میں درج ہوا، stock صفر ہوا، مالک کی مزدوری بچت Rs.10 رپورٹ ہوئی؛ تمام test rows rollback ہو گئیں۔
 - product_settings کا rollback-only admin update test پاس: default Rs.300، special Rs.290 محفوظ ہوئے اور audit actor درست ریکارڈ ہوا؛ تبدیلی rollback ہوگئی۔ Database نے Rs.280 سے کم carton price اور default سے زیادہ special price دونوں رد کیے۔
 - duplicate monthly-bill unique constraint ہٹایا؛ بنیادی (customer_id, bill_month) unique constraint برقرار ہے۔
