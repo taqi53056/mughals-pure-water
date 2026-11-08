@@ -60,3 +60,65 @@ REVOKE ALL PRIVILEGES ON TABLE public.customers FROM authenticated;
 REVOKE ALL (id, customer_code, name, mobile, address, pin_hash, is_active, created_at, auth_user_id, pin_enabled, pin) ON TABLE public.customers FROM authenticated;
 GRANT SELECT (id, customer_code, name, mobile, address, is_active, auth_user_id) ON TABLE public.customers TO authenticated;
 GRANT UPDATE (name, mobile, address, is_active) ON TABLE public.customers TO authenticated;
+
+-- Generated labor_amount on production_worker_allocations is always computed
+-- as cartons * 10 by PostgreSQL. Keep the trigger tolerant of NULL on legacy
+-- rows, while leaving the generated column out of INSERT statements.
+CREATE OR REPLACE FUNCTION public.sync_production_allocation_ledger()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_production_date date;
+  v_is_owner boolean := false;
+  v_labor_amount numeric(12,2);
+BEGIN
+  IF TG_OP <> 'INSERT' THEN
+    DELETE FROM public.worker_ledger
+    WHERE source_table = 'production_worker_allocations'
+      AND source_id = OLD.id;
+  END IF;
+
+  IF TG_OP <> 'DELETE' THEN
+    SELECT p.production_date INTO v_production_date
+    FROM public.production p
+    WHERE p.id = NEW.production_id;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'پروڈکشن ریکارڈ موجود نہیں۔';
+    END IF;
+
+    SELECT w.is_owner INTO v_is_owner
+    FROM public.workers w
+    WHERE w.id = NEW.worker_id
+      AND w.is_active = true
+      AND (w.is_owner = true OR w.work_categories @> ARRAY['production']::text[]);
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'منتخب ورکر فعال نہیں یا پروڈکشن کے لیے مقرر نہیں۔';
+    END IF;
+
+    v_labor_amount := COALESCE(NEW.labor_amount, NEW.cartons * 10);
+
+    IF NOT COALESCE(v_is_owner,false) THEN
+      INSERT INTO public.worker_ledger(
+        worker_id,entry_date,entry_type,work_category,amount,note,source_table,source_id,entered_by
+      )
+      VALUES (
+        NEW.worker_id,
+        v_production_date,
+        'earning',
+        'production',
+        v_labor_amount,
+        format('پروڈکشن: %s کارٹن × Rs.10',NEW.cartons),
+        'production_worker_allocations',
+        NEW.id,
+        auth.uid()
+      );
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  RETURN OLD;
+END;
+$function$;
