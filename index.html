@@ -152,9 +152,11 @@ function normalizePkPhone(value){let p=String(value||"").replace(/\D/g,"");if(p.
 function shareCustomerMessage(phone,message,channel){const number=normalizePkPhone(phone);if(!number){alert("اس گاہک کا درست موبائل نمبر درج نہیں۔");return}if(channel==="whatsapp")window.open("https://wa.me/"+number+"?text="+encodeURIComponent(message),"_blank","noopener");else location.href="sms:+"+number+"?body="+encodeURIComponent(message);}
 function shareCurrentBillWhatsApp(){shareCurrentBill("whatsapp")} function shareCurrentBillSMS(){shareCurrentBill("sms")}
 function shareCurrentDeliveryWhatsApp(){shareCurrentDelivery("whatsapp")} function shareCurrentDeliverySMS(){shareCurrentDelivery("sms")}
-function shareCurrentBill(channel){const id=Number(document.getElementById("bCustomer")?.value),month=document.getElementById("bMonth")?.value,c=(customerList||[]).find(x=>Number(x.id)===id);if(!c||!month){alert("پہلے گاہک اور مہینہ منتخب کریں۔");return}const n=Number(document.getElementById("bBottles")?.textContent)||0,k=Number(document.getElementById("bCaps")?.textContent)||0;const message="السلام علیکم "+c.name+" صاحب! MUGHAL’S PURE WATER کا "+month+" کا بل تیار ہے۔ کامیاب بوتلیں: "+n+"، خراب ڈھکن: "+k+"، پچھلا بقایا: "+document.getElementById("bPrev")?.textContent+"، ادائیگیاں: "+document.getElementById("bPaid")?.textContent+"، قابل ادائیگی: "+document.getElementById("bDue")?.textContent+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
+function shareCurrentBill(channel){if(!currentBillSaved){alert("پہلے بل محفوظ کریں، پھر پیغام تیار کریں۔");return}const id=Number(document.getElementById("bCustomer")?.value),month=document.getElementById("bMonth")?.value,c=(customerList||[]).find(x=>Number(x.id)===id);if(!c||!month){alert("پہلے گاہک اور مہینہ منتخب کریں۔");return}const n=Number(document.getElementById("bBottles")?.textContent)||0,k=Number(document.getElementById("bCaps")?.textContent)||0;const message="السلام علیکم "+c.name+" صاحب! MUGHAL’S PURE WATER کا "+month+" کا بل تیار ہے۔ کامیاب بوتلیں: "+n+"، خراب ڈھکن: "+k+"، پچھلا بقایا: "+document.getElementById("bPrev")?.textContent+"، ادائیگیاں: "+document.getElementById("bPaid")?.textContent+"، قابل ادائیگی: "+document.getElementById("bDue")?.textContent+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
 function shareCurrentDelivery(channel){if(!currentDeliverySaved){alert("پہلے ڈلیوری محفوظ کریں، پھر پیغام تیار کریں۔");return}const id=Number(document.getElementById("dCustomer")?.value),c=(customerList||[]).find(x=>Number(x.id)===id);if(!c){alert("پہلے گاہک منتخب کریں۔");return}const date=document.getElementById("dDate")?.value||"",n=Number(document.getElementById("dSuccess")?.textContent)||0,k=Number(document.getElementById("dCaps")?.value)||0;const message="السلام علیکم "+c.name+" صاحب! "+date+" کو "+n+" کامیاب 19L بوتلوں کی ڈلیوری درج ہوئی۔ خراب ڈھکن: "+k+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
-let user=null, myCustomer=null, customerList=[], currentModule="", editingId=null, currentDeliverySaved=false;
+let user=null, myCustomer=null, customerList=[], currentModule="", editingId=null, currentDeliverySaved=false, currentBillSaved=false;
+function setBillSavedState(saved){currentBillSaved=!!saved;const a=document.getElementById("billWhatsAppButton"),b=document.getElementById("billSMSButton");if(a)a.disabled=!currentBillSaved;if(b)b.disabled=!currentBillSaved;}
+function markBillDirty(){setBillSavedState(false);}
 function setDeliverySavedState(saved){currentDeliverySaved=!!saved;const a=document.getElementById("deliveryWhatsAppButton"),b=document.getElementById("deliverySMSButton");if(a)a.disabled=!currentDeliverySaved;if(b)b.disabled=!currentDeliverySaved;}
 function markDeliveryDirty(){setDeliverySavedState(false);}
 
@@ -551,13 +553,14 @@ async function billingModule(){
  try{list=await getActiveCustomers()}catch(e){msg("گاہک لوڈ نہیں ہوئے: "+e.message);return}
  $("moduleBody").innerHTML=`
  <p class="muted">19L کامیاب بوتل Rs.100، خراب ڈھکن Rs.10۔ ادائیگیاں الگ ریکارڈ ہوں گی؛ بل خود حساب ہوگا۔</p>
- <select id="bCustomer" onchange="loadSelectedBill()">${customerOptions(list)}</select>
- <input id="bMonth" type="month" value="${today().slice(0,7)}" onchange="loadSelectedBill()">
+ <select id="bCustomer" onchange="markBillDirty();loadSelectedBill()">${customerOptions(list)}</select>
+ <input id="bMonth" type="month" value="${today().slice(0,7)}" onchange="markBillDirty();loadSelectedBill()">
  <div class="grid"><div class="stat">کامیاب بوتلیں: <b id="bBottles">0</b></div><div class="stat">خراب ڈھکن: <b id="bCaps">0</b></div>
  <div class="stat">بوتل رقم: <b id="bBottleAmt">Rs. 0</b></div><div class="stat">ڈھکن رقم: <b id="bCapAmt">Rs. 0</b></div>
  <div class="stat">پچھلا بقایا: <b id="bPrev">Rs. 0</b></div><div class="stat">پچھلا ایڈوانس استعمال: <b id="bAdvance">Rs. 0</b></div>
  <div class="stat">اس ماہ کی خالص ادائیگیاں: <b id="bPaid">Rs. 0</b></div></div>
- <div class="total">موجودہ قابل ادائیگی: <span id="bDue">Rs. 0</span></div><button class="secondary" onclick="shareCurrentBillWhatsApp()">بل WhatsApp پر بھیجیں</button><button class="secondary" onclick="shareCurrentBillSMS()">بل SMS کے ذریعے بھیجیں</button>
+ <div class="total">موجودہ قابل ادائیگی: <span id="bDue">Rs. 0</span></div><button id="billWhatsAppButton" class="secondary" disabled onclick="shareCurrentBillWhatsApp()">بل WhatsApp پر بھیجیں</button><button id="billSMSButton" class="secondary" disabled onclick="shareCurrentBillSMS()">بل SMS کے ذریعے بھیجیں</button>
+ <p class="muted">بل محفوظ اور اطلاع درج ہونے کے بعد ہی پیغام تیار ہوگا؛ Send آپ کریں گے۔</p>
  <button onclick="saveBill()">بل دوبارہ حساب کرکے محفوظ کریں</button>
  <div class="card"><h3>نئی ادائیگی درج کریں</h3>
  <input id="paymentDate" type="date" value="${today()}">
@@ -625,6 +628,7 @@ async function loadPaymentHistory(customerId,month){
 }
 
 async function loadSelectedBill(){
+ setBillSavedState(false);
  const id=$("bCustomer").value,month=$("bMonth").value;if(!id||!month)return;
  const m=month.slice(0,7)+"-01";
  try{
@@ -655,11 +659,12 @@ async function saveBill(){
    ?await db.from("customer_notifications").update({title:notice.title,message:notice.message,is_read:false,created_at:new Date().toISOString()}).eq("id",existing[0].id)
    :await db.from("customer_notifications").insert(notice);
   if(nr.error)msg("بل دوبارہ حساب ہوگیا، مگر کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+nr.error.message);
-  else msg("بل دوبارہ حساب ہوگیا اور مکمل تفصیل کے ساتھ کسٹمر کی اطلاع محفوظ ہوگئی۔",true);
+  else {setBillSavedState(true);msg("بل دوبارہ حساب ہوگیا اور مکمل تفصیل کے ساتھ کسٹمر کی اطلاع محفوظ ہوگئی۔",true);}
  }catch(e){msg("بل یا اطلاع مکمل نہیں ہوسکی: "+e.message)}
 }
 
 async function recordCustomerPayment(){
+ setBillSavedState(false);
  const customerId=Number($("bCustomer").value),amount=Number($("paymentAmount").value),paymentDate=$("paymentDate").value,paymentType=$("paymentType").value;
  if(!customerId||!paymentDate||!Number.isFinite(amount)||amount<=0){msg("گاہک، تاریخ اور صفر سے زیادہ رقم درج کریں۔");return}
  if(!confirmLargeEntry("ادائیگی کی رقم (روپے)",amount,1000))return;
