@@ -10,6 +10,7 @@ MUGHAL'S PURE WATER — مختصر ریلیز نوٹس
 - icon.svg، icon-192.png، icon-512.png — آئیکنز
 - MUGHALS_FINAL_OWNER_MIGRATION.sql — Owner/ورکر اجرت کی علیحدگی
 - MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کم از کم قیمت اور سیل RPC
+- MUGHALS_SECURITY_PERFORMANCE_REPAIR_20261109.sql — live Supabase security/performance repairs کا ریکارڈ
 
 قیمتوں کے اصول:
 - 500ml کارٹن: 24 یونٹ، کم از کم Rs.280
@@ -18,13 +19,14 @@ MUGHAL'S PURE WATER — مختصر ریلیز نوٹس
 - کارٹن مزدوری: Rs.10 فی کارٹن
 - 19L: Rs.100 فی کامیاب بوتل، ڈلیوری مزدوری Rs.20، خراب ڈھکن Rs.10
 
-اہم:
-- دونوں incremental SQL migrations لائیو Supabase میں پہلے چل چکی ہیں؛ انہیں دوبارہ نہ چلائیں۔
-- بنیادی V2/master Supabase schema اس repository میں موجود نہیں؛ یہ repository اکیلی نئے Supabase project کی مکمل setup نہیں۔
-- پرانی 3-parameter/ Rs.270 والی سیل SQL فائل متروک تھی اور ہٹا دی گئی ہے۔ موجودہ UI پانچ parameters والا RPC استعمال کرتا ہے۔
-- ماہانہ cron 23:55 پاکستان وقت پر فعال ہے؛ مگر حقیقی ماہانہ execution ابھی ثابت نہیں۔
-- جامد syntax checks پاس ہیں، مگر live browser اور مکمل end-to-end workflow tests باقی ہیں۔
-- جب تک عملی ٹیسٹ مکمل نہ ہوں، اسے final production verified release نہ کہیں۔
+Supabase:
+- 27 public tables پر RLS فعال اور verify ہے۔
+- تین مستقل admin profiles اور موجودہ قیمتیں verify ہیں۔
+- trigger/legacy RPC search_path درست؛ 16 FK indexes شامل؛ customer-scoped RLS policies optimize؛ duplicate monthly bill unique constraint صاف۔
+- ماہانہ cron فعال ہے، لیکن حقیقی month-end run ابھی نہیں ہوا کیونکہ active customers صفر ہیں۔
+- موجودہ database پر پرانی migrations دوبارہ نہ چلائیں؛ بنیادی V2/master schema اس repository میں شامل نہیں۔
+- SECURITY DEFINER warnings میں admin/customer ownership checks کی موجودگی verify کی گئی ہے؛ انہیں blind revoke نہیں کیا گیا۔
+- leaked-password protection کی setting ابھی dashboard پر باقی ہے۔
 
 اس برانچ میں شامل کام:
 - مکمل کسٹمر اکاؤنٹ ویو
@@ -34,3 +36,9 @@ MUGHAL'S PURE WATER — مختصر ریلیز نوٹس
 - audit log میں before/after details
 - Owner savings اور worker wages کی علیحدگی
 - ماہانہ بل کی تفصیلی اطلاع
+- سکیورٹی اور کارکردگی کی database repairs
+
+ریلیز کی حد:
+- static syntax checks اور database-side checks پاس ہیں۔
+- live browser، حقیقی کسٹمر RLS isolation، stock/production/sales/worker ledger اور مکمل ماہانہ notification کے end-to-end tests باقی ہیں۔
+- ان tests کے مکمل ہونے تک اسے final production-verified release نہ کہیں اور main میں merge/deploy نہ کریں۔
