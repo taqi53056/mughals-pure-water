@@ -5,7 +5,7 @@
 CREATE OR REPLACE FUNCTION public.guard_fixed_owner_worker()
 RETURNS trigger
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path TO ''
 AS $function$
 BEGIN
@@ -30,6 +30,10 @@ DROP TRIGGER IF EXISTS protect_fixed_owner_worker ON public.workers;
 CREATE TRIGGER protect_fixed_owner_worker
 BEFORE UPDATE OR DELETE ON public.workers
 FOR EACH ROW EXECUTE FUNCTION public.guard_fixed_owner_worker();
+
+
+-- The trigger only inspects OLD/NEW; no API role needs direct EXECUTE rights.
+REVOKE EXECUTE ON FUNCTION public.guard_fixed_owner_worker() FROM PUBLIC, anon, authenticated;
 
 -- Verification: exactly one active owner remains.
 SELECT count(*) AS active_owner_count
