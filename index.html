@@ -495,9 +495,27 @@ async function saveDelivery(){
  try{await syncBillBottles(Number(id),date.slice(0,7)+"-01")}
  catch(e){billSyncWarning=" ڈلیوری محفوظ ہے، مگر ماہانہ بل اپڈیٹ نہیں ہوا: "+e.message}
  let notificationWarning="";
- if(!old){
-  const {error:notificationError}=await db.from("customer_notifications").insert({customer_id:Number(id),title:"آج کی ڈلیوری درج ہوگئی",message:`السلام علیکم ${customerList.find(x=>Number(x.id)===Number(id))?.name||"گاہک"} صاحب! ${date} کو ${c.success} کامیاب 19L بوتلوں کی ڈلیوری درج ہوگئی۔ خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,notification_type:"delivery"});
-  if(notificationError){console.error("Notification could not be saved",notificationError);notificationWarning=" کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+notificationError.message;}
+ const deliveryNotice={
+  customer_id:Number(id),
+  title:"آج کی ڈلیوری درج ہوگئی",
+  message:`السلام علیکم ${customerList.find(x=>Number(x.id)===Number(id))?.name||"گاہک"} صاحب! ${date} کو ${c.success} کامیاب 19L بوتلوں کی ڈلیوری درج ہوگئی۔ خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,
+  notification_type:"delivery",
+  reference_key:`delivery:${date}`
+ };
+ const {data:existingNotice,error:noticeLookupError}=await db.from("customer_notifications")
+  .select("id").eq("customer_id",Number(id)).eq("reference_key",deliveryNotice.reference_key).maybeSingle();
+ let notificationError=noticeLookupError;
+ if(!notificationError){
+  const noticeResult=existingNotice
+   ?await db.from("customer_notifications").update({
+      title:deliveryNotice.title,message:deliveryNotice.message,is_read:false,created_at:new Date().toISOString()
+    }).eq("id",existingNotice.id)
+   :await db.from("customer_notifications").insert(deliveryNotice);
+  notificationError=noticeResult.error;
+ }
+ if(notificationError){
+  console.error("Notification could not be saved",notificationError);
+  notificationWarning=" کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+notificationError.message;
  }
  msg("ڈلیوری محفوظ ہوگئی۔ مزدوری "+money(c.labor)+billSyncWarning+notificationWarning,!billSyncWarning&&!notificationWarning);
  await loadDailyDeliveries();await loadTodaySummary();
