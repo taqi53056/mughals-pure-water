@@ -1,21 +1,36 @@
-MUGHAL'S PURE WATER — تازہ ایپ پیکج
+MUGHAL'S PURE WATER — مختصر ریلیز نوٹس
 
-فائلیں:
-- index.html: ایپ کا مرکزی صفحہ
-- manifest.webmanifest: PWA شناخت اور انسٹال سیٹنگز
-- SW.js: Service Worker اور cache version v18
-- icon.svg: ایپ آئیکن
-- MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql: پہلے سے چلائی گئی DB repair (دوبارہ نہ چلائیں)
+برانچ: integration-access-check-20261109
+موجودہ Service Worker cache: v19
 
-اہم قیمت اصول:
-- 500ml اور 1.5L کارٹن: کم از کم Rs.280؛ ایڈمن زیادہ قیمت درج کر سکتا ہے۔
-- 6L: Rs.55 فی بوتل۔
-- کارٹن مزدوری: Rs.10 فی کارٹن۔
+اہم فائلیں:
+- index.html — مکمل فرنٹ اینڈ
+- manifest.webmanifest — PWA سیٹنگز
+- SW.js — cache اور offline shell
+- icon.svg، icon-192.png، icon-512.png — آئیکنز
+- MUGHALS_FINAL_OWNER_MIGRATION.sql — Owner/ورکر اجرت کی علیحدگی
+- MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کم از کم قیمت اور سیل RPC
 
-تبدیلیاں:
-- پرانا Rs.270 / 100-carton special rate ہٹا دیا گیا۔
-- سیل انٹری اب record_product_sale کے 5-parameter RPC کو کال کرتی ہے۔
-- UI میں قیمت کی حد بھی چیک ہوتی ہے؛ اصل enforcement Supabase میں پہلے commit ہو چکی ہے۔
+قیمتوں کے اصول:
+- 500ml کارٹن: 24 یونٹ، کم از کم Rs.280
+- 1.5L کارٹن: 12 یونٹ، کم از کم Rs.280
+- 6L: 18 بوتلوں کا پیک، Rs.55 فی بوتل
+- کارٹن مزدوری: Rs.10 فی کارٹن
+- 19L: Rs.100 فی کامیاب بوتل، ڈلیوری مزدوری Rs.20، خراب ڈھکن Rs.10
 
-GitHub Pages پر اپڈیٹ کرتے وقت ZIP کے اندر کی تمام فائلیں repository کے اسی publish folder میں upload/replace کریں۔
-یہ ZIP خودکار طور پر GitHub پر deploy نہیں کرتی۔
+اہم:
+- دونوں incremental SQL migrations لائیو Supabase میں پہلے چل چکی ہیں؛ انہیں دوبارہ نہ چلائیں۔
+- بنیادی V2/master Supabase schema اس repository میں موجود نہیں؛ یہ repository اکیلی نئے Supabase project کی مکمل setup نہیں۔
+- پرانی 3-parameter/ Rs.270 والی سیل SQL فائل متروک تھی اور ہٹا دی گئی ہے۔ موجودہ UI پانچ parameters والا RPC استعمال کرتا ہے۔
+- ماہانہ cron 23:55 پاکستان وقت پر فعال ہے؛ مگر حقیقی ماہانہ execution ابھی ثابت نہیں۔
+- جامد syntax checks پاس ہیں، مگر live browser اور مکمل end-to-end workflow tests باقی ہیں۔
+- جب تک عملی ٹیسٹ مکمل نہ ہوں، اسے final production verified release نہ کہیں۔
+
+اس برانچ میں شامل کام:
+- مکمل کسٹمر اکاؤنٹ ویو
+- بڑی انٹری کی تصدیق
+- شکایات اور ایڈمن جواب
+- آمدن/اخراجات edit/delete
+- audit log میں before/after details
+- Owner savings اور worker wages کی علیحدگی
+- ماہانہ بل کی تفصیلی اطلاع
