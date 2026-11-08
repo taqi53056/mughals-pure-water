@@ -21,7 +21,7 @@ MUGHAL'S PURE WATER — مختصر ریلیز نوٹس
 
 Supabase:
 - 27 public tables پر RLS فعال اور verify ہے۔
-- تین مستقل admin profiles اور موجودہ قیمتیں verify ہیں۔
+- تین مستقل admin profiles اور موجودہ قیمتیں verify ہیں؛ customer PIN fields کی browser access بند ہے۔
 - trigger/legacy RPC search_path درست؛ 16 FK indexes شامل؛ customer-scoped RLS policies optimize؛ duplicate monthly bill unique constraint صاف۔
 - ماہانہ cron فعال ہے، لیکن حقیقی month-end run ابھی نہیں ہوا کیونکہ active customers صفر ہیں۔
 - موجودہ database پر پرانی migrations دوبارہ نہ چلائیں؛ بنیادی V2/master schema اس repository میں شامل نہیں۔
