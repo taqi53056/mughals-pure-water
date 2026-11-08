@@ -52,3 +52,11 @@ WITH CHECK (status = 'new' AND admin_note IS NULL AND EXISTS (SELECT 1 FROM publ
 -- UNIQUE constraint customer_monthly_bills_customer_id_bill_month_key remains.
 ALTER TABLE public.customer_monthly_bills
 DROP CONSTRAINT IF EXISTS customer_monthly_bills_unique_month;
+
+-- Restrict customer table column access: obsolete PIN fields must never be
+-- readable or writable by browser-authenticated users. The app selects only
+-- the safe profile/account columns listed below.
+REVOKE ALL PRIVILEGES ON TABLE public.customers FROM authenticated;
+REVOKE ALL (id, customer_code, name, mobile, address, pin_hash, is_active, created_at, auth_user_id, pin_enabled, pin) ON TABLE public.customers FROM authenticated;
+GRANT SELECT (id, customer_code, name, mobile, address, is_active, auth_user_id) ON TABLE public.customers TO authenticated;
+GRANT UPDATE (name, mobile, address, is_active) ON TABLE public.customers TO authenticated;
