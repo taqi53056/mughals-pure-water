@@ -775,8 +775,8 @@ function salePricePreview(autoSpecial=false,resetDefault=false){
    $("saleUnitPrice").value=String(defaultRate);
   }
   const special=setting.special_100_rate==null?null:Number(setting.special_100_rate);
-  if(autoSpecial&&Number($("saleQty").value)>=100&&special!==null&&Number.isFinite(special)&&special>=280){
-   $("saleUnitPrice").value=String(special);
+  if(autoSpecial){
+   $("saleUnitPrice").value=String(Number($("saleQty").value)>=100&&special!==null&&Number.isFinite(special)&&special>=280?special:defaultRate);
   }
  }
  const c=getSaleCalc();
