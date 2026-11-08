@@ -1076,14 +1076,48 @@ function filterAuditRows(){const q=($("auditSearch")?.value||"").trim().toLowerC
 
 async function settingsModule(){
  setTitle("ترتیبات / کنٹرول سینٹر");
- $("moduleBody").innerHTML='<p class="muted">یہ صفحہ اہم کاروباری قواعد اور موجودہ نظامی سیٹنگز دکھاتا ہے۔ حساس سکیورٹی سیٹنگز صرف ڈیٹابیس کی محفوظ پالیسی کے ذریعے تبدیل ہونی چاہئیں۔</p><div id="settingsStatus">ترتیبات لوڈ ہو رہی ہیں...</div>';
+ $("moduleBody").innerHTML='<p class="muted">کاروباری قواعد، قیمتوں اور نظامی اختیارات کا محفوظ کنٹرول سینٹر۔ ہر قیمت کی تبدیلی آڈٹ لاگ میں محفوظ ہوگی۔</p><div id="settingsStatus">ترتیبات لوڈ ہو رہی ہیں...</div>';
  const [{data:products,error:pe},{data:admins,error:ae},{data:workers,error:we}]=await Promise.all([
-  db.from("product_settings").select("product_type,unit_type,units_per_pack,default_rate,special_100_rate,labor_per_unit,is_active").order("product_type"),
+  db.from("product_settings").select("id,product_type,unit_type,units_per_pack,default_rate,special_100_rate,labor_per_unit,is_active").order("product_type"),
   db.from("profiles").select("id,full_name,role").eq("role","admin").order("full_name"),
   db.from("workers").select("id,full_name,is_active,is_owner").order("full_name")
  ]);
  if(pe||ae||we){$("settingsStatus").textContent="ترتیبات مکمل لوڈ نہیں ہوئیں: "+(pe||ae||we).message;return;}
- $("settingsStatus").innerHTML='<h3>مقررہ کاروباری قواعد</h3><div class="stat">19L کامیاب بوتل: <b>Rs. 100</b> + فی بوتل ڈلیوری مزدوری <b>Rs. 20</b></div><div class="stat">خراب ڈھکن: <b>Rs. 10</b> فی عدد</div><div class="stat">500ml اور 1.5L کارٹن کی کم از کم قیمت: <b>Rs. 280</b></div><h3>ڈیٹابیس پروڈکٹ سیٹنگز</h3><table><tr><th>پروڈکٹ</th><th>پیک</th><th>طے شدہ قیمت</th><th>خصوصی قیمت</th><th>مزدوری</th><th>فعال</th></tr>'+(products||[]).map(p=>`<tr><td>${esc(p.product_type)}</td><td>${p.units_per_pack} ${esc(p.unit_type)}</td><td>${money(p.default_rate)}</td><td>${p.special_100_rate==null?"—":money(p.special_100_rate)}</td><td>${money(p.labor_per_unit)}</td><td>${p.is_active?"ہاں":"نہیں"}</td></tr>`).join("")+'</table><h3>ایڈمن اکاؤنٹس</h3><p>فعال رول والے ایڈمن: <b>'+(admins||[]).length+'</b></p><ul>'+(admins||[]).map(a=>'<li>'+esc(a.full_name||a.id)+'</li>').join("")+'</ul><h3>ورکرز</h3><p>کل: <b>'+(workers||[]).length+'</b> — فعال: <b>'+(workers||[]).filter(w=>w.is_active).length+'</b> — مالک: <b>'+(workers||[]).filter(w=>w.is_owner).length+'</b></p><p class="muted">یہ کنٹرول سینٹر فی الحال صرف محفوظ ریڈ اونلی جائزہ ہے؛ قیمت یا ایڈمن رول میں تبدیلی براہِ راست یہاں سے نہیں کی جاتی۔</p>';
+ const productRows=(products||[]).map(p=>{
+  const floor=p.product_type==="6L"?55:280;
+  return `<tr>
+   <td>${esc(p.product_type)}</td>
+   <td>${p.units_per_pack} ${esc(p.unit_type)}</td>
+   <td><input type="number" min="${floor}" step="1" id="psDefault_${Number(p.id)}" value="${Number(p.default_rate)}" style="max-width:110px"></td>
+   <td>${p.product_type==="6L"?"—":`<input type="number" min="280" step="1" id="psSpecial_${Number(p.id)}" value="${p.special_100_rate==null?"":Number(p.special_100_rate)}" style="max-width:110px">`}</td>
+   <td>${money(p.labor_per_unit)}</td>
+   <td>${p.is_active?"ہاں":"نہیں"}</td>
+   <td><button onclick="saveProductSettings(${Number(p.id)},'${esc(p.product_type)}')">قیمت محفوظ کریں</button></td>
+  </tr>`;
+ }).join("");
+ $("settingsStatus").innerHTML='<h3>مقررہ کاروباری قواعد</h3><div class="stat">19L کامیاب بوتل: <b>Rs. 100</b> + فی بوتل ڈلیوری مزدوری <b>Rs. 20</b></div><div class="stat">خراب ڈھکن: <b>Rs. 10</b> فی عدد</div><div class="stat">500ml اور 1.5L کارٹن کی کم از کم قیمت: <b>Rs. 280</b></div><h3>پروڈکٹ قیمتوں کا کنٹرول</h3><p class="muted">500ml اور 1.5L کارٹن Rs.280 سے کم نہیں ہوسکتے۔ 6L کی قیمت Rs.55 سے کم نہیں ہوسکتی۔ مزدوری اور پیک سائز کاروباری قواعد کے مطابق مقرر ہیں۔</p><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>پیک</th><th>طے شدہ قیمت</th><th>خصوصی قیمت</th><th>مزدوری</th><th>فعال</th><th>عمل</th></tr>'+productRows+'</table></div><h3>ایڈمن اکاؤنٹس</h3><p>مستقل ایڈمن: <b>'+(admins||[]).length+'</b></p><ul>'+(admins||[]).map(a=>'<li>'+esc(a.full_name||a.id)+'</li>').join("")+'</ul><h3>ورکرز</h3><p>کل: <b>'+(workers||[]).length+'</b> — فعال: <b>'+(workers||[]).filter(w=>w.is_active).length+'</b> — مالک: <b>'+(workers||[]).filter(w=>w.is_owner).length+'</b></p><p class="muted">ایڈمن رول اور مقررہ بنیادی کاروباری قواعد اس اسکرین سے تبدیل نہیں ہوتے۔ قیمت کی ہر تبدیلی تصدیق کے بعد محفوظ اور آڈٹ لاگ میں درج ہوگی۔</p>';
+}
+
+async function saveProductSettings(id,productType){
+ const defaultInput=$("psDefault_"+id);
+ const specialInput=$("psSpecial_"+id);
+ if(!defaultInput)return;
+ const defaultRate=Number(defaultInput.value);
+ const specialRate=specialInput&&specialInput.value.trim()!==""?Number(specialInput.value):null;
+ const floor=productType==="6L"?55:280;
+ if(!Number.isFinite(defaultRate)||defaultRate<floor){
+  msg(productType+" کی قیمت کم از کم Rs."+floor+" ہونی چاہیے۔");return;
+ }
+ if(productType!=="6L"&&specialRate!==null&&(!Number.isFinite(specialRate)||specialRate<280)){
+  msg("500ml اور 1.5L کی خصوصی قیمت Rs.280 سے کم نہیں ہوسکتی۔");return;
+ }
+ const changes={default_rate:defaultRate};
+ if(productType!=="6L")changes.special_100_rate=specialRate;
+ if(!confirm(productType+" کی نئی طے شدہ قیمت Rs."+defaultRate+(productType==="6L"?"":" اور خصوصی قیمت "+(specialRate===null?"ختم":("Rs."+specialRate)))+" محفوظ کریں؟"))return;
+ const {error}=await db.from("product_settings").update(changes).eq("id",id).eq("product_type",productType);
+ if(error){msg("قیمت محفوظ نہیں ہوئی: "+error.message);return;}
+ msg("پروڈکٹ کی قیمت محفوظ ہوگئی اور آڈٹ لاگ میں درج ہوگئی۔",true);
+ await settingsModule();
 }
 
 /* گاہک کو صرف اس کا اپنا اکاؤنٹ دکھائیں */
