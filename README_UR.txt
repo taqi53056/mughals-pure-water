@@ -10,6 +10,7 @@ MUGHAL'S PURE WATER — موجودہ برانچ کی تکنیکی دستاویز
 - MUGHALS_FINAL_OWNER_MIGRATION.sql — Owner اور ورکر اجرت کی علیحدگی
 - MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کارٹن قیمت کی کم از کم حد اور 5-parameter سیل RPC
 - MUGHALS_SECURITY_PERFORMANCE_REPAIR_20261109.sql — live Supabase پر لاگو اضافی security/performance repairs کا ریکارڈ
+- MUGHALS_RLS_POLICY_CONSOLIDATION_20261109.sql — final RLS policy consolidation اور invoker RPC hardening
 
 اہم حفاظتی نوٹ:
 1. لائیو Supabase میں Owner migration، Carton price repair اور 2026-11-09 کی security/performance repairs کامیابی سے لاگو ہو چکی ہیں۔ موجودہ ڈیٹابیس پر انہیں دوبارہ چلانے کی ضرورت نہیں۔
@@ -41,7 +42,8 @@ Supabase live verification:
 - پروڈکشن allocation کا rollback-only test پاس: 10 کارٹن پر generated allocation labor Rs.100، worker ledger Rs.100، اور production labor Rs.100؛ تمام test rows rollback ہو گئیں۔
 - duplicate monthly-bill unique constraint ہٹایا؛ بنیادی (customer_id, bill_month) unique constraint برقرار ہے۔
 - customers table پر column-level grants لگائے: browser users صرف ضروری account columns پڑھ/اپڈیٹ کر سکتے ہیں؛ PIN، PIN hash اور PIN enabled fields تک رسائی بند ہے۔
-- Security advisors میں اب بھی authenticated SECURITY DEFINER RPC warnings ہیں؛ متعلقہ functions میں admin/customer ownership checks موجود ہیں، اس لیے انہیں blindly revoke نہیں کیا گیا۔ Leaked-password protection dashboard-level setting ابھی فعال نہیں۔
+- تمام admin-facing data RPCs کو SECURITY INVOKER پر منتقل کیا اور is_admin() کو fixed admin UUID allowlist پر مبنی SECURITY INVOKER بنایا؛ صرف mark_customer_notification_read SECURITY DEFINER رہتا ہے کیونکہ کسٹمر کو notification content پر براہِ راست UPDATE حق نہیں دیا گیا، اور فنکشن صرف اسی auth.uid() سے منسلک کسٹمر کی اطلاع پڑھا ہوا نشان زد کرتا ہے۔
+- RLS policy consolidation کے بعد multiple permissive policy warnings صفر ہیں۔ صرف mark_customer_notification_read کا ایک intentional SECURITY DEFINER warning اور leaked-password protection کی dashboard-level setting باقی ہے۔
 - Performance advisor کے unused-index نوٹس نئی/خالی tables کے سبب ہیں؛ production workload کے بغیر انہیں حذف نہیں کیا گیا۔
 
 تصدیق کی موجودہ حد:
