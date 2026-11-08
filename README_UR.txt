@@ -14,6 +14,7 @@ MUGHAL'S PURE WATER — موجودہ برانچ کی تکنیکی دستاویز
 - MUGHALS_PRODUCT_PRICE_SETTINGS_GUARD_20261109.sql — 100+ کارٹن خصوصی قیمت، مقررہ پیک سائز/مزدوری اور 6L کی Rs.55 قیمت کے database guards
 - MUGHALS_19L_DELIVERY_GUARD_20261109.sql — 19L بوتل/واپسی/کامیاب بوتل/فرق/ڈھکن کی backend حدود
 - MUGHALS_BILLING_GUARD_20261109.sql — ماہانہ بل میں بوتل/ڈھکن چارج، بقایا، ایڈوانس اور closing due کی consistency
+- MUGHALS_OWNER_WORKER_GUARD_20261109.sql — مستقل Owner worker کو delete/deactivate/demote ہونے سے محفوظ رکھتا ہے
 
 اہم حفاظتی نوٹ:
 1. لائیو Supabase میں Owner migration، Carton price repair اور 2026-11-09 کی security/performance repairs کامیابی سے لاگو ہو چکی ہیں۔ موجودہ ڈیٹابیس پر انہیں دوبارہ چلانے کی ضرورت نہیں۔
@@ -30,7 +31,7 @@ MUGHAL'S PURE WATER — موجودہ برانچ کی تکنیکی دستاویز
 - شکایات کے جواب اور متعلقہ customer notification۔
 - آمدن/اخراجات میں ترمیم اور حذف۔
 - آڈٹ لاگ میں پرانی اور نئی تفصیل۔
-- Owner کی بچت اور ورکر کی واجب الادا مزدوری الگ۔
+- Owner کی بچت اور ورکر کی واجب الادا مزدوری الگ؛ مستقل Owner ریکارڈ delete یا deactivate نہیں ہوسکتا۔
 - تفصیلی ماہانہ بل notification اور کسٹمر بل breakdown۔
 - Service Worker cache version v23۔
 
