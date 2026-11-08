@@ -184,7 +184,7 @@ try {
     if (!settingsResult.rendered) failures.push("Admin settings price controls did not render");
     if (!settingsResult.belowFloorBlocked) failures.push("Admin settings allowed a carton price below Rs.280");
     if (!settingsResult.specialAboveDefaultBlocked) failures.push("Admin settings allowed a bulk special price above the default price");
-    if (!settingsResult.saved || settingsResult.savedDefault !== 300 || settingsResult.savedSpecial !== 310) {
+    if (!settingsResult.saved || settingsResult.savedDefault !== 300 || settingsResult.savedSpecial !== 290) {
       failures.push("Admin settings did not save valid price changes correctly");
     }
     if (settingsResult.bulkPrice !== "290") failures.push("100+ carton special price was not applied");
