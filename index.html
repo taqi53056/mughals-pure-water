@@ -42,7 +42,7 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 <body>
 <header><div class="wrap" style="padding:0">
 <h1>MUGHAL'S PURE WATER</h1>
-<div>دکان اور واٹر بزنس مینجمنٹ</div>
+<div>دکان اور واٹر بزنس مینجمنٹ</div><button id="installAppButton" class="secondary" type="button" onclick="installMughalApp()" style="width:auto;margin-top:10px">موبائل میں ایپ انسٹال کریں</button>
 </div></header>
 
 <main class="wrap">
@@ -148,6 +148,12 @@ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const today=()=>{let d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const monthNow=()=>today().slice(0,7)+"-01";
 const money=n=>"Rs. "+(Number(n)||0).toLocaleString("en-PK");
+function normalizePkPhone(value){let p=String(value||"").replace(/\D/g,"");if(p.startsWith("00"))p=p.slice(2);if(p.startsWith("0"))p="92"+p.slice(1);if(p.length===10&&p.startsWith("3"))p="92"+p;return p;}
+function shareCustomerMessage(phone,message,channel){const number=normalizePkPhone(phone);if(!number){alert("اس گاہک کا درست موبائل نمبر درج نہیں۔");return}if(channel==="whatsapp")window.open("https://wa.me/"+number+"?text="+encodeURIComponent(message),"_blank","noopener");else location.href="sms:+"+number+"?body="+encodeURIComponent(message);}
+function shareCurrentBillWhatsApp(){shareCurrentBill("whatsapp")} function shareCurrentBillSMS(){shareCurrentBill("sms")}
+function shareCurrentDeliveryWhatsApp(){shareCurrentDelivery("whatsapp")} function shareCurrentDeliverySMS(){shareCurrentDelivery("sms")}
+function shareCurrentBill(channel){const id=Number(document.getElementById("bCustomer")?.value),month=document.getElementById("bMonth")?.value,c=(customerList||[]).find(x=>Number(x.id)===id);if(!c||!month){alert("پہلے گاہک اور مہینہ منتخب کریں۔");return}const n=Number(document.getElementById("bBottles")?.textContent)||0,k=Number(document.getElementById("bCaps")?.textContent)||0;const message="السلام علیکم "+c.name+" صاحب! MUGHAL’S PURE WATER کا "+month+" کا بل تیار ہے۔ کامیاب بوتلیں: "+n+"، خراب ڈھکن: "+k+"، پچھلا بقایا: "+document.getElementById("bPrev")?.textContent+"، ادائیگیاں: "+document.getElementById("bPaid")?.textContent+"، قابل ادائیگی: "+document.getElementById("bDue")?.textContent+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
+function shareCurrentDelivery(channel){const id=Number(document.getElementById("dCustomer")?.value),c=(customerList||[]).find(x=>Number(x.id)===id);if(!c){alert("پہلے گاہک منتخب کریں۔");return}const date=document.getElementById("dDate")?.value||"",n=Number(document.getElementById("dSuccess")?.textContent)||0,k=Number(document.getElementById("dCaps")?.value)||0;const message="السلام علیکم "+c.name+" صاحب! "+date+" کو "+n+" کامیاب 19L بوتلوں کی ڈلیوری درج ہوئی۔ خراب ڈھکن: "+k+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
 let user=null, myCustomer=null, customerList=[], currentModule="", editingId=null;
 
 function msg(t,ok=false){$("moduleMsg").className=ok?"success":"error";$("moduleMsg").textContent=t}
@@ -409,7 +415,7 @@ async function saveCustomer(){
 
 /* مشترکہ گاہک فہرست — ماہانہ بل اور ڈلیوری دونوں اسی سے بھرتے ہیں */
 async function getActiveCustomers(){
- const {data,error}=await db.from("customers").select("id,name,customer_code,is_active").order("name");
+ const {data,error}=await db.from("customers").select("id,name,customer_code,mobile,is_active").order("name");
  if(error)throw error;
  customerList=data||[];
  return customerList.filter(c=>c.is_active===true);
@@ -432,7 +438,7 @@ async function deliveryModule(){
  <input id="dBack" type="number" min="0" placeholder="اسی لوڈ کی واپس خالی بوتلیں" oninput="calcDelivery()">
  <input id="dCaps" type="number" min="0" step="1" placeholder="خراب ڈھکنوں کی تعداد (ہر ڈھکن Rs.10)" oninput="calcDelivery()">
  <div class="stat">خراب ڈھکنوں کی رقم: <b id="dCapAmount">Rs. 0</b></div>
- <div class="stat">کامیاب بوتلیں: <b id="dSuccess">0</b></div>
+ <div class="stat">کامیاب بوتلیں: <b id="dSuccess">0</b></div><p class="muted">ڈلیوری محفوظ کرنے کے بعد یہ بٹن دبائیں؛ پیغام فون میں تیار ہوگا، Send آپ کریں گے۔</p><button class="secondary" onclick="shareCurrentDeliveryWhatsApp()">WhatsApp پیغام تیار کریں</button><button class="secondary" onclick="shareCurrentDeliverySMS()">SMS پیغام تیار کریں</button>
  <div class="stat">بوتلوں کا فرق: <b id="dDiff">0</b></div>
  <div class="stat">مزدور کی واجب الادا مزدوری: <b id="dLabor">Rs. 0</b></div><div class="stat">مالک کی ممکنہ بچت: <b id="dOwnerSaving">Rs. 0</b></div>
  <div id="dWarn" class="warning hidden">بوتلوں میں فرق ہے؛ اسی دن جانچیں۔</div>
@@ -545,7 +551,7 @@ async function billingModule(){
  <div class="stat">بوتل رقم: <b id="bBottleAmt">Rs. 0</b></div><div class="stat">ڈھکن رقم: <b id="bCapAmt">Rs. 0</b></div>
  <div class="stat">پچھلا بقایا: <b id="bPrev">Rs. 0</b></div><div class="stat">پچھلا ایڈوانس استعمال: <b id="bAdvance">Rs. 0</b></div>
  <div class="stat">اس ماہ کی خالص ادائیگیاں: <b id="bPaid">Rs. 0</b></div></div>
- <div class="total">موجودہ قابل ادائیگی: <span id="bDue">Rs. 0</span></div>
+ <div class="total">موجودہ قابل ادائیگی: <span id="bDue">Rs. 0</span></div><button class="secondary" onclick="shareCurrentBillWhatsApp()">بل WhatsApp پر بھیجیں</button><button class="secondary" onclick="shareCurrentBillSMS()">بل SMS کے ذریعے بھیجیں</button>
  <button onclick="saveBill()">بل دوبارہ حساب کرکے محفوظ کریں</button>
  <div class="card"><h3>نئی ادائیگی درج کریں</h3>
  <input id="paymentDate" type="date" value="${today()}">
@@ -1176,6 +1182,7 @@ async function loadCustomerPanel(){
 }
 </script>
 <script>
+let mughalInstallPrompt=null;window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();mughalInstallPrompt=event;});async function installMughalApp(){if(window.matchMedia("(display-mode: standalone)").matches||navigator.standalone){alert("ایپ پہلے ہی انسٹال ہے۔");return}if(mughalInstallPrompt){mughalInstallPrompt.prompt();await mughalInstallPrompt.userChoice;mughalInstallPrompt=null;return}alert("Android: Chrome مینو ⋮ سے Install app یا Add to Home screen منتخب کریں۔ iPhone: Safari Share سے Add to Home Screen منتخب کریں۔");}
 // PWA service worker is available only on HTTPS or localhost (not file://).
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
  window.addEventListener("load", () => {
