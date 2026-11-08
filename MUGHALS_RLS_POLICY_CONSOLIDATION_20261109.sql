@@ -11,11 +11,11 @@ STABLE
 SECURITY INVOKER
 SET search_path TO ''
 AS $function$
-  SELECT auth.uid() IN (
+  SELECT COALESCE(auth.uid() IN (
     '471fce90-625e-4e8c-863a-659d68afaab3'::uuid,
     'c64d7186-1990-4487-8d0f-e9307f588fd1'::uuid,
     'd713d3c6-9c9e-408f-baa4-4a5b2a157944'::uuid
-  );
+  ), false);
 $function$;
 
 -- Use invoker rights for app-facing RPCs. RLS policies enforce admin/customer scope.
