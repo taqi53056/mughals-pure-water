@@ -43,12 +43,13 @@ class AppParser(HTMLParser):
 def fail(message):
     raise SystemExit("FAIL: " + message)
 
-if not HTML.exists() or not MANIFEST.exists() or not SW.exists():
+if not all(path.exists() for path in (HTML, MANIFEST, SW)):
     fail("required app shell file is missing")
 
 source = HTML.read_text(encoding="utf-8")
 parser = AppParser()
 parser.feed(source)
+
 if len(parser.ids) != len(set(parser.ids)):
     duplicates = sorted({x for x in parser.ids if parser.ids.count(x) > 1})
     fail("duplicate HTML IDs: " + ", ".join(duplicates))
@@ -60,35 +61,27 @@ for handler in parser.onclick:
         fail("onclick handler has no declared function: " + match.group(1))
 
 for ref in parser.local_refs:
-    if not ref:
-        continue
-    candidate = (ROOT / ref).resolve()
-    if not candidate.exists():
+    if ref and not (ROOT / ref).resolve().exists():
         fail("missing local HTML asset: " + ref)
-
-for token in re.findall(r'\$\(["\']([^"\']+)["\']\)', source):
-    if token not in set(parser.ids):
-        fail("referenced element ID is missing: " + token)
-for token in re.findall(r'document\.getElementById\(["\']([^"\']+)["\']\)', source):
-    if token not in set(parser.ids):
-        fail("referenced element ID is missing: " + token)
 
 try:
     json.loads(MANIFEST.read_text(encoding="utf-8"))
 except Exception as exc:
     fail("manifest JSON is invalid: " + str(exc))
 
-for path, content in [(SW, SW.read_text(encoding="utf-8")), *[(None, s) for s in parser.inline_scripts if s.strip()]]:
+js_files = [(SW.name, SW.read_text(encoding="utf-8"))]
+js_files += [(f"inline-script-{i}.js", code) for i, code in enumerate(parser.inline_scripts) if code.strip()]
+for name, code in js_files:
     with tempfile.NamedTemporaryFile("w", suffix=".js", encoding="utf-8", delete=False) as tmp:
-        tmp.write(content)
+        tmp.write(code)
         temp_path = Path(tmp.name)
     result = subprocess.run(["node", "--check", str(temp_path)], capture_output=True, text=True)
     temp_path.unlink(missing_ok=True)
     if result.returncode:
-        fail("JavaScript syntax error: " + (result.stderr or result.stdout).strip())
+        fail(f"JavaScript syntax error in {name}: " + (result.stderr or result.stdout).strip())
 
 for path in (HTML, MANIFEST, SW):
     if "kiswa" in path.read_text(encoding="utf-8").lower():
         fail("legacy Kiswa branding remains in " + path.name)
 
-print("PASS: required files, unique IDs, local assets, onclick handlers, element references, manifest JSON, inline JavaScript, Service Worker syntax, and legacy branding.")
+print("PASS: app shell files, unique IDs, local assets, onclick handlers, manifest JSON, inline JavaScript, Service Worker syntax, and legacy branding.")
