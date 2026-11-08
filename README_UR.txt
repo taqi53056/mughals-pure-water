@@ -31,17 +31,19 @@ MUGHAL'S PURE WATER — موجودہ برانچ کی تکنیکی دستاویز
 
 Supabase live verification:
 - 27/27 public tables پر RLS فعال؛ کوئی public table RLS کے بغیر نہیں۔
-- تین مستقل admin profiles برقرار ہیں۔
+- تین مستقل admin profiles اور تین Auth users برقرار ہیں؛ کوئی اضافی test user نہیں۔
 - 19L customers/deliveries/bills/payments/notifications/complaints کا کاروباری ڈیٹا صفر ہے؛ کوئی فرضی customer یا billing test record شامل نہیں کیا گیا۔
 - تین trigger/legacy RPC function search_path درست کیا اور دوبارہ verify کیا۔
 - 16 unindexed foreign-key columns کے indexes شامل کیے؛ verification میں missing FK indexes صفر۔
 - customer-scoped policies میں auth.uid() کو statement-level subquery میں wrap کیا۔
+- rollback-only billing calculation test میں 3 بوتلیں، 2 خراب ڈھکن، Rs.80 خالص ادائیگی، Rs.20 سابقہ ایڈوانس اور Rs.50 سابقہ بقایا سے Rs.270 بقایا درست نکلا؛ تمام test rows rollback ہو گئیں۔
+- خالی customer table میں اگلا customer code rollback-only test سے C001 verify ہوا۔
 - duplicate monthly-bill unique constraint ہٹایا؛ بنیادی (customer_id, bill_month) unique constraint برقرار ہے۔
 - Security advisors میں اب بھی authenticated SECURITY DEFINER RPC warnings ہیں؛ متعلقہ functions میں admin/customer ownership checks موجود ہیں، اس لیے انہیں blindly revoke نہیں کیا گیا۔ Leaked-password protection dashboard-level setting ابھی فعال نہیں۔
 - Performance advisor کے unused-index نوٹس نئی/خالی tables کے سبب ہیں؛ production workload کے بغیر انہیں حذف نہیں کیا گیا۔
 
 تصدیق کی موجودہ حد:
-- HTML/JavaScript syntax، Service Worker syntax، manifest JSON، IDs اور onclick function references کی جامد جانچ پاس ہوئی۔
+- GitHub Actions static validation workflow کامیابی سے پاس ہوا: HTML shell، unique IDs، local assets، onclick handlers، manifest JSON، inline JavaScript، Service Worker syntax اور پرانی Kiswa branding۔
 - GitHub branch ابھی main میں merge/deploy نہیں ہوئی۔
 - Live browser runtime، حقیقی customer sign-in کے ذریعے RLS isolation، stock/production/sales/worker ledger اور مکمل ماہانہ billing notification کا end-to-end test ابھی مکمل نہیں۔
 - GitHub Pages پر publish کرنے سے پہلے یہ عملی ٹیسٹ ضروری ہیں۔ صرف syntax یا database advisor صاف ہونا production readiness کا مکمل ثبوت نہیں۔
