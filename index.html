@@ -81,6 +81,65 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 .customer-bill-empty{padding:17px;border-radius:16px;background:#f5f7f4;border:1px solid #e7ece5;color:#526158}
 .customer-bill-empty strong{display:block;color:#17271f;font-size:18px;margin-bottom:5px}
 
+/* Three-experience layout: dedicated desktop admin, mobile admin and customer portal */
+#adminPanel{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
+#adminPanel #homeTiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#adminPanel #homeTiles .tile{min-height:96px;position:relative;overflow:hidden;justify-content:center;align-items:center;text-align:center;border-radius:18px;font-size:15px;line-height:1.5;padding:14px}
+#adminPanel #homeTiles .tile:before{display:block;font-size:23px;line-height:1.2;margin-bottom:7px;filter:drop-shadow(0 2px 3px #0002)}
+#adminPanel #homeTiles .tile:nth-child(1):before{content:"♙"}
+#adminPanel #homeTiles .tile:nth-child(2):before{content:"🚚"}
+#adminPanel #homeTiles .tile:nth-child(3):before{content:"▤"}
+#adminPanel #homeTiles .tile:nth-child(4):before{content:"▣"}
+#adminPanel #homeTiles .tile:nth-child(5):before{content:"↗"}
+#adminPanel #homeTiles .tile:nth-child(6):before{content:"−"}
+#adminPanel #homeTiles .tile:nth-child(7):before{content:"＋"}
+#adminPanel #homeTiles .tile:nth-child(8):before{content:"▧"}
+#adminPanel #homeTiles .tile:nth-child(9):before{content:"▥"}
+#adminPanel #homeTiles .tile:nth-child(10):before{content:"♧"}
+#adminPanel #homeTiles .tile:nth-child(11):before{content:"⚙"}
+#adminPanel #homeTiles .tile:nth-child(12):before{content:"☷"}
+#adminPanel #homeTiles .tile:nth-child(13):before{content:"⌑"}
+#adminPanel #homeTiles .tile:nth-child(14):before{content:"⚙"}
+#adminPanel #dashboard,#adminPanel #module{min-width:0;border-radius:22px}
+#adminPanel #dashboard h2{display:flex;align-items:center;gap:10px}
+#adminPanel #dashboard h2:before{content:"";width:5px;height:25px;border-radius:5px;background:var(--gold)}
+#todaySummary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#todaySummary .stat{margin:0;min-height:82px;display:flex;flex-direction:column;justify-content:center;border-radius:15px;padding:14px;font-size:14px}
+#todaySummary .stat b{font-size:20px;color:var(--emerald);font-variant-numeric:tabular-nums}
+#adminPanel #module{background:#fff}
+#adminPanel #module>button:first-child{width:auto;min-width:120px}
+#adminPanel .tablewrap{max-width:100%}
+@media(min-width:700px) and (max-width:1099px){
+ #adminPanel #homeTiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #adminPanel #dashboard,#adminPanel #module{grid-column:1/-1}
+}
+@media(min-width:1100px){
+ #adminPanel{grid-template-columns:264px minmax(0,1fr);gap:20px}
+ #adminPanel #homeTiles{grid-column:1;grid-row:1 / span 2;grid-template-columns:1fr;gap:9px;padding:14px;background:linear-gradient(180deg,#102d25,#174b3a);border:1px solid #c9aa6650;border-radius:23px;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;align-content:start}
+ #adminPanel #homeTiles:before{content:"MUGHAL'S PURE WATER  /  CONTROL";display:block;color:#e4d4a9;font-size:11px;font-weight:800;letter-spacing:.08em;text-align:center;padding:10px 5px 14px;border-bottom:1px solid #ffffff25;margin-bottom:3px}
+ #adminPanel #homeTiles .tile{min-height:54px;display:flex;flex-direction:row;justify-content:flex-start;gap:12px;text-align:right;align-items:center;padding:10px 13px;border:1px solid #ffffff16;border-radius:13px;font-size:14px;box-shadow:none}
+ #adminPanel #homeTiles .tile:before{font-size:18px;margin:0;width:26px;text-align:center}
+ #adminPanel #homeTiles .tile:hover{transform:translateX(-3px);background-image:linear-gradient(110deg,#ffffff18,#ffffff08)}
+ #adminPanel #dashboard,#adminPanel #module{grid-column:2;grid-row:auto;margin:0;min-width:0}
+ #adminPanel #dashboard{padding:24px}
+ #adminPanel #module{padding:24px}
+ #todaySummary{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+ #todaySummary .stat{min-height:106px;padding:18px}
+ #todaySummary .stat b{font-size:24px}
+}
+@media(max-width:699px){
+ #adminPanel #homeTiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #adminPanel.module-open #homeTiles{display:none}
+ #adminPanel #dashboard{padding:16px}
+ #todaySummary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #todaySummary .stat{font-size:12px;min-height:76px;padding:11px}
+ #todaySummary .stat b{font-size:18px}
+ #adminPanel #module{padding:15px}
+}
+@media(min-width:700px) and (max-width:1099px){
+ #adminPanel.module-open #homeTiles{display:grid}
+}
+
 </style>
 </head>
 <body>
@@ -363,7 +422,7 @@ function backHome(){
 
 async function openModule(name){
  currentModule=name;editingId=null;
- $("homeTiles").classList.add("hidden");$("dashboard").classList.add("hidden");$("module").classList.remove("hidden");
+ $("dashboard").classList.add("hidden");$("module").classList.remove("hidden");
  setTitle("");
  if(name==="customers")return customersModule();
  if(name==="delivery")return deliveryModule();
