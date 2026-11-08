@@ -42,7 +42,7 @@ Supabase:
 - آمدن/اخراجات edit/delete
 - audit log میں before/after details
 - Owner savings اور worker wages کی علیحدگی
-- ماہانہ بل کی تفصیلی اطلاع
+- ماہانہ بل کی تفصیلی اطلاع (فی الحال in-app؛ SMS/WhatsApp provider شامل نہیں)
 - 19L delivery اور monthly bill arithmetic کے backend constraints؛ permanent Owner worker کو deactivate/delete کرنے سے تحفظ
 - سکیورٹی اور کارکردگی کی database repairs
 
