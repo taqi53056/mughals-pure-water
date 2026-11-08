@@ -118,6 +118,52 @@ try {
     }
     if (!deliveryMath.invalid.invalid) failures.push("19L returned-bottles validation is incorrect");
 
+    const settingsResult = await page.evaluate(async () => {
+      const mockData = {
+        product_settings: [
+          { id: 1, product_type: "500ml", unit_type: "carton", units_per_pack: 24, default_rate: 280, special_100_rate: 280, labor_per_unit: 10, is_active: true },
+          { id: 2, product_type: "1.5L", unit_type: "carton", units_per_pack: 12, default_rate: 280, special_100_rate: 280, labor_per_unit: 10, is_active: true },
+          { id: 3, product_type: "6L", unit_type: "bottle", units_per_pack: 18, default_rate: 55, special_100_rate: null, labor_per_unit: 0, is_active: true }
+        ],
+        profiles: [{ id: "admin-test", full_name: "Admin Test", role: "admin" }],
+        workers: [{ id: 1, full_name: "Owner", is_active: true, is_owner: true }]
+      };
+      const updates = [];
+      window.db = {
+        from(table) {
+          const chain = {
+            select() { return chain; },
+            eq() { return chain; },
+            order() { return Promise.resolve({ data: mockData[table] || [], error: null }); },
+            update(values) { updates.push({ table, values }); return chain; },
+            then(resolve, reject) { return Promise.resolve({ error: null }).then(resolve, reject); }
+          };
+          return chain;
+        }
+      };
+      window.confirm = () => true;
+      await window.settingsModule();
+      const rendered = Boolean(document.querySelector("#psDefault_1") && document.querySelector("#psSpecial_1"));
+      document.querySelector("#psDefault_1").value = "279";
+      await window.saveProductSettings(1, "500ml");
+      const belowFloorBlocked = updates.length === 0;
+      document.querySelector("#psDefault_1").value = "300";
+      document.querySelector("#psSpecial_1").value = "310";
+      await window.saveProductSettings(1, "500ml");
+      return {
+        rendered,
+        belowFloorBlocked,
+        saved: updates.length === 1 && updates[0].table === "product_settings",
+        savedDefault: updates[0]?.values?.default_rate,
+        savedSpecial: updates[0]?.values?.special_100_rate
+      };
+    });
+    if (!settingsResult.rendered) failures.push("Admin settings price controls did not render");
+    if (!settingsResult.belowFloorBlocked) failures.push("Admin settings allowed a carton price below Rs.280");
+    if (!settingsResult.saved || settingsResult.savedDefault !== 300 || settingsResult.savedSpecial !== 310) {
+      failures.push("Admin settings did not save valid price changes correctly");
+    }
+
     await page.close();
   }
 } finally {
