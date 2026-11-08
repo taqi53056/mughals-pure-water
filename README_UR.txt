@@ -1,26 +1,40 @@
-MUGHAL'S PURE WATER — UPDATED DEPLOYMENT PACKAGE
+MUGHAL'S PURE WATER — موجودہ برانچ کی تکنیکی دستاویز
 
-اس پیکج میں
-- index.html — اپڈیٹ شدہ اردو RTL ایپ
-- manifest.webmanifest — PWA معلومات
-- SW.js — سروس ورکر؛ نیا cache version تاکہ نئی فائل لوڈ ہو
-- MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کارٹن کی کم از کم قیمت Rs.280 اور 6L کی Rs.55 کی database پابندی
-- icon-192.png / icon-512.png — ایپ آئیکنز
-- MUGHALS_FINAL_OWNER_MIGRATION.sql — Owner اور ورکر اجرت کی علیحدگی کی حتمی migration
+برانچ: integration-access-check-20261109
+ایپ: اردو RTL، موبائل/ڈیسک ٹاپ، PWA
+مرکزی فائلیں:
+- index.html — ایپ، لاگ اِن، کسٹمر/ایڈمن پینل اور تمام ماڈیولز
+- manifest.webmanifest — PWA شناخت
+- SW.js — Service Worker؛ موجودہ cache version v19
+- icon.svg، icon-192.png، icon-512.png — ایپ آئیکنز
+- MUGHALS_FINAL_OWNER_MIGRATION.sql — Owner اور ورکر اجرت کی علیحدگی
+- MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کارٹن قیمت کی کم از کم حد اور 5-parameter سیل RPC
 
-اہم SQL نوٹ
-اس پروجیکٹ میں دونوں migration فائلیں شامل ہیں۔ موجودہ live project میں Owner migration اور Carton price floor repair پہلے ہی کامیابی سے چلائی جا چکی ہیں؛ اس لیے اس deployment کے لیے انہیں دوبارہ چلانے کی ضرورت نہیں۔ اگر کسی نئے/بحال شدہ Supabase project پر setup کرنا ہو تو پہلے بنیادی V2 schema اور MUGHALS_MASTER_SUPABASE.sql مکمل کریں، پھر Owner migration اور آخر میں Carton price floor repair چلائیں۔ کسی موجودہ live database پر SQL دوبارہ چلانے سے پہلے backup اور موجودہ schema کی تصدیق ضروری ہے۔
+اہم حفاظتی نوٹ:
+1. لائیو Supabase میں Owner migration اور Carton price repair پہلے کامیابی سے چلائی جا چکی ہیں۔ موجودہ ڈیٹابیس پر انہیں دوبارہ نہ چلائیں۔
+2. یہ repository مکمل ابتدائی Supabase schema نہیں ہے۔ نئے Supabase project کے لیے بنیادی V2 schema اور MUGHALS_MASTER_SUPABASE.sql درکار ہیں؛ وہ master SQL اس repository میں شامل نہیں۔ اس package کو اکیلے نئے ڈیٹابیس کی تنصیب نہ سمجھیں۔
+3. GitHub branch پر موجود SQL فائلیں تاریخی/منتخب migration فائلیں ہیں، روزمرہ deployment کے لیے دوبارہ چلانے کی ہدایت نہیں۔
+4. ایپ میں 500ml اور 1.5L کے کارٹن کی قیمت کم از کم Rs.280 ہے؛ 6L کی قیمت Rs.55 ہے۔ کارٹن مزدوری Rs.10 فی کارٹن ہے۔
+5. 19L کامیاب بوتل Rs.100، ڈلیوری مزدوری Rs.20 فی بوتل، خراب ڈھکن Rs.10 ہے۔
+6. ماہانہ بل اور notification function لائیو Supabase میں اپڈیٹ ہے؛ cron schedule 23:55 پاکستان وقت (28 تا 31 تاریخ) ہے۔ اصل ماہانہ run اور کسٹمر notification کا end-to-end ثبوت ابھی موجود نہیں کیونکہ فعال کسٹمر صفر ہیں اور حالیہ cron run درج نہیں۔
 
-ایپ میں شامل اصلاحات
-- ایڈمن گاہکوں کی فہرست سے مکمل اکاؤنٹ کھول سکتا ہے: profile، تمام ماہانہ بل، تمام ادائیگیاں، 19L ڈلیوری ہسٹری، تازہ بقایا اور closing advance۔ queries منتخب customer_id تک محدود ہیں۔
-- غیر معمولی بڑی مقدار/رقم پر save سے پہلے تصدیق۔
-- Official branding: MUGHAL'S PURE WATER۔
+اس برانچ میں موجود ایپ تبدیلیاں:
+- ایڈمن کے لیے کسٹمر کا مکمل اکاؤنٹ: پروفائل، بل، ادائیگیاں، ڈلیوری ہسٹری اور بیلنس۔
+- بڑی مقدار/رقم پر save سے پہلے تصدیق۔
+- شکایات کے جواب اور متعلقہ customer notification۔
+- آمدن/اخراجات میں ترمیم اور حذف۔
+- آڈٹ لاگ میں پرانی اور نئی تفصیل۔
+- Owner کی بچت اور ورکر کی واجب الادا مزدوری الگ۔
+- تفصیلی ماہانہ بل notification اور کسٹمر بل breakdown۔
+- Service Worker cache version v19۔
 
-اہم حد
-اس پیکج کی فائلیں اور JavaScript syntax مقامی طور پر چیک کی گئی ہیں۔ Live Supabase پر پہلے سے چلائی گئی migrations کی کامیابی کے علاوہ، اس مرحلے پر deployed PWA کے ذریعے end-to-end browser test نہیں کیا گیا، اور GitHub deployment بھی نہیں کیا گیا۔ حقیقی login، RLS، billing، stock اور worker workflow کی آخری تصدیق live deployed app پر ضروری ہے۔
+تصدیق کی موجودہ حد:
+- HTML/JavaScript syntax، Service Worker syntax، manifest JSON، IDs اور onclick function references کی جامد جانچ پاس ہوئی۔
+- GitHub branch main سے 4 commits آگے ہے؛ ابھی main میں merge/deploy نہیں ہوئی۔
+- اس مرحلے پر live browser runtime، تمام Supabase RPC، RLS isolation، حقیقی stock/production/sales/labor اور ماہانہ billing کا مکمل end-to-end test نہیں ہوا۔
+- GitHub Pages پر publish کرنے سے پہلے یہ عملی ٹیسٹ ضروری ہیں۔ صرف syntax پاس ہونا production readiness کا ثبوت نہیں۔
 
-
-اس اپڈیٹ میں اضافی درستگی
-- 500ml اور 1.5L پروڈکشن محفوظ کرنے سے پہلے مالک اور مزدوروں کی تقسیم لازمی ہے؛ تقسیم شدہ کارٹن کل پروڈکشن کے عین برابر ہونے چاہئیں۔
-- Service Worker cache version اپڈیٹ کیا گیا ہے تاکہ نیا کوڈ پرانے cache سے نہ چلے۔
-- یہ مقامی فائل کی اصلاح ہے؛ live Supabase یا GitHub پر کوئی تبدیلی نہیں کی گئی۔
+Deployment اصول:
+- صرف مکمل جانچ کے بعد اس branch کو main میں merge کریں۔
+- GitHub Pages کے لیے repository root کی index.html، manifest، SW اور icons برقرار رکھیں۔
+- merge/deploy کے بعد cache update اور login smoke test کریں۔
