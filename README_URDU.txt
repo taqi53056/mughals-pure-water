@@ -43,5 +43,5 @@ Supabase:
 
 ریلیز کی حد:
 - GitHub Actions static validation پاس ہے؛ database-side schema، RLS، admin guard اور rollback-only billing math checks بھی verify ہیں۔
-- desktop/mobile browser smoke test پاس ہے؛ حقیقی کسٹمر RLS isolation، stock/production/sales/worker ledger اور مکمل ماہانہ notification کے end-to-end tests باقی ہیں۔
+- desktop/mobile browser smoke test میں RTL/PWA، 19L حساب، مالک کی مزدوری بچت، admin price floor اور 100+ carton special rate کے ٹیسٹ پاس ہیں؛ حقیقی کسٹمر RLS isolation، stock/production/sales/worker ledger اور مکمل ماہانہ notification کے end-to-end tests باقی ہیں۔
 - ان tests کے مکمل ہونے تک اسے final production-verified release نہ کہیں اور main میں merge/deploy نہ کریں۔
