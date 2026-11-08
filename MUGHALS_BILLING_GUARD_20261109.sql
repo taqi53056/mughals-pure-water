@@ -3,6 +3,18 @@
 -- Applied and validated on live Supabase on 2026-11-09.
 -- Payments may be negative because refunds are represented as negative net payments.
 
+-- Required arithmetic fields cannot be NULL.
+ALTER TABLE public.customer_monthly_bills
+  ALTER COLUMN bottles_19l SET NOT NULL,
+  ALTER COLUMN bottle_amount SET NOT NULL,
+  ALTER COLUMN damaged_caps SET NOT NULL,
+  ALTER COLUMN cap_amount SET NOT NULL,
+  ALTER COLUMN previous_balance SET NOT NULL,
+  ALTER COLUMN payments SET NOT NULL,
+  ALTER COLUMN advance_used SET NOT NULL,
+  ALTER COLUMN current_due SET NOT NULL,
+  ALTER COLUMN closing_advance SET NOT NULL;
+
 ALTER TABLE public.customer_monthly_bills
 ADD CONSTRAINT customer_monthly_bills_amount_consistency_check
 CHECK (
