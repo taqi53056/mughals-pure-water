@@ -11,7 +11,7 @@ MUGHAL'S PURE WATER — موجودہ برانچ کی تکنیکی دستاویز
 - MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کارٹن قیمت کی کم از کم حد اور 5-parameter سیل RPC
 - MUGHALS_SECURITY_PERFORMANCE_REPAIR_20261109.sql — live Supabase پر لاگو اضافی security/performance repairs کا ریکارڈ
 - MUGHALS_RLS_POLICY_CONSOLIDATION_20261109.sql — final RLS policy consolidation اور invoker RPC hardening
-- MUGHALS_PRODUCT_PRICE_SETTINGS_GUARD_20261109.sql — 100+ کارٹن خصوصی قیمت کو طے شدہ قیمت سے زیادہ ہونے سے روکتا ہے
+- MUGHALS_PRODUCT_PRICE_SETTINGS_GUARD_20261109.sql — 100+ کارٹن خصوصی قیمت، مقررہ پیک سائز/مزدوری اور 6L کی Rs.55 قیمت کے database guards
 
 اہم حفاظتی نوٹ:
 1. لائیو Supabase میں Owner migration، Carton price repair اور 2026-11-09 کی security/performance repairs کامیابی سے لاگو ہو چکی ہیں۔ موجودہ ڈیٹابیس پر انہیں دوبارہ چلانے کی ضرورت نہیں۔
