@@ -783,9 +783,13 @@ function salePricePreview(autoSpecial=false,resetDefault=false){
  $("salePrice").textContent=money(c.price);
  $("saleTotal").textContent=money(c.total);
  const special=setting.special_100_rate==null?null:Number(setting.special_100_rate);
- $("saleSpecialNote").textContent=!is6&&Number($("saleQty").value)>=100&&special!==null
-  ?"100 یا زیادہ کارٹن: خصوصی قیمت "+money(special)+" منتخب ہے۔"
-  :"100 یا زیادہ کارٹن پر اگر خصوصی قیمت مقرر ہو تو وہ خود منتخب ہوگی۔";
+ const bulkOrder=Number($("saleQty").value)>=100;
+ const specialSelected=!is6&&bulkOrder&&special!==null&&Number($("saleUnitPrice").value)===special;
+ $("saleSpecialNote").textContent=is6
+  ?"6L کی مقررہ قیمت Rs.55 فی بوتل ہے۔"
+  :bulkOrder&&special!==null
+   ?(specialSelected?"100 یا زیادہ کارٹن: خصوصی قیمت "+money(special)+" منتخب ہے۔":"100 یا زیادہ کارٹن: خصوصی قیمت "+money(special)+" دستیاب ہے؛ فی الحال درج شدہ قیمت استعمال ہوگی۔")
+   :"100 یا زیادہ کارٹن پر اگر خصوصی قیمت مقرر ہو تو وہ خود منتخب ہوگی۔";
 }
 
 async function saveSale(){
