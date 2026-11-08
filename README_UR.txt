@@ -13,6 +13,7 @@ MUGHAL'S PURE WATER — موجودہ برانچ کی تکنیکی دستاویز
 - MUGHALS_RLS_POLICY_CONSOLIDATION_20261109.sql — final RLS policy consolidation اور invoker RPC hardening
 - MUGHALS_PRODUCT_PRICE_SETTINGS_GUARD_20261109.sql — 100+ کارٹن خصوصی قیمت، مقررہ پیک سائز/مزدوری اور 6L کی Rs.55 قیمت کے database guards
 - MUGHALS_19L_DELIVERY_GUARD_20261109.sql — 19L بوتل/واپسی/کامیاب بوتل/فرق/ڈھکن کی backend حدود
+- MUGHALS_BILLING_GUARD_20261109.sql — ماہانہ بل میں بوتل/ڈھکن چارج، بقایا، ایڈوانس اور closing due کی consistency
 
 اہم حفاظتی نوٹ:
 1. لائیو Supabase میں Owner migration، Carton price repair اور 2026-11-09 کی security/performance repairs کامیابی سے لاگو ہو چکی ہیں۔ موجودہ ڈیٹابیس پر انہیں دوبارہ چلانے کی ضرورت نہیں۔
