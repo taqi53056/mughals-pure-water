@@ -37,6 +37,39 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 #login{max-width:560px;margin:28px auto}#app>.card:first-child{background:linear-gradient(110deg,#fff,#f5f7ef);border-top:2px solid var(--gold)}
 @media(min-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{min-height:112px;padding:24px;font-size:18px}#adminPanel{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(0,1.7fr);gap:16px;align-items:start}#homeTiles{grid-column:1;grid-row:1 / span 2}#dashboard,#module{grid-column:2;margin-top:0}#adminPanel #module{grid-column:1 / -1}}
 @media(max-width:520px){.wrap{padding:11px}.card{padding:15px;border-radius:15px}.grid{gap:9px}.tile{min-height:82px;padding:14px;font-size:14px}header{padding:18px 14px}input,select,button,textarea{font-size:16px}}
+
+/* Premium customer and responsive admin presentation */
+.customer-hero{background:linear-gradient(135deg,#101916,#263a31);color:#fff;border:0;border-radius:22px;padding:22px;box-shadow:0 14px 34px #10231b20}
+.customer-hero h2{color:#fff;font-size:23px;margin-bottom:4px}
+.customer-hero .muted{color:#c9d8ce}
+.customer-id-pill{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:6px 12px;border:1px solid #ffffff35;border-radius:999px;color:#f0dfae;font-size:13px}
+.customer-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:14px 0}
+.customer-stat{position:relative;overflow:hidden;min-height:132px;padding:15px;border-radius:18px;background:#fff;border:1px solid #e3e8e1;box-shadow:0 7px 22px #173d2b0b}
+.customer-stat .stat-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:#edf2ed;color:#111;margin-bottom:8px}
+.customer-stat .stat-icon svg{width:34px;height:34px;display:block}
+.customer-stat .stat-number{font-size:30px;line-height:1.15;font-weight:850;letter-spacing:-.03em;color:#101916;font-variant-numeric:tabular-nums}
+.customer-stat .stat-label{font-size:13px;color:#65736b;margin-top:5px}
+.customer-stat.dark{background:#111b17;color:#fff;border-color:#111b17}
+.customer-stat.dark .stat-icon{background:#26352e;color:#fff}
+.customer-stat.dark .stat-number{color:#fff}
+.customer-stat.dark .stat-label{color:#c3d0c7}
+.customer-section-title{display:flex;align-items:center;gap:10px;margin:4px 0 12px}
+.customer-section-title:before{content:"";width:5px;height:24px;border-radius:5px;background:#b99a56}
+.customer-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.customer-info-item{padding:12px;border-radius:13px;background:#f6f8f5;border:1px solid #e9ede7;min-width:0}
+.customer-info-item small{display:block;color:#758078;font-size:12px}
+.customer-info-item b{display:block;overflow-wrap:anywhere;color:#1c3027}
+.customer-record{padding:14px;border:1px solid #e6eae4;border-radius:15px;background:#fff;margin:9px 0;box-shadow:0 4px 14px #183b2b08}
+.customer-record-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.customer-record-number{font-size:22px;font-weight:850;color:#14251d;font-variant-numeric:tabular-nums}
+.customer-empty{padding:18px;text-align:center;border:1px dashed #cbd5cb;border-radius:14px;background:#f8faf7;color:#65736b}
+#customerPanel .card{border-radius:20px}
+#homeTiles{gap:12px}
+#homeTiles .tile{position:relative;min-height:108px;align-items:center;justify-content:center;text-align:center;font-size:16px;padding:16px;border-radius:18px}
+#adminPanel .card{border-radius:18px}
+@media(max-width:520px){.customer-stats{gap:8px}.customer-stat{min-height:124px;padding:12px}.customer-stat .stat-number{font-size:27px}.customer-hero{padding:19px}.customer-info-grid{grid-template-columns:1fr}#homeTiles .tile{min-height:94px;font-size:14px;padding:12px}}
+@media(min-width:700px){.customer-stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
 </style>
 </head>
 <body>
@@ -109,11 +142,18 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 </div>
 
 <div id="customerPanel" class="hidden">
-<div class="card"><h2>میرا اکاؤنٹ</h2><div id="myAccount"></div></div>
-<div class="card"><h2>میرا ماہانہ بل</h2><div id="myBill"></div><h3>مکمل بل ہسٹری</h3><div id="myBillHistory"></div><h3>ادائیگیوں کی ہسٹری</h3><div id="myPayments"></div></div>
-<div class="card"><h2>میری ڈلیوری</h2><div id="myDeliveries"></div></div>
-<div class="card"><h2>اطلاعات</h2><div id="myNotifications">لوڈ ہو رہا ہے...</div></div>
-<div class="card"><h2>شکایت / مسئلہ درج کریں</h2><div id="complaintForm"></div><div id="myComplaints"></div></div>
+<div class="customer-hero">
+ <h2 id="customerGreeting">السلام علیکم</h2>
+ <p class="muted">آپ کا ذاتی MUGHAL'S PURE WATER اکاؤنٹ</p>
+ <span class="customer-id-pill">کسٹمر آئی ڈی: <b id="customerHeroCode">—</b></span>
+</div>
+<div id="customerStats" class="customer-stats"></div>
+<div class="card"><h2 class="customer-section-title">میرا اکاؤنٹ</h2><div id="myAccount"></div></div>
+<div class="card"><h2 class="customer-section-title">میرا ماہانہ بل</h2><div id="myBill"></div><h3>مکمل بل ہسٹری</h3><div id="myBillHistory"></div></div>
+<div class="card"><h2 class="customer-section-title">ادائیگیوں کی ہسٹری</h2><div id="myPayments"></div></div>
+<div class="card"><h2 class="customer-section-title">میری ڈلیوری</h2><div id="myDeliveries"></div></div>
+<div class="card"><h2 class="customer-section-title">اطلاعات</h2><div id="myNotifications">لوڈ ہو رہا ہے...</div></div>
+<div class="card"><h2 class="customer-section-title">شکایت / مسئلہ درج کریں</h2><div id="complaintForm"></div><div id="myComplaints"></div></div>
 </div>
 </section>
 </main>
@@ -364,11 +404,22 @@ async function approveCustomer(id){
  msg("گاہک کی منظوری ہوگئی۔",true);await loadCustomers();
 }
 
+
+async function toggleCustomerStatus(id){
+ const c=customerList.find(x=>Number(x.id)===Number(id));if(!c)return;
+ const next=!c.is_active;
+ const action=next?"دوبارہ فعال":"غیر فعال";
+ if(!confirm("کیا "+(c.name||"اس کسٹمر")+" کا اکاؤنٹ "+action+" کرنا ہے؟ "+(next?"کسٹمر دوبارہ لاگ اِن کرسکے گا۔":"کسٹمر لاگ اِن نہیں کرسکے گا؛ پرانا مالی ریکارڈ محفوظ رہے گا۔")))return;
+ const {error}=await db.from("customers").update({is_active:next}).eq("id",id);
+ if(error){msg("اکاؤنٹ کی حیثیت تبدیل نہیں ہوئی: "+error.message);return;}
+ msg("کسٹمر اکاؤنٹ "+(next?"فعال":"غیر فعال")+" ہوگیا۔",true);await loadCustomers();
+}
+
 function renderCustomers(){
  const q=($("customerSearch")?.value||"").toLowerCase();
  const rows=customerList.filter(c=>[c.name,c.customer_code,c.mobile].some(x=>String(x||"").toLowerCase().includes(q)));
- $("moduleTable").innerHTML="<table><tr><th>نام</th><th>ID</th><th>موبائل</th><th>حیثیت</th><th>مکمل اکاؤنٹ</th><th>ترمیم</th></tr>"+
- rows.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td>${c.is_active===true?"فعال":"زیرِ منظوری"}</td><td><button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button></td><td><button onclick="editCustomer(${c.id})">ترمیم</button></td></tr>`).join("")+"</table>";
+ $("moduleTable").innerHTML="<table><tr><th>نام</th><th>ID</th><th>موبائل</th><th>حیثیت</th><th>مکمل اکاؤنٹ</th><th>ترمیم</th><th>رسائی</th></tr>"+
+ rows.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td>${c.is_active===true?"فعال":"غیر فعال / زیرِ منظوری"}</td><td><button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button></td><td><button onclick="editCustomer(${c.id})">ترمیم</button></td><td><button class="secondary" onclick="toggleCustomerStatus(${Number(c.id)})">${c.is_active===true?"غیر فعال کریں":"فعال کریں"}</button></td></tr>`).join("")+"</table>";
 }
 
 async function showCustomerFullAccount(id){
@@ -1177,19 +1228,45 @@ async function saveProductSettings(id,productType){
 
 /* گاہک کو صرف اس کا اپنا اکاؤنٹ دکھائیں */
 async function loadCustomerPanel(){
- $("complaintForm").innerHTML=`<select id="complaintCategory"><option>پانی کے معیار کا مسئلہ</option><option>بوتل کا مسئلہ</option><option>ڈیلیوری میں تاخیر</option><option>بل میں غلطی</option><option>دیگر</option></select><textarea id="complaintDetails" rows="3" placeholder="اپنا مسئلہ تفصیل سے لکھیں"></textarea><button onclick="submitComplaint()">شکایت جمع کریں</button>`;
+ const monthStart=monthNow();
+ const [billResult,paymentResult,deliveryResult]=await Promise.all([
+  db.from("customer_monthly_bills").select("*").eq("customer_id",myCustomer.id).order("bill_month",{ascending:false}),
+  db.from("customer_payments").select("payment_date,amount,payment_type").eq("customer_id",myCustomer.id).order("payment_date",{ascending:false}).limit(50),
+  db.from("customer_19l_deliveries").select("*").eq("customer_id",myCustomer.id).order("delivery_date",{ascending:false}).limit(100)
+ ]);
+ const bills=billResult.data||[],payments=paymentResult.data||[],deliveries=deliveryResult.data||[];
+ const billError=billResult.error,paymentError=paymentResult.error,deliveryError=deliveryResult.error;
+ const monthDeliveries=deliveries.filter(r=>String(r.delivery_date||"")>=monthStart);
+ const monthDelivered=monthDeliveries.reduce((n,r)=>n+(Number(r.bottles_delivered)||0),0);
+ const monthSuccessful=monthDeliveries.reduce((n,r)=>n+(Number(r.successful_bottles)||0),0);
+ const monthReturned=monthDeliveries.reduce((n,r)=>n+(Number(r.empty_bottles_returned)||0),0);
+ const monthDifference=monthDeliveries.reduce((n,r)=>n+(Number(r.bottle_difference)||0),0);
+ const jugIcon='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="currentColor" d="M18 3h12v5h-2v4c6 2 10 7 10 14v13c0 3-2 5-5 5H15c-4 0-6-2-6-6V25c0-6 4-11 10-13V8h-1V3zm3 5v6l-1.8.6C14 16.3 12 20 12 25v13c0 1.2.8 2 2 2h19c1 0 2-.8 2-2V26c0-6-3-9-8-11l-2-.6V8h-4z"/></svg>';
+ const stat=(number,label,dark=false)=>'<div class="customer-stat '+(dark?'dark':'')+'"><div class="stat-icon">'+jugIcon+'</div><div class="stat-number">'+Number(number||0).toLocaleString("en-PK")+'</div><div class="stat-label">'+label+'</div></div>';
+ $("customerGreeting").textContent="السلام علیکم، "+(myCustomer.name||"محترم کسٹمر");
+ $("customerHeroCode").textContent=myCustomer.customer_code||"—";
+ $("customerStats").innerHTML=stat(monthSuccessful,"اس ماہ کامیاب 19L بوتلیں",true)+stat(monthDelivered,"اس ماہ دی گئی بوتلیں")+stat(monthReturned,"واپس موصول خالی بوتلیں")+stat(monthDifference,"بوتلوں کا فرق");
+ $("myAccount").innerHTML='<div class="customer-info-grid">'+
+ '<div class="customer-info-item"><small>پورا نام</small><b>'+esc(myCustomer.name)+'</b></div>'+
+ '<div class="customer-info-item"><small>Customer ID</small><b>'+esc(myCustomer.customer_code||"—")+'</b></div>'+
+ '<div class="customer-info-item"><small>موبائل نمبر</small><b>'+esc(myCustomer.mobile||"درج نہیں")+'</b></div>'+
+ '<div class="customer-info-item"><small>مکمل پتہ</small><b>'+esc(myCustomer.address||"درج نہیں")+'</b></div></div>';
+ if(billError){
+  $("myBill").innerHTML='<div class="customer-empty">بل لوڈ نہیں ہوسکا۔ دوبارہ کوشش کریں۔</div>';
+  $("myBillHistory").textContent="بل ہسٹری لوڈ نہیں ہوئی۔";
+ }else if(!bills.length){
+  $("myBill").innerHTML='<div class="customer-stat dark"><div class="stat-label">موجودہ قابلِ ادائیگی رقم</div><div class="stat-number">Rs. 0</div><div class="stat-label">ابھی آپ کا کوئی ماہانہ بل جاری نہیں ہوا۔</div></div>';
+  $("myBillHistory").innerHTML='<div class="customer-empty">ابھی بل ہسٹری موجود نہیں۔ بل تیار ہونے پر یہاں نظر آئے گا۔</div>';
+ }else{
+  const latest=bills[0];
+  $("myBill").innerHTML='<div class="customer-stat dark"><div class="stat-label">موجودہ قابلِ ادائیگی رقم</div><div class="stat-number">'+money(latest.current_due)+'</div><div class="stat-label">بلنگ مہینہ: '+esc(latest.bill_month)+'</div></div>'+
+  '<div class="customer-info-grid"><div class="customer-info-item"><small>کامیاب بوتلیں</small><b>'+Number(latest.bottles_19l||0)+'</b></div><div class="customer-info-item"><small>بوتلوں کی رقم</small><b>'+money(latest.bottle_amount)+'</b></div><div class="customer-info-item"><small>خراب ڈھکن</small><b>'+Number(latest.damaged_caps||0)+' — '+money(latest.cap_amount)+'</b></div><div class="customer-info-item"><small>پچھلا بقایا</small><b>'+money(latest.previous_balance)+'</b></div><div class="customer-info-item"><small>ادائیگیاں</small><b>'+money(latest.payments)+'</b></div><div class="customer-info-item"><small>ایڈوانس</small><b>'+money(latest.closing_advance)+'</b></div></div>';
+  $("myBillHistory").innerHTML=bills.map(x=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(x.bill_month)+'</b><span class="customer-record-number">'+money(x.current_due)+'</span></div><p>بوتلیں: <b>'+Number(x.bottles_19l||0)+'</b> · خراب ڈھکن: <b>'+Number(x.damaged_caps||0)+'</b></p><p>بل: '+money((Number(x.bottle_amount)||0)+(Number(x.cap_amount)||0))+' · ادائیگی: '+money(x.payments)+'</p><small class="muted">قابلِ ادائیگی بقایا</small></div>').join("");
+ }
+ $("myPayments").innerHTML=paymentError?'<div class="customer-empty">ادائیگیوں کی ہسٹری لوڈ نہیں ہوئی۔</div>':payments.map(r=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(r.payment_date)+'</b><span class="customer-record-number">'+money(r.amount)+'</span></div><small class="muted">'+esc(r.payment_type||"ادائیگی")+'</small></div>').join("")||'<div class="customer-empty">ابھی کوئی ادائیگی درج نہیں۔</div>';
+ $("myDeliveries").innerHTML=deliveryError?'<div class="customer-empty">ڈلیوری ہسٹری لوڈ نہیں ہوئی۔</div>':deliveries.map(r=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(r.delivery_date)+'</b><span class="customer-record-number">'+Number(r.successful_bottles||0)+' بوتلیں</span></div><div class="customer-info-grid"><div class="customer-info-item"><small>دی گئی بھری بوتلیں</small><b>'+Number(r.bottles_delivered||0)+'</b></div><div class="customer-info-item"><small>واپس خالی بوتلیں</small><b>'+Number(r.empty_bottles_returned||0)+'</b></div><div class="customer-info-item"><small>بوتلوں کا فرق</small><b>'+Number(r.bottle_difference||0)+'</b></div><div class="customer-info-item"><small>خراب ڈھکن</small><b>'+Number(r.damaged_caps||0)+' — '+money((Number(r.damaged_caps)||0)*10)+'</b></div></div><p>بوتلوں کی رقم: <b>'+money((Number(r.successful_bottles)||0)*100)+'</b></p></div>').join("")||'<div class="customer-empty">ابھی کوئی ڈلیوری درج نہیں۔</div>';
  await Promise.all([loadCustomerNotifications(),loadCustomerComplaints()]);
- $("myAccount").innerHTML=`<p>نام: <b>${esc(myCustomer.name)}</b></p>
- <p>Customer ID: <b>${esc(myCustomer.customer_code)}</b></p>
- <p>موبائل: ${esc(myCustomer.mobile||"درج نہیں")}</p>
- <p>پتہ: ${esc(myCustomer.address||"درج نہیں")}</p>`;
- const {data:b,error}=await db.from("customer_monthly_bills").select("*").eq("customer_id",myCustomer.id).order("bill_month",{ascending:false});
- $("myBillHistory").innerHTML=error?"بل ہسٹری لوڈ نہیں ہوئی":(b||[]).map(x=>`<div class="stat"><b>${esc(x.bill_month)}</b><p>بوتلیں: ${x.bottles_19l||0} | خراب ڈھکن: ${x.damaged_caps||0}</p><p>بل: ${money((Number(x.bottle_amount)||0)+(Number(x.cap_amount)||0))} | ادائیگی: ${money(x.payments)}</p><b>بقایا: ${money(x.current_due)}</b></div>`).join("")||"ابھی بل ہسٹری موجود نہیں۔";
-  $("myBill").innerHTML=error?"بل لوڈ نہیں ہوا":!b?.length?"ابھی بل موجود نہیں":`<p>بلنگ مہینہ: ${esc(b[0].bill_month)}</p><p>کامیاب 19L بوتلیں: ${b[0].bottles_19l||0}</p><p>بوتلوں کے چارجز: ${money(b[0].bottle_amount)}</p><p>خراب ڈھکن: ${b[0].damaged_caps||0} — ${money(b[0].cap_amount)}</p><p>پچھلا بقایا: ${money(b[0].previous_balance)}</p><p>اس ماہ کی ادائیگیاں: ${money(b[0].payments)}</p><p>استعمال شدہ ایڈوانس: ${money(b[0].advance_used)}</p><p>اختتامی ایڈوانس: ${money(b[0].closing_advance)}</p><h3>قابل ادائیگی بقایا: ${money(b[0].current_due)}</h3>`;
- const {data:payments,error:pe}=await db.from("customer_payments").select("payment_date,amount,payment_type").eq("customer_id",myCustomer.id).order("payment_date",{ascending:false}).limit(50);
- $("myPayments").innerHTML=pe?"ادائیگی ہسٹری لوڈ نہیں ہوئی":(payments||[]).map(r=>`<div class="stat">${esc(r.payment_date)} — ${esc(r.payment_type)} — ${money(r.amount)}</div>`).join("")||"ابھی کوئی ادائیگی درج نہیں۔";
- const {data:d,error:de}=await db.from("customer_19l_deliveries").select("*").eq("customer_id",myCustomer.id).order("delivery_date",{ascending:false}).limit(30);
- $("myDeliveries").innerHTML=de?"ڈلیوری لوڈ نہیں ہوئی":`<table><tr><th>تاریخ</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>بوتل رقم</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th></tr>${(d||[]).map(r=>`<tr><td>${esc(r.delivery_date)}</td><td>${r.bottles_delivered}</td><td>${r.empty_bottles_returned}</td><td>${Number(r.successful_bottles)||0}</td><td>${money((Number(r.successful_bottles)||0)*100)}</td><td>${r.bottle_difference}</td><td>${Number(r.damaged_caps)||0}</td><td>${money((Number(r.damaged_caps)||0)*10)}</td></tr>`).join("")}</table>`;
+ $("complaintForm").innerHTML='<select id="complaintCategory"><option>پانی کے معیار کا مسئلہ</option><option>بوتل کا مسئلہ</option><option>ڈیلیوری میں تاخیر</option><option>بل میں غلطی</option><option>دیگر</option></select><textarea id="complaintDetails" rows="3" placeholder="اپنا مسئلہ تفصیل سے لکھیں"></textarea><button onclick="submitComplaint()">شکایت جمع کریں</button>';
 }
 </script>
 <script>
