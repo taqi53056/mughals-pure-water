@@ -755,33 +755,38 @@ async function loadSales(){
 }
 
 /* اخراجات اور آمدن */
+let moneyEditingId=null;
 async function moneyModule(type){
- const exp=type==="expenses",table=exp?"business_expenses":"business_income";
- setTitle(exp?"اخراجات":"آمدن");
+ const exp=type==="expenses";
+ moneyEditingId=null;setTitle(exp?"اخراجات":"آمدن");
  $("moduleBody").innerHTML=`
  <input id="mDate" type="date" value="${today()}">
  <input id="mCategory" placeholder="${exp?'خرچ کی مد':'آمدن کی مد'}">
  <input id="mAmount" type="number" min="1" placeholder="رقم">
  <textarea id="mDetails" placeholder="تفصیل (اختیاری)"></textarea>
- <button onclick="saveMoney('${type}')">محفوظ کریں</button>
+ <button id="moneySaveButton" onclick="saveMoney('${type}')">محفوظ کریں</button>
+ <button class="secondary" onclick="cancelMoneyEdit('${type}')">ترمیم منسوخ / نیا ریکارڈ</button>
  <button class="secondary" onclick="loadMoney('${type}')">ریکارڈ تازہ کریں</button>`;
  await loadMoney(type);
 }
+function cancelMoneyEdit(type){moneyEditingId=null;$("mDate").value=today();$("mCategory").value="";$("mAmount").value="";$("mDetails").value="";$("moneySaveButton").textContent="محفوظ کریں";msg("نیا ریکارڈ درج کیا جا سکتا ہے۔",true);}
 async function saveMoney(type){
  const exp=type==="expenses",table=exp?"business_expenses":"business_income",amount=Number($("mAmount").value),category=$("mCategory").value.trim();
- if(!category||amount<=0){msg("مد اور درست رقم درج کریں۔");return}
+ if(!category||amount<=0||!$("mDate").value){msg("تاریخ، مد اور درست رقم درج کریں۔");return}
  if(!confirmLargeEntry("رقم (روپے)",amount,100000))return;
  const payload=exp?{expense_date:$("mDate").value,category,amount,details:$("mDetails").value.trim()||null}:{income_date:$("mDate").value,category,amount,details:$("mDetails").value.trim()||null};
- const r=await db.from(table).insert(payload);
+ const r=moneyEditingId?await db.from(table).update(payload).eq("id",moneyEditingId):await db.from(table).insert(payload);
  if(r.error){msg("محفوظ نہیں ہوا: "+r.error.message);return}
- msg("ریکارڈ محفوظ ہوگیا۔",true);$("mAmount").value="";$("mDetails").value="";await loadMoney(type);await loadTodaySummary();
+ moneyEditingId=null;msg("ریکارڈ محفوظ ہوگیا۔",true);$("mDate").value=today();$("mCategory").value="";$("mAmount").value="";$("mDetails").value="";$("moneySaveButton").textContent="محفوظ کریں";await loadMoney(type);await loadTodaySummary();
 }
+async function editMoneyRecord(type,id){const exp=type==="expenses",table=exp?"business_expenses":"business_income",datecol=exp?"expense_date":"income_date";const {data,error}=await db.from(table).select("*").eq("id",id).maybeSingle();if(error||!data){msg("ریکارڈ نہیں ملا: "+(error?.message||""));return;}moneyEditingId=id;$("mDate").value=data[datecol];$("mCategory").value=data.category||"";$("mAmount").value=data.amount;$("mDetails").value=data.details||"";$("moneySaveButton").textContent="تبدیلی محفوظ کریں";msg("ریکارڈ ترمیم کے لیے کھل گیا۔",true);}
+async function deleteMoneyRecord(type,id){if(!confirm("کیا آپ یہ مالی ریکارڈ مستقل حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہوگا۔"))return;const table=type==="expenses"?"business_expenses":"business_income";const {error}=await db.from(table).delete().eq("id",id);if(error){msg("ریکارڈ حذف نہیں ہوا: "+error.message);return;}if(moneyEditingId===id)moneyEditingId=null;msg("ریکارڈ حذف ہوگیا۔",true);await loadMoney(type);await loadTodaySummary();}
 async function loadMoney(type){
  const exp=type==="expenses",table=exp?"business_expenses":"business_income",datecol=exp?"expense_date":"income_date";
  const {data,error}=await db.from(table).select("*").order(datecol,{ascending:false}).limit(100);
  if(error){$("moduleTable").textContent=error.message;return}
- $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>مد</th><th>تفصیل</th><th>رقم</th></tr>"+
- (data||[]).map(r=>`<tr><td>${esc(r[datecol])}</td><td>${esc(r.category)}</td><td>${esc(r.details)}</td><td>${money(r.amount)}</td></tr>`).join("")+"</table>";
+ $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>مد</th><th>تفصیل</th><th>رقم</th><th>عمل</th></tr>"+
+ (data||[]).map(r=>`<tr><td>${esc(r[datecol])}</td><td>${esc(r.category)}</td><td>${esc(r.details)}</td><td>${money(r.amount)}</td><td><button class="secondary" onclick="editMoneyRecord('${type}',${r.id})">ترمیم</button><button class="secondary" onclick="deleteMoneyRecord('${type}',${r.id})">حذف</button></td></tr>`).join("")+"</table>";
 }
 
 /* آج کا خلاصہ اور رپورٹس */
