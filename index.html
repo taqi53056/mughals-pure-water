@@ -730,20 +730,31 @@ async function loadStock(type){
 }
 
 /* سیل / مال کا اخراج */
+let saleSettings={};
 async function salesModule(){
  setTitle("سیل / مال کا اخراج");
+ const {data:settings,error:settingsError}=await db.from("product_settings")
+  .select("product_type,default_rate,special_100_rate,is_active").eq("is_active",true);
+ if(settingsError){msg("قیمتوں کی سیٹنگز لوڈ نہیں ہوئیں: "+settingsError.message);return;}
+ saleSettings=Object.fromEntries((settings||[]).map(p=>[p.product_type,p]));
+ if(!saleSettings["500ml"]||!saleSettings["1.5L"]||!saleSettings["6L"]){
+  msg("ضروری پروڈکٹ قیمتیں موجود یا فعال نہیں؛ سیل روک دی گئی۔");return;
+ }
+ const default500=Number(saleSettings["500ml"].default_rate);
  $("moduleBody").innerHTML=`
  <input id="saleDate" type="date" value="${today()}">
- <select id="saleType" onchange="salePricePreview()">
+ <select id="saleType" onchange="salePricePreview(false,true)">
  <option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
  <select id="saleWorker"><option value="">کارٹن کی مزدوری نہیں (مالک کا کام)</option></select>
- <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview()">
- <input id="saleUnitPrice" type="number" min="280" step="1" value="280" placeholder="فی کارٹن قیمت (کم از کم 280)" oninput="salePricePreview()">
- <div class="stat">فی یونٹ قیمت: <b id="salePrice">Rs. 280</b></div>
+ <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview(true,false)">
+ <input id="saleUnitPrice" type="number" min="280" step="1" value="${default500}" placeholder="فی کارٹن قیمت (کم از کم 280)" oninput="salePricePreview(false,false)">
+ <div class="stat">فی یونٹ قیمت: <b id="salePrice">Rs. ${default500}</b></div>
+ <div class="stat" id="saleSpecialNote">100 یا زیادہ کارٹن پر مقررہ خصوصی قیمت خود منتخب ہوگی۔</div>
  <div class="total">کل رقم: <span id="saleTotal">Rs. 0</span></div>
- <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.280 فی کارٹن ہے؛ ایڈمن اس سے زیادہ قیمت درج کر سکتا ہے۔ 6L بوتل Rs.55۔</p>
+ <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.280 فی کارٹن ہے۔ 100 یا زیادہ کارٹن پر اگر خصوصی قیمت مقرر ہو تو وہ لاگو ہوگی۔ 6L بوتل Rs.55 مقرر ہے۔</p>
  <button onclick="saveSale()">سیل محفوظ کریں</button>
  <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button>`;
+ salePricePreview(false,true);
  await loadSales();
  const {data:workers}=await db.from("workers").select("id,full_name,is_owner").eq("is_active",true).contains("work_categories",["carton loading/unloading"]).order("full_name");
  $("saleWorker").innerHTML=`<option value="">مالک / غیر منسوب</option>`+(workers||[]).map(w=>`<option value="${w.id}" data-owner="${w.is_owner===true}">${esc(w.is_owner?"Owner (مالک)":w.full_name)}</option>`).join("");
@@ -753,13 +764,30 @@ function getSaleCalc(){
  const price=type==="6L"?55:(Number($("saleUnitPrice").value)||0);
  return {type,qty,price,total:qty*price,unit:type==="6L"?"bottle":"carton"};
 }
-function salePricePreview(){
- const is6=$("saleType").value==="6L";
+function salePricePreview(autoSpecial=false,resetDefault=false){
+ const type=$("saleType").value,is6=type==="6L",setting=saleSettings[type]||{};
  $("saleUnitPrice").disabled=is6;
- if(is6)$("saleUnitPrice").value="55";
- else if(Number($("saleUnitPrice").value)<280)$("saleUnitPrice").value="280";
- const c=getSaleCalc();$("salePrice").textContent=money(c.price);$("saleTotal").textContent=money(c.total);
+ if(is6){
+  $("saleUnitPrice").value="55";
+ }else{
+  const defaultRate=Number(setting.default_rate)||280;
+  if(resetDefault||!Number.isFinite(Number($("saleUnitPrice").value))||Number($("saleUnitPrice").value)<280){
+   $("saleUnitPrice").value=String(defaultRate);
+  }
+  const special=setting.special_100_rate==null?null:Number(setting.special_100_rate);
+  if(autoSpecial&&Number($("saleQty").value)>=100&&special!==null&&Number.isFinite(special)&&special>=280){
+   $("saleUnitPrice").value=String(special);
+  }
+ }
+ const c=getSaleCalc();
+ $("salePrice").textContent=money(c.price);
+ $("saleTotal").textContent=money(c.total);
+ const special=setting.special_100_rate==null?null:Number(setting.special_100_rate);
+ $("saleSpecialNote").textContent=!is6&&Number($("saleQty").value)>=100&&special!==null
+  ?"100 یا زیادہ کارٹن: خصوصی قیمت "+money(special)+" منتخب ہے۔"
+  :"100 یا زیادہ کارٹن پر اگر خصوصی قیمت مقرر ہو تو وہ خود منتخب ہوگی۔";
 }
+
 async function saveSale(){
  const c=getSaleCalc(),button=document.querySelector('button[onclick="saveSale()"]');
  if(!Number.isInteger(c.qty)||c.qty<=0){msg("کارٹن یا 6L بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
@@ -1085,14 +1113,15 @@ async function settingsModule(){
  if(pe||ae||we){$("settingsStatus").textContent="ترتیبات مکمل لوڈ نہیں ہوئیں: "+(pe||ae||we).message;return;}
  const productRows=(products||[]).map(p=>{
   const floor=p.product_type==="6L"?55:280;
+  const carton=p.product_type!=="6L";
   return `<tr>
    <td>${esc(p.product_type)}</td>
    <td>${p.units_per_pack} ${esc(p.unit_type)}</td>
-   <td><input type="number" min="${floor}" step="1" id="psDefault_${Number(p.id)}" value="${Number(p.default_rate)}" style="max-width:110px"></td>
-   <td>${p.product_type==="6L"?"—":`<input type="number" min="280" step="1" id="psSpecial_${Number(p.id)}" value="${p.special_100_rate==null?"":Number(p.special_100_rate)}" style="max-width:110px">`}</td>
+   <td>${carton?`<input type="number" min="280" step="1" id="psDefault_${Number(p.id)}" value="${Number(p.default_rate)}" style="max-width:110px">`:money(p.default_rate)}</td>
+   <td>${carton?`<input type="number" min="280" step="1" id="psSpecial_${Number(p.id)}" value="${p.special_100_rate==null?"":Number(p.special_100_rate)}" style="max-width:110px">`:"—"}</td>
    <td>${money(p.labor_per_unit)}</td>
    <td>${p.is_active?"ہاں":"نہیں"}</td>
-   <td><button onclick="saveProductSettings(${Number(p.id)},'${esc(p.product_type)}')">قیمت محفوظ کریں</button></td>
+   <td>${carton?`<button onclick="saveProductSettings(${Number(p.id)},'${esc(p.product_type)}')">قیمت محفوظ کریں</button>`:"مقررہ"}</td>
   </tr>`;
  }).join("");
  $("settingsStatus").innerHTML='<h3>مقررہ کاروباری قواعد</h3><div class="stat">19L کامیاب بوتل: <b>Rs. 100</b> + فی بوتل ڈلیوری مزدوری <b>Rs. 20</b></div><div class="stat">خراب ڈھکن: <b>Rs. 10</b> فی عدد</div><div class="stat">500ml اور 1.5L کارٹن کی کم از کم قیمت: <b>Rs. 280</b></div><h3>پروڈکٹ قیمتوں کا کنٹرول</h3><p class="muted">500ml اور 1.5L کارٹن Rs.280 سے کم نہیں ہوسکتے۔ 6L کی قیمت Rs.55 سے کم نہیں ہوسکتی۔ مزدوری اور پیک سائز کاروباری قواعد کے مطابق مقرر ہیں۔</p><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>پیک</th><th>طے شدہ قیمت</th><th>خصوصی قیمت</th><th>مزدوری</th><th>فعال</th><th>عمل</th></tr>'+productRows+'</table></div><h3>ایڈمن اکاؤنٹس</h3><p>مستقل ایڈمن: <b>'+(admins||[]).length+'</b></p><ul>'+(admins||[]).map(a=>'<li>'+esc(a.full_name||a.id)+'</li>').join("")+'</ul><h3>ورکرز</h3><p>کل: <b>'+(workers||[]).length+'</b> — فعال: <b>'+(workers||[]).filter(w=>w.is_active).length+'</b> — مالک: <b>'+(workers||[]).filter(w=>w.is_owner).length+'</b></p><p class="muted">ایڈمن رول اور مقررہ بنیادی کاروباری قواعد اس اسکرین سے تبدیل نہیں ہوتے۔ قیمت کی ہر تبدیلی تصدیق کے بعد محفوظ اور آڈٹ لاگ میں درج ہوگی۔</p>';
@@ -1104,7 +1133,8 @@ async function saveProductSettings(id,productType){
  if(!defaultInput)return;
  const defaultRate=Number(defaultInput.value);
  const specialRate=specialInput&&specialInput.value.trim()!==""?Number(specialInput.value):null;
- const floor=productType==="6L"?55:280;
+ if(productType==="6L"){msg("6L کی قیمت Rs.55 مقرر ہے اور اس اسکرین سے تبدیل نہیں ہوتی۔");return;}
+ const floor=280;
  if(!Number.isFinite(defaultRate)||defaultRate<floor){
   msg(productType+" کی قیمت کم از کم Rs."+floor+" ہونی چاہیے۔");return;
  }
