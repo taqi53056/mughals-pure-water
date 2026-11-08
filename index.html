@@ -1138,8 +1138,11 @@ async function saveProductSettings(id,productType){
  if(!Number.isFinite(defaultRate)||defaultRate<floor){
   msg(productType+" کی قیمت کم از کم Rs."+floor+" ہونی چاہیے۔");return;
  }
- if(productType!=="6L"&&specialRate!==null&&(!Number.isFinite(specialRate)||specialRate<280)){
+ if(specialRate!==null&&(!Number.isFinite(specialRate)||specialRate<280)){
   msg("500ml اور 1.5L کی خصوصی قیمت Rs.280 سے کم نہیں ہوسکتی۔");return;
+ }
+ if(specialRate!==null&&specialRate>defaultRate){
+  msg("100 یا زیادہ کارٹن کی خصوصی قیمت طے شدہ قیمت سے زیادہ نہیں ہوسکتی۔");return;
  }
  const changes={default_rate:defaultRate};
  if(productType!=="6L")changes.special_100_rate=specialRate;
