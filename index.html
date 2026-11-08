@@ -261,7 +261,10 @@ async function signupCustomer(){
   await ensureSupabase();
   const {data,error}=await db.auth.signUp({
    email,password,
-   options:{data:{full_name:name,mobile,address}}
+   options:{
+    data:{full_name:name,mobile,address},
+    emailRedirectTo:"https://taqi53056.github.io/mughals-pure-water/"
+   }
   });
   if(error)throw error;
   if(data?.session){
