@@ -733,12 +733,13 @@ async function loadStock(type){
 let saleSettings={};
 async function salesModule(){
  setTitle("سیل / مال کا اخراج");
+ $("moduleBody").innerHTML='<p class="muted">قیمتوں کی سیٹنگز لوڈ ہو رہی ہیں...</p>';
  const {data:settings,error:settingsError}=await db.from("product_settings")
   .select("product_type,default_rate,special_100_rate,is_active").eq("is_active",true);
- if(settingsError){msg("قیمتوں کی سیٹنگز لوڈ نہیں ہوئیں: "+settingsError.message);return;}
+ if(settingsError){$("moduleBody").textContent="قیمتوں کی سیٹنگز لوڈ نہیں ہوئیں: "+settingsError.message;return;}
  saleSettings=Object.fromEntries((settings||[]).map(p=>[p.product_type,p]));
  if(!saleSettings["500ml"]||!saleSettings["1.5L"]||!saleSettings["6L"]){
-  msg("ضروری پروڈکٹ قیمتیں موجود یا فعال نہیں؛ سیل روک دی گئی۔");return;
+  $("moduleBody").textContent="ضروری پروڈکٹ قیمتیں موجود یا فعال نہیں؛ سیل روک دی گئی۔";return;
  }
  const default500=Number(saleSettings["500ml"].default_rate);
  $("moduleBody").innerHTML=`
