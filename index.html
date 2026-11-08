@@ -565,6 +565,8 @@ async function syncBillBottles(customerId,month){
   previousDue:Number(previous?.current_due)||0,
   previousAdvance:Number(previous?.closing_advance)||0,
   netPayments,
+  bottleAmount:Number(bill.bottle_amount)||0,
+  capAmount:Number(bill.cap_amount)||0,
   charges:(Number(bill.bottle_amount)||0)+(Number(bill.cap_amount)||0),
   payable:Number(bill.current_due)||0,
   closingAdvance:Number(bill.closing_advance)||0,
@@ -606,9 +608,25 @@ async function loadSelectedBill(){
 }
 
 async function saveBill(){
- const id=$("bCustomer").value,month=$("bMonth").value;if(!id||!month){msg("گاہک اور مہینہ منتخب کریں۔");return}
- try{const result=await syncBillBottles(Number(id),selectedBillMonth());await loadSelectedBill();const month=selectedBillMonth();const {data:existing}=await db.from("customer_notifications").select("id").eq("customer_id",Number(id)).eq("reference_key",`bill:${month.slice(0,7)}`).limit(1);const notice={customer_id:Number(id),title:"ماہانہ بل تیار ہے",message:`السلام علیکم! ${month.slice(0,7)} کا بل تیار ہے۔ کامیاب بوتلیں: ${result.bottles}، خراب ڈھکن: ${result.caps}، قابل ادائیگی رقم: ${money(result.payable)}۔ MUGHAL'S PURE WATER کا شکریہ۔`,notification_type:"bill",reference_key:`bill:${month.slice(0,7)}`};const nr=existing?.length?await db.from("customer_notifications").update({message:notice.message,is_read:false,created_at:new Date().toISOString()}).eq("id",existing[0].id):await db.from("customer_notifications").insert(notice);if(nr.error){msg("بل محفوظ ہوگیا، مگر کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+nr.error.message);}else{msg("بل محفوظ ہوگیا اور کسٹمر کی اطلاع بھیج دی گئی۔",true)}}
- catch(e){msg("بل محفوظ نہیں ہوا: "+e.message)}
+ const id=$("bCustomer").value,monthInput=$("bMonth").value;if(!id||!monthInput){msg("گاہک اور مہینہ منتخب کریں۔");return}
+ try{
+  const month=selectedBillMonth();
+  const result=await syncBillBottles(Number(id),month);
+  await loadSelectedBill();
+  const {data:existing,error:lookupError}=await db.from("customer_notifications").select("id").eq("customer_id",Number(id)).eq("reference_key",`bill:${month.slice(0,7)}`).limit(1);
+  if(lookupError)throw lookupError;
+  const customerName=customerList.find(x=>Number(x.id)===Number(id))?.name||"محترم گاہک";
+  const notice={
+   customer_id:Number(id),title:"ماہانہ بل تیار ہے",
+   message:`السلام علیکم ${customerName} صاحب! MUGHAL'S PURE WATER کا ${month.slice(0,7)} کا ماہانہ بل تیار ہے۔\nبلنگ مدت: ${month.slice(0,7)}\nکامیاب 19L بوتلیں: ${result.bottles}\nبوتلوں کے چارجز: ${money(result.bottleAmount)}\nخراب ڈھکن: ${result.caps} عدد × Rs.10 = ${money(result.capAmount)}\nاس ماہ کے کل چارجز: ${money(result.charges)}\nپچھلا بقایا: ${money(result.previousDue)}\nپچھلا دستیاب ایڈوانس: ${money(result.previousAdvance)}\nاس ماہ استعمال شدہ ایڈوانس: ${money(result.advanceUsed)}\nاس ماہ کی خالص ادائیگیاں: ${money(result.netPayments)}\nاب قابل ادائیگی بقایا: ${money(result.payable)}\nاختتامی ایڈوانس: ${money(result.closingAdvance)}\nآپ کے تعاون کا شکریہ۔`,
+   notification_type:"bill",reference_key:`bill:${month.slice(0,7)}`
+  };
+  const nr=existing?.length
+   ?await db.from("customer_notifications").update({title:notice.title,message:notice.message,is_read:false,created_at:new Date().toISOString()}).eq("id",existing[0].id)
+   :await db.from("customer_notifications").insert(notice);
+  if(nr.error)msg("بل دوبارہ حساب ہوگیا، مگر کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+nr.error.message);
+  else msg("بل دوبارہ حساب ہوگیا اور مکمل تفصیل کے ساتھ کسٹمر کی اطلاع محفوظ ہوگئی۔",true);
+ }catch(e){msg("بل یا اطلاع مکمل نہیں ہوسکی: "+e.message)}
 }
 
 async function recordCustomerPayment(){
@@ -1056,7 +1074,7 @@ async function loadCustomerPanel(){
  <p>پتہ: ${esc(myCustomer.address||"درج نہیں")}</p>`;
  const {data:b,error}=await db.from("customer_monthly_bills").select("*").eq("customer_id",myCustomer.id).order("bill_month",{ascending:false});
  $("myBillHistory").innerHTML=error?"بل ہسٹری لوڈ نہیں ہوئی":(b||[]).map(x=>`<div class="stat"><b>${esc(x.bill_month)}</b><p>بوتلیں: ${x.bottles_19l||0} | خراب ڈھکن: ${x.damaged_caps||0}</p><p>بل: ${money((Number(x.bottle_amount)||0)+(Number(x.cap_amount)||0))} | ادائیگی: ${money(x.payments)}</p><b>بقایا: ${money(x.current_due)}</b></div>`).join("")||"ابھی بل ہسٹری موجود نہیں۔";
- $("myBill").innerHTML=error?"بل لوڈ نہیں ہوا":!b?.length?"ابھی بل موجود نہیں":`<p>مہینہ: ${esc(b[0].bill_month)}</p><p>19L بوتلیں: ${b[0].bottles_19l||0}</p><p>بوتل رقم: ${money(b[0].bottle_amount)}</p><p>خراب Caps: ${b[0].damaged_caps||0}</p><p>پچھلا بقایا: ${money(b[0].previous_balance)}</p><p>وصول شدہ رقم: ${money(b[0].payments)}</p><h3>قابل ادائیگی: ${money(b[0].current_due)}</h3>`;
+  $("myBill").innerHTML=error?"بل لوڈ نہیں ہوا":!b?.length?"ابھی بل موجود نہیں":`<p>بلنگ مہینہ: ${esc(b[0].bill_month)}</p><p>کامیاب 19L بوتلیں: ${b[0].bottles_19l||0}</p><p>بوتلوں کے چارجز: ${money(b[0].bottle_amount)}</p><p>خراب ڈھکن: ${b[0].damaged_caps||0} — ${money(b[0].cap_amount)}</p><p>پچھلا بقایا: ${money(b[0].previous_balance)}</p><p>اس ماہ کی ادائیگیاں: ${money(b[0].payments)}</p><p>استعمال شدہ ایڈوانس: ${money(b[0].advance_used)}</p><p>اختتامی ایڈوانس: ${money(b[0].closing_advance)}</p><h3>قابل ادائیگی بقایا: ${money(b[0].current_due)}</h3>`;
  const {data:payments,error:pe}=await db.from("customer_payments").select("payment_date,amount,payment_type").eq("customer_id",myCustomer.id).order("payment_date",{ascending:false}).limit(50);
  $("myPayments").innerHTML=pe?"ادائیگی ہسٹری لوڈ نہیں ہوئی":(payments||[]).map(r=>`<div class="stat">${esc(r.payment_date)} — ${esc(r.payment_type)} — ${money(r.amount)}</div>`).join("")||"ابھی کوئی ادائیگی درج نہیں۔";
  const {data:d,error:de}=await db.from("customer_19l_deliveries").select("*").eq("customer_id",myCustomer.id).order("delivery_date",{ascending:false}).limit(30);
