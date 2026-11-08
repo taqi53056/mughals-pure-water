@@ -152,8 +152,11 @@ try {
       document.querySelector("#psDefault_1").value = "300";
       document.querySelector("#psSpecial_1").value = "310";
       await window.saveProductSettings(1, "500ml");
+      const specialAboveDefaultBlocked = updates.length === 0;
+      document.querySelector("#psSpecial_1").value = "290";
+      await window.saveProductSettings(1, "500ml");
       mockData.product_settings[0].default_rate = 300;
-      mockData.product_settings[0].special_100_rate = 310;
+      mockData.product_settings[0].special_100_rate = 290;
       await window.salesModule();
       document.querySelector("#saleQty").value = "100";
       window.salePricePreview(true, false);
@@ -168,6 +171,7 @@ try {
       return {
         rendered,
         belowFloorBlocked,
+        specialAboveDefaultBlocked,
         saved: updates.length === 1 && updates[0].table === "product_settings",
         savedDefault: updates[0]?.values?.default_rate,
         savedSpecial: updates[0]?.values?.special_100_rate,
@@ -179,10 +183,11 @@ try {
     });
     if (!settingsResult.rendered) failures.push("Admin settings price controls did not render");
     if (!settingsResult.belowFloorBlocked) failures.push("Admin settings allowed a carton price below Rs.280");
+    if (!settingsResult.specialAboveDefaultBlocked) failures.push("Admin settings allowed a bulk special price above the default price");
     if (!settingsResult.saved || settingsResult.savedDefault !== 300 || settingsResult.savedSpecial !== 310) {
       failures.push("Admin settings did not save valid price changes correctly");
     }
-    if (settingsResult.bulkPrice !== "310") failures.push("100+ carton special price was not applied");
+    if (settingsResult.bulkPrice !== "290") failures.push("100+ carton special price was not applied");
     if (settingsResult.normalPrice !== "300") failures.push("Default carton price was not restored below 100 units");
     if (settingsResult.sixLiterPrice !== "55" || !settingsResult.sixLiterDisabled) {
       failures.push("6L fixed price control is incorrect");
