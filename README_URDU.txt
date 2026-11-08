@@ -11,6 +11,7 @@ MUGHAL'S PURE WATER — مختصر ریلیز نوٹس
 - MUGHALS_FINAL_OWNER_MIGRATION.sql — Owner/ورکر اجرت کی علیحدگی
 - MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کم از کم قیمت اور سیل RPC
 - MUGHALS_SECURITY_PERFORMANCE_REPAIR_20261109.sql — live Supabase security/performance repairs کا ریکارڈ
+- MUGHALS_RLS_POLICY_CONSOLIDATION_20261109.sql — final RLS policy consolidation اور invoker RPC hardening
 
 قیمتوں کے اصول:
 - 500ml کارٹن: 24 یونٹ، کم از کم Rs.280
@@ -25,7 +26,7 @@ Supabase:
 - trigger/legacy RPC search_path درست؛ 16 FK indexes شامل؛ customer-scoped RLS policies optimize؛ duplicate monthly bill unique constraint صاف۔
 - ماہانہ cron فعال ہے، لیکن حقیقی month-end run ابھی نہیں ہوا کیونکہ active customers صفر ہیں۔
 - موجودہ database پر پرانی migrations دوبارہ نہ چلائیں؛ بنیادی V2/master schema اس repository میں شامل نہیں۔
-- SECURITY DEFINER warnings میں admin/customer ownership checks کی موجودگی verify کی گئی ہے؛ انہیں blind revoke نہیں کیا گیا۔
+- admin-facing RPCs اب SECURITY INVOKER ہیں؛ صرف customer notification-read helper SECURITY DEFINER ہے اور customer ownership check کرتا ہے۔ Multiple permissive policy warnings صفر ہیں۔
 - leaked-password protection کی setting ابھی dashboard پر باقی ہے۔
 
 اس برانچ میں شامل کام:
