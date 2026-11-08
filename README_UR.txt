@@ -48,6 +48,7 @@ Supabase live verification:
 - 19L delivery guard کا rollback-only test پاس: 3 دی گئی، 2 خالی واپس، 2 کامیاب، فرق 1، ایک خراب ڈھکن؛ مالک کی delivery labor صفر رہی۔ خالی بوتلیں دی گئی بوتلوں سے زیادہ رکھنے والی انٹری رد ہوئی۔
 - سیل RPC کا rollback-only test پاس: ایک 500ml کارٹن Rs.300 میں درج ہوا، stock صفر ہوا، مالک کی مزدوری بچت Rs.10 رپورٹ ہوئی؛ تمام test rows rollback ہو گئیں۔
 - product_settings کا rollback-only admin update test پاس: default Rs.300، special Rs.290 محفوظ ہوئے اور audit actor درست ریکارڈ ہوا؛ تبدیلی rollback ہوگئی۔ Database نے Rs.280 سے کم carton price اور default سے زیادہ special price دونوں رد کیے۔
+- Owner worker guard کا rollback-only test پاس: مستقل Owner کو deactivate کرنے کی کوشش رد ہوئی؛ فعال Owner کی تعداد ایک برقرار رہی۔ Monthly bill consistency constraints اور 19L exchange constraints validate ہیں۔
 - duplicate monthly-bill unique constraint ہٹایا؛ بنیادی (customer_id, bill_month) unique constraint برقرار ہے۔
 - customers table پر column-level grants لگائے: browser users صرف ضروری account columns پڑھ/اپڈیٹ کر سکتے ہیں؛ PIN، PIN hash اور PIN enabled fields تک رسائی بند ہے۔
 - تمام admin-facing data RPCs کو SECURITY INVOKER پر منتقل کیا اور is_admin() کو fixed admin UUID allowlist پر مبنی SECURITY INVOKER بنایا؛ صرف mark_customer_notification_read SECURITY DEFINER رہتا ہے کیونکہ کسٹمر کو notification content پر براہِ راست UPDATE حق نہیں دیا گیا، اور فنکشن صرف اسی auth.uid() سے منسلک کسٹمر کی اطلاع پڑھا ہوا نشان زد کرتا ہے۔
