@@ -1,7 +1,7 @@
 MUGHAL'S PURE WATER — مختصر ریلیز نوٹس
 
 برانچ: integration-access-check-20261109
-موجودہ Service Worker cache: v20
+موجودہ Service Worker cache: v21
 
 اہم فائلیں:
 - index.html — مکمل فرنٹ اینڈ
