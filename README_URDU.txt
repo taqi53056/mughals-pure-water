@@ -31,7 +31,8 @@ Supabase:
 - ماہانہ cron فعال ہے، لیکن حقیقی month-end run ابھی نہیں ہوا کیونکہ active customers صفر ہیں۔
 - موجودہ database پر پرانی migrations دوبارہ نہ چلائیں؛ بنیادی V2/master schema اس repository میں شامل نہیں۔
 - admin-facing RPCs اب SECURITY INVOKER ہیں؛ صرف customer notification-read helper SECURITY DEFINER ہے اور customer ownership check کرتا ہے۔ Multiple permissive policy warnings صفر ہیں۔
-- leaked-password protection کی setting ابھی dashboard پر باقی ہے۔
+- Supabase organization Free plan پر ہے؛ leaked-password protection Supabase کے مطابق Pro یا اس سے اوپر کے plan میں دستیاب ہے، اس لیے موجودہ plan پر فعال نہیں ہوسکتی۔
+- صرف mark_customer_notification_read SECURITY DEFINER رہتا ہے؛ وہ صرف auth.uid() سے منسلک active customer کی اپنی notification کو read نشان زد کرتا ہے۔
 
 اس برانچ میں شامل کام:
 - مکمل کسٹمر اکاؤنٹ ویو
@@ -42,6 +43,7 @@ Supabase:
 - audit log میں before/after details
 - Owner savings اور worker wages کی علیحدگی
 - ماہانہ بل کی تفصیلی اطلاع
+- 19L delivery اور monthly bill arithmetic کے backend constraints؛ permanent Owner worker کو deactivate/delete کرنے سے تحفظ
 - سکیورٹی اور کارکردگی کی database repairs
 
 ریلیز کی حد:
