@@ -1,7 +1,8 @@
 {
+  "id": "./",
   "name": "MUGHAL'S PURE WATER",
-  "short_name": "Mughal Water",
-  "description": "واٹر بزنس مینجمنٹ",
+  "short_name": "Mughal's Water",
+  "description": "دکان اور واٹر بزنس مینجمنٹ",
   "lang": "ur",
   "dir": "rtl",
   "start_url": "./index.html",
@@ -10,6 +11,7 @@
   "background_color": "#f2f7f4",
   "theme_color": "#087b50",
   "icons": [
-    {"src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

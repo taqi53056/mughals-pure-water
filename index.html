@@ -5,29 +5,38 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#087b50">
-<meta name="description" content="MUGHAL'S PURE WATER — واٹر بزنس مینجمنٹ">
 <link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MUGHAL'S PURE WATER">
 <title>MUGHAL'S PURE WATER</title>
 <style>
+:root{--emerald:#073f32;--green:#0b6b50;--gold:#c8a65a;--ink:#172c26;--muted:#718078;--paper:#f5f6f1;--line:#e5e8df;--white:#fff}
 *{box-sizing:border-box}
-body{margin:0;background:#f2f7f4;color:#183128;font-family:system-ui,sans-serif}
-header{background:#087b50;color:white;padding:18px}
-.wrap{max-width:850px;margin:auto;padding:14px}
-.card{background:white;padding:16px;border-radius:16px;margin:12px 0;box-shadow:0 3px 14px #0001}
-h1,h2,h3,p{margin:0 0 10px}
-input,select,button,textarea{width:100%;padding:12px;margin:5px 0;border-radius:10px;border:1px solid #ccd8d0;font-size:16px}
-button{background:#087b50;color:white;border:0;font-weight:bold;cursor:pointer}
-.secondary{background:#e6f3eb;color:#087b50}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.tile{padding:18px;border-radius:14px;color:white;font-weight:bold;min-height:80px;display:flex;align-items:flex-end;cursor:pointer}
-.blue{background:#2868a9}.orange{background:#d97706}.purple{background:#7844b8}
-.teal{background:#087f7a}.red{background:#c43d3d}.green{background:#16834f}
-.gray{background:#52635b}.yellow{background:#b38b08}
-.hidden{display:none!important}.muted{color:#65756b;font-size:13px}
-.error{color:#b42318;white-space:pre-wrap}.success{color:#087b50;white-space:pre-wrap}
-table{width:100%;border-collapse:collapse}td,th{padding:9px;border-bottom:1px solid #e4ebe6;text-align:right}
-.tablewrap{overflow:auto}.stat{background:#f0f7f2;border-radius:10px;padding:12px;margin:7px 0}
-.total{font-size:20px;font-weight:bold}.warning{background:#fff3cf;padding:10px;border-radius:10px;margin:8px 0}
+body{margin:0;background:radial-gradient(ellipse at top,#e9f0e9 0,#f5f6f1 55%);color:var(--ink);font-family:system-ui,-apple-system,"Noto Nastaliq Urdu",sans-serif;line-height:1.65}
+header{background:linear-gradient(125deg,#062f27 0%,#07533f 58%,#0b7051 100%);color:#fff;padding:24px 18px;border-bottom:3px solid var(--gold);box-shadow:0 8px 28px #082f2630}
+header .wrap{max-width:1180px}header h1{font-size:clamp(20px,3vw,29px);letter-spacing:.035em;color:#f8f4e9;margin:0 0 3px}header .wrap>div{color:#e4d5ad;font-size:13px;letter-spacing:.04em}
+.wrap{max-width:1180px;margin:auto;padding:18px}
+.card{background:rgba(255,255,255,.96);padding:20px;border:1px solid #e8e8df;border-radius:18px;margin:14px 0;box-shadow:0 7px 24px #173d2b0b}
+h1,h2,h3,p{margin:0 0 10px}h2{color:var(--emerald);font-size:21px}h3{color:#315448;font-size:17px}
+input,select,button,textarea{width:100%;padding:13px 14px;margin:6px 0;border-radius:12px;border:1px solid #d7dfd8;background:#fff;color:var(--ink);font:inherit;font-size:15px;min-height:48px;outline:none;transition:border-color .18s,box-shadow .18s}
+input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px #0b6b5018}
+button{background:linear-gradient(135deg,#07533f,#0b7655);color:#fff;border:1px solid #0b6b50;font-weight:700;cursor:pointer;box-shadow:0 4px 12px #07533f20}
+button:hover{filter:brightness(1.06)}button:disabled{opacity:.55;cursor:not-allowed}
+.secondary{background:#edf3ed;color:#14533f;border:1px solid #dce7dc;box-shadow:none}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tile{padding:20px;border-radius:16px;color:#fff;font-weight:750;min-height:94px;display:flex;align-items:flex-end;cursor:pointer;border:1px solid #ffffff25;box-shadow:0 7px 18px #183b2b16;transition:transform .18s,box-shadow .18s}
+.tile:hover{transform:translateY(-2px);box-shadow:0 10px 22px #183b2b24}
+.blue{background:linear-gradient(135deg,#244d62,#326f80)}.orange{background:linear-gradient(135deg,#95632d,#bd8b45)}.purple{background:linear-gradient(135deg,#51446d,#796b91)}
+.teal{background:linear-gradient(135deg,#075d58,#16877d)}.red{background:linear-gradient(135deg,#87433d,#b76a5d)}.green{background:linear-gradient(135deg,#14553d,#25805a)}
+.gray{background:linear-gradient(135deg,#344b43,#62766a)}.yellow{background:linear-gradient(135deg,#80672c,#b2934d)}
+.hidden{display:none!important}.muted{color:var(--muted);font-size:13px}
+.error{color:#a52a2a;white-space:pre-wrap}.success{color:#08734f;white-space:pre-wrap}
+table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10px;border-bottom:1px solid var(--line);text-align:right}th{color:#315448;background:#f5f7f2;font-weight:700}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}.stat{background:linear-gradient(110deg,#f1f6f0,#f8f7ef);border:1px solid #e7ebdf;border-radius:12px;padding:13px;margin:8px 0}
+.total{font-size:21px;font-weight:800;color:var(--emerald)}.warning{background:#fff5db;border:1px solid #efdfb2;padding:12px;border-radius:12px;margin:9px 0}
+#login{max-width:560px;margin:28px auto}#app>.card:first-child{background:linear-gradient(110deg,#fff,#f5f7ef);border-top:2px solid var(--gold)}
+@media(min-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{min-height:112px;padding:24px;font-size:18px}#adminPanel{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(0,1.7fr);gap:16px;align-items:start}#homeTiles{grid-column:1;grid-row:1 / span 2}#dashboard,#module{grid-column:2;margin-top:0}#adminPanel #module{grid-column:1 / -1}}
+@media(max-width:520px){.wrap{padding:11px}.card{padding:15px;border-radius:15px}.grid{gap:9px}.tile{min-height:82px;padding:14px;font-size:14px}header{padding:18px 14px}input,select,button,textarea{font-size:16px}}
 </style>
 </head>
 <body>
@@ -77,6 +86,10 @@ table{width:100%;border-collapse:collapse}td,th{padding:9px;border-bottom:1px so
 <div class="tile green" onclick="openModule('income')">آمدن</div>
 <div class="tile gray" onclick="openModule('billing')">ماہانہ بل</div>
 <div class="tile blue" onclick="openModule('reports')">رپورٹس</div>
+<div class="tile gray" onclick="openModule('workers')">ورکر لیجر</div>
+<div class="tile yellow" onclick="openModule('labor')">صفائی / پروڈکشن / دھلائی</div>
+<div class="tile red" onclick="openModule('complaints')">کسٹمر شکایات</div>
+<div class="tile gray" onclick="openModule('audit')">سکیورٹی / آڈٹ لاگ</div>
 </div>
 
 <div id="dashboard" class="card">
@@ -96,8 +109,10 @@ table{width:100%;border-collapse:collapse}td,th{padding:9px;border-bottom:1px so
 
 <div id="customerPanel" class="hidden">
 <div class="card"><h2>میرا اکاؤنٹ</h2><div id="myAccount"></div></div>
-<div class="card"><h2>میرا ماہانہ بل</h2><div id="myBill"></div></div>
+<div class="card"><h2>میرا ماہانہ بل</h2><div id="myBill"></div><h3>مکمل بل ہسٹری</h3><div id="myBillHistory"></div><h3>ادائیگیوں کی ہسٹری</h3><div id="myPayments"></div></div>
 <div class="card"><h2>میری ڈلیوری</h2><div id="myDeliveries"></div></div>
+<div class="card"><h2>اطلاعات</h2><div id="myNotifications">لوڈ ہو رہا ہے...</div></div>
+<div class="card"><h2>شکایت / مسئلہ درج کریں</h2><div id="complaintForm"></div><div id="myComplaints"></div></div>
 </div>
 </section>
 </main>
@@ -135,6 +150,12 @@ const money=n=>"Rs. "+(Number(n)||0).toLocaleString("en-PK");
 let user=null, myCustomer=null, customerList=[], currentModule="", editingId=null;
 
 function msg(t,ok=false){$("moduleMsg").className=ok?"success":"error";$("moduleMsg").textContent=t}
+// بڑی مقدار یا رقم پر آخری تصدیق: عام اندراجات بلا رکاوٹ رہتے ہیں۔
+function confirmLargeEntry(label,value,threshold){
+ const n=Number(value);
+ if(!Number.isFinite(n)||n<=threshold)return true;
+ return confirm(`${label} کی مقدار ${n.toLocaleString("en-US")} درج کی گئی ہے، جو مقررہ حد ${threshold.toLocaleString("en-US")} سے زیادہ ہے۔ کیا یہی درست مقدار ہے؟`);
+}
 function setTitle(t){$("moduleTitle").textContent=t;$("moduleMsg").textContent="";$("moduleTable").innerHTML=""}
 
 function showSignup(){
@@ -212,7 +233,7 @@ async function loadApp(){
  }
  const isAdmin=p.data?.role==="admin";
  if(!isAdmin){
-  const r=await db.from("customers").select("id,name,customer_code,mobile,address,auth_user_id").eq("auth_user_id",user.id).maybeSingle();
+  const r=await db.from("customers").select("id,name,customer_code,mobile,address,auth_user_id,is_active").eq("auth_user_id",user.id).maybeSingle();
   if(r.error){
    await db.auth.signOut();
    $("loginMsg").textContent="کسٹمر اکاؤنٹ کی تصدیق نہیں ہوسکی؛ رسائی روک دی گئی ہے۔";
@@ -221,18 +242,24 @@ async function loadApp(){
   myCustomer=r.data;
   if(!myCustomer){
    await db.auth.signOut();
-   $("loginMsg").textContent="اس اکاؤنٹ کو کسٹمر یا ایڈمن رسائی حاصل نہیں۔ منتظم سے رابطہ کریں۔";
+   $("loginMsg").textContent="آپ کی رجسٹریشن ابھی منتظم کی منظوری کی منتظر ہو سکتی ہے۔ منظوری کے بعد دوبارہ لاگ اِن کریں؛ اگر پہلے سے منظور ہیں تو منتظم سے اکاؤنٹ لنک چیک کروائیں۔";
+   return;
+  }
+  if(myCustomer.is_active!==true){
+   myCustomer=null;
+   await db.auth.signOut();
+   $("loginMsg").textContent="آپ کی رجسٹریشن موصول ہوگئی ہے۔ منتظم کی منظوری کے بعد آپ لاگ اِن کر سکیں گے۔";
    return;
   }
  }
  $("login").classList.add("hidden");$("app").classList.remove("hidden");
  if(myCustomer){
-  $("welcome").textContent="خوش آمدید، "+myCustomer.name;
+  $("welcome").textContent="السلام علیکم، "+myCustomer.name+" صاحب";
   $("role").textContent=" | گاہک";
   $("adminPanel").classList.add("hidden");$("customerPanel").classList.remove("hidden");
   await loadCustomerPanel();
  }else{
-  $("welcome").textContent="MUGHAL'S PURE WATER";
+  $("welcome").textContent="السلام علیکم، "+(p.data?.full_name||"ایڈمن")+" صاحب";
   $("role").textContent=" | انتظامی پینل";
   $("customerPanel").classList.add("hidden");$("adminPanel").classList.remove("hidden");
   await loadTodaySummary();
@@ -272,15 +299,25 @@ async function openModule(name){
  if(name==="expenses")return moneyModule("expenses");
  if(name==="income")return moneyModule("income");
  if(name==="reports")return reportsModule();
+ if(name==="workers")return workersModule();
+ if(name==="labor")return laborModule();
+ if(name==="complaints")return complaintsModule();
+ if(name==="audit")return auditModule();
 }
 
 /* گاہک */
 async function customersModule(){
  setTitle("گاہکوں کا ریکارڈ");
  $("moduleBody").innerHTML=`
- <p class="muted">نئے گاہک خود ایپ سے رجسٹریشن کریں گے۔ یہاں صرف موجودہ گاہکوں کا ریکارڈ دیکھیں اور درست کریں۔</p>
+ <p class="muted">نئے گاہک خود رجسٹریشن کریں گے۔ منظوری کے بعد ہی انہیں بل اور ڈلیوری نظر آئے گی۔</p>
+ <div class="card"><h3>منظوری کے منتظر گاہک</h3><div id="pendingCustomers">فہرست لوڈ ہو رہی ہے...</div></div>
  <input id="customerSearch" placeholder="نام، Customer ID یا موبائل تلاش کریں" oninput="renderCustomers()">
  <button class="secondary" onclick="loadCustomers()">فہرست تازہ کریں</button>
+ <div id="customerFullAccount" class="card hidden" aria-live="polite">
+  <h3>گاہک کا مکمل اکاؤنٹ</h3>
+  <button class="secondary" onclick="closeCustomerFullAccount()">بند کریں</button>
+  <div id="customerFullAccountBody">ریکارڈ لوڈ ہو رہا ہے...</div>
+ </div>
  <div id="customerEditForm" class="card hidden">
   <h3>گاہک کی معلومات میں ترمیم</h3>
   <label>Customer ID</label><input id="cCode" readonly>
@@ -294,17 +331,57 @@ async function customersModule(){
 }
 
 async function loadCustomers(){
- const {data,error}=await db.from("customers").select("id,name,customer_code,mobile,address,is_active").order("name");
+ const {data,error}=await db.from("customers").select("id,name,customer_code,mobile,address,is_active,auth_user_id").order("name");
  if(error){msg("گاہک لوڈ نہیں ہوئے: "+error.message);return}
- customerList=data||[];renderCustomers();
+ customerList=data||[];renderCustomers();renderPendingCustomers();
+}
+
+async function renderPendingCustomers(){
+ const box=$("pendingCustomers");if(!box)return;
+ const pending=customerList.filter(c=>c.is_active!==true);
+ if(!pending.length){box.textContent="اس وقت کوئی نیا منتظر گاہک نہیں۔";return;}
+ box.innerHTML="<div class=\"tablewrap\"><table><tr><th>نام</th><th>Customer ID</th><th>موبائل</th><th>منظوری</th></tr>"+
+ pending.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code||"ابھی نہیں")}</td><td>${esc(c.mobile||"")}</td><td><button onclick=\"approveCustomer(${Number(c.id)})\">منظور کریں</button></td></tr>`).join("")+"</table></div>";
+}
+async function approveCustomer(id){
+ const c=customerList.find(x=>Number(x.id)===Number(id));if(!c||c.is_active===true)return;
+ if(!confirm("کیا "+(c.name||"اس گاہک")+" کو اکاؤنٹ استعمال کرنے کی منظوری دینی ہے؟"))return;
+ const {error}=await db.from("customers").update({is_active:true}).eq("id",id);
+ if(!error && c.auth_user_id){await db.from("customer_notifications").insert({customer_id:id,title:"آپ کا اکاؤنٹ منظور ہوگیا",message:"السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔",notification_type:"account"});}
+ if(error){msg("منظوری محفوظ نہیں ہوئی: "+error.message);return;}
+ msg("گاہک کی منظوری ہوگئی۔",true);await loadCustomers();
 }
 
 function renderCustomers(){
  const q=($("customerSearch")?.value||"").toLowerCase();
  const rows=customerList.filter(c=>[c.name,c.customer_code,c.mobile].some(x=>String(x||"").toLowerCase().includes(q)));
- $("moduleTable").innerHTML="<table><tr><th>نام</th><th>ID</th><th>موبائل</th><th>ترمیم</th></tr>"+
- rows.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td><button onclick="editCustomer(${c.id})">ترمیم</button></td></tr>`).join("")+"</table>";
+ $("moduleTable").innerHTML="<table><tr><th>نام</th><th>ID</th><th>موبائل</th><th>حیثیت</th><th>مکمل اکاؤنٹ</th><th>ترمیم</th></tr>"+
+ rows.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td>${c.is_active===true?"فعال":"زیرِ منظوری"}</td><td><button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button></td><td><button onclick="editCustomer(${c.id})">ترمیم</button></td></tr>`).join("")+"</table>";
 }
+
+async function showCustomerFullAccount(id){
+ const customer=customerList.find(c=>Number(c.id)===Number(id));
+ const panel=$("customerFullAccount"),body=$("customerFullAccountBody");
+ if(!customer||!panel||!body)return;
+ panel.classList.remove("hidden");body.textContent="مکمل اکاؤنٹ لوڈ ہو رہا ہے...";
+ panel.scrollIntoView({behavior:"smooth",block:"start"});
+ const [bills,payments,deliveries]=await Promise.all([
+  db.from("customer_monthly_bills").select("bill_month,bottles_19l,bottle_amount,damaged_caps,cap_amount,previous_balance,payments,advance_used,current_due,closing_advance").eq("customer_id",id).order("bill_month",{ascending:false}),
+  db.from("customer_payments").select("payment_date,amount,payment_type").eq("customer_id",id).order("payment_date",{ascending:false}),
+  db.from("customer_19l_deliveries").select("delivery_date,bottles_delivered,empty_bottles_returned,successful_bottles,bottle_difference,damaged_caps,delivery_labor").eq("customer_id",id).order("delivery_date",{ascending:false})
+ ]);
+ const failed=[bills.error,payments.error,deliveries.error].filter(Boolean);
+ if(failed.length){body.textContent="مکمل اکاؤنٹ لوڈ نہیں ہوسکا: "+failed.map(e=>e.message).join(" | ");return;}
+ const bs=bills.data||[],ps=payments.data||[],ds=deliveries.data||[];
+ const totalDue=bs.length?Number(bs[0].current_due)||0:0;
+ const totalAdvance=bs.length?(Number(bs[0].closing_advance)||0):0;
+ body.innerHTML=`<div class="stat"><b>${esc(customer.name)}</b> — ${esc(customer.customer_code||"")}<br>موبائل: ${esc(customer.mobile||"درج نہیں")}<br>پتہ: ${esc(customer.address||"درج نہیں")}<br>حیثیت: ${customer.is_active===true?"فعال":"زیرِ منظوری"}</div>
+ <div class="stat">تازہ ترین بقایا: <b>${money(totalDue)}</b> — تازہ ترین بل میں باقی ایڈوانس: <b>${money(totalAdvance)}</b></div>
+ <h4>ماہانہ بل</h4>${bs.length?`<table><tr><th>مہینہ</th><th>بوتلیں</th><th>بوتل رقم</th><th>ڈھکن</th><th>ڈھکن رقم</th><th>پچھلا بقایا</th><th>ادائیگی</th><th>ایڈوانس استعمال</th><th>بقایا</th><th>باقی ایڈوانس</th></tr>${bs.map(r=>`<tr><td>${esc(r.bill_month)}</td><td>${Number(r.bottles_19l)||0}</td><td>${money(r.bottle_amount)}</td><td>${Number(r.damaged_caps)||0}</td><td>${money(r.cap_amount)}</td><td>${money(r.previous_balance)}</td><td>${money(r.payments)}</td><td>${money(r.advance_used)}</td><td>${money(r.current_due)}</td><td>${money(r.closing_advance)}</td></tr>`).join("")}</table>`:"ابھی بل موجود نہیں۔"}
+ <h4>ادائیگیوں کی مکمل ہسٹری</h4>${ps.length?`<table><tr><th>تاریخ</th><th>قسم</th><th>رقم</th></tr>${ps.map(r=>`<tr><td>${esc(r.payment_date)}</td><td>${esc(r.payment_type)}</td><td>${money(r.amount)}</td></tr>`).join("")}</table>`:"ابھی ادائیگی موجود نہیں۔"}
+ <h4>19L ڈلیوری ہسٹری</h4>${ds.length?`<table><tr><th>تاریخ</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>مزدوری</th></tr>${ds.map(r=>`<tr><td>${esc(r.delivery_date)}</td><td>${Number(r.bottles_delivered)||0}</td><td>${Number(r.empty_bottles_returned)||0}</td><td>${Number(r.successful_bottles)||0}</td><td>${Number(r.bottle_difference)||0}</td><td>${Number(r.damaged_caps)||0}</td><td>${money(r.delivery_labor)}</td></tr>`).join("")}</table>`:"ابھی ڈلیوری موجود نہیں۔"}`;
+}
+function closeCustomerFullAccount(){ $("customerFullAccount")?.classList.add("hidden"); }
 
 function editCustomer(id){
  const c=customerList.find(x=>Number(x.id)===Number(id));if(!c)return;
@@ -333,7 +410,7 @@ async function getActiveCustomers(){
  const {data,error}=await db.from("customers").select("id,name,customer_code,is_active").order("name");
  if(error)throw error;
  customerList=data||[];
- return customerList.filter(c=>c.is_active!==false);
+ return customerList.filter(c=>c.is_active===true);
 }
 function customerOptions(list){
  return `<option value="">گاہک منتخب کریں</option>`+list.map(c=>`<option value="${c.id}">${esc(c.name)} — ${esc(c.customer_code)}</option>`).join("");
@@ -347,6 +424,7 @@ async function deliveryModule(){
  $("moduleBody").innerHTML=`
  <p class="muted">ہر گاہک کی ایک دن میں ایک انٹری۔ کمپنی کی بوتلیں فروخت نہیں ہوتیں۔</p>
  <select id="dCustomer" onchange="loadSelectedDelivery()">${customerOptions(list)}</select>
+ <select id="dWorker" onchange="calcDelivery()"><option value="">مالک / غیر منسوب ڈیلیوری</option></select>
  <input id="dDate" type="date" value="${today()}" onchange="loadSelectedDelivery()">
  <input id="dOut" type="number" min="0" placeholder="دی گئی بھری بوتلیں" oninput="calcDelivery()">
  <input id="dBack" type="number" min="0" placeholder="اسی لوڈ کی واپس خالی بوتلیں" oninput="calcDelivery()">
@@ -354,11 +432,19 @@ async function deliveryModule(){
  <div class="stat">خراب ڈھکنوں کی رقم: <b id="dCapAmount">Rs. 0</b></div>
  <div class="stat">کامیاب بوتلیں: <b id="dSuccess">0</b></div>
  <div class="stat">بوتلوں کا فرق: <b id="dDiff">0</b></div>
- <div class="stat">ڈلیوری مزدوری: <b id="dLabor">Rs. 0</b></div>
+ <div class="stat">مزدور کی واجب الادا مزدوری: <b id="dLabor">Rs. 0</b></div><div class="stat">مالک کی ممکنہ بچت: <b id="dOwnerSaving">Rs. 0</b></div>
  <div id="dWarn" class="warning hidden">بوتلوں میں فرق ہے؛ اسی دن جانچیں۔</div>
  <button onclick="saveDelivery()">ڈلیوری محفوظ کریں</button>
  <button class="secondary" onclick="loadDailyDeliveries()">تمام ڈلیوریاں تازہ کریں</button>`;
+ await loadWorkerOptions();
  await loadDailyDeliveries();
+}
+
+async function loadWorkerOptions(selected=""){
+ const sel=$("dWorker");if(!sel)return;
+ const {data,error}=await db.from("workers").select("id,full_name,is_owner").eq("is_active",true).contains("work_categories",["19L delivery"]).order("full_name");
+ if(error){sel.innerHTML=`<option value="">ورکر فہرست دستیاب نہیں</option>`;return;}
+ sel.innerHTML=`<option value="">مالک / غیر منسوب ڈیلیوری</option>`+(data||[]).map(w=>`<option value="${w.id}" data-owner="${w.is_owner===true}">${esc(w.is_owner?"Owner (مالک)":w.full_name)}</option>`).join("");sel.value=selected||"";
 }
 
 function calcDelivery(){
@@ -366,10 +452,14 @@ function calcDelivery(){
  const caps=Number($("dCaps")?.value)||0;
  const success=Math.min(out,back),diff=Math.max(0,out-back);
  $("dSuccess").textContent=success;$("dDiff").textContent=back>out?"غلط اندراج":diff;
- $("dLabor").textContent=money(success*20);
+ const owner=$("dWorker")?.selectedOptions?.[0]?.dataset.owner==="true";
+ $("dLabor").textContent=money($("dWorker")?.value&&!owner?success*20:0);
+ if($("dOwnerSaving"))$("dOwnerSaving").textContent=money(owner?success*20:0);
  if($("dCapAmount"))$("dCapAmount").textContent=money(caps*10);
  $("dWarn").classList.toggle("hidden",diff===0);
- return {out,back,caps,capAmount:caps*10,success,diff,labor:success*20,invalid:back>out};
+ const isOwner=$("dWorker")?.selectedOptions?.[0]?.dataset.owner==="true";
+ const labor=$("dWorker")?.value&&!isOwner?success*20:0;
+ return {out,back,caps,capAmount:caps*10,success,diff,labor,isOwner,ownerSaving:isOwner?success*20:0,invalid:back>out};
 }
 
 async function loadSelectedDelivery(){
@@ -380,6 +470,7 @@ async function loadSelectedDelivery(){
  $("dOut").value=data?.bottles_delivered??"";
  $("dBack").value=data?.empty_bottles_returned??"";
  $("dCaps").value=data?.damaged_caps??0;
+ if($("dWorker"))$("dWorker").value=data?.worker_id?String(data.worker_id):"";
  calcDelivery();
 }
 
@@ -391,7 +482,9 @@ async function saveDelivery(){
  if(!Number.isInteger(c.caps)||c.caps<0){msg("خراب ڈھکنوں کی تعداد صحیح عدد میں درج کریں۔");return}
  if(c.diff>0&&!confirm("بوتلوں میں "+c.diff+" کا فرق ہے۔ کیا محفوظ کرنا ہے؟"))return;
  if(c.caps>0&&!confirm(c.caps+" خراب ڈھکن × Rs.10 = "+money(c.capAmount)+". کیا محفوظ کرنا ہے؟"))return;
- const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,bottle_difference:c.diff,damaged_caps:c.caps};
+ if(!confirmLargeEntry("19L بوتلوں کی تعداد",c.out,100)||!confirmLargeEntry("خراب ڈھکنوں کی تعداد",c.caps,50))return;
+ const workerId=$("dWorker")?.value||null;
+ const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
  const {data:old,error:e}=await db.from("customer_19l_deliveries").select("id").eq("customer_id",id).eq("delivery_date",date).maybeSingle();
  if(e){msg(e.message);return}
  const r=old?await db.from("customer_19l_deliveries").update(payload).eq("id",old.id):await db.from("customer_19l_deliveries").insert(payload);
@@ -399,7 +492,12 @@ async function saveDelivery(){
  let billSyncWarning="";
  try{await syncBillBottles(Number(id),date.slice(0,7)+"-01")}
  catch(e){billSyncWarning=" ڈلیوری محفوظ ہے، مگر ماہانہ بل اپڈیٹ نہیں ہوا: "+e.message}
- msg("ڈلیوری محفوظ ہوگئی۔ مزدوری "+money(c.labor)+billSyncWarning,!billSyncWarning);
+ let notificationWarning="";
+ if(!old){
+  const {error:notificationError}=await db.from("customer_notifications").insert({customer_id:Number(id),title:"آج کی ڈلیوری درج ہوگئی",message:`السلام علیکم ${customerList.find(x=>Number(x.id)===Number(id))?.name||"گاہک"} صاحب! ${date} کو ${c.success} کامیاب 19L بوتلوں کی ڈلیوری درج ہوگئی۔ خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,notification_type:"delivery"});
+  if(notificationError){console.error("Notification could not be saved",notificationError);notificationWarning=" کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+notificationError.message;}
+ }
+ msg("ڈلیوری محفوظ ہوگئی۔ مزدوری "+money(c.labor)+billSyncWarning+notificationWarning,!billSyncWarning&&!notificationWarning);
  await loadDailyDeliveries();await loadTodaySummary();
 }
 
@@ -409,101 +507,120 @@ async function loadDailyDeliveries(){
  const {data,error}=await db.from("customer_19l_deliveries").select("*").order("delivery_date",{ascending:false}).order("id",{ascending:false});
  if(error){$("moduleTable").textContent=error.message;return}
  const names=await getActiveCustomers().catch(()=>customerList);
- $("moduleTable").innerHTML="<h3>تمام ڈلیوریاں (نئی تاریخ پہلے)</h3><table><tr><th>تاریخ</th><th>گاہک</th><th>دی گئیں</th><th>واپس</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th><th>مزدوری</th></tr>"+
- (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${d.empty_bottles_returned}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${money(d.delivery_labor)}</td></tr>`}).join("")+"</table>";
+ const {data:workers}=await db.from("workers").select("id,full_name,is_owner");
+ $("moduleTable").innerHTML="<h3>تمام ڈلیوریاں (نئی تاریخ پہلے)</h3><table><tr><th>تاریخ</th><th>گاہک</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th><th>ورکر</th><th>مزدوری</th></tr>"+
+ (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));let w=(workers||[]).find(x=>Number(x.id)===Number(d.worker_id));return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${d.empty_bottles_returned}</td><td>${d.successful_bottles}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${esc(w?.is_owner?"Owner (مالک)":w?.full_name||"مالک / غیر منسلک")}</td><td>${money(d.delivery_labor)}</td></tr>`}).join("")+"</table>";
 }
 
 /* ماہانہ بل */
 async function billingModule(){
- setTitle("ماہانہ بل");
+ setTitle("ماہانہ بل اور ادائیگیاں");
  let list;
  try{list=await getActiveCustomers()}catch(e){msg("گاہک لوڈ نہیں ہوئے: "+e.message);return}
  $("moduleBody").innerHTML=`
- <p class="muted">19L بوتل Rs.100، خراب Cap Rs.10۔ کامیاب ڈلیوریوں کی تعداد خودکار طور پر شامل ہوگی۔</p>
+ <p class="muted">19L کامیاب بوتل Rs.100، خراب ڈھکن Rs.10۔ ادائیگیاں الگ ریکارڈ ہوں گی؛ بل خود حساب ہوگا۔</p>
  <select id="bCustomer" onchange="loadSelectedBill()">${customerOptions(list)}</select>
  <input id="bMonth" type="month" value="${today().slice(0,7)}" onchange="loadSelectedBill()">
- <input id="bBottles" type="number" min="0" placeholder="19L بوتلیں (ڈلیوری سے خودکار)" readonly>
- <input id="bCaps" type="number" min="0" placeholder="خراب ڈھکن (ڈلیوری سے خودکار)" readonly>
- <input id="bPrev" type="number" min="0" placeholder="پچھلا بقایا" oninput="calcBill()">
- <input id="bPaid" type="number" min="0" placeholder="وصول شدہ رقم" oninput="calcBill()">
- <input id="bAdvance" type="number" min="0" placeholder="استعمال شدہ ایڈوانس" oninput="calcBill()">
- <div class="stat">بوتلوں کی رقم: <b id="bBottleAmt">Rs. 0</b></div>
- <div class="stat">Cap کی رقم: <b id="bCapAmt">Rs. 0</b></div>
- <div class="total">قابل ادائیگی: <span id="bDue">Rs. 0</span></div>
- <button onclick="saveBill()">بل محفوظ کریں</button>
- <h3>اس مہینے کی تاریخ وار ڈلیوری ہسٹری</h3>
- <div id="billDeliveryHistory" class="tablewrap">گاہک منتخب کریں۔</div>`;
+ <div class="grid"><div class="stat">کامیاب بوتلیں: <b id="bBottles">0</b></div><div class="stat">خراب ڈھکن: <b id="bCaps">0</b></div>
+ <div class="stat">بوتل رقم: <b id="bBottleAmt">Rs. 0</b></div><div class="stat">ڈھکن رقم: <b id="bCapAmt">Rs. 0</b></div>
+ <div class="stat">پچھلا بقایا: <b id="bPrev">Rs. 0</b></div><div class="stat">پچھلا ایڈوانس استعمال: <b id="bAdvance">Rs. 0</b></div>
+ <div class="stat">اس ماہ کی خالص ادائیگیاں: <b id="bPaid">Rs. 0</b></div></div>
+ <div class="total">موجودہ قابل ادائیگی: <span id="bDue">Rs. 0</span></div>
+ <button onclick="saveBill()">بل دوبارہ حساب کرکے محفوظ کریں</button>
+ <div class="card"><h3>نئی ادائیگی درج کریں</h3>
+ <input id="paymentDate" type="date" value="${today()}">
+ <input id="paymentAmount" type="number" min="0.01" step="0.01" placeholder="رقم (روپے)">
+ <select id="paymentType"><option value="bill_payment">بل کی ادائیگی</option><option value="advance">ایڈوانس</option><option value="refund">واپسی / ریفنڈ</option></select>
+ <button onclick="recordCustomerPayment()">ادائیگی محفوظ کریں</button></div>
+ <h3>اس مہینے کی تاریخ وار ڈلیوری ہسٹری</h3><div id="billDeliveryHistory" class="tablewrap">گاہک منتخب کریں۔</div>
+ <h3>اس مہینے کی ادائیگیاں</h3><div id="billPaymentHistory" class="tablewrap"></div>`;
 }
 
+function selectedBillMonth(){return $("bMonth").value.slice(0,7)+"-01";}
 async function syncBillBottles(customerId,month){
- const next=month.slice(0,5)+String(Number(month.slice(5,7))+1).padStart(2,"0")+"-01";
+ // مرکزی حساب Supabase کے محفوظ admin-only فنکشن سے ہوگا؛ براؤزر میں الگ حساب یا براہِ راست bill upsert نہیں ہوگا۔
+ const {error:calcError}=await db.rpc("recalculate_customer_bills_from",{
+  p_customer_id:customerId,
+  p_start_month:month
+ });
+ if(calcError)throw calcError;
  const start=new Date(month+"T00:00:00");
- start.setMonth(start.getMonth()+1);
- const end=start.getFullYear()+"-"+String(start.getMonth()+1).padStart(2,"0")+"-01";
- const {data,error}=await db.from("customer_19l_deliveries").select("successful_bottles,damaged_caps").eq("customer_id",customerId).gte("delivery_date",month).lt("delivery_date",end);
- if(error)throw error;
- const bottles=(data||[]).reduce((s,r)=>s+(Number(r.successful_bottles)||0),0);
- const caps=(data||[]).reduce((s,r)=>s+(Number(r.damaged_caps)||0),0);
- const {data:old,error:oldError}=await db.from("customer_monthly_bills").select("*").eq("customer_id",customerId).eq("bill_month",month).maybeSingle();
- if(oldError)throw oldError;
- const prev=Number(old?.previous_balance)||0,paid=Number(old?.payments)||0,advance=Number(old?.advance_used)||0;
- const total=prev+bottles*100+caps*10-paid-advance;
- const r=await db.from("customer_monthly_bills").upsert({customer_id:customerId,bill_month:month,bottles_19l:bottles,bottle_amount:bottles*100,damaged_caps:caps,cap_amount:caps*10,previous_balance:prev,payments:paid,advance_used:advance,current_due:Math.max(0,total),closing_advance:Math.max(0,-total)},{onConflict:"customer_id,bill_month"});
- if(r.error)throw r.error;
- return bottles;
+ const endDate=new Date(start);endDate.setMonth(endDate.getMonth()+1);
+ const end=endDate.getFullYear()+"-"+String(endDate.getMonth()+1).padStart(2,"0")+"-01";
+ const [{data:bill,error:billError},{data:previous,error:previousError},{data:payments,error:paymentError}]=await Promise.all([
+  db.from("customer_monthly_bills").select("bottles_19l,damaged_caps,bottle_amount,cap_amount,previous_balance,payments,advance_used,current_due,closing_advance").eq("customer_id",customerId).eq("bill_month",month).maybeSingle(),
+  db.from("customer_monthly_bills").select("current_due,closing_advance").eq("customer_id",customerId).lt("bill_month",month).order("bill_month",{ascending:false}).limit(1).maybeSingle(),
+  db.from("customer_payments").select("amount,payment_type").eq("customer_id",customerId).gte("payment_date",month).lt("payment_date",end)
+ ]);
+ if(billError)throw billError;
+ if(previousError)throw previousError;
+ if(paymentError)throw paymentError;
+ if(!bill)throw new Error("بل کا ریکارڈ تیار نہیں ہوا۔");
+ const netPayments=(payments||[]).reduce((n,r)=>n+(r.payment_type==="refund"?-Number(r.amount):Number(r.amount)),0);
+ return {
+  bottles:Number(bill.bottles_19l)||0,
+  caps:Number(bill.damaged_caps)||0,
+  previousDue:Number(previous?.current_due)||0,
+  previousAdvance:Number(previous?.closing_advance)||0,
+  netPayments,
+  charges:(Number(bill.bottle_amount)||0)+(Number(bill.cap_amount)||0),
+  payable:Number(bill.current_due)||0,
+  closingAdvance:Number(bill.closing_advance)||0,
+  advanceUsed:Number(bill.advance_used)||0
+ };
 }
 
 async function loadBillDeliveryHistory(customerId,month){
- const box=$("billDeliveryHistory");
- if(!box)return;
- const start=month+"-01";
- const d=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),1);
+ const box=$("billDeliveryHistory");if(!box)return;
+ const start=month+"-01";const d=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),1);
  const end=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-01";
  box.textContent="ہسٹری لوڈ ہو رہی ہے...";
- const {data,error}=await db.from("customer_19l_deliveries")
-  .select("delivery_date,successful_bottles,delivery_labor")
-  .eq("customer_id",customerId).gte("delivery_date",start).lt("delivery_date",end)
-  .order("delivery_date",{ascending:true});
+ const {data,error}=await db.from("customer_19l_deliveries").select("delivery_date,successful_bottles,damaged_caps").eq("customer_id",customerId).gte("delivery_date",start).lt("delivery_date",end).order("delivery_date",{ascending:true});
  if(error){box.textContent="ہسٹری لوڈ نہیں ہوئی: "+error.message;return}
- const rows=data||[];
- if(!rows.length){box.textContent="اس مہینے کی کوئی ڈلیوری درج نہیں۔";return}
- const total=rows.reduce((n,r)=>n+(Number(r.successful_bottles)||0),0);
- box.innerHTML="<table><tr><th>ڈلیوری کی تاریخ</th><th>کامیاب 19L بوتلیں</th><th>اس دن کی قیمت</th></tr>"+
-  rows.map(r=>{const count=Number(r.successful_bottles)||0;return `<tr><td>${esc(r.delivery_date)}</td><td>${count}</td><td>${money(count*100)}</td></tr>`}).join("")+
-  `<tr><th>کل</th><th>${total}</th><th>${money(total*100)}</th></tr></table>`;
+ const rows=data||[];if(!rows.length){box.textContent="اس مہینے کی کوئی ڈلیوری درج نہیں۔";return}
+ box.innerHTML="<table><tr><th>تاریخ</th><th>کامیاب بوتلیں</th><th>خراب ڈھکن</th><th>رقم</th></tr>"+rows.map(r=>{const n=Number(r.successful_bottles)||0,c=Number(r.damaged_caps)||0;return `<tr><td>${esc(r.delivery_date)}</td><td>${n}</td><td>${c}</td><td>${money(n*100+c*10)}</td></tr>`}).join("")+"</table>";
+}
+
+async function loadPaymentHistory(customerId,month){
+ const box=$("billPaymentHistory");if(!box)return;
+ const d=new Date(month+"T00:00:00");d.setMonth(d.getMonth()+1);const end=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-01";
+ const {data,error}=await db.from("customer_payments").select("payment_date,amount,payment_type").eq("customer_id",customerId).gte("payment_date",month).lt("payment_date",end).order("payment_date",{ascending:false});
+ if(error){box.textContent="ادائیگیاں لوڈ نہیں ہوئیں: "+error.message;return}
+ const labels={advance:"ایڈوانس",bill_payment:"بل ادائیگی",refund:"ریفنڈ"};
+ box.innerHTML=!(data||[]).length?"اس ماہ کوئی ادائیگی درج نہیں۔":"<table><tr><th>تاریخ</th><th>قسم</th><th>رقم</th></tr>"+data.map(r=>`<tr><td>${esc(r.payment_date)}</td><td>${labels[r.payment_type]||esc(r.payment_type)}</td><td>${money(r.amount)}</td></tr>`).join("")+"</table>";
 }
 
 async function loadSelectedBill(){
- const id=$("bCustomer").value,month=$("bMonth").value;
- if(!id||!month)return;
+ const id=$("bCustomer").value,month=$("bMonth").value;if(!id||!month)return;
  const m=month.slice(0,7)+"-01";
  try{
-  await syncBillBottles(Number(id),m);
-  await loadBillDeliveryHistory(Number(id),month.slice(0,7));
- }catch(e){msg("ڈلیوری سے بوتلوں کا حساب نہیں آیا: "+e.message);return}
- const {data,error}=await db.from("customer_monthly_bills").select("*").eq("customer_id",id).eq("bill_month",m).maybeSingle();
- if(error){msg(error.message);return}
- $("bBottles").value=data?.bottles_19l??0;$("bCaps").value=data?.damaged_caps??0;
- $("bPrev").value=data?.previous_balance??0;$("bPaid").value=data?.payments??0;$("bAdvance").value=data?.advance_used??0;
- calcBill();
-}
-
-function calcBill(){
- const bottles=Number($("bBottles").value)||0,caps=Number($("bCaps").value)||0,prev=Number($("bPrev").value)||0,paid=Number($("bPaid").value)||0,adv=Number($("bAdvance").value)||0;
- const bottleAmt=bottles*100,capAmt=caps*10,total=prev+bottleAmt+capAmt-paid-adv;
- $("bBottleAmt").textContent=money(bottleAmt);$("bCapAmt").textContent=money(capAmt);$("bDue").textContent=money(Math.max(0,total));
- return {bottles,caps,prev,paid,adv,bottleAmt,capAmt,total};
+  const b=await syncBillBottles(Number(id),m);
+  $("bBottles").textContent=b.bottles;$("bCaps").textContent=b.caps;
+  $("bBottleAmt").textContent=money(b.bottles*100);$("bCapAmt").textContent=money(b.caps*10);
+  $("bPrev").textContent=money(b.previousDue);$("bAdvance").textContent=money(Math.min(b.previousAdvance,Math.max(b.charges-b.previousDue,0)));
+  $("bPaid").textContent=money(b.netPayments);$("bDue").textContent=money(b.payable);
+  await Promise.all([loadBillDeliveryHistory(Number(id),month.slice(0,7)),loadPaymentHistory(Number(id),m)]);
+ }catch(e){msg("بل کا حساب مکمل نہیں ہوا: "+e.message)}
 }
 
 async function saveBill(){
- const id=$("bCustomer").value,month=$("bMonth").value;
- if(!id||!month){msg("گاہک اور مہینہ منتخب کریں۔");return}
- const c=calcBill();
- if([c.bottles,c.caps,c.prev,c.paid,c.adv].some(n=>n<0)){msg("منفی رقم درج نہیں ہوسکتی۔");return}
- if(!Number.isInteger(c.bottles)||!Number.isInteger(c.caps)){msg("بوتلوں اور ڈھکنوں کی تعداد مکمل عدد میں درج کریں۔");return}
- const r=await db.from("customer_monthly_bills").upsert({customer_id:Number(id),bill_month:month.slice(0,7)+"-01",bottles_19l:c.bottles,bottle_amount:c.bottleAmt,damaged_caps:c.caps,cap_amount:c.capAmt,previous_balance:c.prev,payments:c.paid,advance_used:c.adv,current_due:Math.max(0,c.total),closing_advance:Math.max(0,-c.total)},{onConflict:"customer_id,bill_month"});
- if(r.error){msg("بل محفوظ نہیں ہوا: "+r.error.message);return}
- msg("ماہانہ بل محفوظ ہوگیا۔",true);
+ const id=$("bCustomer").value,month=$("bMonth").value;if(!id||!month){msg("گاہک اور مہینہ منتخب کریں۔");return}
+ try{const result=await syncBillBottles(Number(id),selectedBillMonth());await loadSelectedBill();const month=selectedBillMonth();const {data:existing}=await db.from("customer_notifications").select("id").eq("customer_id",Number(id)).eq("reference_key",`bill:${month.slice(0,7)}`).limit(1);const notice={customer_id:Number(id),title:"ماہانہ بل تیار ہے",message:`السلام علیکم! ${month.slice(0,7)} کا بل تیار ہے۔ کامیاب بوتلیں: ${result.bottles}، خراب ڈھکن: ${result.caps}، قابل ادائیگی رقم: ${money(result.payable)}۔ MUGHAL'S PURE WATER کا شکریہ۔`,notification_type:"bill",reference_key:`bill:${month.slice(0,7)}`};const nr=existing?.length?await db.from("customer_notifications").update({message:notice.message,is_read:false,created_at:new Date().toISOString()}).eq("id",existing[0].id):await db.from("customer_notifications").insert(notice);if(nr.error){msg("بل محفوظ ہوگیا، مگر کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+nr.error.message);}else{msg("بل محفوظ ہوگیا اور کسٹمر کی اطلاع بھیج دی گئی۔",true)}}
+ catch(e){msg("بل محفوظ نہیں ہوا: "+e.message)}
+}
+
+async function recordCustomerPayment(){
+ const customerId=Number($("bCustomer").value),amount=Number($("paymentAmount").value),paymentDate=$("paymentDate").value,paymentType=$("paymentType").value;
+ if(!customerId||!paymentDate||!Number.isFinite(amount)||amount<=0){msg("گاہک، تاریخ اور صفر سے زیادہ رقم درج کریں۔");return}
+ if(!confirmLargeEntry("ادائیگی کی رقم (روپے)",amount,100000))return;
+ const {error}=await db.from("customer_payments").insert({customer_id:customerId,amount,payment_date:paymentDate,payment_type:paymentType,entered_by:user?.id||null});
+ if(error){msg("ادائیگی محفوظ نہیں ہوئی: "+error.message);return}
+ $("paymentAmount").value="";
+ try{
+  await syncBillBottles(customerId,paymentDate.slice(0,7)+"-01");
+  await loadSelectedBill();
+  msg("ادائیگی محفوظ ہوگئی اور متعلقہ مہینے کے بعد کے بل بھی دوبارہ حساب ہوگئے۔",true);
+ }catch(e){msg("ادائیگی محفوظ ہوگئی، مگر بل دوبارہ حساب نہیں ہوسکا: "+e.message)}
 }
 
 /* خام مال اور تیار مال */
@@ -533,6 +650,7 @@ async function stockModule(type){
 async function saveFinishedAdjustment(){
  const product=$("adjType").value,qty=Number($("adjQty").value),direction=$("adjDirection").value,reason=$("adjReason").value.trim();
  if(!Number.isInteger(qty)||qty<=0||!reason){msg("درست مقدار اور وجہ لازمی درج کریں۔");return}
+ if(!confirmLargeEntry("اسٹاک درستگی کی مقدار",qty,100))return;
  const r=await db.from("finished_stock_adjustments").insert({product_type:product,quantity:qty,adjustment_type:direction,adjustment_date:$("adjDate").value,reason,entered_by:user.id});
  if(r.error){msg("اسٹاک درستگی محفوظ نہیں ہوئی: "+r.error.message);return}
  msg("اسٹاک درستگی محفوظ ہوگئی۔",true);$("adjQty").value="";$("adjReason").value="";await loadStock("finished");await loadTodaySummary();
@@ -541,6 +659,7 @@ async function saveFinishedAdjustment(){
 async function saveStock(type){
  const raw=type==="raw",table=raw?"raw_material_stock":"finished_goods",product=$("sType").value,qty=Number($("sQty").value);
  if(!Number.isInteger(qty)||qty<=0){msg("کارٹن یا بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
+ if(!confirmLargeEntry(raw?"خام مال کے کارٹن":"تیار مال کی مقدار",qty,100))return;
  const payload=raw?{entry_date:$("sDate").value,product_type:product,cartons:qty,notes:$("sNote").value.trim()||null}:{entry_date:$("sDate").value,product_type:product,quantity:qty,unit:product==="6L"?"bottle":"carton",notes:$("sNote").value.trim()||null};
  const r=await db.from(table).insert(payload);
  if(r.error){msg("محفوظ نہیں ہوا: "+r.error.message);return}
@@ -556,24 +675,20 @@ async function loadStock(type){
    (data||[]).map(r=>`<tr><td>${esc(r.entry_date)}</td><td>${esc(r.product_type)}</td><td>${r.cartons}</td><td>کارٹن</td></tr>`).join("")+"</table>";
   return;
  }
- const [{data:sales,error:se},{data:adjustments,error:ae}]=await Promise.all([
-  db.from("product_sales").select("product_type,quantity,unit").limit(1000),
-  db.from("finished_stock_adjustments").select("product_type,quantity,adjustment_type,adjustment_date,reason").order("adjustment_date",{ascending:false}).limit(1000)
+ const [{data:summary,error:summaryError},{data:adjustments,error:ae},{data:production,error:pre}]=await Promise.all([
+  db.rpc("get_finished_stock_summary"),
+  db.from("finished_stock_adjustments").select("product_type,quantity,adjustment_type,adjustment_date,reason").order("adjustment_date",{ascending:false}).limit(1000),
+  db.from("production").select("production_date,product_type,quantity").order("production_date",{ascending:false}).limit(500)
  ]);
- if(se||ae){$("moduleTable").textContent="اسٹاک کا مکمل حساب لوڈ نہیں ہوا: "+(se||ae).message;return}
- const products=["500ml","1.5L","6L"];
- const summaries=products.map(product=>{
-  const unit=product==="6L"?"bottle":"carton";
-  const made=(data||[]).filter(r=>r.product_type===product&&r.unit===unit).reduce((n,r)=>n+(Number(r.quantity)||0),0);
-  const sold=(sales||[]).filter(r=>r.product_type===product&&r.unit===unit).reduce((n,r)=>n+(Number(r.quantity)||0),0);
-  const adj=(adjustments||[]).filter(r=>r.product_type===product).reduce((n,r)=>n+(r.adjustment_type==="increase"?1:r.adjustment_type==="decrease"?-1:0)*(Number(r.quantity)||0),0);
-  return `<tr><td>${product}</td><td>${made}</td><td>${sold}</td><td>${adj}</td><td><b>${made-sold+adj}</b></td><td>${unit==="bottle"?"بوتل":"کارٹن"}</td></tr>`;
- }).join("");
- $("moduleTable").innerHTML="<h3>موجودہ تیار مال کا خلاصہ</h3><table><tr><th>پروڈکٹ</th><th>تیار</th><th>فروخت</th><th>درستگی</th><th>باقی</th><th>یونٹ</th></tr>"+summaries+"</table>"+
- "<h3>تیار مال کی تازہ انٹریاں</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>یونٹ</th></tr>"+
+ if(summaryError||ae||pre){$("moduleTable").textContent="اسٹاک کا مکمل حساب لوڈ نہیں ہوا: "+(summaryError||ae||pre).message;return}
+ const summaries=(summary||[]).map(r=>`<tr><td>${esc(r.product_type)}</td><td>${Number(r.manual_stock)||0}</td><td>${Number(r.production_stock)||0}</td><td>${Number(r.sold_quantity)||0}</td><td>${Number(r.adjustment_quantity)||0}</td><td><b>${Number(r.available_quantity)||0}</b></td><td>${r.unit==="bottle"?"بوتل":"کارٹن"}</td></tr>`).join("");
+ $("moduleTable").innerHTML="<h3>موجودہ تیار مال کا خلاصہ</h3><table><tr><th>پروڈکٹ</th><th>دستی اسٹاک</th><th>پروڈکشن سے تیار</th><th>فروخت</th><th>درستگی</th><th>باقی</th><th>یونٹ</th></tr>"+summaries+"</table>"+
+ "<h3>دستی تیار مال کی تازہ انٹریاں</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>یونٹ</th></tr>"+
  (data||[]).map(r=>`<tr><td>${esc(r.entry_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity}</td><td>${esc(r.unit)}</td></tr>`).join("")+"</table>"+
+ "<h3>پروڈکشن کی تازہ انٹریاں</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>یونٹ</th></tr>"+
+ (production||[]).map(r=>`<tr><td>${esc(r.production_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity}</td><td>${r.product_type==="6L"?"بوتل":"کارٹن"}</td></tr>`).join("")+"</table>"+
  "<h3>اسٹاک درستگی کی ہسٹری</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>قسم</th><th>مقدار</th><th>وجہ</th></tr>"+
- (adjustments||[]).map(r=>`<tr><td>${esc(r.adjustment_date)}</td><td>${esc(r.product_type)}</td><td>${r.adjustment_type==="increase"?"اضافہ":r.adjustment_type==="decrease"?"کمی":"نامعلوم"}</td><td>${r.quantity}</td><td>${esc(r.reason)}</td></tr>`).join("")+"</table>";
+ (adjustments||[]).map(r=>`<tr><td>${esc(r.adjustment_date)}</td><td>${esc(r.product_type)}</td><td>${r.adjustment_type==="increase"?"اضافہ":"کمی"}</td><td>${r.quantity}</td><td>${esc(r.reason)}</td></tr>`).join("")+"</table>";
 }
 
 /* سیل / مال کا اخراج */
@@ -583,66 +698,50 @@ async function salesModule(){
  <input id="saleDate" type="date" value="${today()}">
  <select id="saleType" onchange="salePricePreview()">
  <option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
+ <select id="saleWorker"><option value="">کارٹن کی مزدوری نہیں (مالک کا کام)</option></select>
  <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview()">
- <label for="saleUnitPrice">فی کارٹن قیمت (کم از کم Rs.280)</label>
- <input id="saleUnitPrice" type="number" min="280" step="1" value="280" inputmode="decimal" oninput="salePricePreview()">
+ <input id="saleUnitPrice" type="number" min="280" step="1" value="280" placeholder="فی کارٹن قیمت (کم از کم 280)" oninput="salePricePreview()">
  <div class="stat">فی یونٹ قیمت: <b id="salePrice">Rs. 280</b></div>
  <div class="total">کل رقم: <span id="saleTotal">Rs. 0</span></div>
- <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ کم از کم Rs.280 فی کارٹن؛ ایڈمن اس سے زیادہ قیمت درج کر سکتا ہے۔ 6L بوتل Rs.55۔</p>
+ <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.280 فی کارٹن ہے؛ ایڈمن اس سے زیادہ قیمت درج کر سکتا ہے۔ 6L بوتل Rs.55۔</p>
  <button onclick="saveSale()">سیل محفوظ کریں</button>
  <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button>`;
  await loadSales();
+ const {data:workers}=await db.from("workers").select("id,full_name,is_owner").eq("is_active",true).contains("work_categories",["carton loading/unloading"]).order("full_name");
+ $("saleWorker").innerHTML=`<option value="">مالک / غیر منسوب</option>`+(workers||[]).map(w=>`<option value="${w.id}" data-owner="${w.is_owner===true}">${esc(w.is_owner?"Owner (مالک)":w.full_name)}</option>`).join("");
 }
 function getSaleCalc(){
  const type=$("saleType").value,qty=Number($("saleQty").value)||0;
- const entered=Number($("saleUnitPrice")?.value)||280;
- const price=type==="6L"?55:entered;
+ const price=type==="6L"?55:(Number($("saleUnitPrice").value)||0);
  return {type,qty,price,total:qty*price,unit:type==="6L"?"bottle":"carton"};
 }
 function salePricePreview(){
- const c=getSaleCalc();
- const priceInput=$("saleUnitPrice");
- const priceLabel=document.querySelector('label[for="saleUnitPrice"]');
- if(priceInput){priceInput.disabled=c.type==="6L";if(c.type==="6L")priceInput.value=55;else if(Number(priceInput.value)<280)priceInput.value=280;}
- if(priceLabel)priceLabel.textContent=c.type==="6L"?"6L فی بوتل قیمت (مقررہ Rs.55)":"فی کارٹن قیمت (کم از کم Rs.280)";
- $("salePrice").textContent=money(c.price);$("saleTotal").textContent=money(c.total);
+ const is6=$("saleType").value==="6L";
+ $("saleUnitPrice").disabled=is6;
+ if(is6)$("saleUnitPrice").value="55";
+ else if(Number($("saleUnitPrice").value)<280)$("saleUnitPrice").value="280";
+ const c=getSaleCalc();$("salePrice").textContent=money(c.price);$("saleTotal").textContent=money(c.total);
 }
 async function saveSale(){
  const c=getSaleCalc(),button=document.querySelector('button[onclick="saveSale()"]');
  if(!Number.isInteger(c.qty)||c.qty<=0){msg("کارٹن یا 6L بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
- if(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<280)){msg("500ml اور 1.5L کارٹن کی قیمت کم از کم Rs.280 ہونی چاہیے۔");return}
+ if(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<280)){msg("500ml اور 1.5L کی قیمت کم از کم 280 روپے فی کارٹن ہونی چاہیے۔");return}
+ if(!confirmLargeEntry("فروخت کی مقدار",c.qty,100))return;
  if(button)button.disabled=true;
  try{
-  const [{data:stock,error:e},{data:sold,error:se},{data:adjustments,error:ae}]=await Promise.all([
-   db.from("finished_goods").select("quantity,unit").eq("product_type",c.type).limit(1000),
-   db.from("product_sales").select("quantity,unit").eq("product_type",c.type).limit(1000),
-   db.from("finished_stock_adjustments").select("quantity,adjustment_type").eq("product_type",c.type).limit(1000)
-  ]);
-  if(e||se||ae)throw (e||se||ae);
-  const made=(stock||[]).filter(r=>r.unit===c.unit).reduce((s,r)=>s+(Number(r.quantity)||0),0);
-  const out=(sold||[]).filter(r=>r.unit===c.unit).reduce((s,r)=>s+(Number(r.quantity)||0),0);
-  const adj=(adjustments||[]).reduce((s,r)=>s+(r.adjustment_type==="increase"?1:r.adjustment_type==="decrease"?-1:0)*(Number(r.quantity)||0),0);
-  const available=made-out+adj;
-  if(c.qty>available){msg("تیار مال کا اسٹاک کم ہے۔ موجودہ دستیاب مقدار: "+Math.max(0,available));return}
-  const r=await db.rpc("record_product_sale",{
-   p_sale_date:$("saleDate").value,
+  const {data,error}=await db.rpc("record_product_sale",{
+   p_sale_date:$('saleDate').value,
    p_product_type:c.type,
    p_quantity:c.qty,
-   p_worker_id:null,
+   p_worker_id:c.type==="6L"?null:(Number($("saleWorker").value)||null),
    p_unit_price:c.price
   });
-  if(r.error)throw r.error;
-  const saleId=r.data?.sale_id;
-  if(c.type!=="6L"){
-   const labor=c.qty*10;
-   const er=await db.from("business_expenses").insert({expense_date:$("saleDate").value,category:"کارٹن تیار کرنے کی مزدوری",amount:labor,details:c.type+" کے "+c.qty+" کارٹن × Rs.10"});
-   if(er.error){
-    const rollback=saleId?await db.from("product_sales").delete().eq("id",saleId):{error:new Error("RPC sale id unavailable")};
-    if(rollback.error)throw new Error("سیل درج ہوگئی مگر مزدوری بھی محفوظ نہ ہوئی اور سیل واپس بھی نہ ہوسکی۔ سیل ID: "+(saleId||"نامعلوم")+"؛ مزدوری: "+er.error.message+"؛ واپسی: "+rollback.error.message);
-    throw new Error("مزدوری محفوظ نہ ہونے کی وجہ سے سیل انٹری واپس کردی گئی: "+er.error.message);
-   }
-  }
-  msg("سیل اور متعلقہ مزدوری محفوظ ہوگئی: "+money(c.total),true);await loadSales();await loadTodaySummary();
+  if(error)throw error;
+  if(!data||!data.sale_id)throw new Error("ڈیٹابیس سے سیل کی تصدیق موصول نہیں ہوئی۔");
+  const ownerSelected=$("saleWorker")?.selectedOptions?.[0]?.dataset.owner==="true";
+  msg("سیل محفوظ ہوگئی: "+money(data.total_amount)+(ownerSelected?"۔ مالک کی ممکنہ بچت: "+money(data.owner_saved_labor||0):(data.labor_amount?"۔ ورکر کی واجب الادا مزدوری: "+money(data.labor_amount):"۔ ورکر منتخب نہیں، اس لیے مزدوری درج نہیں ہوئی۔")),true);
+  $("saleQty").value="";salePricePreview();
+  await loadSales();await loadTodaySummary();
  }catch(e){msg("سیل محفوظ نہیں ہوئی: "+(e?.message||String(e)))}
  finally{if(button)button.disabled=false}
 }
@@ -669,6 +768,7 @@ async function moneyModule(type){
 async function saveMoney(type){
  const exp=type==="expenses",table=exp?"business_expenses":"business_income",amount=Number($("mAmount").value),category=$("mCategory").value.trim();
  if(!category||amount<=0){msg("مد اور درست رقم درج کریں۔");return}
+ if(!confirmLargeEntry("رقم (روپے)",amount,100000))return;
  const payload=exp?{expense_date:$("mDate").value,category,amount,details:$("mDetails").value.trim()||null}:{income_date:$("mDate").value,category,amount,details:$("mDetails").value.trim()||null};
  const r=await db.from(table).insert(payload);
  if(r.error){msg("محفوظ نہیں ہوا: "+r.error.message);return}
@@ -747,21 +847,206 @@ async function runReport(){
  }catch(e){msg("رپورٹ نہیں بنی: "+e.message)}
 }
 
+/* ورکرز: الگ لیجر، کام کی اقسام اور ادائیگیاں */
+async function workersModule(){
+ setTitle("ورکر لیجر");
+ $("moduleBody").innerHTML=`<div class="card"><h3>نیا ورکر</h3><input id="wName" placeholder="ورکر کا پورا نام"><input id="wMobile" placeholder="موبائل (اختیاری)"><label><input type="checkbox" id="wc19" style="width:auto;min-height:0"> 19L ڈیلیوری</label><label><input type="checkbox" id="wcCarton" style="width:auto;min-height:0"> کارٹن لوڈنگ / اَن لوڈنگ</label><label><input type="checkbox" id="wcClean" style="width:auto;min-height:0"> صفائی</label><label><input type="checkbox" id="wcProd" style="width:auto;min-height:0"> پروڈکشن</label><label><input type="checkbox" id="wcWash" style="width:auto;min-height:0"> بوتل دھلائی</label><button onclick="saveWorker()">ورکر محفوظ کریں</button></div><div class="card"><h3>ورکر کی ادائیگی / ایڈوانس</h3><input id="wlMonth" type="month" value="${today().slice(0,7)}" onchange="loadWorkers()"><select id="wlWorker"></select><input id="wlDate" type="date" value="${today()}"><select id="wlType"><option value="earning">اضافی کمائی درج کریں</option><option value="payment">اجرت ادا کی</option><option value="advance">ایڈوانس دیا</option><option value="deduction">کٹوتی</option></select><select id="wlCategory"><option value="19L delivery">19L ڈیلیوری</option><option value="carton loading/unloading">کارٹن لوڈنگ / اَن لوڈنگ</option><option value="cleaning">صفائی</option><option value="production">پروڈکشن</option><option value="bottle washing">بوتل دھلائی</option><option value="manual adjustment">دیگر / درستگی</option></select><input id="wlAmount" type="number" min="0.01" step="0.01" placeholder="رقم"><input id="wlNote" placeholder="تفصیل"><button onclick="saveWorkerEntry()">لیجر میں درج کریں</button></div><button class="secondary" onclick="loadWorkers()">فہرست تازہ کریں</button>`;
+ await loadWorkers();
+}
+async function loadWorkers(){
+ const {data,error}=await db.from("workers").select("id,full_name,mobile,work_categories,is_active,is_owner").order("full_name");if(error){msg("ورکرز لوڈ نہیں ہوئے: "+error.message);return;}
+ const sel=$("wlWorker");if(sel)sel.innerHTML='<option value="">ورکر منتخب کریں</option>'+(data||[]).filter(w=>w.is_active&&!w.is_owner).map(w=>`<option value="${w.id}">${esc(w.full_name)}</option>`).join("");
+ const wageWorkers=(data||[]).filter(w=>!w.is_owner);const ids=wageWorkers.map(w=>w.id);let entries=[];const month=$("wlMonth")?.value||today().slice(0,7);const start=month+"-01";const endDate=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),1);const end=endDate.getFullYear()+"-"+String(endDate.getMonth()+1).padStart(2,"0")+"-01";if(ids.length){let offset=0;while(true){const r=await db.from("worker_ledger").select("id,worker_id,entry_type,amount,entry_date,work_category,note").in("worker_id",ids).lt("entry_date",end).order("entry_date",{ascending:true}).order("id",{ascending:true}).range(offset,offset+999);if(r.error){msg("لیجر لوڈ نہیں ہوا: "+r.error.message);return;}const page=r.data||[];entries.push(...page);if(page.length<1000)break;offset+=1000;}}
+ const catLabels={"19L delivery":"19L ڈیلیوری","carton loading/unloading":"کارٹن","cleaning":"صفائی","production":"پروڈکشن","bottle washing":"بوتل دھلائی"};
+ const typeLabels={earning:"کمائی",payment:"ادائیگی",advance:"ایڈوانس",deduction:"کٹوتی",adjustment:"درستگی"};
+ const rows=wageWorkers.map(w=>{const es=entries.filter(e=>e.worker_id===w.id);const before=es.filter(e=>e.entry_date<start);const current=es.filter(e=>e.entry_date>=start);const opening=before.reduce((n,e)=>n+(e.entry_type==="earning"?Number(e.amount):-Number(e.amount)),0);const earned=current.filter(e=>e.entry_type==="earning").reduce((n,e)=>n+Number(e.amount),0);const out=current.filter(e=>e.entry_type!=="earning").reduce((n,e)=>n+Number(e.amount),0);return `<tr><td>${esc(w.full_name)}</td><td>${esc((w.work_categories||[]).map(c=>catLabels[c]||c).join(", "))}</td><td>${money(opening)}</td><td>${money(earned)}</td><td>${money(out)}</td><td><b>${money(opening+earned-out)}</b></td></tr>`}).join("");
+ const details=entries.filter(e=>e.entry_date>=start).map(e=>`<tr><td>${esc(e.entry_date)}</td><td>${esc((data||[]).find(w=>w.id===e.worker_id)?.full_name||"")}</td><td>${esc(catLabels[e.work_category]||e.work_category)}</td><td>${typeLabels[e.entry_type]||esc(e.entry_type)}</td><td>${money(e.amount)}</td><td>${esc(e.note||"")}</td></tr>`).join("");
+ $("moduleTable").innerHTML=`<h3>${esc(month)} کا لیجر</h3>`+'<table><tr><th>ورکر</th><th>کام</th><th>پچھلا بقایا</th><th>اس ماہ کمائی</th><th>ادائیگی/ایڈوانس/کٹوتی</th><th>اختتامی بقایا</th></tr>'+rows+'</table><h3>اس ماہ کی تفصیلی انٹریاں</h3><table><tr><th>تاریخ</th><th>ورکر</th><th>کام</th><th>قسم</th><th>رقم</th><th>تفصیل</th></tr>'+details+'</table>';
+}
+async function saveWorker(){
+ const name=$("wName").value.trim();if(!name){msg("ورکر کا نام درج کریں۔");return;}
+ const cats=[];if($("wc19").checked)cats.push("19L delivery");if($("wcCarton").checked)cats.push("carton loading/unloading");if($("wcClean").checked)cats.push("cleaning");if($("wcProd").checked)cats.push("production");if($("wcWash").checked)cats.push("bottle washing");if(!cats.length){msg("کم از کم ایک کام منتخب کریں۔");return;}
+ const {error}=await db.from("workers").insert({full_name:name,mobile:$("wMobile").value.trim()||null,work_categories:cats});if(error){msg("ورکر محفوظ نہیں ہوا: "+error.message);return;}msg("ورکر محفوظ ہوگیا۔",true);$("wName").value="";$("wMobile").value="";await loadWorkers();
+}
+async function saveWorkerEntry(){
+ const workerId=Number($("wlWorker").value),amount=Number($("wlAmount").value),type=$("wlType").value;if(!workerId||!Number.isFinite(amount)||amount<=0){msg("ورکر اور درست رقم درج کریں۔");return;}
+ const {error}=await db.from("worker_ledger").insert({worker_id:workerId,entry_date:$("wlDate").value,entry_type:type,work_category:$("wlCategory").value,amount,note:$("wlNote").value.trim()||null,entered_by:user?.id||null});if(error){msg("لیجر انٹری محفوظ نہیں ہوئی: "+error.message);return;}msg("ورکر کی انٹری محفوظ ہوگئی۔",true);$("wlAmount").value="";$("wlNote").value="";await loadWorkers();
+}
+
+/* صفائی، پروڈکشن اور بوتل دھلائی */
+async function laborModule(){
+ setTitle("صفائی، پروڈکشن اور بوتل دھلائی");
+ const {data:workers,error}=await db.from("workers").select("id,full_name,work_categories,is_owner").eq("is_active",true).order("full_name");
+ if(error){msg("ورکرز لوڈ نہیں ہوئے: "+error.message);return;}
+ window.productionWorkers=(workers||[]).filter(w=>w.is_owner||(w.work_categories||[]).includes("production"));
+ const options=(category)=>'<option value="">مالک / بغیر ورکر</option>'+(workers||[]).filter(w=>(w.work_categories||[]).includes(category)).map(w=>`<option value="${w.id}">${esc(w.full_name)}</option>`).join("");
+ $("moduleBody").innerHTML=`
+ <div class="card"><h3>صفائی کی مزدوری</h3>
+ <input id="cleanDate" type="date" value="${today()}">
+ <select id="cleanWorker">${options("cleaning")}</select>
+ <input id="cleanAmount" type="number" min="0.01" step="0.01" placeholder="مزدوری کی رقم (روپے)">
+ <input id="cleanNote" maxlength="250" placeholder="تفصیل (اختیاری)">
+ <button onclick="saveCleaningLabor()">صفائی کا ریکارڈ محفوظ کریں</button></div>
+  <div class="card"><h3>پروڈکشن</h3>
+  <input id="prodDate" type="date" value="${today()}">
+  <select id="prodType" onchange="updateProductionRatePreview()"><option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
+  <input id="prodQty" type="number" min="1" step="1" placeholder="کل تیار شدہ کارٹن / بوتلیں" oninput="updateProductionAllocationTotal()">
+  <div class="stat">مقررہ مزدوری: <b id="prodRateDisplay">Rs. 10 فی کارٹن</b></div>
+  <div id="prodAllocationSection">
+   <h3>مالک اور ہر مزدور کے تیار کردہ کارٹن</h3>
+   <p class="muted">مالک اور ہر مزدور کے سامنے صرف اسی کے بنائے ہوئے کارٹن درج کریں۔ سب کی تعداد کا مجموعہ کل پروڈکشن کے برابر ہونا چاہیے۔ مزدور کو Rs.10 فی کارٹن اجرت؛ مالک کے حصے کو الگ ممکنہ بچت سمجھا جائے گا۔</p>
+   <div id="prodAllocations"></div>
+   <button type="button" class="secondary" onclick="addProductionWorkerRow()">+ ایک اور مزدور شامل کریں</button>
+   <div class="stat">کل تقسیم شدہ کارٹن: <b id="prodAllocatedQty">0</b> / <span id="prodTotalQty">0</span><br>مزدوروں کی اجرت: <b id="prodAllocatedWage">Rs. 0</b><br>مالک کی ممکنہ بچت: <b id="prodOwnerSaving">Rs. 0</b></div>
+  </div>
+  <p id="prod6LNote" class="muted hidden">6L کی پروڈکشن پر مزدوری صفر ہے۔</p>
+  <p class="muted">500ml اور 1.5L: Rs.10 فی تیار کارٹن۔ 6L: پروڈکشن مزدوری صفر۔ ورکر منتخب نہ ہو تو کسی ورکر کے لیجر میں رقم درج نہیں ہوگی۔</p>
+  <button onclick="saveProduction()">پروڈکشن محفوظ کریں</button></div>
+ <div class="card"><h3>بوتل دھلائی کی مزدوری</h3>
+ <input id="washDate" type="date" value="${today()}">
+ <select id="washWorker">${options("bottle washing")}</select>
+ <input id="washAmount" type="number" min="0.01" step="0.01" placeholder="مزدوری کی رقم (روپے)">
+ <input id="washNote" maxlength="250" placeholder="تفصیل (اختیاری)">
+ <button onclick="saveWashingLabor()">دھلائی کی مزدوری درج کریں</button></div>
+ <button class="secondary" onclick="loadLaborHistory()">ریکارڈ تازہ کریں</button>`;
+ addProductionWorkerRow();
+ updateProductionAllocationTotal();
+ await loadLaborHistory();
+}
+async function saveCleaningLabor(){
+ const worker=Number($("cleanWorker").value)||null,amount=Number($("cleanAmount").value),date=$("cleanDate").value;
+ if(!date||!Number.isFinite(amount)||amount<=0){msg("تاریخ اور درست مزدوری درج کریں۔");return;}
+ const {error}=await db.from("daily_cleaning_labor").insert({labor_date:date,worker_name:worker?($("cleanWorker").selectedOptions[0]?.textContent||""):"مالک",worker_id:worker,amount,note:$("cleanNote").value.trim()||null});
+ if(error){msg("صفائی محفوظ نہیں ہوئی: "+error.message);return;}msg("صفائی کا ریکارڈ محفوظ ہوگیا۔",true);$("cleanAmount").value="";$("cleanNote").value="";await loadLaborHistory();
+}
+function productionRate(productType){return productType==="6L"?0:10;}
+function updateProductionRatePreview(){
+ const type=$("prodType").value,rate=productionRate(type),is6L=type==="6L";
+ $("prodRateDisplay").textContent=is6L?"Rs. 0 (6L پر مزدوری نہیں)":"Rs. 10 فی کارٹن";
+ $("prodAllocationSection").classList.toggle("hidden",is6L);
+ $("prod6LNote").classList.toggle("hidden",!is6L);
+ if(is6L){$("prodAllocations").innerHTML="";}
+ else if(!$("prodAllocations").children.length){addProductionWorkerRow();}
+ updateProductionAllocationTotal();
+}
+function addProductionWorkerRow(){
+ const box=$("prodAllocations");if(!box)return;
+ const opts='<option value="">ورکر منتخب کریں</option>'+(window.productionWorkers||[]).map(w=>`<option value="${w.id}" data-owner="${w.is_owner===true}">${esc(w.is_owner?"Owner (مالک)":w.full_name)}</option>`).join("");
+ const row=document.createElement("div");row.className="prodAllocRow grid";row.style.cssText="grid-template-columns:minmax(0,1.2fr) minmax(90px,.8fr) auto;gap:6px;align-items:center;margin:8px 0";
+ row.innerHTML=`<select class="prodWorkerSelect" aria-label="مزدور">${opts}</select><input class="prodWorkerCartons" type="number" min="1" step="1" placeholder="کارٹن" aria-label="اس مزدور کے کارٹن"><button type="button" class="secondary" style="width:auto;padding:8px 12px" aria-label="مزدور ہٹائیں" onclick="this.closest('.prodAllocRow').remove();updateProductionAllocationTotal()">×</button>`;
+ row.querySelector(".prodWorkerSelect").addEventListener("change",updateProductionAllocationTotal);
+ row.querySelector(".prodWorkerCartons").addEventListener("input",updateProductionAllocationTotal);
+ box.appendChild(row);updateProductionAllocationTotal();
+}
+function updateProductionAllocationTotal(){
+ const qty=Number($("prodQty")?.value)||0;
+ const rows=[...document.querySelectorAll("#prodAllocations .prodAllocRow")];
+ const total=rows.reduce((n,r)=>n+(Number(r.querySelector(".prodWorkerCartons").value)||0),0);
+ const ownerTotal=rows.filter(r=>r.querySelector(".prodWorkerSelect").selectedOptions[0]?.dataset.owner==="true").reduce((n,r)=>n+(Number(r.querySelector(".prodWorkerCartons").value)||0),0);
+ if($("prodAllocatedQty"))$("prodAllocatedQty").textContent=String(total);
+ if($("prodTotalQty"))$("prodTotalQty").textContent=String(qty);
+ if($("prodAllocatedWage"))$("prodAllocatedWage").textContent=money((total-ownerTotal)*productionRate($("prodType").value));
+ if($("prodOwnerSaving"))$("prodOwnerSaving").textContent=money(ownerTotal*productionRate($("prodType").value));
+}
+async function saveProduction(){
+ const productType=$("prodType").value,qty=Number($("prodQty").value),date=$("prodDate").value;
+ if(!date||!Number.isInteger(qty)||qty<=0){msg("تاریخ اور مکمل مقدار درج کریں۔");return;}
+ const allocations=[];
+ if(productType!=="6L"){
+  const seen=new Set();let invalid=false;
+  document.querySelectorAll("#prodAllocations .prodAllocRow").forEach(row=>{
+   const workerId=Number(row.querySelector(".prodWorkerSelect").value)||null;
+   const cartons=Number(row.querySelector(".prodWorkerCartons").value)||0;
+   if(!workerId&&!cartons)return;
+   if(!workerId||!Number.isInteger(cartons)||cartons<=0){invalid=true;return;}
+   if(seen.has(workerId)){invalid=true;return;}seen.add(workerId);
+   allocations.push({worker_id:workerId,cartons});
+  });
+  if(invalid){msg("ہر درج شدہ مزدور کے لیے الگ ورکر اور درست کارٹن تعداد درج کریں۔ ایک ورکر کو دو بار شامل نہ کریں۔");return;}
+  if(!allocations.length){msg("500ml اور 1.5L کی پوری پروڈکشن مالک اور/یا مزدوروں میں تقسیم کریں۔ مالک کے کارٹن بھی الگ درج کریں۔");return;}
+  if(allocations.reduce((n,a)=>n+a.cartons,0)!==qty){msg("مالک اور مزدوروں کے کارٹنوں کا مجموعہ کل تیار شدہ مقدار کے بالکل برابر ہونا ضروری ہے۔");return;}
+ }
+ const button=document.querySelector('button[onclick="saveProduction()"]');if(button)button.disabled=true;
+ try{
+  const {data,error}=await db.rpc("record_production_with_workers",{p_production_date:date,p_product_type:productType,p_quantity:qty,p_allocations:allocations});
+  if(error)throw error;
+  if(!data||!data.production_id)throw new Error("ڈیٹابیس سے پروڈکشن کی تصدیق موصول نہیں ہوئی۔");
+  msg("پروڈکشن محفوظ ہوگئی۔ مزدوروں کی واجب الادا اجرت: "+money(data.worker_labor_total)+"۔ مالک کی ممکنہ بچت: "+money(data.owner_saved_labor||0)+"۔ مالک کے کارٹن: "+(data.owner_cartons||0),true);
+  $("prodQty").value="";$("prodAllocations").innerHTML="";if(productType!=="6L")addProductionWorkerRow();updateProductionAllocationTotal();await loadLaborHistory();
+ }catch(e){msg("پروڈکشن محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
+}
+async function saveWashingLabor(){
+ const worker=Number($("washWorker").value),amount=Number($("washAmount").value),date=$("washDate").value,note=$("washNote").value.trim();
+ if(!worker){msg("بوتل دھلائی کے لیے متعلقہ ورکر منتخب کریں۔");return;}
+ if(!date||!Number.isFinite(amount)||amount<=0){msg("تاریخ اور درست مزدوری درج کریں۔");return;}
+ const {error}=await db.from("worker_ledger").insert({worker_id:worker,entry_date:date,entry_type:"earning",work_category:"bottle washing",amount,note:note||"بوتل دھلائی کی مزدوری",entered_by:user?.id||null});
+ if(error){msg("دھلائی کی مزدوری محفوظ نہیں ہوئی: "+error.message);return;}msg("دھلائی کی مزدوری لیجر میں محفوظ ہوگئی۔",true);$("washAmount").value="";$("washNote").value="";await loadLaborHistory();
+}
+async function loadLaborHistory(){
+ const [{data:clean,error:ce},{data:prod,error:pe},{data:ledger,error:le},{data:workers,error:we},{data:allocations,error:ae},{data:ownerSummary,error:oe}]=await Promise.all([
+  db.from("daily_cleaning_labor").select("id,labor_date,worker_name,worker_id,amount,note").order("labor_date",{ascending:false}).limit(100),
+  db.from("production").select("id,production_date,product_type,quantity,labor_rate,labor_amount,worker_id").order("production_date",{ascending:false}).limit(100),
+  db.from("worker_ledger").select("id,worker_id,entry_date,amount,note").eq("work_category","bottle washing").order("entry_date",{ascending:false}).limit(100),
+  db.from("workers").select("id,full_name,is_owner"),
+  db.from("production_worker_allocations").select("id,production_id,worker_id,cartons,labor_amount").order("id").limit(1000),
+  db.rpc("get_owner_work_summary")
+ ]);
+ if(ce||pe||le||we||ae||oe){$("moduleTable").textContent="ریکارڈ لوڈ نہیں ہوئے: "+(ce||pe||le||we||ae||oe).message;return;}
+ const person=id=>(workers||[]).find(w=>Number(w.id)===Number(id));
+ const name=id=>{const w=person(id);return w?.is_owner?"Owner (مالک)":w?.full_name||"مالک / غیر منسلک";};
+ const os=ownerSummary||{};
+ $("moduleTable").innerHTML=`<h3>مالک کے کام کی الگ رپورٹ</h3><div class="stat">مالک کے پروڈکشن کارٹن: <b>${Number(os.production_cartons)||0}</b> — ممکنہ بچت: <b>${money(os.production_saving||0)}</b></div><div class="stat">مالک کی کامیاب 19L ڈیلیوریاں: <b>${Number(os.delivery_bottles)||0}</b> — ممکنہ بچت: <b>${money(os.delivery_saving||0)}</b></div><div class="stat">مالک کے سیل/کارٹن کام: <b>${Number(os.sales_cartons)||0}</b> — ممکنہ بچت: <b>${money(os.sales_saving||0)}</b></div><div class="stat">کل ممکنہ بچت: <b>${money(os.total_saving||0)}</b></div>`+'<h3>صفائی</h3><table><tr><th>تاریخ</th><th>ورکر</th><th>رقم</th><th>تفصیل</th></tr>'+(clean||[]).map(r=>`<tr><td>${esc(r.labor_date)}</td><td>${esc(r.worker_name||name(r.worker_id))}</td><td>${money(r.amount)}</td><td>${esc(r.note||"")}</td></tr>`).join("")+'</table><h3>پروڈکشن</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>شرح</th><th>مزدوروں کی واجب الادا اجرت</th><th>مالک کی ممکنہ بچت</th><th>تقسیم</th></tr>'+(prod||[]).map(r=>{const parts=(allocations||[]).filter(a=>Number(a.production_id)===Number(r.id));const ownerCartons=parts.filter(a=>person(a.worker_id)?.is_owner).reduce((n,a)=>n+Number(a.cartons),0);const ownerSaving=ownerCartons*productionRate(r.product_type);const split=parts.length?parts.map(a=>`${esc(name(a.worker_id))}: ${a.cartons} کارٹن`).join("، "):r.worker_id?`${esc(name(r.worker_id))} (پرانا ریکارڈ)`:"کوئی تقسیم درج نہیں";return `<tr><td>${esc(r.production_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity}</td><td>${money(r.labor_rate)}</td><td>${money(r.labor_amount)}</td><td>${money(ownerSaving)}</td><td>${split}</td></tr>`}).join("")+'</table><h3>بوتل دھلائی</h3><table><tr><th>تاریخ</th><th>ورکر</th><th>رقم</th><th>تفصیل</th></tr>'+(ledger||[]).map(r=>`<tr><td>${esc(r.entry_date)}</td><td>${esc(name(r.worker_id))}</td><td>${money(r.amount)}</td><td>${esc(r.note||"")}</td></tr>`).join("")+'</table>';
+}
+
+/* شکایات */
+async function complaintsModule(){
+ setTitle("کسٹمر شکایات");
+ $("moduleBody").innerHTML='<p class="muted">کسٹمر کی شکایات اور ان کی پیش رفت۔</p><button class="secondary" onclick="loadComplaints()">فہرست تازہ کریں</button>';
+ await loadComplaints();
+}
+async function loadComplaints(){
+ const {data,error}=await db.from("customer_complaints").select("id,customer_id,category,details,status,admin_note,created_at,customers(name,customer_code)").order("created_at",{ascending:false}).limit(100);
+ if(error){$("moduleTable").textContent="شکایات لوڈ نہیں ہوئیں: "+error.message;return;}
+ const labels={new:"نئی",in_progress:"جاری",resolved:"حل ہوگئی"};
+ $("moduleTable").innerHTML='<table><tr><th>کسٹمر</th><th>قسم</th><th>تفصیل</th><th>حیثیت</th><th>اپڈیٹ</th></tr>'+(data||[]).map(c=>`<tr><td>${esc(c.customers?.name||c.customer_id)}</td><td>${esc(c.category)}</td><td>${esc(c.details)}</td><td>${labels[c.status]||c.status}</td><td><select id="cs${c.id}"><option value="new" ${c.status==='new'?'selected':''}>نئی</option><option value="in_progress" ${c.status==='in_progress'?'selected':''}>جاری</option><option value="resolved" ${c.status==='resolved'?'selected':''}>حل ہوگئی</option></select><button onclick="updateComplaint(${c.id})">محفوظ</button></td></tr>`).join("")+'</table>';
+}
+async function updateComplaint(id){const status=$("cs"+id).value;const {data:complaint}=await db.from("customer_complaints").select("customer_id,category").eq("id",id).maybeSingle();const {error}=await db.from("customer_complaints").update({status,updated_at:new Date().toISOString()}).eq("id",id);if(!error&&complaint){await db.from("customer_notifications").insert({customer_id:complaint.customer_id,title:"آپ کی شکایت کی تازہ کاری",message:`آپ کی شکایت (${complaint.category}) کی حیثیت اپڈیٹ ہوگئی ہے: ${status==="resolved"?"حل ہوگئی":status==="in_progress"?"زیرِ کارروائی":"موصول"}۔`,notification_type:"complaint"});}if(error){msg("شکایت اپڈیٹ نہیں ہوئی: "+error.message);return;}msg("شکایت کی حیثیت اپڈیٹ ہوگئی۔",true);await loadComplaints();}
+async function submitComplaint(){const category=$("complaintCategory").value,details=$("complaintDetails").value.trim();if(!details){$("myComplaints").textContent="براہ کرم مسئلے کی تفصیل لکھیں۔";return;}const {error}=await db.from("customer_complaints").insert({customer_id:myCustomer.id,category,details});if(error){$("myComplaints").textContent="شکایت محفوظ نہیں ہوئی: "+error.message;return;}$("complaintDetails").value="";await loadCustomerComplaints();}
+async function loadCustomerComplaints(){const {data,error}=await db.from("customer_complaints").select("category,details,status,created_at,admin_note").eq("customer_id",myCustomer.id).order("created_at",{ascending:false});if(error){$("myComplaints").textContent="شکایات لوڈ نہیں ہوئیں";return;}const labels={new:"موصول",in_progress:"زیرِ کارروائی",resolved:"حل ہوگئی"};$("myComplaints").innerHTML=(data||[]).map(c=>`<div class="stat"><b>${esc(c.category)}</b> — ${labels[c.status]||c.status}<p>${esc(c.details)}</p><small>${esc(c.admin_note||"")}</small></div>`).join("")||"ابھی کوئی شکایت درج نہیں۔";}
+async function loadCustomerNotifications(){const {data,error}=await db.from("customer_notifications").select("id,title,message,is_read,created_at").eq("customer_id",myCustomer.id).order("created_at",{ascending:false}).limit(30);if(error){$("myNotifications").textContent="اطلاعات لوڈ نہیں ہوئیں";return;}$("myNotifications").innerHTML=(data||[]).map(n=>`<div class="stat"><b>${esc(n.title)}</b><p>${esc(n.message)}</p><small>${esc(n.created_at)}</small>${!n.is_read?`<button class="secondary" onclick="markNotificationRead(${n.id})">پڑھ لیا</button>`:""}</div>`).join("")||"ابھی کوئی نئی اطلاع نہیں۔";}
+async function markNotificationRead(id){const {error}=await db.rpc("mark_customer_notification_read",{p_notification_id:id});if(!error)await loadCustomerNotifications();}
+
+async function auditModule(){
+ setTitle("سکیورٹی / آڈٹ لاگ");
+ const {data,error}=await db.from("audit_log").select("changed_at,table_name,record_id,action,changed_by").order("changed_at",{ascending:false}).limit(100);
+ if(error){$("moduleTable").textContent="آڈٹ لاگ لوڈ نہیں ہوا: "+error.message;return;}
+ $("moduleTable").innerHTML='<table><tr><th>وقت</th><th>ٹیبل</th><th>ریکارڈ</th><th>عمل</th><th>صارف</th></tr>'+(data||[]).map(r=>`<tr><td>${esc(r.changed_at)}</td><td>${esc(r.table_name)}</td><td>${esc(r.record_id)}</td><td>${esc(r.action)}</td><td>${esc(r.changed_by||"")}</td></tr>`).join("")+'</table>';
+}
+
 /* گاہک کو صرف اس کا اپنا اکاؤنٹ دکھائیں */
 async function loadCustomerPanel(){
+ $("complaintForm").innerHTML=`<select id="complaintCategory"><option>پانی کے معیار کا مسئلہ</option><option>بوتل کا مسئلہ</option><option>ڈیلیوری میں تاخیر</option><option>بل میں غلطی</option><option>دیگر</option></select><textarea id="complaintDetails" rows="3" placeholder="اپنا مسئلہ تفصیل سے لکھیں"></textarea><button onclick="submitComplaint()">شکایت جمع کریں</button>`;
+ await Promise.all([loadCustomerNotifications(),loadCustomerComplaints()]);
  $("myAccount").innerHTML=`<p>نام: <b>${esc(myCustomer.name)}</b></p>
  <p>Customer ID: <b>${esc(myCustomer.customer_code)}</b></p>
  <p>موبائل: ${esc(myCustomer.mobile||"درج نہیں")}</p>
  <p>پتہ: ${esc(myCustomer.address||"درج نہیں")}</p>`;
- const {data:b,error}=await db.from("customer_monthly_bills").select("*").eq("customer_id",myCustomer.id).order("bill_month",{ascending:false}).limit(1);
+ const {data:b,error}=await db.from("customer_monthly_bills").select("*").eq("customer_id",myCustomer.id).order("bill_month",{ascending:false});
+ $("myBillHistory").innerHTML=error?"بل ہسٹری لوڈ نہیں ہوئی":(b||[]).map(x=>`<div class="stat"><b>${esc(x.bill_month)}</b><p>بوتلیں: ${x.bottles_19l||0} | خراب ڈھکن: ${x.damaged_caps||0}</p><p>بل: ${money((Number(x.bottle_amount)||0)+(Number(x.cap_amount)||0))} | ادائیگی: ${money(x.payments)}</p><b>بقایا: ${money(x.current_due)}</b></div>`).join("")||"ابھی بل ہسٹری موجود نہیں۔";
  $("myBill").innerHTML=error?"بل لوڈ نہیں ہوا":!b?.length?"ابھی بل موجود نہیں":`<p>مہینہ: ${esc(b[0].bill_month)}</p><p>19L بوتلیں: ${b[0].bottles_19l||0}</p><p>بوتل رقم: ${money(b[0].bottle_amount)}</p><p>خراب Caps: ${b[0].damaged_caps||0}</p><p>پچھلا بقایا: ${money(b[0].previous_balance)}</p><p>وصول شدہ رقم: ${money(b[0].payments)}</p><h3>قابل ادائیگی: ${money(b[0].current_due)}</h3>`;
+ const {data:payments,error:pe}=await db.from("customer_payments").select("payment_date,amount,payment_type").eq("customer_id",myCustomer.id).order("payment_date",{ascending:false}).limit(50);
+ $("myPayments").innerHTML=pe?"ادائیگی ہسٹری لوڈ نہیں ہوئی":(payments||[]).map(r=>`<div class="stat">${esc(r.payment_date)} — ${esc(r.payment_type)} — ${money(r.amount)}</div>`).join("")||"ابھی کوئی ادائیگی درج نہیں۔";
  const {data:d,error:de}=await db.from("customer_19l_deliveries").select("*").eq("customer_id",myCustomer.id).order("delivery_date",{ascending:false}).limit(30);
  $("myDeliveries").innerHTML=de?"ڈلیوری لوڈ نہیں ہوئی":`<table><tr><th>تاریخ</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>بوتل رقم</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th></tr>${(d||[]).map(r=>`<tr><td>${esc(r.delivery_date)}</td><td>${r.bottles_delivered}</td><td>${r.empty_bottles_returned}</td><td>${Number(r.successful_bottles)||0}</td><td>${money((Number(r.successful_bottles)||0)*100)}</td><td>${r.bottle_difference}</td><td>${Number(r.damaged_caps)||0}</td><td>${money((Number(r.damaged_caps)||0)*10)}</td></tr>`).join("")}</table>`;
 }
 </script>
 <script>
-if ('serviceWorker' in navigator) {
- window.addEventListener('load',()=>navigator.serviceWorker.register('./SW.js').catch(err=>console.warn('Service worker registration failed',err)));
+// PWA service worker is available only on HTTPS or localhost (not file://).
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+ window.addEventListener("load", () => {
+  navigator.serviceWorker.register("./SW.js").catch(err => console.error("PWA setup:", err));
+ }, {once:true});
 }
 </script>
 </body>
