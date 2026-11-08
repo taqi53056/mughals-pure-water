@@ -85,6 +85,39 @@ try {
     await page.locator('button[onclick="showLogin()"]').click();
     await page.locator("#loginForm").waitFor({ state: "visible" });
 
+    const deliveryMath = await page.evaluate(() => {
+      const fixture = document.createElement("div");
+      fixture.innerHTML = `
+        <select id="dWorker">
+          <option value="">No worker</option>
+          <option value="2" data-owner="false" selected>Worker</option>
+          <option value="1" data-owner="true">Owner</option>
+        </select>
+        <input id="dOut"><input id="dBack"><input id="dCaps">
+        <b id="dSuccess"></b><b id="dDiff"></b><b id="dLabor"></b>
+        <b id="dOwnerSaving"></b><b id="dCapAmount"></b><div id="dWarn"></div>
+      `;
+      document.body.appendChild(fixture);
+      document.querySelector("#dOut").value = "12";
+      document.querySelector("#dBack").value = "10";
+      document.querySelector("#dCaps").value = "2";
+      const worker = window.calcDelivery();
+      document.querySelector("#dWorker").value = "1";
+      const owner = window.calcDelivery();
+      document.querySelector("#dBack").value = "13";
+      const invalid = window.calcDelivery();
+      fixture.remove();
+      return { worker, owner, invalid };
+    });
+    if (deliveryMath.worker.success !== 10 || deliveryMath.worker.diff !== 2 ||
+        deliveryMath.worker.labor !== 200 || deliveryMath.worker.capAmount !== 20) {
+      failures.push("19L worker delivery calculation is incorrect");
+    }
+    if (deliveryMath.owner.labor !== 0 || deliveryMath.owner.ownerSaving !== 200) {
+      failures.push("19L owner labor saving calculation is incorrect");
+    }
+    if (!deliveryMath.invalid.invalid) failures.push("19L returned-bottles validation is incorrect");
+
     await page.close();
   }
 } finally {
