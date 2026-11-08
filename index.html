@@ -90,6 +90,7 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 <div class="tile yellow" onclick="openModule('labor')">صفائی / پروڈکشن / دھلائی</div>
 <div class="tile red" onclick="openModule('complaints')">کسٹمر شکایات</div>
 <div class="tile gray" onclick="openModule('audit')">سکیورٹی / آڈٹ لاگ</div>
+<div class="tile teal" onclick="openModule('settings')">ترتیبات / کنٹرول سینٹر</div>
 </div>
 
 <div id="dashboard" class="card">
@@ -303,6 +304,7 @@ async function openModule(name){
  if(name==="labor")return laborModule();
  if(name==="complaints")return complaintsModule();
  if(name==="audit")return auditModule();
+ if(name==="settings")return settingsModule();
 }
 
 /* گاہک */
@@ -1002,16 +1004,16 @@ async function loadLaborHistory(){
 /* شکایات */
 async function complaintsModule(){
  setTitle("کسٹمر شکایات");
- $("moduleBody").innerHTML='<p class="muted">کسٹمر کی شکایات اور ان کی پیش رفت۔</p><button class="secondary" onclick="loadComplaints()">فہرست تازہ کریں</button>';
+ $("moduleBody").innerHTML='<p class="muted">کسٹمر کی شکایات، منتظم کا جواب اور پیش رفت۔</p><button class="secondary" onclick="loadComplaints()">فہرست تازہ کریں</button>';
  await loadComplaints();
 }
 async function loadComplaints(){
  const {data,error}=await db.from("customer_complaints").select("id,customer_id,category,details,status,admin_note,created_at,customers(name,customer_code)").order("created_at",{ascending:false}).limit(100);
  if(error){$("moduleTable").textContent="شکایات لوڈ نہیں ہوئیں: "+error.message;return;}
  const labels={new:"نئی",in_progress:"جاری",resolved:"حل ہوگئی"};
- $("moduleTable").innerHTML='<table><tr><th>کسٹمر</th><th>قسم</th><th>تفصیل</th><th>حیثیت</th><th>اپڈیٹ</th></tr>'+(data||[]).map(c=>`<tr><td>${esc(c.customers?.name||c.customer_id)}</td><td>${esc(c.category)}</td><td>${esc(c.details)}</td><td>${labels[c.status]||c.status}</td><td><select id="cs${c.id}"><option value="new" ${c.status==='new'?'selected':''}>نئی</option><option value="in_progress" ${c.status==='in_progress'?'selected':''}>جاری</option><option value="resolved" ${c.status==='resolved'?'selected':''}>حل ہوگئی</option></select><button onclick="updateComplaint(${c.id})">محفوظ</button></td></tr>`).join("")+'</table>';
+ $("moduleTable").innerHTML='<table><tr><th>کسٹمر</th><th>قسم / تفصیل</th><th>حیثیت اور جواب</th><th>محفوظ</th></tr>'+(data||[]).map(c=>`<tr><td>${esc(c.customers?.name||c.customer_id)}</td><td>${esc(c.category)}<p>${esc(c.details)}</p></td><td><select id="cs${c.id}"><option value="new" ${c.status==='new'?'selected':''}>نئی</option><option value="in_progress" ${c.status==='in_progress'?'selected':''}>جاری</option><option value="resolved" ${c.status==='resolved'?'selected':''}>حل ہوگئی</option></select><textarea id="cn${c.id}" rows="2" placeholder="کسٹمر کے لیے جواب / نوٹ">${esc(c.admin_note||"")}</textarea></td><td><button onclick="updateComplaint(${c.id})">محفوظ</button></td></tr>`).join("")+'</table>';
 }
-async function updateComplaint(id){const status=$("cs"+id).value;const {data:complaint}=await db.from("customer_complaints").select("customer_id,category").eq("id",id).maybeSingle();const {error}=await db.from("customer_complaints").update({status,updated_at:new Date().toISOString()}).eq("id",id);if(!error&&complaint){await db.from("customer_notifications").insert({customer_id:complaint.customer_id,title:"آپ کی شکایت کی تازہ کاری",message:`آپ کی شکایت (${complaint.category}) کی حیثیت اپڈیٹ ہوگئی ہے: ${status==="resolved"?"حل ہوگئی":status==="in_progress"?"زیرِ کارروائی":"موصول"}۔`,notification_type:"complaint"});}if(error){msg("شکایت اپڈیٹ نہیں ہوئی: "+error.message);return;}msg("شکایت کی حیثیت اپڈیٹ ہوگئی۔",true);await loadComplaints();}
+async function updateComplaint(id){const status=$("cs"+id).value,admin_note=$("cn"+id).value.trim();const {data:complaint,error:ce}=await db.from("customer_complaints").select("customer_id,category,status,admin_note").eq("id",id).maybeSingle();if(ce||!complaint){msg("شکایت کا ریکارڈ نہیں ملا: "+(ce?.message||""));return;}const {error}=await db.from("customer_complaints").update({status,admin_note:admin_note||null,updated_at:new Date().toISOString()}).eq("id",id);if(error){msg("شکایت اپڈیٹ نہیں ہوئی: "+error.message);return;}if(status!==complaint.status||admin_note!==(complaint.admin_note||"")){const message=`آپ کی شکایت (${complaint.category}) اپڈیٹ ہوئی ہے۔ حیثیت: ${status==="resolved"?"حل ہوگئی":status==="in_progress"?"زیرِ کارروائی":"موصول"}۔`+(admin_note?" منتظم کا جواب: "+admin_note:"");const nr=await db.from("customer_notifications").insert({customer_id:complaint.customer_id,title:"آپ کی شکایت کی تازہ کاری",message,notification_type:"complaint"});if(nr.error){msg("شکایت محفوظ ہوئی مگر اطلاع نہ بھیجی جا سکی: "+nr.error.message);await loadComplaints();return;}}msg("شکایت اور منتظم کا جواب محفوظ ہوگیا۔",true);await loadComplaints();}
 async function submitComplaint(){const category=$("complaintCategory").value,details=$("complaintDetails").value.trim();if(!details){$("myComplaints").textContent="براہ کرم مسئلے کی تفصیل لکھیں۔";return;}const {error}=await db.from("customer_complaints").insert({customer_id:myCustomer.id,category,details});if(error){$("myComplaints").textContent="شکایت محفوظ نہیں ہوئی: "+error.message;return;}$("complaintDetails").value="";await loadCustomerComplaints();}
 async function loadCustomerComplaints(){const {data,error}=await db.from("customer_complaints").select("category,details,status,created_at,admin_note").eq("customer_id",myCustomer.id).order("created_at",{ascending:false});if(error){$("myComplaints").textContent="شکایات لوڈ نہیں ہوئیں";return;}const labels={new:"موصول",in_progress:"زیرِ کارروائی",resolved:"حل ہوگئی"};$("myComplaints").innerHTML=(data||[]).map(c=>`<div class="stat"><b>${esc(c.category)}</b> — ${labels[c.status]||c.status}<p>${esc(c.details)}</p><small>${esc(c.admin_note||"")}</small></div>`).join("")||"ابھی کوئی شکایت درج نہیں۔";}
 async function loadCustomerNotifications(){const {data,error}=await db.from("customer_notifications").select("id,title,message,is_read,created_at").eq("customer_id",myCustomer.id).order("created_at",{ascending:false}).limit(30);if(error){$("myNotifications").textContent="اطلاعات لوڈ نہیں ہوئیں";return;}$("myNotifications").innerHTML=(data||[]).map(n=>`<div class="stat"><b>${esc(n.title)}</b><p>${esc(n.message)}</p><small>${esc(n.created_at)}</small>${!n.is_read?`<button class="secondary" onclick="markNotificationRead(${n.id})">پڑھ لیا</button>`:""}</div>`).join("")||"ابھی کوئی نئی اطلاع نہیں۔";}
@@ -1019,9 +1021,24 @@ async function markNotificationRead(id){const {error}=await db.rpc("mark_custome
 
 async function auditModule(){
  setTitle("سکیورٹی / آڈٹ لاگ");
- const {data,error}=await db.from("audit_log").select("changed_at,table_name,record_id,action,changed_by").order("changed_at",{ascending:false}).limit(100);
+ $("moduleBody").innerHTML='<input id="auditSearch" placeholder="ٹیبل، ریکارڈ، عمل یا صارف تلاش کریں" oninput="filterAuditRows()"><button class="secondary" onclick="auditModule()">آڈٹ تازہ کریں</button>';
+ const {data,error}=await db.from("audit_log").select("changed_at,table_name,record_id,action,changed_by,old_data,new_data").order("changed_at",{ascending:false}).limit(200);
  if(error){$("moduleTable").textContent="آڈٹ لاگ لوڈ نہیں ہوا: "+error.message;return;}
- $("moduleTable").innerHTML='<table><tr><th>وقت</th><th>ٹیبل</th><th>ریکارڈ</th><th>عمل</th><th>صارف</th></tr>'+(data||[]).map(r=>`<tr><td>${esc(r.changed_at)}</td><td>${esc(r.table_name)}</td><td>${esc(r.record_id)}</td><td>${esc(r.action)}</td><td>${esc(r.changed_by||"")}</td></tr>`).join("")+'</table>';
+ window.auditRows=data||[];filterAuditRows();
+}
+function filterAuditRows(){const q=($("auditSearch")?.value||"").trim().toLowerCase();const rows=(window.auditRows||[]).filter(r=>!q||[r.table_name,r.record_id,r.action,r.changed_by].some(v=>String(v??"").toLowerCase().includes(q)));$("moduleTable").innerHTML='<table><tr><th>وقت</th><th>ٹیبل / ریکارڈ</th><th>عمل / صارف</th><th>پہلے / بعد</th></tr>'+rows.map(r=>`<tr><td>${esc(r.changed_at)}</td><td>${esc(r.table_name)}<br>${esc(r.record_id)}</td><td>${esc(r.action)}<br>${esc(r.changed_by||"")}</td><td><details><summary>تفصیل</summary><b>پہلے:</b><pre>${esc(JSON.stringify(r.old_data,null,2))}</pre><b>بعد:</b><pre>${esc(JSON.stringify(r.new_data,null,2))}</pre></details></td></tr>`).join("")+'</table>'+(rows.length?"":'<p class="muted">کوئی ریکارڈ نہیں ملا۔</p>');
+}
+
+async function settingsModule(){
+ setTitle("ترتیبات / کنٹرول سینٹر");
+ $("moduleBody").innerHTML='<p class="muted">یہ صفحہ اہم کاروباری قواعد اور موجودہ نظامی سیٹنگز دکھاتا ہے۔ حساس سکیورٹی سیٹنگز صرف ڈیٹابیس کی محفوظ پالیسی کے ذریعے تبدیل ہونی چاہئیں۔</p><div id="settingsStatus">ترتیبات لوڈ ہو رہی ہیں...</div>';
+ const [{data:products,error:pe},{data:admins,error:ae},{data:workers,error:we}]=await Promise.all([
+  db.from("product_settings").select("product_type,unit_type,units_per_pack,default_rate,special_100_rate,labor_per_unit,is_active").order("product_type"),
+  db.from("profiles").select("id,full_name,role").eq("role","admin").order("full_name"),
+  db.from("workers").select("id,full_name,is_active,is_owner").order("full_name")
+ ]);
+ if(pe||ae||we){$("settingsStatus").textContent="ترتیبات مکمل لوڈ نہیں ہوئیں: "+(pe||ae||we).message;return;}
+ $("settingsStatus").innerHTML='<h3>مقررہ کاروباری قواعد</h3><div class="stat">19L کامیاب بوتل: <b>Rs. 100</b> + فی بوتل ڈلیوری مزدوری <b>Rs. 20</b></div><div class="stat">خراب ڈھکن: <b>Rs. 10</b> فی عدد</div><div class="stat">500ml اور 1.5L کارٹن کی کم از کم قیمت: <b>Rs. 280</b></div><h3>ڈیٹابیس پروڈکٹ سیٹنگز</h3><table><tr><th>پروڈکٹ</th><th>پیک</th><th>طے شدہ قیمت</th><th>خصوصی قیمت</th><th>مزدوری</th><th>فعال</th></tr>'+(products||[]).map(p=>`<tr><td>${esc(p.product_type)}</td><td>${p.units_per_pack} ${esc(p.unit_type)}</td><td>${money(p.default_rate)}</td><td>${p.special_100_rate==null?"—":money(p.special_100_rate)}</td><td>${money(p.labor_per_unit)}</td><td>${p.is_active?"ہاں":"نہیں"}</td></tr>`).join("")+'</table><h3>ایڈمن اکاؤنٹس</h3><p>فعال رول والے ایڈمن: <b>'+(admins||[]).length+'</b></p><ul>'+(admins||[]).map(a=>'<li>'+esc(a.full_name||a.id)+'</li>').join("")+'</ul><h3>ورکرز</h3><p>کل: <b>'+(workers||[]).length+'</b> — فعال: <b>'+(workers||[]).filter(w=>w.is_active).length+'</b> — مالک: <b>'+(workers||[]).filter(w=>w.is_owner).length+'</b></p><p class="muted">یہ کنٹرول سینٹر فی الحال صرف محفوظ ریڈ اونلی جائزہ ہے؛ قیمت یا ایڈمن رول میں تبدیلی براہِ راست یہاں سے نہیں کی جاتی۔</p>';
 }
 
 /* گاہک کو صرف اس کا اپنا اکاؤنٹ دکھائیں */
