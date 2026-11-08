@@ -14,6 +14,7 @@ MUGHAL'S PURE WATER — مختصر ریلیز نوٹس
 - MUGHALS_RLS_POLICY_CONSOLIDATION_20261109.sql — final RLS policy consolidation اور invoker RPC hardening
 - MUGHALS_PRODUCT_PRICE_SETTINGS_GUARD_20261109.sql — bulk special price، fixed pack/labor، اور fixed 6L rate database guards
 - MUGHALS_19L_DELIVERY_GUARD_20261109.sql — 19L exchange data integrity guard
+- MUGHALS_BILLING_GUARD_20261109.sql — monthly bill arithmetic integrity guard
 
 قیمتوں کے اصول:
 - 500ml کارٹن: 24 یونٹ، کم از کم Rs.280
