@@ -31,7 +31,7 @@ const server = createServer(async (req, res) => {
   }
 });
 
-await new Promise(resolveListen => server.listen(4173, "127.0.0.1", resolveListen));
+await new Promise(resolveListen => server.listen(4173, "0.0.0.0", resolveListen));
 const browser = await chromium.launch({ headless: true });
 const failures = [];
 
@@ -49,7 +49,7 @@ try {
       })
     );
 
-    await page.goto("http://127.0.0.1:4173/index.html", { waitUntil: "load" });
+    await page.goto("http://localhost:4173/index.html", { waitUntil: "load" });
     await page.locator("#loginForm").waitFor({ state: "visible" });
 
     const state = await page.evaluate(() => ({
@@ -64,7 +64,7 @@ try {
     if (state.direction !== "rtl") failures.push("Document direction is not RTL");
     if (state.width > state.viewport + 1) failures.push(`Horizontal overflow at ${viewport.width}px`);
     if (!state.manifest) failures.push("PWA manifest link is missing");
-    const manifestResponse = await page.request.get("http://127.0.0.1:4173/manifest.webmanifest");
+    const manifestResponse = await page.request.get("http://localhost:4173/manifest.webmanifest");
     if (!manifestResponse.ok()) failures.push("PWA manifest did not load");
     else {
       const manifest = await manifestResponse.json();
