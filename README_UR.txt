@@ -45,9 +45,9 @@ Supabase live verification:
 - Performance advisor کے unused-index نوٹس نئی/خالی tables کے سبب ہیں؛ production workload کے بغیر انہیں حذف نہیں کیا گیا۔
 
 تصدیق کی موجودہ حد:
-- GitHub Actions static validation workflow کامیابی سے پاس ہوا: HTML shell، unique IDs، local assets، onclick handlers، manifest JSON، inline JavaScript، Service Worker syntax اور پرانی Kiswa branding۔
+- GitHub Actions static validation اور Playwright desktop/mobile browser smoke tests کامیابی سے پاس ہوئے: HTML shell، unique IDs، local assets، onclick handlers، manifest JSON، inline JavaScript، Service Worker، RTL layout، login/signup navigation اور پرانی Kiswa branding۔
 - GitHub branch ابھی main میں merge/deploy نہیں ہوئی۔
-- Live browser runtime، حقیقی customer sign-in کے ذریعے RLS isolation، stock/production/sales/worker ledger اور مکمل ماہانہ billing notification کا end-to-end test ابھی مکمل نہیں۔
+- بنیادی browser smoke test پاس ہے، مگر حقیقی customer sign-in کے ذریعے RLS isolation، مکمل stock/production/sales/worker ledger UI workflows اور ماہانہ cron notification کا مکمل end-to-end test ابھی باقی ہے۔
 - GitHub Pages پر publish کرنے سے پہلے یہ عملی ٹیسٹ ضروری ہیں۔ صرف syntax یا database advisor صاف ہونا production readiness کا مکمل ثبوت نہیں۔
 
 Deployment اصول:
