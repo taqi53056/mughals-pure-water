@@ -134,9 +134,11 @@ try {
           const chain = {
             select() { return chain; },
             eq() { return chain; },
-            order() { return Promise.resolve({ data: mockData[table] || [], error: null }); },
+            order() { return chain; },
+            limit() { return chain; },
+            contains() { return chain; },
             update(values) { updates.push({ table, values }); return chain; },
-            then(resolve, reject) { return Promise.resolve({ error: null }).then(resolve, reject); }
+            then(resolve, reject) { return Promise.resolve({ data: mockData[table] || [], error: null }).then(resolve, reject); }
           };
           return chain;
         }
@@ -150,18 +152,40 @@ try {
       document.querySelector("#psDefault_1").value = "300";
       document.querySelector("#psSpecial_1").value = "310";
       await window.saveProductSettings(1, "500ml");
+      mockData.product_settings[0].default_rate = 300;
+      mockData.product_settings[0].special_100_rate = 310;
+      await window.salesModule();
+      document.querySelector("#saleQty").value = "100";
+      window.salePricePreview(true, false);
+      const bulkPrice = document.querySelector("#saleUnitPrice").value;
+      document.querySelector("#saleQty").value = "99";
+      window.salePricePreview(true, false);
+      const normalPrice = document.querySelector("#saleUnitPrice").value;
+      document.querySelector("#saleType").value = "6L";
+      window.salePricePreview(false, true);
+      const sixLiterPrice = document.querySelector("#saleUnitPrice").value;
+      const sixLiterDisabled = document.querySelector("#saleUnitPrice").disabled;
       return {
         rendered,
         belowFloorBlocked,
         saved: updates.length === 1 && updates[0].table === "product_settings",
         savedDefault: updates[0]?.values?.default_rate,
-        savedSpecial: updates[0]?.values?.special_100_rate
+        savedSpecial: updates[0]?.values?.special_100_rate,
+        bulkPrice,
+        normalPrice,
+        sixLiterPrice,
+        sixLiterDisabled
       };
     });
     if (!settingsResult.rendered) failures.push("Admin settings price controls did not render");
     if (!settingsResult.belowFloorBlocked) failures.push("Admin settings allowed a carton price below Rs.280");
     if (!settingsResult.saved || settingsResult.savedDefault !== 300 || settingsResult.savedSpecial !== 310) {
       failures.push("Admin settings did not save valid price changes correctly");
+    }
+    if (settingsResult.bulkPrice !== "310") failures.push("100+ carton special price was not applied");
+    if (settingsResult.normalPrice !== "300") failures.push("Default carton price was not restored below 100 units");
+    if (settingsResult.sixLiterPrice !== "55" || !settingsResult.sixLiterDisabled) {
+      failures.push("6L fixed price control is incorrect");
     }
 
     await page.close();
