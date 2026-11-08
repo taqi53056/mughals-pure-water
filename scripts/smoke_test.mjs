@@ -64,6 +64,18 @@ try {
     if (state.direction !== "rtl") failures.push("Document direction is not RTL");
     if (state.width > state.viewport + 1) failures.push(`Horizontal overflow at ${viewport.width}px`);
     if (!state.manifest) failures.push("PWA manifest link is missing");
+    const manifestResponse = await page.request.get("http://127.0.0.1:4173/manifest.webmanifest");
+    if (!manifestResponse.ok()) failures.push("PWA manifest did not load");
+    else {
+      const manifest = await manifestResponse.json();
+      if (!String(manifest.name || "").includes("MUGHAL'S PURE WATER")) failures.push("PWA manifest name is incorrect");
+    }
+    const serviceWorkerActive = await page.evaluate(async () => {
+      if (!("serviceWorker" in navigator)) return false;
+      const registration = await navigator.serviceWorker.ready;
+      return Boolean(registration.active && new URL(registration.active.scriptURL).pathname.endsWith("/SW.js"));
+    });
+    if (!serviceWorkerActive) failures.push("PWA Service Worker did not activate");
 
     await page.locator('button[onclick="showSignup()"]').click();
     await page.locator("#signupForm").waitFor({ state: "visible" });
