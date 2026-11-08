@@ -33,6 +33,7 @@ MUGHAL'S PURE WATER — موجودہ برانچ کی تکنیکی دستاویز
 - آڈٹ لاگ میں پرانی اور نئی تفصیل۔
 - Owner کی بچت اور ورکر کی واجب الادا مزدوری الگ؛ مستقل Owner ریکارڈ delete یا deactivate نہیں ہوسکتا۔
 - تفصیلی ماہانہ بل notification اور کسٹمر بل breakdown۔
+- کسٹمر notifications فی الحال صرف app کے اندر ہیں؛ SMS/WhatsApp provider/channel ابھی طے نہیں، اس لیے external message delivery شامل نہیں۔
 - Service Worker cache version v24۔
 
 Supabase live verification:
