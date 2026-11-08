@@ -1,21 +1,52 @@
-MUGHAL'S PURE WATER — تازہ ایپ پیکج
+MUGHAL'S PURE WATER — مختصر ریلیز نوٹس
 
-فائلیں:
-- index.html: ایپ کا مرکزی صفحہ
-- manifest.webmanifest: PWA شناخت اور انسٹال سیٹنگز
-- SW.js: Service Worker اور cache version v18
-- icon.svg: ایپ آئیکن
-- MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql: پہلے سے چلائی گئی DB repair (دوبارہ نہ چلائیں)
+برانچ: integration-access-check-20261109
+موجودہ Service Worker cache: v24
 
-اہم قیمت اصول:
-- 500ml اور 1.5L کارٹن: کم از کم Rs.280؛ ایڈمن زیادہ قیمت درج کر سکتا ہے۔
-- 6L: Rs.55 فی بوتل۔
-- کارٹن مزدوری: Rs.10 فی کارٹن۔
+اہم فائلیں:
+- index.html — مکمل فرنٹ اینڈ
+- manifest.webmanifest — PWA سیٹنگز
+- SW.js — cache اور offline shell
+- icon.svg، icon-192.png، icon-512.png — آئیکنز
+- MUGHALS_FINAL_OWNER_MIGRATION.sql — Owner/ورکر اجرت کی علیحدگی
+- MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کم از کم قیمت اور سیل RPC
+- MUGHALS_SECURITY_PERFORMANCE_REPAIR_20261109.sql — live Supabase security/performance repairs کا ریکارڈ
+- MUGHALS_RLS_POLICY_CONSOLIDATION_20261109.sql — final RLS policy consolidation اور invoker RPC hardening
+- MUGHALS_PRODUCT_PRICE_SETTINGS_GUARD_20261109.sql — bulk special price، fixed pack/labor، اور fixed 6L rate database guards
+- MUGHALS_19L_DELIVERY_GUARD_20261109.sql — 19L exchange data integrity guard
+- MUGHALS_BILLING_GUARD_20261109.sql — monthly bill arithmetic integrity guard
+- MUGHALS_OWNER_WORKER_GUARD_20261109.sql — permanent owner worker protection
 
-تبدیلیاں:
-- پرانا Rs.270 / 100-carton special rate ہٹا دیا گیا۔
-- سیل انٹری اب record_product_sale کے 5-parameter RPC کو کال کرتی ہے۔
-- UI میں قیمت کی حد بھی چیک ہوتی ہے؛ اصل enforcement Supabase میں پہلے commit ہو چکی ہے۔
+قیمتوں کے اصول:
+- 500ml کارٹن: 24 یونٹ، کم از کم Rs.280
+- 1.5L کارٹن: 12 یونٹ، کم از کم Rs.280
+- 6L: 18 بوتلوں کا پیک، Rs.55 فی بوتل
+- کارٹن مزدوری: Rs.10 فی کارٹن
+- 19L: Rs.100 فی کامیاب بوتل، ڈلیوری مزدوری Rs.20، خراب ڈھکن Rs.10
 
-GitHub Pages پر اپڈیٹ کرتے وقت ZIP کے اندر کی تمام فائلیں repository کے اسی publish folder میں upload/replace کریں۔
-یہ ZIP خودکار طور پر GitHub پر deploy نہیں کرتی۔
+Supabase:
+- 27 public tables پر RLS فعال اور verify ہے۔
+- تین مستقل admin profiles اور موجودہ قیمتیں verify ہیں؛ customer PIN fields کی browser access بند ہے۔
+- trigger/legacy RPC search_path درست؛ 16 FK indexes شامل؛ customer-scoped RLS policies optimize؛ duplicate monthly bill unique constraint صاف۔
+- ماہانہ cron فعال ہے، لیکن حقیقی month-end run ابھی نہیں ہوا کیونکہ active customers صفر ہیں۔
+- موجودہ database پر پرانی migrations دوبارہ نہ چلائیں؛ بنیادی V2/master schema اس repository میں شامل نہیں۔
+- admin-facing RPCs اب SECURITY INVOKER ہیں؛ صرف customer notification-read helper SECURITY DEFINER ہے اور customer ownership check کرتا ہے۔ Multiple permissive policy warnings صفر ہیں۔
+- Supabase organization Free plan پر ہے؛ leaked-password protection Supabase کے مطابق Pro یا اس سے اوپر کے plan میں دستیاب ہے، اس لیے موجودہ plan پر فعال نہیں ہوسکتی۔
+- صرف mark_customer_notification_read SECURITY DEFINER رہتا ہے؛ وہ صرف auth.uid() سے منسلک active customer کی اپنی notification کو read نشان زد کرتا ہے۔
+
+اس برانچ میں شامل کام:
+- مکمل کسٹمر اکاؤنٹ ویو
+- ایڈمن کنٹرول سینٹر سے محفوظ پروڈکٹ قیمت ترمیم؛ 100+ کارٹن پر خصوصی قیمت خود لاگو؛ یہ default قیمت سے زیادہ یا Rs.280 سے کم نہیں ہوسکتی۔ 6L قیمت Rs.55 مقرر
+- بڑی انٹری کی تصدیق (مالی رقم Rs.1,000 سے اوپر؛ پیداوار/اسٹاک/ڈلیوری مقدار پر الگ حد)
+- شکایات اور ایڈمن جواب
+- آمدن/اخراجات edit/delete
+- audit log میں before/after details
+- Owner savings اور worker wages کی علیحدگی
+- ماہانہ بل کی تفصیلی اطلاع (فی الحال in-app؛ SMS/WhatsApp provider شامل نہیں)
+- 19L delivery اور monthly bill arithmetic کے backend constraints؛ permanent Owner worker کو deactivate/delete کرنے سے تحفظ
+- سکیورٹی اور کارکردگی کی database repairs
+
+ریلیز کی حد:
+- GitHub Actions static validation پاس ہے؛ database-side schema، RLS، admin guard اور rollback-only billing math checks بھی verify ہیں۔
+- desktop/mobile browser smoke test میں RTL/PWA، 19L حساب، مالک کی مزدوری بچت، admin price floor اور 100+ carton special rate کے ٹیسٹ پاس ہیں؛ حقیقی کسٹمر RLS isolation، stock/production/sales/worker ledger اور مکمل ماہانہ notification کے end-to-end tests باقی ہیں۔
+- ان tests کے مکمل ہونے تک اسے final production-verified release نہ کہیں اور main میں merge/deploy نہ کریں۔
