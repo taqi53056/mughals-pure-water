@@ -5,7 +5,7 @@ MUGHAL'S PURE WATER — موجودہ برانچ کی تکنیکی دستاویز
 مرکزی فائلیں:
 - index.html — ایپ، لاگ اِن، کسٹمر/ایڈمن پینل اور تمام ماڈیولز
 - manifest.webmanifest — PWA شناخت
-- SW.js — Service Worker؛ موجودہ cache version v23
+- SW.js — Service Worker؛ موجودہ cache version v24
 - icon.svg، icon-192.png، icon-512.png — ایپ آئیکنز
 - MUGHALS_FINAL_OWNER_MIGRATION.sql — Owner اور ورکر اجرت کی علیحدگی
 - MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کارٹن قیمت کی کم از کم حد اور 5-parameter سیل RPC
@@ -33,7 +33,7 @@ MUGHAL'S PURE WATER — موجودہ برانچ کی تکنیکی دستاویز
 - آڈٹ لاگ میں پرانی اور نئی تفصیل۔
 - Owner کی بچت اور ورکر کی واجب الادا مزدوری الگ؛ مستقل Owner ریکارڈ delete یا deactivate نہیں ہوسکتا۔
 - تفصیلی ماہانہ بل notification اور کسٹمر بل breakdown۔
-- Service Worker cache version v23۔
+- Service Worker cache version v24۔
 
 Supabase live verification:
 - 27/27 public tables پر RLS فعال؛ کوئی public table RLS کے بغیر نہیں۔
