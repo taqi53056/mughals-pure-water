@@ -38,6 +38,7 @@ Supabase live verification:
 - customer-scoped policies میں auth.uid() کو statement-level subquery میں wrap کیا۔
 - rollback-only billing calculation test میں 3 بوتلیں، 2 خراب ڈھکن، Rs.80 خالص ادائیگی، Rs.20 سابقہ ایڈوانس اور Rs.50 سابقہ بقایا سے Rs.270 بقایا درست نکلا؛ تمام test rows rollback ہو گئیں۔
 - خالی customer table میں اگلا customer code rollback-only test سے C001 verify ہوا۔
+- پروڈکشن allocation کا rollback-only test پاس: 10 کارٹن پر generated allocation labor Rs.100، worker ledger Rs.100، اور production labor Rs.100؛ تمام test rows rollback ہو گئیں۔
 - duplicate monthly-bill unique constraint ہٹایا؛ بنیادی (customer_id, bill_month) unique constraint برقرار ہے۔
 - customers table پر column-level grants لگائے: browser users صرف ضروری account columns پڑھ/اپڈیٹ کر سکتے ہیں؛ PIN، PIN hash اور PIN enabled fields تک رسائی بند ہے۔
 - Security advisors میں اب بھی authenticated SECURITY DEFINER RPC warnings ہیں؛ متعلقہ functions میں admin/customer ownership checks موجود ہیں، اس لیے انہیں blindly revoke نہیں کیا گیا۔ Leaked-password protection dashboard-level setting ابھی فعال نہیں۔
