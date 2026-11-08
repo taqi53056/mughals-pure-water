@@ -22,7 +22,7 @@ MUGHAL'S PURE WATER — موجودہ برانچ کی تکنیکی دستاویز
 3. GitHub branch پر موجود SQL فائلیں تاریخی/منتخب migration فائلیں ہیں؛ production database پر دوبارہ چلانے سے پہلے target schema اور migration state لازماً چیک کریں۔
 4. ایپ میں 500ml اور 1.5L کے کارٹن کی قیمت کم از کم Rs.280 ہے؛ 6L کی قیمت Rs.55 ہے۔ کارٹن مزدوری Rs.10 فی کارٹن ہے۔
 5. 19L کامیاب بوتل Rs.100، ڈلیوری مزدوری Rs.20 فی بوتل، خراب ڈھکن Rs.10 ہے۔
-6. ماہانہ بل اور notification function لائیو Supabase میں موجود ہے؛ cron schedule 23:55 پاکستان وقت (28 تا 31 تاریخ) ہے۔ 2026-11-09 کو non-month-end guard test نے 0 واپس کیا۔ اصل ماہانہ run اور کسٹمر notification کا end-to-end ثبوت ابھی موجود نہیں کیونکہ فعال کسٹمر صفر ہیں اور حالیہ cron run درج نہیں۔
+6. ماہانہ بل اور notification function لائیو Supabase میں موجود ہے؛ cron schedule 23:55 پاکستان وقت (28 تا 31 تاریخ) ہے۔ اصل function کو transaction-only month-end simulation میں 2026-11-30 کی تاریخ دے کر مکمل چلایا گیا: نومبر کا بل بنا، تفصیلی personalized notification بنی، اور آخر میں function definition سمیت تمام test rows rollback ہو گئیں۔ حقیقی cron کا پہلا production run قدرتی طور پر مہینے کے آخر میں فعال حقیقی کسٹمرز کے ساتھ ہوگا۔
 
 اس برانچ میں موجود ایپ تبدیلیاں:
 - ایڈمن کے لیے کسٹمر کا مکمل اکاؤنٹ: پروفائل، بل، ادائیگیاں، ڈلیوری ہسٹری اور بیلنس۔
@@ -45,6 +45,8 @@ Supabase live verification:
 - customer-scoped policies میں auth.uid() کو statement-level subquery میں wrap کیا۔
 - rollback-only billing tests میں درست mutually-exclusive opening states verify ہوئیں: (الف) سابقہ بقایا Rs.50، advance صفر، 3 بوتلیں، 2 خراب ڈھکن، Rs.80 ادائیگی → Rs.290 بقایا؛ (ب) سابقہ advance Rs.20، بقایا صفر، وہی charges/payment → Rs.220 بقایا اور Rs.20 advance استعمال۔ تمام test rows rollback ہو گئیں۔
 - خالی customer table میں اگلا customer code rollback-only test سے C001 verify ہوا۔
+- دو عارضی Auth identities اصل signup trigger سے بنا کر rollback-only RLS isolation test کیا: ہر کسٹمر کو صرف اپنا customer profile، delivery، bill، payment اور notification نظر آئی؛ دوسرے کسٹمر کا کوئی ریکارڈ ظاہر نہیں ہوا۔ دونوں identities اور تمام test data rollback ہو گئے۔
+- month-end end-to-end simulation میں 3 کامیاب بوتلیں Rs.300، 2 خراب ڈھکن Rs.20، سابقہ بقایا Rs.50، ادائیگی Rs.80 اور آخری بقایا Rs.290 درست نکلا؛ notification میں کسٹمر کا نام، بوتل/ڈھکن کی تفصیل، بقایا اور bill:2026-11 reference موجود تھا۔
 - پروڈکشن allocation کا rollback-only test پاس: 10 کارٹن پر generated allocation labor Rs.100، worker ledger Rs.100، اور production labor Rs.100؛ تمام test rows rollback ہو گئیں۔
 - 19L delivery guard کا rollback-only test پاس: 3 دی گئی، 2 خالی واپس، 2 کامیاب، فرق 1، ایک خراب ڈھکن؛ مالک کی delivery labor صفر رہی۔ خالی بوتلیں دی گئی بوتلوں سے زیادہ رکھنے والی انٹری رد ہوئی۔
 - سیل RPC کا rollback-only test پاس: ایک 500ml کارٹن Rs.300 میں درج ہوا، stock صفر ہوا، مالک کی مزدوری بچت Rs.10 رپورٹ ہوئی؛ تمام test rows rollback ہو گئیں۔
@@ -59,9 +61,10 @@ Supabase live verification:
 
 تصدیق کی موجودہ حد:
 - GitHub Actions static validation اور Playwright desktop/mobile browser smoke tests کامیابی سے پاس ہوئے: HTML shell، unique IDs، local assets، onclick handlers، manifest JSON، inline JavaScript، Service Worker، RTL layout، login/signup navigation، 19L کامیاب بوتل/مزدوری حساب، مالک کی بچت، 100+ کارٹن خصوصی قیمت، قیمت کی کم از کم حد اور پرانی Kiswa branding۔
+- دو کسٹمرز کی RLS isolation اور ماہانہ بل/notification generation کے transaction-only end-to-end database tests بھی کامیاب ہیں؛ تمام عارضی ریکارڈ rollback ہوئے اور live customer/auth data صفر ہی رہا۔
+- حقیقی cron کا پہلا scheduled run ابھی مستقبل میں ہے؛ اس کی business logic simulated month-end run سے verify ہو چکی ہے۔
+- مکمل UI workflow (حقیقی customer accounts کے ساتھ browser سے delivery, stock, production, sales, worker ledger) ابھی database rollback tests اور browser smoke test سے الگ live customer workflow کے طور پر نہیں چلایا گیا۔
 - GitHub branch ابھی main میں merge/deploy نہیں ہوئی۔
-- بنیادی browser smoke test پاس ہے، مگر حقیقی customer sign-in کے ذریعے RLS isolation، مکمل stock/production/sales/worker ledger UI workflows اور ماہانہ cron notification کا مکمل end-to-end test ابھی باقی ہے۔
-- GitHub Pages پر publish کرنے سے پہلے یہ عملی ٹیسٹ ضروری ہیں۔ صرف syntax یا database advisor صاف ہونا production readiness کا مکمل ثبوت نہیں۔
 
 Deployment اصول:
 - صرف مکمل عملی جانچ کے بعد اس branch کو main میں merge کریں۔
