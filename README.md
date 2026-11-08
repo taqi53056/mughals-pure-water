@@ -4,6 +4,7 @@
 
 - تفصیلی اردو تکنیکی/ڈپلائمنٹ نوٹس: [README_UR.txt](README_UR.txt)
 - مختصر ریلیز نوٹس: [README_URDU.txt](README_URDU.txt)
+- موجودہ release gates اور اگلے verification steps: [RELEASE_READINESS_20261109.md](RELEASE_READINESS_20261109.md)
 
 **Security note:** Supabase organization is on the Free plan. Supabase documents leaked-password protection as Pro-and-above, so it cannot be enabled on the current plan. The only remaining SECURITY DEFINER app RPC is `mark_customer_notification_read`, which updates only the notice belonging to the authenticated active customer.
 
