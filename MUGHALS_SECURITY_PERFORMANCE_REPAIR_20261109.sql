@@ -122,3 +122,10 @@ BEGIN
   RETURN OLD;
 END;
 $function$;
+
+-- Remove browser EXECUTE rights from internal admin-only helpers that the
+-- frontend does not call directly. Definer-owned callers remain able to use
+-- them; the app-facing guarded RPCs retain their required grants.
+REVOKE EXECUTE ON FUNCTION public.calculate_customer_bill(bigint,date) FROM authenticated;
+REVOKE EXECUTE ON FUNCTION public.recalculate_customer_bill(bigint,date) FROM authenticated;
+REVOKE EXECUTE ON FUNCTION public.record_customer_refund(bigint,numeric) FROM authenticated;
