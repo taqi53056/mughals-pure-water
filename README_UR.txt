@@ -53,6 +53,7 @@ Supabase live verification:
 - customers table پر column-level grants لگائے: browser users صرف ضروری account columns پڑھ/اپڈیٹ کر سکتے ہیں؛ PIN، PIN hash اور PIN enabled fields تک رسائی بند ہے۔
 - تمام admin-facing data RPCs کو SECURITY INVOKER پر منتقل کیا اور is_admin() کو fixed admin UUID allowlist پر مبنی SECURITY INVOKER بنایا؛ صرف mark_customer_notification_read SECURITY DEFINER رہتا ہے کیونکہ کسٹمر کو notification content پر براہِ راست UPDATE حق نہیں دیا گیا، اور فنکشن صرف اسی auth.uid() سے منسلک کسٹمر کی اطلاع پڑھا ہوا نشان زد کرتا ہے۔
 - RLS policy consolidation کے بعد multiple permissive policy warnings صفر ہیں۔ صرف mark_customer_notification_read کا ایک intentional SECURITY DEFINER warning باقی ہے؛ Supabase organization Free plan پر ہے، اور leaked-password protection Supabase کے مطابق Pro یا اس سے اوپر کے plan میں دستیاب ہے، اس لیے موجودہ plan پر فعال نہیں ہوسکتی۔
+- Performance advisor میں unindexed foreign keys، RLS initplan، duplicate indexes اور multiple permissive policy warnings صفر ہیں۔ 19 unused-index INFO notices موجود ہیں کیونکہ کاروباری ٹیبلز ابھی خالی ہیں؛ ان میں سے future FK/lookup indexes کو بلاوجہ حذف نہیں کرنا۔
 - Performance advisor کے unused-index نوٹس نئی/خالی tables کے سبب ہیں؛ production workload کے بغیر انہیں حذف نہیں کیا گیا۔
 
 تصدیق کی موجودہ حد:
