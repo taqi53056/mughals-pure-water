@@ -12,6 +12,7 @@ MUGHAL'S PURE WATER — مختصر ریلیز نوٹس
 - MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کم از کم قیمت اور سیل RPC
 - MUGHALS_SECURITY_PERFORMANCE_REPAIR_20261109.sql — live Supabase security/performance repairs کا ریکارڈ
 - MUGHALS_RLS_POLICY_CONSOLIDATION_20261109.sql — final RLS policy consolidation اور invoker RPC hardening
+- MUGHALS_PRODUCT_PRICE_SETTINGS_GUARD_20261109.sql — bulk special price database guard
 
 قیمتوں کے اصول:
 - 500ml کارٹن: 24 یونٹ، کم از کم Rs.280
@@ -31,7 +32,7 @@ Supabase:
 
 اس برانچ میں شامل کام:
 - مکمل کسٹمر اکاؤنٹ ویو
-- ایڈمن کنٹرول سینٹر سے محفوظ پروڈکٹ قیمت ترمیم؛ 100+ کارٹن پر خصوصی قیمت خود لاگو، کم از کم حد Rs.280؛ 6L قیمت Rs.55 مقرر
+- ایڈمن کنٹرول سینٹر سے محفوظ پروڈکٹ قیمت ترمیم؛ 100+ کارٹن پر خصوصی قیمت خود لاگو؛ یہ default قیمت سے زیادہ یا Rs.280 سے کم نہیں ہوسکتی۔ 6L قیمت Rs.55 مقرر
 - بڑی انٹری کی تصدیق (مالی رقم Rs.1,000 سے اوپر؛ پیداوار/اسٹاک/ڈلیوری مقدار پر الگ حد)
 - شکایات اور ایڈمن جواب
 - آمدن/اخراجات edit/delete
