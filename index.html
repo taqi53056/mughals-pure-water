@@ -1183,6 +1183,7 @@ async function moneyModule(type){
  const exp=type==="expenses";
  moneyEditingId=null;setTitle(exp?"اخراجات":"آمدن");
  $("moduleBody").innerHTML=`
+ <p class="muted">${exp?"صرف روزمرہ کاروباری اخراجات درج کریں۔ ورکر کی مزدوری ورکر لیجر سے خود شمار ہوتی ہے؛ وہی مزدوری یہاں دوبارہ درج نہ کریں۔ اسٹاک اور مشینری کی خریداری مالی لین دین میں درج کریں۔":"یہاں صرف دوسری آمدن درج کریں؛ 19L ڈلیوری یا پروڈکٹ سیل کی رقم یہاں دوبارہ درج نہ کریں۔"}</p>
  <input id="mDate" type="date" value="${today()}">
  <input id="mCategory" placeholder="${exp?'خرچ کی مد':'آمدن کی مد'}">
  <input id="mAmount" type="number" min="1" placeholder="رقم">
