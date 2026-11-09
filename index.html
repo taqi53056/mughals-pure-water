@@ -1025,9 +1025,10 @@ async function recordCustomerPayment(){
 /* خام مال اور تیار مال */
 async function stockModule(type){
  const raw=type==="raw";
- setTitle(raw?"خام مال":"تیار مال");
+ setTitle(raw?"خام مال":"تیار مال — ابتدائی اسٹاک");
  $("moduleBody").innerHTML=`
- <h3>${raw?"نئی خام مال انٹری":"نیا تیار مال"}</h3>
+ <p class="muted">${raw?"یہ پرانا خام مال اندراج ہے۔":"یہاں صرف پہلے سے موجود ابتدائی تیار مال درج کریں۔ روزانہ پیداوار الگ پروڈکشن اندراج سے خود اسٹاک میں شامل ہوتی ہے؛ اسے یہاں دوبارہ درج نہ کریں۔"}</p>
+ <h3>${raw?"نئی خام مال انٹری":"ابتدائی تیار مال کی انٹری"}</h3>
  <input id="sDate" type="date" value="${today()}">
  <select id="sType">
  ${raw?'<option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option>':'<option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option>'}
@@ -1416,13 +1417,18 @@ async function loadTodaySummary(){
   const diff=(d||[]).reduce((s,r)=>s+(Number(r.bottle_difference)||0),0);
   const labor=(d||[]).reduce((s,r)=>s+(Number(r.delivery_labor)||0),0);
   const sales=await sumTable("product_sales","total_amount","sale_date",date);
+  const counterAmount=await sumTable("counter_water_sales","total_amount","sale_date",date);
+  const counterLitres=await sumTable("counter_water_sales","total_litres","sale_date",date);
+  const tankerSpend=await sumTable("water_tanker_purchases","total_amount","purchase_date",date);
   const expenses=await sumTable("business_expenses","amount","expense_date",date);
   const income=await sumTable("business_income","amount","income_date",date);
   el.innerHTML=`<div class="stat">تاریخ: ${date}</div>
   <div class="stat">19L کامیاب بوتلیں: <b>${bottles}</b></div>
   <div class="stat">بوتلوں کا فرق: <b>${diff}</b></div>
   <div class="stat">19L ڈلیوری مزدوری: <b>${money(labor)}</b></div>
-  <div class="stat">چھوٹے پیک کی سیل: <b>${money(sales)}</b></div>
+  <div class="stat">500ml / 1.5L / 6L فروخت: <b>${money(sales)}</b></div>
+  <div class="stat">19L کاؤنٹر: <b>${counterLitres} لیٹر — ${money(counterAmount)}</b></div>
+  <div class="stat">آج ٹینکر خریداری: <b>${money(tankerSpend)}</b></div>
   <div class="stat">اخراجات: <b>${money(expenses)}</b></div>
   <div class="stat">درج شدہ آمدن: <b>${money(income)}</b></div>`;
  }catch(e){el.textContent="خلاصہ لوڈ نہیں ہوا: "+e.message}
