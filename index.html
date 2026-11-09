@@ -154,6 +154,7 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 <h2>لاگ اِن</h2>
 <input id="email" type="email" autocomplete="email" placeholder="ای میل">
 <input id="password" type="password" autocomplete="current-password" placeholder="پاس ورڈ">
+<button class="secondary" type="button" style="width:auto;margin-top:-8px" onclick="togglePasswordVisibility('password',this)">پاس ورڈ دکھائیں</button>
 <button id="loginButton" type="button" onclick="handleLoginClick()">لاگ اِن</button>
 <button class="secondary" type="button" onclick="showSignup()">نیا کسٹمر اکاؤنٹ بنائیں</button>
 <button class="secondary" type="button" onclick="resendConfirmationEmail()">تصدیقی ای میل دوبارہ بھیجیں</button>
@@ -166,6 +167,7 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 <input id="signupAddress" type="text" autocomplete="street-address" maxlength="300" placeholder="مکمل پتہ">
 <input id="signupEmail" type="email" autocomplete="email" maxlength="254" placeholder="ای میل">
 <input id="signupPassword" type="password" autocomplete="new-password" minlength="8" placeholder="پاس ورڈ (کم از کم 8 حروف)">
+<button class="secondary" type="button" style="width:auto;margin-top:-8px" onclick="togglePasswordVisibility('signupPassword',this)">پاس ورڈ دکھائیں</button>
 <button id="signupButton" type="button" onclick="signupCustomer()">اکاؤنٹ بنائیں</button>
 <button class="secondary" type="button" onclick="showLogin()">واپس لاگ اِن</button>
 </div>
@@ -304,6 +306,14 @@ function handleLoginClick(){
  const m=document.getElementById("loginMsg");
  if(typeof login!=="function"){m.textContent="لاگ اِن کوڈ شروع نہیں ہوا۔ فائل دوبارہ کھولیں۔";return;}
  login();
+}
+
+function togglePasswordVisibility(fieldId,button){
+ const field=$(fieldId);
+ if(!field)return;
+ const visible=field.type==="password";
+ field.type=visible?"text":"password";
+ button.textContent=visible?"پاس ورڈ چھپائیں":"پاس ورڈ دکھائیں";
 }
 
 async function resendConfirmationEmail(){
