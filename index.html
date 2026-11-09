@@ -1572,7 +1572,7 @@ async function runReport(){
  const start=$("rStart").value,end=$("rEnd").value;
  if(!start||!end||start>end){msg("تاریخ کی حد درست منتخب کریں۔");return;}
  try{
-  const [deliveries,counterSales,tankers,waterOpening,sales,returns,rawPurchases,production,expenses,income,allFin,periodFin,workerRows,stockResult]=await Promise.all([
+  const [deliveries,counterSales,tankers,waterOpening,sales,returns,rawPurchases,production,expenses,income,allFin,periodFin,workerRows,stockResult,productSettingsResult]=await Promise.all([
    financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor","delivery_date",start,end),
    financeFetchAll("counter_water_sales","sale_date,total_litres,total_amount","sale_date",start,end),
    financeFetchAll("water_tanker_purchases","purchase_date,water_use,tanker_count,rate_per_tanker,total_amount","purchase_date",null,end),
@@ -1580,13 +1580,14 @@ async function runReport(){
    financeFetchAll("product_sales","sale_date,product_type,quantity,total_amount,unit,payment_method","sale_date",start,end),
    financeFetchAll("product_returns","return_date,product_type,quantity,replacement_quantity","return_date",start,end),
    financeFetchAll("raw_material_purchases","purchase_date,record_type,material_type,quantity,total_amount","purchase_date",null,end),
-   financeFetchAll("production","production_date,product_type,quantity,labor_amount","production_date",start,end),
+   financeFetchAll("production","production_date,product_type,quantity,labor_amount","production_date",null,end),
    financeFetchAll("business_expenses","amount,category,business_segment,payment_method","expense_date",start,end),
    financeFetchAll("business_income","amount,category","income_date",start,end),
    financeFetchAll("business_finance_ledger","entry_type,amount,counterparty,category","entry_date",null,end),
    financeFetchAll("business_finance_ledger","entry_type,amount,counterparty,category","entry_date",start,end),
    financeFetchAll("worker_ledger","entry_type,work_category,amount,entry_date","entry_date",start,end),
-   db.rpc("get_finished_stock_summary")
+   db.rpc("get_finished_stock_summary"),
+   db.from("product_settings").select("product_type,labor_per_unit")
   ]);
   const sum=(rows,key)=>(rows||[]).reduce((n,r)=>n+(Number(r[key])||0),0);
   const total=(rows,type)=>(rows||[]).filter(x=>x.entry_type===type).reduce((n,r)=>n+(Number(r.amount)||0),0);
@@ -1642,7 +1643,20 @@ async function runReport(){
   const productRevenue=sum(sales,"total_amount");
   const otherIncome=sum(income,"amount")+total(periodFin,"interest_income");
   const deliveryLabor=sum(deliveries,"delivery_labor");
-  const productionLabor=sum(production,"labor_amount");
+  const productLaborRate=(type)=>{
+   const rows=production.filter(r=>r.product_type===type);
+   const qty=sum(rows,"quantity");
+   if(qty>0)return sum(rows,"labor_amount")/qty;
+   const setting=(productSettingsResult.data||[]).find(x=>x.product_type===type);
+   return Number(setting?.labor_per_unit)||0;
+  };
+  const productLaborCost=(type)=>{
+   const divisor=type==="500ml"?24:type==="1.5L"?12:1;
+   const sold=sum(sales.filter(x=>x.product_type===type),"quantity");
+   const replacements=sum(returns.filter(x=>x.product_type===type),"replacement_quantity");
+   return productLaborRate(type)*(sold+replacements/divisor);
+  };
+  const productionLabor=["500ml","1.5L","6L"].reduce((n,type)=>n+productLaborCost(type),0);
   const supportLabor=workerRows.filter(r=>r.entry_type==="earning"&&["carton loading/unloading","cleaning","bottle washing","manual adjustment"].includes(r.work_category)).reduce((n,r)=>n+(Number(r.amount)||0),0);
   const exp19=expenses.filter(x=>x.business_segment==="19L").reduce((n,r)=>n+(Number(r.amount)||0),0);
   const expProducts=expenses.filter(x=>x.business_segment==="finished_goods").reduce((n,r)=>n+(Number(r.amount)||0),0);
@@ -1661,7 +1675,7 @@ async function runReport(){
   if(successful19+damagedCaps>0&&capCost===null)missing.push("19L ڈھکن کی خریداری");
   if(missingProductCosts.length)missing.push("خام مال: "+[...new Set(missingProductCosts)].join("، "));
   const complete=missing.length===0;
-  const hasActivity=deliveries.length||counterSales.length||sales.length||returns.length||expenses.length||income.length||production.some(x=>Number(x.labor_amount)>0)||workerRows.some(x=>x.entry_type==="earning")||total(periodFin,"depreciation_expense")>0||total(periodFin,"inventory_loss")>0||total(periodFin,"interest_expense")>0||total(periodFin,"interest_income")>0;
+  const hasActivity=deliveries.length||counterSales.length||sales.length||returns.length||expenses.length||income.length||production.some(x=>x.production_date>=start&&x.production_date<=end)||workerRows.some(x=>x.entry_type==="earning")||total(periodFin,"depreciation_expense")>0||total(periodFin,"inventory_loss")>0||total(periodFin,"interest_expense")>0||total(periodFin,"interest_income")>0;
   const stockRows=stockResult?.data||[];
   const stockText=stockResult?.error?"تیار مال کا اسٹاک ابھی لوڈ نہیں ہوا":stockRows.map(x=>x.product_type+": "+Number(x.available_quantity||0)+" "+(x.unit==="bottle"?"بوتل":"کارٹن")).join(" — ");
   const ownerNames=["محمد اسامہ مغل","محمد مزمل مغل","محمد تقی مغل","محمد رفیع مغل"];
@@ -1681,7 +1695,7 @@ async function runReport(){
    const returned=sum(returns.filter(x=>x.product_type===type),"replacement_quantity");
    const divisor=type==="500ml"?24:type==="1.5L"?12:1;
    const loss=unitCosts[type]===null?null:returned*(unitCosts[type]/divisor);
-   const labor=sum(production.filter(x=>x.product_type===type),"labor_amount");
+   const labor=productLaborCost(type);
    const known=cost===null||loss===null?null:rev-cost-loss-labor;
    return {type,rev,cost,returned,loss,labor,known};
   });
