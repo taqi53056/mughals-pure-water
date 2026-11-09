@@ -1330,7 +1330,8 @@ async function runReport(){
   let packCogs=0,missingPack=0;for(const r of sales){const qty=Number(r.quantity)||0,rate=costAt(r.product_type,r.sale_date);if(qty&&rate===null)missingPack+=qty;else packCogs+=qty*(rate||0)}
   const revenue19=sum(deliveries,"successful_bottles")*100+sum(deliveries,"damaged_caps")*10;
   const packRevenue=sum(sales,"total_amount"),otherIncome=sum(income,"amount")+total(periodFin,"interest_income");
-  const businessExpenses=sum(expenses,"amount")+total(periodFin,"interest_expense");\n  const depreciation=total(periodFin,"depreciation_expense"),inventoryLoss=total(periodFin,"inventory_loss");
+  const businessExpenses=sum(expenses,"amount")+total(periodFin,"interest_expense");
+  const depreciation=total(periodFin,"depreciation_expense"),inventoryLoss=total(periodFin,"inventory_loss");
   const deliveryLabor=sum(deliveries,"delivery_labor");
   const supportLabor=workerRows.filter(r=>r.entry_type==="earning"&&["carton loading/unloading","cleaning","bottle washing"].includes(r.work_category)).reduce((n,r)=>n+(Number(r.amount)||0),0);
   const totalRevenue=revenue19+packRevenue+otherIncome;
