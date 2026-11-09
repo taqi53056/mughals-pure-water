@@ -203,8 +203,15 @@ try {
       const normalPrice = document.querySelector("#saleUnitPrice").value;
       document.querySelector("#saleType").value = "6L";
       window.salePricePreview(false, true);
-      const sixLiterPrice = document.querySelector("#saleUnitPrice").value;
+      const sixLiterMinimumPrice = document.querySelector("#saleUnitPrice").value;
       const sixLiterDisabled = document.querySelector("#saleUnitPrice").disabled;
+      const sixLiterMinAttribute = document.querySelector("#saleUnitPrice").min;
+      document.querySelector("#saleUnitPrice").value = "60";
+      window.salePricePreview(false, false);
+      const sixLiterCustomPrice = document.querySelector("#saleUnitPrice").value;
+      document.querySelector("#saleUnitPrice").value = "49";
+      window.salePricePreview(false, false);
+      const sixLiterBelowFloorReset = document.querySelector("#saleUnitPrice").value;
       return {
         rendered,
         belowFloorBlocked,
@@ -214,8 +221,11 @@ try {
         savedSpecial: updates[0]?.values?.special_100_rate,
         bulkPrice,
         normalPrice,
-        sixLiterPrice,
-        sixLiterDisabled
+        sixLiterMinimumPrice,
+        sixLiterDisabled,
+        sixLiterMinAttribute,
+        sixLiterCustomPrice,
+        sixLiterBelowFloorReset
       };
     });
     if (!settingsResult.rendered) failures.push("Admin settings price controls did not render");
@@ -226,8 +236,10 @@ try {
     }
     if (settingsResult.bulkPrice !== "290") failures.push("100+ carton special price was not applied");
     if (settingsResult.normalPrice !== "300") failures.push("Default carton price was not restored below 100 units");
-    if (settingsResult.sixLiterPrice !== "55" || !settingsResult.sixLiterDisabled) {
-      failures.push("6L fixed price control is incorrect");
+    if (settingsResult.sixLiterMinimumPrice !== "55" || settingsResult.sixLiterDisabled ||
+        settingsResult.sixLiterMinAttribute !== "55" || settingsResult.sixLiterCustomPrice !== "60" ||
+        settingsResult.sixLiterBelowFloorReset !== "55") {
+      failures.push("6L minimum and editable sale price rules are incorrect");
     }
 
     await page.close();
