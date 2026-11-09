@@ -1920,13 +1920,13 @@ async function settingsModule(){
    <td>${esc(p.product_type)}</td>
    <td>${p.units_per_pack} ${esc(p.unit_type)}</td>
    <td>${carton?`<input type="number" min="280" step="1" id="psDefault_${Number(p.id)}" value="${Number(p.default_rate)}" style="max-width:110px">`:money(p.default_rate)}</td>
-   <td>${carton?`<input type="number" min="280" step="1" id="psSpecial_${Number(p.id)}" value="${p.special_100_rate==null?"":Number(p.special_100_rate)}" style="max-width:110px">`:"—"}</td>
+   <td>${carton?`<input type="number" min="270" step="1" id="psSpecial_${Number(p.id)}" value="${p.special_100_rate==null?"":Number(p.special_100_rate)}" style="max-width:110px">`:"—"}</td>
    <td>${money(p.labor_per_unit)}</td>
    <td>${p.is_active?"ہاں":"نہیں"}</td>
    <td>${carton?`<button onclick="saveProductSettings(${Number(p.id)},'${esc(p.product_type)}')">قیمت محفوظ کریں</button>`:"مقررہ"}</td>
   </tr>`;
  }).join("");
- $("settingsStatus").innerHTML='<h3>مقررہ کاروباری قواعد</h3><div class="stat">19L کامیاب بوتل: <b>Rs. 100</b> + فی بوتل ڈلیوری مزدوری <b>Rs. 20</b></div><div class="stat">خراب ڈھکن: <b>Rs. 10</b> فی عدد</div><div class="stat">500ml اور 1.5L کارٹن کی کم از کم قیمت: <b>Rs. 280</b></div><h3>پروڈکٹ قیمتوں کا کنٹرول</h3><p class="muted">500ml اور 1.5L کارٹن Rs.280 سے کم نہیں ہوسکتے۔ 100 یا زیادہ کارٹن پر خصوصی قیمت خود لاگو ہوتی ہے، جو طے شدہ قیمت سے زیادہ نہیں ہوسکتی۔ 6L کی قیمت Rs.55 مقرر ہے۔ مزدوری اور پیک سائز کاروباری قواعد کے مطابق مقرر ہیں۔</p><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>پیک</th><th>طے شدہ قیمت</th><th>خصوصی قیمت</th><th>مزدوری</th><th>فعال</th><th>عمل</th></tr>'+productRows+'</table></div><h3>ایڈمن اکاؤنٹس</h3><p>مستقل ایڈمن: <b>'+(admins||[]).length+'</b></p><ul>'+(admins||[]).map(a=>'<li>'+esc(a.full_name||a.id)+'</li>').join("")+'</ul><h3>ورکرز</h3><p>کل: <b>'+(workers||[]).length+'</b> — فعال: <b>'+(workers||[]).filter(w=>w.is_active).length+'</b> — مالک: <b>'+(workers||[]).filter(w=>w.is_owner).length+'</b></p><p class="muted">ایڈمن رول اور مقررہ بنیادی کاروباری قواعد اس اسکرین سے تبدیل نہیں ہوتے۔ قیمت کی ہر تبدیلی تصدیق کے بعد محفوظ اور آڈٹ لاگ میں درج ہوگی۔</p>';
+ $("settingsStatus").innerHTML='<h3>مقررہ کاروباری قواعد</h3><div class="stat">19L کامیاب بوتل: <b>Rs. 100</b> + فی بوتل ڈلیوری مزدوری <b>Rs. 20</b></div><div class="stat">خراب ڈھکن: <b>Rs. 10</b> فی عدد</div><div class="stat">500ml اور 1.5L کارٹن کی عمومی قیمت: <b>Rs. 280</b> — خصوصی قیمت: <b>Rs. 270</b> فی کارٹن</div><h3>پروڈکٹ قیمتوں کا کنٹرول</h3><p class="muted">عمومی قیمت کم از کم Rs.280 ہوگی؛ 100 یا زیادہ کارٹن پر خصوصی قیمت Rs.270 یا اس سے زیادہ ہوسکتی ہے، مگر عمومی قیمت سے زیادہ نہیں۔ 6L کی فروخت قیمت ہر سیل میں درج کی جاسکتی ہے (کم از کم Rs.55)۔ مزدوری اور پیک سائز کاروباری قواعد کے مطابق مقرر ہیں۔</p><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>پیک</th><th>طے شدہ قیمت</th><th>خصوصی قیمت</th><th>مزدوری</th><th>فعال</th><th>عمل</th></tr>'+productRows+'</table></div><h3>ایڈمن اکاؤنٹس</h3><p>مستقل ایڈمن: <b>'+(admins||[]).length+'</b></p><ul>'+(admins||[]).map(a=>'<li>'+esc(a.full_name||a.id)+'</li>').join("")+'</ul><h3>ورکرز</h3><p>کل: <b>'+(workers||[]).length+'</b> — فعال: <b>'+(workers||[]).filter(w=>w.is_active).length+'</b> — مالک: <b>'+(workers||[]).filter(w=>w.is_owner).length+'</b></p><p class="muted">ایڈمن رول اور مقررہ بنیادی کاروباری قواعد اس اسکرین سے تبدیل نہیں ہوتے۔ قیمت کی ہر تبدیلی تصدیق کے بعد محفوظ اور آڈٹ لاگ میں درج ہوگی۔</p>';
 }
 
 async function saveProductSettings(id,productType){
@@ -1940,8 +1940,8 @@ async function saveProductSettings(id,productType){
  if(!Number.isFinite(defaultRate)||defaultRate<floor){
   msg(productType+" کی قیمت کم از کم Rs."+floor+" ہونی چاہیے۔");return;
  }
- if(specialRate!==null&&(!Number.isFinite(specialRate)||specialRate<280)){
-  msg("500ml اور 1.5L کی خصوصی قیمت Rs.280 سے کم نہیں ہوسکتی۔");return;
+ if(specialRate!==null&&(!Number.isFinite(specialRate)||specialRate<270)){
+  msg("500ml اور 1.5L کی خصوصی قیمت Rs.270 سے کم نہیں ہوسکتی۔");return;
  }
  if(specialRate!==null&&specialRate>defaultRate){
   msg("100 یا زیادہ کارٹن کی خصوصی قیمت طے شدہ قیمت سے زیادہ نہیں ہوسکتی۔");return;
