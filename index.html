@@ -1235,8 +1235,8 @@ async function loadTankerPurchases(){
  ]);
  if(error||openingError){$("moduleTable").textContent="ٹینکر / ابتدائی اسٹاک لوڈ نہیں ہوا: "+(error||openingError).message;return;}
  $("moduleTable").innerHTML='<h3>ٹینکر خریداری اور ابتدائی پانی کی ہسٹری</h3><table><tr><th>تاریخ</th><th>اندراج</th><th>مقدار</th><th>فی ٹینکر / مالیت</th><th>کل رقم</th></tr>'+
- (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>'+({19L_delivery:"19L ڈلیوری",product_filling:"500ml / 1.5L فلنگ",shop_counter:"6L / 19L کاؤنٹر"}[r.water_use]||r.water_use)+' — ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td></tr>').join("")+
- (data||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+({19L_delivery:"19L ڈلیوری",product_filling:"500ml / 1.5L فلنگ",shop_counter:"6L / 19L کاؤنٹر"}[r.water_use]||r.water_use)+' — خریداری</td><td>'+r.tanker_count+' × 1,000 لیٹر</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+'</table>';
+ (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>'+({"19L_delivery":"19L ڈلیوری","product_filling":"500ml / 1.5L فلنگ","shop_counter":"6L / 19L کاؤنٹر"}[r.water_use]||r.water_use)+' — ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td></tr>').join("")+
+ (data||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+({"19L_delivery":"19L ڈلیوری","product_filling":"500ml / 1.5L فلنگ","shop_counter":"6L / 19L کاؤنٹر"}[r.water_use]||r.water_use)+' — خریداری</td><td>'+r.tanker_count+' × 1,000 لیٹر</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+'</table>';
 }
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
