@@ -1584,7 +1584,8 @@ async function runReport(){
   }
   let returnLoss=0;
   for(const r of returns){
-   const cost=unitCosts[r.product_type],q=Number(r.replacement_quantity)||0;
+   const divisor=r.product_type==="500ml"?24:r.product_type==="1.5L"?12:1;
+   const cost=unitCosts[r.product_type]===null?null:unitCosts[r.product_type]/divisor,q=Number(r.replacement_quantity)||0;
    if(q&&cost===null)missingProductCosts.push(r.product_type);
    else returnLoss+=q*(cost||0);
   }
@@ -1633,7 +1634,8 @@ async function runReport(){
    const soldQty=sum(sales.filter(x=>x.product_type===type),"quantity");
    const cost=unitCosts[type]===null?null:soldQty*unitCosts[type];
    const returned=sum(returns.filter(x=>x.product_type===type),"replacement_quantity");
-   const loss=unitCosts[type]===null?null:returned*unitCosts[type];
+   const divisor=type==="500ml"?24:type==="1.5L"?12:1;
+   const loss=unitCosts[type]===null?null:returned*(unitCosts[type]/divisor);
    const labor=sum(production.filter(x=>x.product_type===type),"labor_amount");
    const known=cost===null||loss===null?null:rev-cost-loss-labor;
    return {type,rev,cost,returned,loss,labor,known};
