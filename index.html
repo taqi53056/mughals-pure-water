@@ -1126,7 +1126,7 @@ async function rawMaterialsModule(){
  '<input id="rawPurchaseAmount" type="number" min="0.01" step="0.01" placeholder="کل ادا شدہ رقم / ابتدائی مالیت (روپے)">'+
  '<input id="rawPurchaseSupplier" maxlength="120" placeholder="سپلائر (اختیاری)">'+
  '<textarea id="rawPurchaseDetails" maxlength="300" placeholder="بل نمبر / تفصیل (اختیاری)"></textarea>'+
- '<button onclick="saveRawMaterialPurchase()">خریداری محفوظ کریں</button></div>'+
+ '<button id="rawPurchaseSaveButton" onclick="saveRawMaterialPurchase()">خریداری محفوظ کریں</button></div>'+
  '<div class="card"><h3>خام مال کا اندازاً باقی اسٹاک</h3><p class="muted">پیداوار کے مطابق بوتل، کارٹن، ٹیپ اور اسٹیکر کا استعمال خود منہا ہوگا۔ سپلائر کے کلیم سے آنے والی مفت تبدیلیاں درج نہ ہونے کی وجہ سے مقدار اندازاً ہوگی۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div></div>';
  await loadRawMaterialPurchases();
 }
@@ -1146,7 +1146,7 @@ async function saveRawMaterialPurchase(){
  };
  const {error}=await db.from("raw_material_purchases").insert(payload);
  if(error){msg("خریداری محفوظ نہیں ہوئی: "+error.message);return;}
- msg("خام مال کی خریداری محفوظ ہوگئی۔",true);
+ msg(record_type==="opening_stock"?"ابتدائی خام مال اسٹاک محفوظ ہوگیا۔":"خام مال کی خریداری محفوظ ہوگئی۔",true);
  $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
  $("rawPurchaseSupplier").value="";$("rawPurchaseDetails").value="";
  await loadRawMaterialPurchases();await loadTodaySummary();
@@ -1195,6 +1195,7 @@ function toggleRawPurchaseKind(){
  const opening=$("rawPurchaseKind")?.value==="opening_stock";
  if($("rawPurchaseAmount"))$("rawPurchaseAmount").placeholder=opening?"پہلے سے موجود اسٹاک کی اندازاً کل مالیت":"کل ادا شدہ رقم (روپے)";
  if($("rawPurchaseDetails")&&opening)$("rawPurchaseDetails").placeholder="ابتدائی اسٹاک کی تاریخ / اندازاً مالیت کی بنیاد";
+ if($("rawPurchaseSaveButton"))$("rawPurchaseSaveButton").textContent=opening?"ابتدائی اسٹاک محفوظ کریں":"خریداری محفوظ کریں";
 }
 function updateTankerTotal(){
  const n=Number($("tankCount")?.value)||0,r=Number($("tankRate")?.value)||0;
