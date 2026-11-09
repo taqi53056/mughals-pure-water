@@ -1675,7 +1675,7 @@ async function runReport(){
   if(successful19+damagedCaps>0&&capCost===null)missing.push("19L ڈھکن کی خریداری");
   if(missingProductCosts.length)missing.push("خام مال: "+[...new Set(missingProductCosts)].join("، "));
   const complete=missing.length===0;
-  const hasActivity=deliveries.length||counterSales.length||sales.length||returns.length||expenses.length||income.length||production.some(x=>x.production_date>=start&&x.production_date<=end)||workerRows.some(x=>x.entry_type==="earning")||total(periodFin,"depreciation_expense")>0||total(periodFin,"inventory_loss")>0||total(periodFin,"interest_expense")>0||total(periodFin,"interest_income")>0;
+  const hasActivity=deliveries.length||counterSales.length||sales.length||returns.length||expenses.length||income.length||rawPurchases.length||tankers.length||waterOpening.length||production.some(x=>x.production_date>=start&&x.production_date<=end)||workerRows.length||periodFin.length||total(periodFin,"depreciation_expense")>0||total(periodFin,"inventory_loss")>0||total(periodFin,"interest_expense")>0||total(periodFin,"interest_income")>0;
   const stockRows=stockResult?.data||[];
   const stockText=stockResult?.error?"تیار مال کا اسٹاک ابھی لوڈ نہیں ہوا":stockRows.map(x=>x.product_type+": "+Number(x.available_quantity||0)+" "+(x.unit==="bottle"?"بوتل":"کارٹن")).join(" — ");
   const ownerNames=["محمد اسامہ مغل","محمد مزمل مغل","محمد تقی مغل","محمد رفیع مغل"];
