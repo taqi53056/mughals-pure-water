@@ -1645,7 +1645,7 @@ async function runReport(){
   const net=profit19+profitProducts+otherIncome-expGeneral-interestExpense-depreciation-inventoryLoss;
   const missing=[];
   if(usedWaterLitres>0&&waterPerLitre===null)missing.push("ٹینکر کی خریداری");
-  if(damagedCaps>0&&capCost===null)missing.push("19L ڈھکن کی خریداری");
+  if(successful19+damagedCaps>0&&capCost===null)missing.push("19L ڈھکن کی خریداری");
   if(missingProductCosts.length)missing.push("خام مال: "+[...new Set(missingProductCosts)].join("، "));
   if(production.some(r=>["500ml","1.5L"].includes(r.product_type)&&Number(r.quantity)>0)||sales.some(r=>["500ml","1.5L"].includes(r.product_type)&&Number(r.quantity)>0))missing.push("500ml / 1.5L فلنگ پانی کی الگ لاگت");
   if(production.some(r=>r.product_type==="6L"&&Number(r.quantity)>0)||sales.some(r=>r.product_type==="6L"&&Number(r.quantity)>0))missing.push("6L دکان کے پانی کی الگ لاگت");
