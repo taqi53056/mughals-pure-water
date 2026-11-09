@@ -1449,9 +1449,30 @@ async function reportsModule(){
  '<input id="finParty" maxlength="120" placeholder="کس سے لیا / کس کو دیا / سپلائر"><select id="finMethod"><option value="">ادائیگی کا طریقہ</option><option>نقد</option><option>بینک</option><option>جاز کیش</option><option>ایزی پیسہ</option><option>ادھار</option><option>دیگر</option></select><textarea id="finDetails" maxlength="500" placeholder="مزید تفصیل / رسید نمبر"></textarea><button onclick="saveFinanceEntry()">مالی اندراج محفوظ کریں</button></div>'+
  '<div class="card"><h3>لاگت کا خودکار حساب</h3><p class="muted">خام مال کی خریداری، ٹینکر کی اصل قیمت، پیداوار اور پیکنگ کے اندراجات سے لاگت خود بنے گی۔ کسی خریداری یا فروخت کو مالی لیجر میں دوبارہ درج نہ کریں۔</p></div>'+
  '<div class="card"><h3>روزانہ، ماہانہ اور سالانہ رپورٹ</h3><p class="muted">ہر شعبے کا نتیجہ الگ اور مشترکہ اخراجات کے بعد پورے کاروبار کا نتیجہ بھی دکھایا جائے گا۔</p><button class="secondary" onclick="setReportPeriod(&quot;day&quot;)">آج کی رپورٹ</button><button class="secondary" onclick="setReportPeriod(&quot;month&quot;)">اس ماہ کی رپورٹ</button><button class="secondary" onclick="setReportPeriod(&quot;year&quot;)">اس سال کی رپورٹ</button><input id="rStart" type="date" value="2000-01-01"><input id="rEnd" type="date" value="'+today()+'"><button onclick="runReport()">رپورٹ دکھائیں</button></div>'+
+ '<div class="card"><h3>خودکار ماہانہ رپورٹس</h3><p class="muted">ہر مہینے کی پہلی تاریخ کو رات 12:05 بجے پاکستان وقت پر پچھلے مہینے کی رپورٹ خود محفوظ ہوگی۔</p><div id="monthlySnapshots" class="muted">رپورٹس لوڈ ہو رہی ہیں...</div><button class="secondary" onclick="loadMonthlySnapshots()">رپورٹس تازہ کریں</button></div>'+
  '<div class="card"><h3>حالیہ مالی اندراجات</h3><div id="financeLedgerTable" class="muted">ریکارڈ لوڈ ہو رہا ہے...</div></div>';
- await Promise.all([runReport(),loadFinanceLedger()]);
+ await Promise.all([runReport(),loadFinanceLedger(),loadMonthlySnapshots()]);
 }
+
+async function loadMonthlySnapshots(){
+ const el=$("monthlySnapshots");if(!el)return;
+ const {data,error}=await db.from("business_monthly_report_snapshots")
+  .select("month_start,month_end,report,generated_at")
+  .order("month_start",{ascending:false}).limit(12);
+ if(error){el.textContent="ماہانہ رپورٹس لوڈ نہیں ہوئیں: "+error.message;return;}
+ if(!(data||[]).length){el.textContent="پہلی ماہانہ رپورٹ اگلے مہینے کی پہلی تاریخ کو خودکار طور پر تیار ہوگی۔";return;}
+ el.innerHTML=(data||[]).map(row=>{
+  const r=row.report||{},seg=r.segments||{},owners=r.owner_withdrawals||{},stock=r.stock_estimate||{};
+  const result=r.has_activity?(r.complete?money(seg.net_profit||0):"عارضی — لاگت نامکمل"):"کوئی کاروباری اندراج نہیں";
+  const missing=(r.missing_costs||[]).length?"<p class='warning'>نامکمل لاگت: "+(r.missing_costs||[]).map(esc).join("، ")+"</p>":"";
+  return "<div class='audit-card'><div class='audit-card-top'><b>"+esc(row.month_start)+" تا "+esc(row.month_end)+"</b><span>"+(r.complete?"حساب مکمل":"حساب عارضی")+"</span></div>"+
+   "<div class='worker-summary-grid'><div><small>19L شعبہ</small><b>"+money(seg["19L"]?.profit_before_shared||0)+"</b></div><div><small>مصنوعات کا شعبہ</small><b>"+money(seg.finished_goods?.profit_before_shared||0)+"</b></div><div><small>مجموعی نتیجہ</small><b>"+result+"</b></div><div><small>چاروں مالکان کی نکاسی</small><b>"+money(owners.total||0)+"</b></div></div>"+
+   missing+
+   "<p class='muted'>موجودہ محفوظ اسٹاک تخمینہ: 500ml "+(stock.finished_500ml_cartons||0)+" کارٹن، 1.5L "+(stock.finished_1_5l_cartons||0)+" کارٹن، 6L "+(stock.finished_6l_bottles||0)+" بوتلیں۔</p>"+
+   "<p class='muted'>تیار ہونے کا وقت: "+esc(new Date(row.generated_at).toLocaleString("ur-PK"))+"</p></div>";
+ }).join("");
+}
+
 async function loadCostRateHistory(){
  const el=$("costRateHistory");if(!el)return;
  const {data,error}=await db.from("product_cost_rates").select("product_type,unit_cost,effective_from,details").order("effective_from",{ascending:false}).limit(12);
