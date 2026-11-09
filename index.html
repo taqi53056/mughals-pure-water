@@ -1618,7 +1618,7 @@ async function runReport(){
  const start=$("rStart").value,end=$("rEnd").value;
  if(!start||!end||start>end){msg("تاریخ کی حد درست منتخب کریں۔");return;}
  try{
-  const [deliveries,allDeliveries,counterSales,allCounterSales,tankers,waterOpening,sales,returns,rawPurchases,production,expenses,income,allFin,periodFin,workerRows,stockResult,productSettingsResult]=await Promise.all([
+  const [deliveries,allDeliveries,counterSales,allCounterSales,tankers,waterOpening,sales,returns,rawPurchases,production,expenses,income,allFin,periodFin,workerRows,dailyCleaningRows,stockResult,productSettingsResult]=await Promise.all([
    financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor","delivery_date",start,end),
    financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor","delivery_date",null,end),
    financeFetchAll("counter_water_sales","sale_date,total_litres,total_amount","sale_date",start,end),
@@ -1634,6 +1634,7 @@ async function runReport(){
    financeFetchAll("business_finance_ledger","entry_type,amount,counterparty,category","entry_date",null,end),
    financeFetchAll("business_finance_ledger","entry_type,amount,counterparty,category","entry_date",start,end),
    financeFetchAll("worker_ledger","entry_type,work_category,amount,entry_date","entry_date",start,end),
+   financeFetchAll("daily_cleaning_labor","amount,labor_date","labor_date",start,end),
    db.rpc("get_finished_stock_summary"),
    db.from("product_settings").select("product_type,labor_per_unit")
   ]);
@@ -1705,7 +1706,7 @@ async function runReport(){
    return productLaborRate(type)*(sold+replacements/divisor);
   };
   const productionLabor=["500ml","1.5L","6L"].reduce((n,type)=>n+productLaborCost(type),0);
-  const supportLabor=workerRows.filter(r=>r.entry_type==="earning"&&["carton loading/unloading","cleaning","bottle washing","manual adjustment"].includes(r.work_category)).reduce((n,r)=>n+(Number(r.amount)||0),0);
+  const supportLabor=workerRows.filter(r=>r.entry_type==="earning"&&["carton loading/unloading","cleaning","bottle washing","manual adjustment"].includes(r.work_category)).reduce((n,r)=>n+(Number(r.amount)||0),0)+sum(dailyCleaningRows,"amount");
   const exp19=expenses.filter(x=>x.business_segment==="19L").reduce((n,r)=>n+(Number(r.amount)||0),0);
   const expProducts=expenses.filter(x=>x.business_segment==="finished_goods").reduce((n,r)=>n+(Number(r.amount)||0),0);
   const expGeneral=expenses.filter(x=>!x.business_segment||x.business_segment==="general").reduce((n,r)=>n+(Number(r.amount)||0),0);
@@ -1722,7 +1723,7 @@ async function runReport(){
   if(successful19+damagedCaps>0&&capCost===null)missing.push("19L ڈھکن کی خریداری");
   if(missingProductCosts.length)missing.push("خام مال: "+[...new Set(missingProductCosts)].join("، "));
   const complete=missing.length===0;
-  const hasActivity=deliveries.length||counterSales.length||sales.length||returns.length||expenses.length||income.length||rawPurchases.length||tankers.length||waterOpening.length||production.some(x=>x.production_date>=start&&x.production_date<=end)||workerRows.length||periodFin.length||total(periodFin,"depreciation_expense")>0||total(periodFin,"inventory_loss")>0||total(periodFin,"interest_expense")>0||total(periodFin,"interest_income")>0;
+  const hasActivity=deliveries.length||counterSales.length||sales.length||returns.length||expenses.length||income.length||rawPurchases.length||tankers.length||waterOpening.length||production.some(x=>x.production_date>=start&&x.production_date<=end)||workerRows.length||dailyCleaningRows.length||periodFin.length||total(periodFin,"depreciation_expense")>0||total(periodFin,"inventory_loss")>0||total(periodFin,"interest_expense")>0||total(periodFin,"interest_income")>0;
   const stockRows=stockResult?.data||[];
   const stockText=stockResult?.error?"تیار مال کا اسٹاک ابھی لوڈ نہیں ہوا":stockRows.map(x=>x.product_type+": "+Number(x.available_quantity||0)+" "+(x.unit==="bottle"?"بوتل":"کارٹن")).join(" — ");
   // خام مال کی مقدار اور روپے میں قدر: ابتدائی اسٹاک + خریداری - پیداوار میں استعمال
@@ -1928,8 +1929,11 @@ async function saveCleaningLabor(){
  const worker=Number($("cleanWorker").value)||null,amount=Number($("cleanAmount").value),date=$("cleanDate").value;
  if(!date||!Number.isFinite(amount)||amount<=0){msg("تاریخ اور درست مزدوری درج کریں۔");return;}
  if(!confirmLargeEntry("صفائی کی مزدوری (روپے)",amount,1000))return;
- const {error}=await db.from("daily_cleaning_labor").insert({labor_date:date,worker_name:worker?($("cleanWorker").selectedOptions[0]?.textContent||""):"مالک",worker_id:worker,amount,note:$("cleanNote").value.trim()||null});
- if(error){msg("صفائی محفوظ نہیں ہوئی: "+error.message);return;}msg("صفائی کا ریکارڈ محفوظ ہوگیا۔",true);$("cleanAmount").value="";$("cleanNote").value="";await loadLaborHistory();
+ const payload={worker_id:worker,entry_date:date,entry_type:"earning",work_category:"cleaning",amount,note:$("cleanNote").value.trim()||"صفائی کی مزدوری"};
+ const result=worker
+  ?await db.from("worker_ledger").insert({...payload,entered_by:user?.id||null})
+  :await db.from("daily_cleaning_labor").insert({labor_date:date,worker_name:"مالک",worker_id:null,amount,note:payload.note});
+ if(result.error){msg("صفائی محفوظ نہیں ہوئی: "+result.error.message);return;}msg(worker?"صفائی کی مزدوری ورکر لیجر میں محفوظ ہوگئی۔":"مالک کی صفائی کی مزدوری محفوظ ہوگئی۔",true);$("cleanAmount").value="";$("cleanNote").value="";await loadLaborHistory();
 }
 function productionRate(productType){return productType==="6L"?0:10;}
 function updateProductionRatePreview(){
