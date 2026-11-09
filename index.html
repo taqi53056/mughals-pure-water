@@ -1627,7 +1627,7 @@ async function runReport(){
   const deliveredLitres=successful19*19;
   const usedWaterLitres=deliveredLitres+counterLitres;
   const waterCogs=waterPerLitre===null?0:usedWaterLitres*waterPerLitre;
-  const capCogs=capCost===null?0:damagedCaps*capCost;
+  const capCogs=capCost===null?0:(successful19+damagedCaps)*capCost;
   const revenue19=successful19*100+damagedCaps*10+sum(counterSales,"total_amount");
   const productRevenue=sum(sales,"total_amount");
   const otherIncome=sum(income,"amount")+total(periodFin,"interest_income");
@@ -1674,7 +1674,7 @@ async function runReport(){
   });
   $("moduleTable").innerHTML=
    "<h3>"+start+" سے "+end+" تک — مالی نتیجہ</h3>"+
-   "<div class='card'><h3>19L پانی کا شعبہ</h3><div class='stat'>گھریلو ڈلیوری اور ڈھکن آمدن: <b>"+fmt(successful19*100+damagedCaps*10)+"</b></div><div class='stat'>کاؤنٹر فروخت: <b>"+fmt(sum(counterSales,"total_amount"))+"</b> — "+counterLitres+" لیٹر</div><div class='stat'>19L کی کل آمدن: <b>"+fmt(revenue19)+"</b></div><div class='stat'>پانی کی لاگت: <b>"+fmt(waterCogs)+"</b></div><div class='stat'>خراب ڈھکنوں کی لاگت: <b>"+fmt(capCogs)+"</b></div><div class='stat'>گھریلو ڈلیوری مزدوری: <b>"+fmt(deliveryLabor)+"</b></div><div class='stat'>19L شعبے کے اخراجات: <b>"+fmt(exp19)+"</b></div><div class='total'>19L شعبے کا نتیجہ: "+fmt(profit19)+"</div></div>"+
+   "<div class='card'><h3>19L پانی کا شعبہ</h3><div class='stat'>گھریلو ڈلیوری اور ڈھکن آمدن: <b>"+fmt(successful19*100+damagedCaps*10)+"</b></div><div class='stat'>کاؤنٹر فروخت: <b>"+fmt(sum(counterSales,"total_amount"))+"</b> — "+counterLitres+" لیٹر</div><div class='stat'>19L کی کل آمدن: <b>"+fmt(revenue19)+"</b></div><div class='stat'>پانی کی لاگت: <b>"+fmt(waterCogs)+"</b></div><div class='stat'>تمام استعمال شدہ ڈھکنوں کی لاگت (کامیاب بوتلیں + خراب ڈھکن): <b>"+fmt(capCogs)+"</b></div><div class='stat'>گھریلو ڈلیوری مزدوری: <b>"+fmt(deliveryLabor)+"</b></div><div class='stat'>19L شعبے کے اخراجات: <b>"+fmt(exp19)+"</b></div><div class='total'>19L شعبے کا نتیجہ: "+fmt(profit19)+"</div></div>"+
    "<div class='card'><h3>500ml، 1.5L اور 6L مصنوعات</h3>"+
    productBreakdown.map(x=>"<div class='stat'><b>"+x.type+"</b><br>فروخت: "+fmt(x.rev)+"<br>خام مال / پیکنگ: "+(x.cost===null?"لاگت نامکمل":fmt(x.cost))+"<br>متبادل بوتلوں کا نقصان: "+(x.loss===null?"لاگت نامکمل":fmt(x.loss))+"<br>پروڈکشن مزدوری: "+fmt(x.labor)+"<br><b>مشترکہ خرچ سے پہلے حصہ: "+(x.known===null?"لاگت نامکمل":fmt(x.known))+"</b></div>").join("")+
    "<div class='stat'>تینوں مصنوعات کی مجموعی فروخت: <b>"+fmt(productRevenue)+"</b></div><div class='stat'>خام مال اور پیکنگ کی مجموعی لاگت: <b>"+fmt(productCogs)+"</b></div><div class='stat'>خراب مال کی تبدیلی کا نقصان: <b>"+fmt(returnLoss)+"</b></div><div class='stat'>پروڈکشن مزدوری: <b>"+fmt(productionLabor)+"</b></div><div class='stat'>مشترکہ لوڈنگ، صفائی اور دھلائی مزدوری: <b>"+fmt(supportLabor)+"</b></div><div class='stat'>مصنوعات کی ترسیل اور دیگر اخراجات: <b>"+fmt(expProducts)+"</b></div><div class='total'>مصنوعات کے شعبے کا نتیجہ: "+fmt(profitProducts)+"</div><p class='muted'>ہر پروڈکٹ کا حصہ مشترکہ لوڈنگ، صفائی اور ترسیل کے اخراجات سے پہلے ہے؛ یہ اخراجات نیچے شعبے کے مجموعی حساب میں شامل ہیں۔</p></div>"+
