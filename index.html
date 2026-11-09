@@ -357,6 +357,10 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 <div class="tile yellow" onclick="openModule('labor')">صفائی / پروڈکشن / دھلائی</div>
 <div class="tile red" onclick="openModule('complaints')">کسٹمر شکایات</div>
 <div class="tile gray" onclick="openModule('audit')">سکیورٹی / آڈٹ لاگ</div>
+<div class="tile yellow" onclick="openModule('raw')">خام مال کی خریداری</div>
+<div class="tile blue" onclick="openModule('tanker')">19L پانی کے ٹینکر</div>
+<div class="tile teal" onclick="openModule('counterWater')">19L کاؤنٹر فروخت</div>
+<div class="tile red" onclick="openModule('returns')">خراب تیار مال کی واپسی</div>
 <div class="tile teal" onclick="openModule('settings')">ترتیبات / کنٹرول سینٹر</div>
 </div>
 
@@ -630,7 +634,10 @@ async function openModule(name){
  if(name==="customers")return customersModule();
  if(name==="delivery")return deliveryModule();
  if(name==="billing")return billingModule();
- if(name==="raw")return stockModule("raw");
+ if(name==="raw")return rawMaterialsModule();
+ if(name==="tanker")return tankerPurchaseModule();
+ if(name==="counterWater")return counterWaterModule();
+ if(name==="returns")return productReturnsModule();
  if(name==="finished")return stockModule("finished");
  if(name==="sales")return salesModule();
  if(name==="expenses")return moneyModule("expenses");
@@ -1083,6 +1090,182 @@ async function loadStock(type){
  (adjustments||[]).map(r=>`<tr><td>${esc(r.adjustment_date)}</td><td>${esc(r.product_type)}</td><td>${r.adjustment_type==="increase"?"اضافہ":"کمی"}</td><td>${r.quantity}</td><td>${esc(r.reason)}</td></tr>`).join("")+"</table>";
 }
 
+
+/* مربوط خام مال، ٹینکر، کاؤنٹر فروخت اور تیار مال کی واپسی */
+const rawMaterialLabels={
+ bottle_500ml:"500ml بوتل + ڈھکن",
+ bottle_1_5l:"1.5L بوتل + ڈھکن",
+ bottle_6l:"6L بوتل + ڈھکن",
+ carton_500ml:"500ml کارٹن",
+ carton_1_5l:"1.5L کارٹن",
+ tape_bundle:"ٹیپ کا بنڈل",
+ sticker:"اسٹیکر",
+ cap_19l:"19L ڈھکن"
+};
+const rawMaterialUnits={
+ bottle_500ml:"bottle",bottle_1_5l:"bottle",bottle_6l:"bottle",
+ carton_500ml:"carton",carton_1_5l:"carton",tape_bundle:"bundle",
+ sticker:"piece",cap_19l:"piece"
+};
+async function rawMaterialsModule(){
+ setTitle("خام مال کی خریداری");
+ $("moduleBody").innerHTML=
+ '<p class="muted">خریداری کے بل کے مطابق صرف خریدی ہوئی مقدار اور کل نقد قیمت درج کریں۔ کلیم کے بدلے آنے والا مال خریداری یا خرچ نہیں ہوگا۔</p>'+
+ '<div class="card"><h3>نئی خریداری</h3>'+
+ '<input id="rawPurchaseDate" type="date" value="'+today()+'">'+
+ '<select id="rawPurchaseType">'+
+ Object.keys(rawMaterialLabels).map(k=>'<option value="'+k+'">'+rawMaterialLabels[k]+'</option>').join("")+
+ '</select>'+
+ '<input id="rawPurchaseQty" type="number" min="1" step="1" placeholder="بل کے مطابق مقدار">'+
+ '<input id="rawPurchaseAmount" type="number" min="0.01" step="0.01" placeholder="کل ادا شدہ رقم (روپے)">'+
+ '<input id="rawPurchaseSupplier" maxlength="120" placeholder="سپلائر (اختیاری)">'+
+ '<textarea id="rawPurchaseDetails" maxlength="300" placeholder="بل نمبر / تفصیل (اختیاری)"></textarea>'+
+ '<button onclick="saveRawMaterialPurchase()">خریداری محفوظ کریں</button></div>'+
+ '<div class="card"><h3>خام مال کا اندازاً باقی اسٹاک</h3><p class="muted">پیداوار کے مطابق بوتل، کارٹن، ٹیپ اور اسٹیکر کا استعمال خود منہا ہوگا۔ سپلائر کے کلیم سے آنے والی مفت تبدیلیاں درج نہ ہونے کی وجہ سے مقدار اندازاً ہوگی۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div></div>';
+ await loadRawMaterialPurchases();
+}
+async function saveRawMaterialPurchase(){
+ const type=$("rawPurchaseType").value,date=$("rawPurchaseDate").value;
+ const quantity=Number($("rawPurchaseQty").value),total_amount=Number($("rawPurchaseAmount").value);
+ if(!date||!Number.isInteger(quantity)||quantity<=0||!Number.isFinite(total_amount)||total_amount<=0){
+  msg("تاریخ، مکمل مقدار اور کل ادا شدہ رقم درست درج کریں۔");return;
+ }
+ if(!confirmLargeEntry("خام مال کی مقدار",quantity,1000)||!confirmLargeEntry("خریداری کی رقم",total_amount,100000))return;
+ const payload={
+  purchase_date:date,material_type:type,quantity,unit:rawMaterialUnits[type],
+  total_amount,supplier:$("rawPurchaseSupplier").value.trim()||null,
+  payment_method:"cash",details:$("rawPurchaseDetails").value.trim()||null,
+  entered_by:user?.id||null
+ };
+ const {error}=await db.from("raw_material_purchases").insert(payload);
+ if(error){msg("خریداری محفوظ نہیں ہوئی: "+error.message);return;}
+ msg("خام مال کی خریداری محفوظ ہوگئی۔",true);
+ $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
+ $("rawPurchaseSupplier").value="";$("rawPurchaseDetails").value="";
+ await loadRawMaterialPurchases();await loadTodaySummary();
+}
+async function loadRawMaterialPurchases(){
+ const [{data:purchases,error:pe},{data:production,error:pr}]=await Promise.all([
+  db.from("raw_material_purchases").select("*").order("purchase_date",{ascending:false}).limit(1000),
+  db.from("production").select("product_type,quantity,production_date").order("production_date",{ascending:true}).limit(5000)
+ ]);
+ if(pe||pr){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(pe||pr).message;return;}
+ const rows=purchases||[],prod=production||[];
+ const purchased=key=>rows.filter(x=>x.material_type===key).reduce((n,x)=>n+Number(x.quantity||0),0);
+ const made=(key)=>prod.filter(x=>x.product_type===key).reduce((n,x)=>n+Number(x.quantity||0),0);
+ const used={
+  bottle_500ml:made("500ml")*24,bottle_1_5l:made("1.5L")*12,bottle_6l:made("6L"),
+  carton_500ml:made("500ml"),carton_1_5l:made("1.5L"),
+  tape_bundle:(made("500ml")+made("1.5L"))/200,
+  sticker:made("500ml")*24+made("1.5L")*12+made("6L")
+ };
+ const balanceKeys=["bottle_500ml","bottle_1_5l","bottle_6l","carton_500ml","carton_1_5l","tape_bundle","sticker"];
+ $("rawStockBalance").innerHTML='<div class="grid">'+balanceKeys.map(k=>{
+  const remaining=purchased(k)-used[k];
+  const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"?"اسٹیکر":"بوتل";
+  return '<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
+ }).join("")+'<div class="stat">19L ڈھکن<br><b>'+purchased("cap_19l")+' عدد خریدے گئے</b><small>روزانہ استعمال درج نہیں ہوتا۔</small></div></div>';
+ $("moduleTable").innerHTML='<h3>خریداری کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>خام مال</th><th>مقدار</th><th>کل رقم</th><th>فی یونٹ لاگت</th><th>سپلائر</th></tr>'+
+ rows.map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
+ '</table></div>';
+}
+async function tankerPurchaseModule(){
+ setTitle("19L پانی کے ٹینکر");
+ $("moduleBody").innerHTML=
+ '<p class="muted">ہر گاڑی ایک ہزار لیٹر ہے۔ ایک یا دو ٹینکر آئیں تو تعداد درج کریں؛ فی ٹینکر اصل قیمت 1,200 یا 1,250 وغیرہ درج کریں۔</p>'+
+ '<div class="card"><input id="tankDate" type="date" value="'+today()+'">'+
+ '<input id="tankCount" type="number" min="1" step="1" value="1" placeholder="ٹینکروں کی تعداد">'+
+ '<input id="tankRate" type="number" min="1" step="0.01" placeholder="فی 1,000 لیٹر ٹینکر کی قیمت">'+
+ '<div class="total">کل رقم: <b id="tankTotal">Rs. 0</b></div>'+
+ '<input id="tankSupplier" maxlength="120" placeholder="سپلائر (اختیاری)">'+
+ '<button onclick="saveTankerPurchase()">ٹینکر خریداری محفوظ کریں</button></div>';
+ $("tankCount").addEventListener("input",updateTankerTotal);$("tankRate").addEventListener("input",updateTankerTotal);
+ await loadTankerPurchases();
+}
+function updateTankerTotal(){
+ const n=Number($("tankCount")?.value)||0,r=Number($("tankRate")?.value)||0;
+ if($("tankTotal"))$("tankTotal").textContent=money(n*r);
+}
+async function saveTankerPurchase(){
+ const date=$("tankDate").value,count=Number($("tankCount").value),rate=Number($("tankRate").value);
+ if(!date||!Number.isInteger(count)||count<=0||!Number.isFinite(rate)||rate<=0){msg("تاریخ، ٹینکروں کی تعداد اور فی ٹینکر قیمت درست درج کریں۔");return;}
+ if(!confirmLargeEntry("ٹینکروں کی تعداد",count,5)||!confirmLargeEntry("ٹینکر کی کل رقم",count*rate,100000))return;
+ const {error}=await db.from("water_tanker_purchases").insert({
+  purchase_date:date,tanker_count:count,rate_per_tanker:rate,
+  payment_method:"cash",supplier:$("tankSupplier").value.trim()||null,
+  entered_by:user?.id||null
+ });
+ if(error){msg("ٹینکر خریداری محفوظ نہیں ہوئی: "+error.message);return;}
+ msg("ٹینکر خریداری محفوظ ہوگئی۔",true);$("tankSupplier").value="";await loadTankerPurchases();await loadTodaySummary();
+}
+async function loadTankerPurchases(){
+ const {data,error}=await db.from("water_tanker_purchases").select("*").order("purchase_date",{ascending:false}).limit(100);
+ if(error){$("moduleTable").textContent=error.message;return;}
+ $("moduleTable").innerHTML='<h3>ٹینکر خریداری کی ہسٹری</h3><table><tr><th>تاریخ</th><th>ٹینکر</th><th>فی ٹینکر</th><th>کل رقم</th></tr>'+
+ (data||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+r.tanker_count+' × 1,000 لیٹر</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+'</table>';
+}
+async function counterWaterModule(){
+ setTitle("19L کاؤنٹر فروخت");
+ $("moduleBody").innerHTML=
+ '<p class="muted">گاہکوں کی الگ الگ تفصیل نہیں چاہیے۔ پورے دن کے کُل فروخت شدہ لیٹر اور کُل وصول شدہ رقم ایک ہی انٹری میں درج کریں۔</p>'+
+ '<div class="card"><input id="counterDate" type="date" value="'+today()+'">'+
+ '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنے لیٹر فروخت ہوئے؟">'+
+ '<input id="counterAmount" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنی رقم وصول ہوئی؟">'+
+ '<select id="counterMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="mixed">مختلف ذرائع</option></select>'+
+ '<button onclick="saveCounterWaterSale()">روزانہ کاؤنٹر فروخت محفوظ کریں</button></div>';
+ $("counterDate").addEventListener("change",loadCounterWaterForDate);await loadCounterWaterForDate();
+}
+async function loadCounterWaterForDate(){
+ const date=$("counterDate").value;
+ const {data,error}=await db.from("counter_water_sales").select("*").eq("sale_date",date).maybeSingle();
+ if(error){msg("کاؤنٹر ریکارڈ لوڈ نہیں ہوا: "+error.message);return;}
+ $("counterLitres").value=data?.total_litres??"";
+ $("counterAmount").value=data?.total_amount??"";
+ $("counterMethod").value=data?.payment_method||"cash";
+ const {data:history}=await db.from("counter_water_sales").select("*").order("sale_date",{ascending:false}).limit(30);
+ $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر فروخت کی ہسٹری</h3><table><tr><th>تاریخ</th><th>لیٹر</th><th>وصول شدہ رقم</th><th>فی لیٹر اوسط</th></tr>'+
+ (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.total_litres))+'</td></tr>').join("")+'</table>';
+}
+async function saveCounterWaterSale(){
+ const sale_date=$("counterDate").value,total_litres=Number($("counterLitres").value),total_amount=Number($("counterAmount").value);
+ if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<=0){msg("تاریخ، کل لیٹر اور وصول شدہ رقم درست درج کریں۔");return;}
+ if(!confirmLargeEntry("کاؤنٹر فروخت کے لیٹر",total_litres,1000)||!confirmLargeEntry("وصول شدہ رقم",total_amount,100000))return;
+ const payload={sale_date,total_litres,total_amount,payment_method:$("counterMethod").value,entered_by:user?.id||null};
+ const {error}=await db.from("counter_water_sales").upsert(payload,{onConflict:"sale_date"});
+ if(error){msg("کاؤنٹر فروخت محفوظ نہیں ہوئی: "+error.message);return;}
+ msg("روزانہ کاؤنٹر فروخت محفوظ ہوگئی۔",true);await loadCounterWaterForDate();await loadTodaySummary();
+}
+async function productReturnsModule(){
+ setTitle("خراب تیار مال کی واپسی");
+ $("moduleBody").innerHTML=
+ '<p class="muted">دکان سے واپس آنے والی خراب بوتل دوبارہ استعمال نہیں ہوگی۔ اسی تعداد میں نئی بوتل بطور تبدیلی دینے کا ریکارڈ ہوگا؛ اسے نئی فروخت نہیں گنا جائے گا۔</p>'+
+ '<div class="card"><input id="returnDate" type="date" value="'+today()+'">'+
+ '<select id="returnType"><option value="500ml">500ml کارٹن کے اندر بوتل</option><option value="1.5L">1.5L کارٹن کے اندر بوتل</option><option value="6L">6L بوتل</option></select>'+
+ '<input id="returnQty" type="number" min="1" step="1" placeholder="خراب بوتلوں کی تعداد">'+
+ '<input id="returnReason" maxlength="200" placeholder="وجہ: لیک / ٹوٹی / خراب">'+
+ '<button onclick="saveProductReturn()">واپسی اور متبادل محفوظ کریں</button></div>';
+ await loadProductReturns();
+}
+async function saveProductReturn(){
+ const return_date=$("returnDate").value,product_type=$("returnType").value;
+ const quantity=Number($("returnQty").value),reason=$("returnReason").value.trim();
+ if(!return_date||!Number.isInteger(quantity)||quantity<=0||!reason){msg("تاریخ، خراب بوتلوں کی تعداد اور وجہ درج کریں۔");return;}
+ if(!confirmLargeEntry("واپس آنے والی خراب بوتلیں",quantity,100))return;
+ const {error}=await db.from("product_returns").insert({
+  return_date,product_type,quantity,replacement_quantity:quantity,reason,entered_by:user?.id||null
+ });
+ if(error){msg("واپسی محفوظ نہیں ہوئی: "+error.message);return;}
+ msg("خراب مال کی واپسی اور متبادل بوتلوں کا اندراج محفوظ ہوگیا۔",true);
+ $("returnQty").value="";$("returnReason").value="";
+ await loadProductReturns();await loadTodaySummary();
+}
+async function loadProductReturns(){
+ const {data,error}=await db.from("product_returns").select("*").order("return_date",{ascending:false}).limit(100);
+ if(error){$("moduleTable").textContent=error.message;return;}
+ $("moduleTable").innerHTML='<h3>خراب مال کی واپسی کی ہسٹری</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>خراب بوتلیں</th><th>متبادل بوتلیں</th><th>وجہ</th></tr>'+
+ (data||[]).map(r=>'<tr><td>'+esc(r.return_date)+'</td><td>'+esc(r.product_type)+'</td><td>'+r.quantity+'</td><td>'+r.replacement_quantity+'</td><td>'+esc(r.reason)+'</td></tr>').join("")+'</table>';
+}
+
 /* سیل / مال کا اخراج */
 let saleSettings={};
 async function salesModule(){
@@ -1102,11 +1285,12 @@ async function salesModule(){
  <option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
  <select id="saleWorker"><option value="">کارٹن کی مزدوری نہیں (مالک کا کام)</option></select>
  <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview(true,false)">
- <input id="saleUnitPrice" type="number" min="280" step="1" value="${default500}" placeholder="فی کارٹن قیمت (کم از کم 280)" oninput="salePricePreview(false,false)">
+ <input id="saleUnitPrice" type="number" min="55" step="1" value="${default500}" placeholder="اصل فی کارٹن / بوتل قیمت" oninput="salePricePreview(false,false)">
+ <select id="salePaymentMethod"><option value="cash">نقد وصولی</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>
  <div class="stat">فی یونٹ قیمت: <b id="salePrice">Rs. ${default500}</b></div>
  <div class="stat" id="saleSpecialNote">100 یا زیادہ کارٹن پر مقررہ خصوصی قیمت خود منتخب ہوگی۔</div>
  <div class="total">کل رقم: <span id="saleTotal">Rs. 0</span></div>
- <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.280 فی کارٹن ہے۔ 100 یا زیادہ کارٹن پر اگر خصوصی قیمت مقرر ہو تو وہ لاگو ہوگی۔ 6L بوتل Rs.55 مقرر ہے۔</p>
+ <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.280 فی کارٹن ہے۔ 6L کی کم از کم قیمت Rs.55 فی بوتل ہے؛ اصل فروخت قیمت درج کریں۔</p>
  <button onclick="saveSale()">سیل محفوظ کریں</button>
  <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button>`;
  salePricePreview(false,true);
@@ -1116,14 +1300,15 @@ async function salesModule(){
 }
 function getSaleCalc(){
  const type=$("saleType").value,qty=Number($("saleQty").value)||0;
- const price=type==="6L"?55:(Number($("saleUnitPrice").value)||0);
+ const price=Number($("saleUnitPrice").value)||0;
  return {type,qty,price,total:qty*price,unit:type==="6L"?"bottle":"carton"};
 }
 function salePricePreview(autoSpecial=false,resetDefault=false){
  const type=$("saleType").value,is6=type==="6L",setting=saleSettings[type]||{};
  $("saleUnitPrice").disabled=is6;
  if(is6){
-  $("saleUnitPrice").value="55";
+  const current=Number($("saleUnitPrice").value);
+  if(resetDefault||!Number.isFinite(current)||current<55)$("saleUnitPrice").value="55";
  }else{
   const defaultRate=Number(setting.default_rate)||280;
   if(resetDefault||!Number.isFinite(Number($("saleUnitPrice").value))||Number($("saleUnitPrice").value)<280){
@@ -1150,7 +1335,7 @@ function salePricePreview(autoSpecial=false,resetDefault=false){
 async function saveSale(){
  const c=getSaleCalc(),button=document.querySelector('button[onclick="saveSale()"]');
  if(!Number.isInteger(c.qty)||c.qty<=0){msg("کارٹن یا 6L بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
- if(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<280)){msg("500ml اور 1.5L کی قیمت کم از کم 280 روپے فی کارٹن ہونی چاہیے۔");return}
+ if((c.type==="6L"&&(!Number.isFinite(c.price)||c.price<55))||(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<280))){msg(c.type==="6L"?"6L کی قیمت کم از کم 55 روپے فی بوتل ہونی چاہیے۔":"500ml اور 1.5L کی قیمت کم از کم 280 روپے فی کارٹن ہونی چاہیے۔");return}
  if(!confirmLargeEntry("فروخت کی مقدار",c.qty,100)||!confirmLargeEntry("فروخت کی کل رقم (روپے)",c.total,1000))return;
  if(button)button.disabled=true;
  try{
@@ -1159,7 +1344,8 @@ async function saveSale(){
    p_product_type:c.type,
    p_quantity:c.qty,
    p_worker_id:c.type==="6L"?null:(Number($("saleWorker").value)||null),
-   p_unit_price:c.price
+   p_unit_price:c.price,
+   p_payment_method:$("salePaymentMethod").value
   });
   if(error)throw error;
   if(!data||!data.sale_id)throw new Error("ڈیٹابیس سے سیل کی تصدیق موصول نہیں ہوئی۔");
@@ -1173,8 +1359,8 @@ async function saveSale(){
 async function loadSales(){
  const {data,error}=await db.from("product_sales").select("*").order("sale_date",{ascending:false}).limit(100);
  if(error){$("moduleTable").textContent=error.message;return}
- $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>فی یونٹ</th><th>کل</th></tr>"+
- (data||[]).map(r=>`<tr><td>${esc(r.sale_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity} ${esc(r.unit)}</td><td>${money(r.unit_price)}</td><td>${money(r.total_amount)}</td></tr>`).join("")+"</table>";
+ $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>فی یونٹ</th><th>کل</th><th>ادائیگی</th></tr>"+
+ (data||[]).map(r=>`<tr><td>${esc(r.sale_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity} ${esc(r.unit)}</td><td>${money(r.unit_price)}</td><td>${money(r.total_amount)}</td><td>${esc(r.payment_method||"cash")}</td></tr>`).join("")+"</table>";
 }
 
 /* اخراجات اور آمدن */
