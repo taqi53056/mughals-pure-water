@@ -1326,7 +1326,7 @@ function salePricePreview(autoSpecial=false,resetDefault=false){
  const bulkOrder=Number($("saleQty").value)>=100;
  const specialSelected=!is6&&bulkOrder&&special!==null&&Number($("saleUnitPrice").value)===special;
  $("saleSpecialNote").textContent=is6
-  ?"6L کی مقررہ قیمت Rs.55 فی بوتل ہے۔"
+  ?"6L کی کم از کم قیمت Rs.55 فی بوتل ہے؛ اصل قیمت درج کریں۔"
   :bulkOrder&&special!==null
    ?(specialSelected?"100 یا زیادہ کارٹن: خصوصی قیمت "+money(special)+" منتخب ہے۔":"100 یا زیادہ کارٹن: خصوصی قیمت "+money(special)+" دستیاب ہے؛ فی الحال درج شدہ قیمت استعمال ہوگی۔")
    :"100 یا زیادہ کارٹن پر اگر خصوصی قیمت مقرر ہو تو وہ خود منتخب ہوگی۔";
@@ -1372,6 +1372,7 @@ async function moneyModule(type){
  <p class="muted">${exp?"صرف روزمرہ کاروباری اخراجات درج کریں۔ ورکر کی مزدوری ورکر لیجر سے خود شمار ہوتی ہے؛ وہی مزدوری یہاں دوبارہ درج نہ کریں۔ اسٹاک اور مشینری کی خریداری مالی لین دین میں درج کریں۔":"یہاں صرف دوسری آمدن درج کریں؛ 19L ڈلیوری یا پروڈکٹ سیل کی رقم یہاں دوبارہ درج نہ کریں۔"}</p>
  <input id="mDate" type="date" value="${today()}">
  <input id="mCategory" placeholder="${exp?'خرچ کی مد':'آمدن کی مد'}">
+ ${exp?'<select id="mSegment"><option value="general">مشترکہ خرچ — کرایہ / بجلی وغیرہ</option><option value="19L">19L گھریلو ڈیلیوری</option><option value="finished_goods">500ml / 1.5L / 6L ترسیل</option></select><select id="mMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>':''}
  <input id="mAmount" type="number" min="1" placeholder="رقم">
  <textarea id="mDetails" placeholder="تفصیل (اختیاری)"></textarea>
  <button id="moneySaveButton" onclick="saveMoney('${type}')">محفوظ کریں</button>
@@ -1379,17 +1380,17 @@ async function moneyModule(type){
  <button class="secondary" onclick="loadMoney('${type}')">ریکارڈ تازہ کریں</button>`;
  await loadMoney(type);
 }
-function cancelMoneyEdit(type){moneyEditingId=null;$("mDate").value=today();$("mCategory").value="";$("mAmount").value="";$("mDetails").value="";$("moneySaveButton").textContent="محفوظ کریں";msg("نیا ریکارڈ درج کیا جا سکتا ہے۔",true);}
+function cancelMoneyEdit(type){moneyEditingId=null;$("mDate").value=today();$("mCategory").value="";$("mAmount").value="";$("mDetails").value="";if(type==="expenses"){$("mSegment").value="general";$("mMethod").value="cash";}$("moneySaveButton").textContent="محفوظ کریں";msg("نیا ریکارڈ درج کیا جا سکتا ہے۔",true);}
 async function saveMoney(type){
  const exp=type==="expenses",table=exp?"business_expenses":"business_income",amount=Number($("mAmount").value),category=$("mCategory").value.trim();
  if(!category||amount<=0||!$("mDate").value){msg("تاریخ، مد اور درست رقم درج کریں۔");return}
  if(!confirmLargeEntry("رقم (روپے)",amount,1000))return;
- const payload=exp?{expense_date:$("mDate").value,category,amount,details:$("mDetails").value.trim()||null}:{income_date:$("mDate").value,category,amount,details:$("mDetails").value.trim()||null};
+ const payload=exp?{expense_date:$("mDate").value,category,amount,business_segment:$("mSegment").value,payment_method:$("mMethod").value,details:$("mDetails").value.trim()||null}:{income_date:$("mDate").value,category,amount,details:$("mDetails").value.trim()||null};
  const r=moneyEditingId?await db.from(table).update(payload).eq("id",moneyEditingId):await db.from(table).insert(payload);
  if(r.error){msg("محفوظ نہیں ہوا: "+r.error.message);return}
- moneyEditingId=null;msg("ریکارڈ محفوظ ہوگیا۔",true);$("mDate").value=today();$("mCategory").value="";$("mAmount").value="";$("mDetails").value="";$("moneySaveButton").textContent="محفوظ کریں";await loadMoney(type);await loadTodaySummary();
+ moneyEditingId=null;msg("ریکارڈ محفوظ ہوگیا۔",true);$("mDate").value=today();$("mCategory").value="";$("mAmount").value="";$("mDetails").value="";if(exp){$("mSegment").value="general";$("mMethod").value="cash";}$("moneySaveButton").textContent="محفوظ کریں";await loadMoney(type);await loadTodaySummary();
 }
-async function editMoneyRecord(type,id){const exp=type==="expenses",table=exp?"business_expenses":"business_income",datecol=exp?"expense_date":"income_date";const {data,error}=await db.from(table).select("*").eq("id",id).maybeSingle();if(error||!data){msg("ریکارڈ نہیں ملا: "+(error?.message||""));return;}moneyEditingId=id;$("mDate").value=data[datecol];$("mCategory").value=data.category||"";$("mAmount").value=data.amount;$("mDetails").value=data.details||"";$("moneySaveButton").textContent="تبدیلی محفوظ کریں";msg("ریکارڈ ترمیم کے لیے کھل گیا۔",true);}
+async function editMoneyRecord(type,id){const exp=type==="expenses",table=exp?"business_expenses":"business_income",datecol=exp?"expense_date":"income_date";const {data,error}=await db.from(table).select("*").eq("id",id).maybeSingle();if(error||!data){msg("ریکارڈ نہیں ملا: "+(error?.message||""));return;}moneyEditingId=id;$("mDate").value=data[datecol];$("mCategory").value=data.category||"";$("mAmount").value=data.amount;$("mDetails").value=data.details||"";if(exp){$("mSegment").value=data.business_segment||"general";$("mMethod").value=data.payment_method||"cash";}$("moneySaveButton").textContent="تبدیلی محفوظ کریں";msg("ریکارڈ ترمیم کے لیے کھل گیا۔",true);}
 async function deleteMoneyRecord(type,id){if(!confirm("کیا آپ یہ مالی ریکارڈ مستقل حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہوگا۔"))return;const table=type==="expenses"?"business_expenses":"business_income";const {error}=await db.from(table).delete().eq("id",id);if(error){msg("ریکارڈ حذف نہیں ہوا: "+error.message);return;}if(moneyEditingId===id)moneyEditingId=null;msg("ریکارڈ حذف ہوگیا۔",true);await loadMoney(type);await loadTodaySummary();}
 async function loadMoney(type){
  const exp=type==="expenses",table=exp?"business_expenses":"business_income",datecol=exp?"expense_date":"income_date";
@@ -1431,10 +1432,11 @@ async function reportsModule(){
  setTitle("کاروبار کا مکمل مالی حساب");
  $("moduleBody").innerHTML=
  '<div class="card"><h3>کاروبار کا مالی لین دین</h3><p class="muted">یہاں سرمایہ، مالک کی نکالی رقم، قرض، اسٹاک اور اثاثے درج کریں۔ روزمرہ اخراجات اور دوسری آمدن الگ بٹن سے درج کریں۔ ایک ہی خرچ دو جگہ درج نہ کریں۔</p>'+
- '<input id="finDate" type="date" value="'+today()+'"><select id="finType"><option value="capital_in">مالک نے سرمایہ لگایا</option><option value="owner_withdrawal">مالک نے رقم نکالی</option><option value="loan_received">کاروبار نے قرض لیا</option><option value="loan_repaid">قرض کی اصل رقم واپس کی</option><option value="loan_given">کسی کو قرض / ادھار دیا</option><option value="loan_collected">دوسروں سے قرض / ادھار وصول کیا</option><option value="inventory_purchase">اسٹاک / خام مال / پیکنگ خریدی</option><option value="inventory_loss">اسٹاک ضائع / خراب ہوا</option><option value="fixed_asset_purchase">مشینری / گاڑی / سامان خریدا</option><option value="fixed_asset_sale">مشینری / اثاثہ فروخت کیا</option><option value="depreciation_expense">مشینری / سامان کی ماہانہ فرسودگی</option><option value="interest_expense">قرض کی مالی لاگت ادا کی</option><option value="interest_income">مالی آمدن</option></select>'+
+ '<input id="finDate" type="date" value="'+today()+'"><select id="finType" onchange="toggleOwnerWithdrawalField()"><option value="capital_in">مالک نے سرمایہ لگایا</option><option value="owner_withdrawal">مالک نے رقم نکالی</option><option value="loan_received">کاروبار نے قرض لیا</option><option value="loan_repaid">قرض کی اصل رقم واپس کی</option><option value="loan_given">کسی کو قرض / ادھار دیا</option><option value="loan_collected">دوسروں سے قرض / ادھار وصول کیا</option><option value="inventory_loss">اسٹاک ضائع / خراب ہوا</option><option value="fixed_asset_purchase">مشینری / گاڑی / سامان خریدا</option><option value="fixed_asset_sale">مشینری / اثاثہ فروخت کیا</option><option value="depreciation_expense">مشینری / سامان کی ماہانہ فرسودگی</option><option value="interest_expense">قرض کی مالی لاگت ادا کی</option><option value="interest_income">مالی آمدن</option></select>'+
+ '<select id="finOwner" class="hidden"><option value="">مالک منتخب کریں</option><option>محمد اسامہ مغل</option><option>محمد مزمل مغل</option><option>محمد تقی مغل</option><option>محمد رفیع مغل</option></select>'+
  '<input id="finAmount" type="number" min="0.01" step="0.01" placeholder="کل رقم روپے میں"><input id="finCategory" maxlength="100" placeholder="مد / قسم مثلاً بوتلیں، خام مال، مشینری"><input id="finItem" maxlength="120" placeholder="آئٹم / سامان کا نام (اختیاری)"><div class="grid"><input id="finQty" type="number" min="0" step="0.001" placeholder="مقدار (اختیاری)"><input id="finUnit" maxlength="30" placeholder="یونٹ: کارٹن، عدد، کلو"></div>'+
  '<input id="finParty" maxlength="120" placeholder="کس سے لیا / کس کو دیا / سپلائر"><select id="finMethod"><option value="">ادائیگی کا طریقہ</option><option>نقد</option><option>بینک</option><option>جاز کیش</option><option>ایزی پیسہ</option><option>ادھار</option><option>دیگر</option></select><textarea id="finDetails" maxlength="500" placeholder="مزید تفصیل / رسید نمبر"></textarea><button onclick="saveFinanceEntry()">مالی اندراج محفوظ کریں</button></div>'+
- '<div class="card"><h3>فروخت شدہ مال کی اصل فی یونٹ لاگت</h3><p class="muted">19L کی لاگت فی کامیاب بوتل درج کریں، اس میں ڈلیوری مزدوری شامل نہ ہو۔ 500ml اور 1.5L کی لاگت فی کارٹن میں خام مال، پیکنگ اور پروڈکشن مزدوری شامل کریں؛ کارٹن لوڈنگ مزدوری الگ شمار ہوگی۔ 6L کی لاگت فی بوتل درج کریں۔</p><input id="costDate" type="date" value="'+today()+'"><select id="costType"><option value="19L">19 لیٹر — فی کامیاب بوتل</option><option value="500ml">500ml — فی کارٹن</option><option value="1.5L">1.5L — فی کارٹن</option><option value="6L">6L — فی بوتل</option></select><input id="costAmount" type="number" min="0" step="0.01" placeholder="اصل لاگت روپے میں"><input id="costDetails" maxlength="250" placeholder="لاگت کی بنیاد / تفصیل"><button onclick="saveProductCostRate()">فی یونٹ لاگت محفوظ کریں</button><div id="costRateHistory" class="muted"></div></div>'+
+ '<div class="card"><h3>لاگت کا خودکار حساب</h3><p class="muted">خام مال کی خریداری، ٹینکر کی اصل قیمت، پیداوار اور پیکنگ کے اندراجات سے لاگت خود بنے گی۔ کسی خریداری یا فروخت کو مالی لیجر میں دوبارہ درج نہ کریں۔</p></div>'+
  '<div class="card"><h3>منافع، نقصان اور سرمایہ پر واپسی</h3><p class="muted">رپورٹ ابتدا سے آج تک کھلے گی۔ تاریخیں بدل کر کسی مہینے یا مدت کا الگ نتیجہ دیکھ سکتے ہیں۔ سرمایہ اور قرض کے بقایا جات منتخب آخری تاریخ تک مجموعی دکھائے جائیں گے۔</p><input id="rStart" type="date" value="2000-01-01"><input id="rEnd" type="date" value="'+today()+'"><button onclick="runReport()">مکمل مالی رپورٹ دکھائیں</button></div>'+
  '<div class="card"><h3>حالیہ مالی اندراجات</h3><div id="financeLedgerTable" class="muted">ریکارڈ لوڈ ہو رہا ہے...</div></div>';
  await Promise.all([runReport(),loadFinanceLedger(),loadCostRateHistory()]);
@@ -1458,17 +1460,21 @@ async function deleteFinanceEntry(id){
  if(error){msg("اندراج حذف نہیں ہوا: "+error.message);return}
  msg("اندراج حذف ہوگیا۔",true);await loadFinanceLedger();await runReport();
 }
+function toggleOwnerWithdrawalField(){const el=$("finOwner");if(!el)return;el.classList.toggle("hidden",$("finType").value!=="owner_withdrawal");}
 async function saveFinanceEntry(){
  const entry_date=$("finDate").value,entry_type=$("finType").value,amount=Number($("finAmount").value);
  const category=$("finCategory").value.trim(),item_name=$("finItem").value.trim();
  const quantity=$("finQty").value?Number($("finQty").value):null,unit=$("finUnit").value.trim();
- const counterparty=$("finParty").value.trim(),payment_method=$("finMethod").value,details=$("finDetails").value.trim();
+ const counterparty=entry_type==="owner_withdrawal"?$("finOwner").value:$("finParty").value.trim(),payment_method=$("finMethod").value,details=$("finDetails").value.trim();
+ if(entry_type==="owner_withdrawal"&&!counterparty){msg("ذاتی نکاسی کے لیے مالک منتخب کریں۔");return;}
  if(!entry_date||!Number.isFinite(amount)||amount<=0){msg("تاریخ اور درست رقم لازمی درج کریں۔");return}
  if(quantity!==null&&(!Number.isFinite(quantity)||quantity<=0)){msg("مقدار درست درج کریں یا خالی چھوڑ دیں۔");return}
  if(!confirmLargeEntry("مالی اندراج",amount,100000))return;
  const {error}=await db.from("business_finance_ledger").insert({entry_date,entry_type,amount,category:category||null,item_name:item_name||null,quantity,unit:unit||null,counterparty:counterparty||null,payment_method:payment_method||null,details:details||null,entered_by:user.id});
  if(error){msg("مالی اندراج محفوظ نہیں ہوا: "+error.message);return}
  msg("مالی اندراج محفوظ ہوگیا۔",true);
+ if($("finOwner"))$("finOwner").value="";
+ toggleOwnerWithdrawalField();
  for(const id of ["finAmount","finCategory","finItem","finQty","finUnit","finParty","finDetails"])$(id).value="";
  $("finMethod").value="";await Promise.all([runReport(),loadFinanceLedger()]);
 }
