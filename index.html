@@ -1595,9 +1595,14 @@ async function runReport(){
    const list=rawPurchases.filter(x=>x.material_type===type);
    const q=sum(list,"quantity");return q>0?sum(list,"total_amount")/q:null;
   };
-  const tankerLitres=sum(tankers,"tanker_count")*1000+sum(waterOpening,"litres");
-  const waterTotalValue=sum(tankers,"total_amount")+sum(waterOpening,"total_value");
-  const waterPerLitre=tankerLitres>0?waterTotalValue/tankerLitres:null;
+  const waterPool=(use)=>{
+   const tp=tankers.filter(x=>x.water_use===use),op=waterOpening.filter(x=>x.water_use===use);
+   const litres=sum(tp,"tanker_count")*1000+sum(op,"litres");
+   const value=sum(tp,"total_amount")+sum(op,"total_value");
+   return {litres,value,rate:litres>0?value/litres:null};
+  };
+  const water19=waterPool("19L_delivery"),waterFill=waterPool("product_filling"),waterShop=waterPool("shop_counter");
+  const waterPerLitre=water19.rate;
   const capCost=weightedRate("cap_19l");
   const stickerCost=1;
   const tapeCost=weightedRate("tape_bundle");
@@ -1625,8 +1630,13 @@ async function runReport(){
   const damagedCaps=sum(deliveries,"damaged_caps");
   const counterLitres=sum(counterSales,"total_litres");
   const deliveredLitres=successful19*19;
-  const usedWaterLitres=deliveredLitres+counterLitres;
+  const fillWaterLitres=production.reduce((n,r)=>n+Number(r.quantity||0)*(r.product_type==="500ml"?12:r.product_type==="1.5L"?18:0),0);
+  const shopWaterFor6L=production.filter(r=>r.product_type==="6L").reduce((n,r)=>n+Number(r.quantity||0)*6,0);
+  const usedWaterLitres=deliveredLitres;
   const waterCogs=waterPerLitre===null?0:usedWaterLitres*waterPerLitre;
+  const counterWaterCogs=waterShop.rate===null?0:counterLitres*waterShop.rate;
+  const fillWaterCogs=waterFill.rate===null?0:fillWaterLitres*waterFill.rate;
+  const shopWater6LCogs=waterShop.rate===null?0:shopWaterFor6L*waterShop.rate;
   const capCogs=capCost===null?0:(successful19+damagedCaps)*capCost;
   const revenue19=successful19*100+damagedCaps*10+sum(counterSales,"total_amount");
   const productRevenue=sum(sales,"total_amount");
@@ -1640,15 +1650,16 @@ async function runReport(){
   const interestExpense=total(periodFin,"interest_expense");
   const depreciation=total(periodFin,"depreciation_expense");
   const inventoryLoss=total(periodFin,"inventory_loss");
-  const profit19=revenue19-waterCogs-capCogs-deliveryLabor-exp19;
-  const profitProducts=productRevenue-productCogs-returnLoss-productionLabor-supportLabor-expProducts;
+  const profit19=revenue19-waterCogs-counterWaterCogs-capCogs-deliveryLabor-exp19;
+  const profitProducts=productRevenue-productCogs-returnLoss-productionLabor-supportLabor-expProducts-fillWaterCogs-shopWater6LCogs;
   const net=profit19+profitProducts+otherIncome-expGeneral-interestExpense-depreciation-inventoryLoss;
   const missing=[];
-  if(usedWaterLitres>0&&waterPerLitre===null)missing.push("ٹینکر کی خریداری");
+  if(usedWaterLitres>0&&water19.rate===null)missing.push("19L ڈلیوری پانی کی خریداری / ابتدائی اسٹاک");
+  if(counterLitres>0&&waterShop.rate===null)missing.push("کاؤنٹر پانی کی خریداری / ابتدائی اسٹاک");
+  if(fillWaterLitres>0&&waterFill.rate===null)missing.push("500ml / 1.5L فلنگ پانی کی خریداری / ابتدائی اسٹاک");
+  if(shopWaterFor6L>0&&waterShop.rate===null)missing.push("6L دکان کے پانی کی خریداری / ابتدائی اسٹاک");
   if(successful19+damagedCaps>0&&capCost===null)missing.push("19L ڈھکن کی خریداری");
   if(missingProductCosts.length)missing.push("خام مال: "+[...new Set(missingProductCosts)].join("، "));
-  if(production.some(r=>["500ml","1.5L"].includes(r.product_type)&&Number(r.quantity)>0)||sales.some(r=>["500ml","1.5L"].includes(r.product_type)&&Number(r.quantity)>0))missing.push("500ml / 1.5L فلنگ پانی کی الگ لاگت");
-  if(production.some(r=>r.product_type==="6L"&&Number(r.quantity)>0)||sales.some(r=>r.product_type==="6L"&&Number(r.quantity)>0))missing.push("6L دکان کے پانی کی الگ لاگت");
   const complete=missing.length===0;
   const hasActivity=deliveries.length||counterSales.length||sales.length||returns.length||expenses.length||income.length||production.some(x=>Number(x.labor_amount)>0)||workerRows.some(x=>x.entry_type==="earning")||total(periodFin,"depreciation_expense")>0||total(periodFin,"inventory_loss")>0||total(periodFin,"interest_expense")>0||total(periodFin,"interest_income")>0;
   const stockRows=stockResult?.data||[];
@@ -1676,14 +1687,14 @@ async function runReport(){
   });
   $("moduleTable").innerHTML=
    "<h3>"+start+" سے "+end+" تک — مالی نتیجہ</h3>"+
-   "<div class='card'><h3>19L پانی کا شعبہ</h3><div class='stat'>گھریلو ڈلیوری اور ڈھکن آمدن: <b>"+fmt(successful19*100+damagedCaps*10)+"</b></div><div class='stat'>کاؤنٹر فروخت: <b>"+fmt(sum(counterSales,"total_amount"))+"</b> — "+counterLitres+" لیٹر</div><div class='stat'>19L کی کل آمدن: <b>"+fmt(revenue19)+"</b></div><div class='stat'>پانی کی لاگت: <b>"+fmt(waterCogs)+"</b></div><div class='stat'>تمام استعمال شدہ ڈھکنوں کی لاگت (کامیاب بوتلیں + خراب ڈھکن): <b>"+fmt(capCogs)+"</b></div><div class='stat'>گھریلو ڈلیوری مزدوری: <b>"+fmt(deliveryLabor)+"</b></div><div class='stat'>19L شعبے کے اخراجات: <b>"+fmt(exp19)+"</b></div><div class='total'>19L شعبے کا نتیجہ: "+fmt(profit19)+"</div></div>"+
+   "<div class='card'><h3>19L پانی کا شعبہ</h3><div class='stat'>گھریلو ڈلیوری اور ڈھکن آمدن: <b>"+fmt(successful19*100+damagedCaps*10)+"</b></div><div class='stat'>کاؤنٹر فروخت: <b>"+fmt(sum(counterSales,"total_amount"))+"</b> — "+counterLitres+" لیٹر</div><div class='stat'>19L کی کل آمدن: <b>"+fmt(revenue19)+"</b></div><div class='stat'>19L ڈلیوری پانی کی لاگت: <b>"+fmt(waterCogs)+"</b></div><div class='stat'>19L کاؤنٹر پانی کی لاگت: <b>"+fmt(counterWaterCogs)+"</b></div><div class='stat'>تمام استعمال شدہ ڈھکنوں کی لاگت (کامیاب بوتلیں + خراب ڈھکن): <b>"+fmt(capCogs)+"</b></div><div class='stat'>گھریلو ڈلیوری مزدوری: <b>"+fmt(deliveryLabor)+"</b></div><div class='stat'>19L شعبے کے اخراجات: <b>"+fmt(exp19)+"</b></div><div class='total'>19L شعبے کا نتیجہ: "+fmt(profit19)+"</div></div>"+
    "<div class='card'><h3>500ml، 1.5L اور 6L مصنوعات</h3>"+
    productBreakdown.map(x=>"<div class='stat'><b>"+x.type+"</b><br>فروخت: "+fmt(x.rev)+"<br>خام مال / پیکنگ: "+(x.cost===null?"لاگت نامکمل":fmt(x.cost))+"<br>متبادل بوتلوں کا نقصان: "+(x.loss===null?"لاگت نامکمل":fmt(x.loss))+"<br>پروڈکشن مزدوری: "+fmt(x.labor)+"<br><b>مشترکہ خرچ سے پہلے حصہ: "+(x.known===null?"لاگت نامکمل":fmt(x.known))+"</b></div>").join("")+
-   "<div class='stat'>تینوں مصنوعات کی مجموعی فروخت: <b>"+fmt(productRevenue)+"</b></div><div class='stat'>خام مال اور پیکنگ کی مجموعی لاگت: <b>"+fmt(productCogs)+"</b></div><div class='stat'>خراب مال کی تبدیلی کا نقصان: <b>"+fmt(returnLoss)+"</b></div><div class='stat'>پروڈکشن مزدوری: <b>"+fmt(productionLabor)+"</b></div><div class='stat'>مشترکہ لوڈنگ، صفائی اور دھلائی مزدوری: <b>"+fmt(supportLabor)+"</b></div><div class='stat'>مصنوعات کی ترسیل اور دیگر اخراجات: <b>"+fmt(expProducts)+"</b></div><div class='total'>مصنوعات کے شعبے کا نتیجہ: "+fmt(profitProducts)+"</div><p class='muted'>ہر پروڈکٹ کا حصہ مشترکہ لوڈنگ، صفائی اور ترسیل کے اخراجات سے پہلے ہے؛ یہ اخراجات نیچے شعبے کے مجموعی حساب میں شامل ہیں۔</p></div>"+
+   "<div class='stat'>تینوں مصنوعات کی مجموعی فروخت: <b>"+fmt(productRevenue)+"</b></div><div class='stat'>خام مال اور پیکنگ کی مجموعی لاگت: <b>"+fmt(productCogs)+"</b></div><div class='stat'>خراب مال کی تبدیلی کا نقصان: <b>"+fmt(returnLoss)+"</b></div><div class='stat'>فلنگ پانی: "+fillWaterLitres+" لیٹر — "+fmt(fillWaterCogs)+"</div><div class='stat'>6L پانی: "+shopWaterFor6L+" لیٹر — "+fmt(shopWater6LCogs)+"</div><div class='stat'>پروڈکشن مزدوری: <b>"+fmt(productionLabor)+"</b></div><div class='stat'>مشترکہ لوڈنگ، صفائی اور دھلائی مزدوری: <b>"+fmt(supportLabor)+"</b></div><div class='stat'>مصنوعات کی ترسیل اور دیگر اخراجات: <b>"+fmt(expProducts)+"</b></div><div class='total'>مصنوعات کے شعبے کا نتیجہ: "+fmt(profitProducts)+"</div><p class='muted'>ہر پروڈکٹ کا حصہ مشترکہ لوڈنگ، صفائی اور ترسیل کے اخراجات سے پہلے ہے؛ یہ اخراجات نیچے شعبے کے مجموعی حساب میں شامل ہیں۔</p></div>"+
    "<div class='card'><h3>مشترکہ خرچ اور مجموعی نتیجہ</h3><div class='stat'>دکان کا کرایہ، بجلی اور مشترکہ اخراجات: <b>"+fmt(expGeneral)+"</b></div><div class='stat'>قرض کی مالی لاگت: <b>"+fmt(interestExpense)+"</b></div><div class='stat'>اثاثوں کی فرسودگی: <b>"+fmt(depreciation)+"</b></div><div class='stat'>دیگر آمدن / مالی آمدن: <b>"+fmt(otherIncome)+"</b></div><div class='total'>"+(!hasActivity?"ابھی کاروباری نتیجہ دستیاب نہیں":complete?"مجموعی خالص منافع / نقصان":"عارضی مجموعی نتیجہ") +": "+(hasActivity?fmt(Math.abs(net))+(net>=0?" منافع":" نقصان"):"ابھی اندراجات موجود نہیں")+"</div>"+
    (complete?"":"<p class='warning'>حتمی منافع کے لیے یہ خریداری لاگتیں درج ہونا ضروری ہیں: "+missing.join("، ")+"۔</p>")+
    "<p class='muted'>ہر شعبے کا الگ نتیجہ مشترکہ اخراجات سے پہلے دکھایا گیا ہے۔ مجموعی نتیجے میں مشترکہ اخراجات منہا ہیں۔ خام مال اور ٹینکر کی خریداری کو فوراً خرچ نہیں گنا؛ استعمال شدہ مال کی لاگت شامل ہے۔</p></div>"+
-   "<div class='card'><h3>اسٹاک کی صورتِ حال</h3><div class='stat'>موجودہ تیار مال (آج): <b>"+esc(stockText)+"</b></div><div class='stat'>اس مدت میں خام مال کی خریداری: <b>"+fmt(rawSpend)+"</b></div><div class='stat'>اس مدت میں ٹینکر خریداری: <b>"+fmt(tankerSpend)+"</b></div><div class='stat'>پانی کی اوسط لاگت: <b>"+(waterPerLitre===null?"ٹینکر ریکارڈ موجود نہیں":fmt(waterPerLitre*19)+" فی 19 لیٹر")+"</b></div></div>"+
+   "<div class='card'><h3>اسٹاک کی صورتِ حال</h3><div class='stat'>موجودہ تیار مال (آج): <b>"+esc(stockText)+"</b></div><div class='stat'>اس مدت میں خام مال کی خریداری: <b>"+fmt(rawSpend)+"</b></div><div class='stat'>اس مدت میں ٹینکر خریداری: <b>"+fmt(tankerSpend)+"</b></div><div class='stat'>پانی کی اوسط لاگت: <b>"+(waterPerLitre===null?"19L ڈلیوری کا ریکارڈ موجود نہیں":fmt(waterPerLitre*19)+" فی 19 لیٹر؛ فلنگ "+(waterFill.rate===null?"—":fmt(waterFill.rate)+" فی لیٹر")+"؛ دکان "+(waterShop.rate===null?"—":fmt(waterShop.rate)+" فی لیٹر"))+"</b></div></div>"+
    "<div class='card'><h3>چاروں مالکان کی ذاتی نکاسی</h3>"+ownerWithdrawals.map(x=>"<div class='stat'>"+x.name+": <b>"+fmt(x.amount)+"</b></div>").join("")+"<div class='total'>چاروں کی مجموعی نکاسی: "+fmt(totalWithdraw)+"</div><p class='muted'>ذاتی نکاسی کاروباری خرچ نہیں، اس لیے اسے منافع سے منہا نہیں کیا گیا۔</p></div>"+
    "<div class='card'><h3>سرمایہ، قرض اور اثاثے</h3><div class='stat'>درج شدہ سرمایہ: <b>"+fmt(capital)+"</b></div><div class='stat'>کاروبار کا قرض: وصول "+fmt(loanIn)+" — اصل رقم واپس "+fmt(loanRepay)+" — باقی "+fmt(loanIn-loanRepay)+"</div><div class='stat'>دوسروں کو دیا قرض: "+fmt(loanGiven)+" — واپس وصول "+fmt(loanCollected)+" — باقی "+fmt(loanGiven-loanCollected)+"</div><div class='stat'>اثاثے خریدے: "+fmt(assetPurchases)+" — اثاثے فروخت: "+fmt(assetSales)+"</div><div class='stat'>اسٹاک اور ٹینکر کی خریداری کی نقد ادائیگی الگ ہے؛ یہ فوری منافع کا خرچ نہیں۔</div></div>";
  }catch(e){msg("مالی رپورٹ نہیں بنی: "+e.message);}
