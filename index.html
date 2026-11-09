@@ -1579,7 +1579,7 @@ async function runReport(){
    financeFetchAll("water_opening_stock","as_of_date,litres,total_value","as_of_date",null,end),
    financeFetchAll("product_sales","sale_date,product_type,quantity,total_amount,unit,payment_method","sale_date",start,end),
    financeFetchAll("product_returns","return_date,product_type,quantity,replacement_quantity","return_date",start,end),
-   financeFetchAll("raw_material_purchases","purchase_date,material_type,quantity,total_amount","purchase_date",null,end),
+   financeFetchAll("raw_material_purchases","purchase_date,record_type,material_type,quantity,total_amount","purchase_date",null,end),
    financeFetchAll("production","production_date,product_type,quantity,labor_amount","production_date",start,end),
    financeFetchAll("business_expenses","amount,category,business_segment,payment_method","expense_date",start,end),
    financeFetchAll("business_income","amount,category","income_date",start,end),
