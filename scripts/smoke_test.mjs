@@ -85,6 +85,43 @@ try {
     await page.locator('button[onclick="showLogin()"]').click();
     await page.locator("#loginForm").waitFor({ state: "visible" });
 
+    const adminNavigation = await page.evaluate(async () => {
+      const panel = document.querySelector("#adminPanel");
+      const tiles = document.querySelector("#homeTiles");
+      const dashboard = document.querySelector("#dashboard");
+      const module = document.querySelector("#module");
+      if (!panel || !tiles || !dashboard || !module || typeof window.openModule !== "function") {
+        return { missing: true };
+      }
+      panel.classList.remove("hidden");
+      tiles.classList.remove("hidden");
+      dashboard.classList.remove("hidden");
+      module.classList.add("hidden");
+      await window.openModule("__layout_smoke_test__");
+      const state = {
+        missing: false,
+        moduleOpen: panel.classList.contains("module-open"),
+        moduleVisible: !module.classList.contains("hidden"),
+        tileDisplay: getComputedStyle(tiles).display,
+        tilePosition: getComputedStyle(tiles).position
+      };
+      panel.classList.remove("module-open");
+      module.classList.add("hidden");
+      dashboard.classList.remove("hidden");
+      tiles.classList.remove("hidden");
+      return state;
+    });
+    if (adminNavigation.missing || !adminNavigation.moduleOpen || !adminNavigation.moduleVisible) {
+      failures.push("Admin module navigation state did not activate correctly");
+    }
+    if (viewport.width <= 699 && adminNavigation.tileDisplay !== "none") {
+      failures.push("Mobile admin tile grid should hide while a module is open");
+    }
+    if (viewport.width >= 1100 &&
+        (adminNavigation.tileDisplay === "none" || adminNavigation.tilePosition !== "sticky")) {
+      failures.push("Desktop admin navigation rail should remain visible and sticky");
+    }
+
     const deliveryMath = await page.evaluate(() => {
       const fixture = document.createElement("div");
       fixture.innerHTML = `
