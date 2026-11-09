@@ -1361,7 +1361,7 @@ async function markNotificationRead(id){const {error}=await db.rpc("mark_custome
 
 async function auditModule(){
  setTitle("سکیورٹی / آڈٹ لاگ");
- $("moduleBody").innerHTML='<p class="muted">یہاں صرف اہم اور آسان معلومات دکھائی جاتی ہیں۔ اصل محفوظ ریکارڈ برقرار رہتا ہے۔</p><input id="auditSearch" placeholder="کام یا تاریخ تلاش کریں" oninput="filterAuditRows()"><button class="secondary" onclick="auditModule()">فہرست تازہ کریں</button>';
+ $("moduleBody").innerHTML='<p class="muted">یہاں صرف اہم اور آسان معلومات دکھائی جاتی ہیں۔ اصل محفوظ ریکارڈ برقرار رہتا ہے۔</p><input id="auditSearch" placeholder="کام، تاریخ یا ایڈمن تلاش کریں" oninput="filterAuditRows()"><button class="secondary" onclick="auditModule()">فہرست تازہ کریں</button>';
  const [{data,error},{data:profiles}]=await Promise.all([
   db.from("audit_log").select("changed_at,table_name,record_id,action,changed_by,old_data,new_data").order("changed_at",{ascending:false}).limit(200),
   db.from("profiles").select("id,full_name")
@@ -1379,7 +1379,7 @@ function auditTableLabel(value){
 }
 function auditActionLabel(value){return ({INSERT:"نیا ریکارڈ بنایا",UPDATE:"ریکارڈ میں تبدیلی",DELETE:"ریکارڈ حذف کیا"})[value]||"ریکارڈ اپڈیٹ ہوا";}
 function auditFieldLabel(key){
- return ({default_rate:"مقررہ قیمت",special_100_rate:"خصوصی قیمت",labor_per_unit:"مزدوری",units_per_pack:"پیک میں تعداد",product_type:"پروڈکٹ",full_name:"نام",mobile:"موبائل نمبر",is_active:"فعال حیثیت",work_categories:"کام کی اقسام",amount:"رقم",entry_type:"اندراج کی قسم",work_category:"کام",status:"حیثیت",admin_note:"ایڈمن کا جواب",bottles_delivered:"دی گئی بوتلیں",empty_bottles_returned:"واپس خالی بوتلیں",damaged_caps:"خراب ڈھکن"})[key]||key.replaceAll("_"," ");
+ return ({default_rate:"مقررہ قیمت",special_100_rate:"خصوصی قیمت",labor_per_unit:"مزدوری",units_per_pack:"پیک میں تعداد",product_type:"پروڈکٹ",full_name:"نام",mobile:"موبائل نمبر",is_active:"فعال حیثیت",category:"مد",details:"تفصیل",work_categories:"کام کی اقسام",amount:"رقم",entry_type:"اندراج کی قسم",work_category:"کام",status:"حیثیت",admin_note:"ایڈمن کا جواب",bottles_delivered:"دی گئی بوتلیں",empty_bottles_returned:"واپس خالی بوتلیں",damaged_caps:"خراب ڈھکن"})[key]||key.replaceAll("_"," ");
 }
 function auditValue(value){
  if(value===null||value===undefined)return "خالی";
@@ -1389,14 +1389,14 @@ function auditValue(value){
  return String(value);
 }
 function auditChanges(r){
- const before=r.old_data||{},after=r.new_data||{},keys=[...new Set([...Object.keys(before),...Object.keys(after)])].filter(k=>!["id","created_at","updated_at"].includes(k));
+ const before=r.old_data||{},after=r.new_data||{},keys=[...new Set([...Object.keys(before),...Object.keys(after)])].filter(k=>!["id","created_at","updated_at","record_id","auth_user_id"].includes(k));
  const changed=keys.filter(k=>JSON.stringify(before[k]??null)!==JSON.stringify(after[k]??null));
  if(!changed.length)return r.action==="INSERT"?"نیا ریکارڈ درج ہوا":r.action==="DELETE"?"ریکارڈ حذف کیا گیا":"کوئی نمایاں تبدیلی درج نہیں";
  return changed.slice(0,6).map(k=>auditFieldLabel(k)+": "+auditValue(before[k])+" ← "+auditValue(after[k])).join("؛ ");
 }
 function filterAuditRows(){
  const q=($("auditSearch")?.value||"").trim().toLowerCase();
- const rows=(window.auditRows||[]).filter(r=>{const actor=window.auditProfiles?.[r.changed_by]||"صارف درج نہیں";return !q||[auditTableLabel(r.table_name),auditActionLabel(r.action),actor,auditTime(r.changed_at),auditChanges(r)].join(" ").toLowerCase().includes(q);});
+ const rows=(window.auditRows||[]).filter(r=>{const actor=window.auditProfiles?.[r.changed_by]||"ایڈمن";return !q||[auditTableLabel(r.table_name),auditActionLabel(r.action),actor,auditTime(r.changed_at),auditChanges(r)].join(" ").toLowerCase().includes(q);});
  $("moduleTable").innerHTML=rows.map(r=>{
   const actor=window.auditProfiles?.[r.changed_by]||"صارف درج نہیں";
   return '<article class="audit-card"><div class="audit-card-top"><b>'+esc(auditTime(r.changed_at))+'</b><span>'+esc(auditActionLabel(r.action))+'</span></div><h3>'+esc(auditTableLabel(r.table_name))+'</h3><p class="muted">کس نے کیا: '+esc(actor)+'</p><p>'+esc(auditChanges(r))+'</p></article>';
