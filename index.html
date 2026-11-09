@@ -54,6 +54,14 @@ button.secondary{background:#f0f5f0;color:#174d39;border:1px solid #dce7dc;box-s
 .tile{position:relative;overflow:hidden;isolation:isolate;border-radius:19px;min-height:104px;box-shadow:0 8px 20px #173d2b1b}
 .tile:after{content:"";position:absolute;z-index:-1;width:125px;height:125px;border:1px solid #ffffff24;border-radius:50%;inset:auto -42px -72px auto;box-shadow:0 0 0 13px #ffffff0a,0 0 0 27px #ffffff08}
 .tile:hover{transform:translateY(-3px);box-shadow:0 13px 26px #183b2b28}#homeTiles .tile{font-size:16px;line-height:1.55;text-shadow:0 1px 2px #0002}
+#homeTiles .tile:before{content:"";display:inline-grid;place-items:center;flex:0 0 36px;width:36px;height:36px;margin-left:11px;border-radius:12px;background:#ffffff20;border:1px solid #ffffff30;font-size:20px;line-height:1}
+#homeTiles .tile:nth-child(1):before{content:"♙"}#homeTiles .tile:nth-child(2):before{content:"↗"}#homeTiles .tile:nth-child(3):before{content:"▤"}#homeTiles .tile:nth-child(4):before{content:"▣"}#homeTiles .tile:nth-child(5):before{content:"⇢"}#homeTiles .tile:nth-child(6):before{content:"−"}#homeTiles .tile:nth-child(7):before{content:"＋"}#homeTiles .tile:nth-child(8):before{content:"▧"}#homeTiles .tile:nth-child(9):before{content:"▥"}#homeTiles .tile:nth-child(10):before{content:"♧"}#homeTiles .tile:nth-child(11):before{content:"⚒"}#homeTiles .tile:nth-child(12):before{content:"✉"}#homeTiles .tile:nth-child(13):before{content:"◷"}#homeTiles .tile:nth-child(14):before{content:"⚙"}
+#customerPanel>.card:nth-child(1)>h2:after{content:"♙";margin-inline-start:auto;color:#a78b4e;font-size:17px}
+#customerPanel>.card:nth-child(2)>h2:after{content:"▤";margin-inline-start:auto;color:#a78b4e;font-size:17px}
+#customerPanel>.card:nth-child(3)>h2:after{content:"↗";margin-inline-start:auto;color:#a78b4e;font-size:17px}
+#customerPanel>.card:nth-child(4)>h2:after{content:"◉";margin-inline-start:auto;color:#a78b4e;font-size:17px}
+#customerPanel>.card:nth-child(5)>h2:after{content:"✉";margin-inline-start:auto;color:#a78b4e;font-size:17px}
+
 #login{max-width:570px;margin:34px auto}#login.card{padding:clamp(20px,4vw,34px);border-top:4px solid var(--mp-gold)}#login h2{margin-bottom:17px}
 #app>.card:first-child{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 19px;border-top:3px solid var(--mp-gold)}
 #app>.card:first-child #welcome{font-size:17px;font-weight:800}#app>.card:first-child #role{margin-inline-start:auto}#app>.card:first-child button{width:auto;min-width:105px;margin:0}
@@ -100,7 +108,7 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 @media(max-width:699px){
  header{padding:17px 13px}.wrap{padding:11px}.card{padding:15px;border-radius:17px}
  #adminPanel #homeTiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
- #adminPanel #homeTiles .tile{min-height:88px;padding:12px;font-size:14px;border-radius:15px}
+ #adminPanel #homeTiles .tile{min-height:88px;padding:12px;font-size:14px;border-radius:15px}#adminPanel #homeTiles .tile{align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:7px}#adminPanel #homeTiles .tile:before{margin:0;width:34px;height:34px;flex-basis:34px;font-size:19px}
  #adminPanel #module{padding:14px}#moduleBody button,#module button{min-width:0;min-height:44px;padding:9px 12px;font-size:14px}
  #moduleBody .card{padding:13px}#moduleTable table{min-width:600px;font-size:13px}#moduleTable td,#moduleTable th{padding:9px 8px}
  #todaySummary{gap:8px}#todaySummary .stat{padding:11px;min-height:74px;font-size:13px}#todaySummary .stat b{font-size:18px}
