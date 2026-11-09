@@ -1177,10 +1177,10 @@ async function loadRawMaterialPurchases(){
  '</table></div>';
 }
 async function tankerPurchaseModule(){
- setTitle("19L پانی کے ٹینکر");
+ setTitle("پانی کی خریداری اور ابتدائی اسٹاک");
  $("moduleBody").innerHTML=
- '<p class="muted">نیا ٹینکر آئے تو گاڑیوں کی تعداد اور فی 1,000 لیٹر قیمت درج کریں۔ اگر پہلے سے پانی موجود ہے تو ابتدائی لیٹر اور اس کی اندازاً مالیت درج کریں۔</p>'+
- '<div class="card"><select id="tankEntryKind" onchange="toggleTankerEntryKind()"><option value="purchase">نئی ٹینکر خریداری</option><option value="opening_stock">پہلے سے موجود پانی کا ابتدائی اسٹاک</option></select><input id="tankDate" type="date" value="'+today()+'">'+
+ '<p class="muted">ہر پانی کی خریداری کو اس کے اصل استعمال کے مطابق الگ درج کریں تاکہ 19L، 500ml/1.5L اور 6L/کاؤنٹر کا خرچ الگ نکلے۔ ہر ٹینکر 1,000 لیٹر شمار ہوگا۔</p>'+
+ '<div class="card"><label>پانی کس کام کے لیے ہے؟</label><select id="waterUse"><option value="19L_delivery">19L ڈلیوری</option><option value="product_filling">500ml / 1.5L فلنگ</option><option value="shop_counter">6L / 19L کاؤنٹر</option></select><select id="tankEntryKind" onchange="toggleTankerEntryKind()"><option value="purchase">نئی ٹینکر خریداری</option><option value="opening_stock">پہلے سے موجود پانی کا ابتدائی اسٹاک</option></select><input id="tankDate" type="date" value="'+today()+'">'+
  '<div id="tankerPurchaseFields"><input id="tankCount" type="number" min="1" step="1" value="1" placeholder="ٹینکروں کی تعداد">'+
  '<input id="tankRate" type="number" min="1" step="0.01" placeholder="فی 1,000 لیٹر ٹینکر کی قیمت">'+
  '<div class="total">کل رقم: <b id="tankTotal">Rs. 0</b></div>'+
@@ -1212,7 +1212,7 @@ async function saveTankerPurchase(){
   const litres=Number($("tankOpeningLitres").value),total_value=Number($("tankOpeningValue").value);
   if(!date||!Number.isFinite(litres)||litres<=0||!Number.isFinite(total_value)||total_value<=0){msg("ابتدائی پانی کے لیٹر اور اس کی کل مالیت درست درج کریں۔");return;}
   if(!confirmLargeEntry("ابتدائی پانی کے لیٹر",litres,5000)||!confirmLargeEntry("ابتدائی پانی کی مالیت",total_value,100000))return;
-  const {error}=await db.from("water_opening_stock").upsert({as_of_date:date,litres,total_value,details:"ابتدائی موجود پانی",entered_by:user?.id||null},{onConflict:"as_of_date"});
+  const {error}=await db.from("water_opening_stock").upsert({as_of_date:date,water_use:$("waterUse").value,litres,total_value,details:"ابتدائی موجود پانی",entered_by:user?.id||null},{onConflict:"as_of_date,water_use"});
   if(error){msg("ابتدائی پانی کا اسٹاک محفوظ نہیں ہوا: "+error.message);return;}
   msg("ابتدائی پانی کا اسٹاک محفوظ ہوگیا۔",true);$("tankOpeningLitres").value="";$("tankOpeningValue").value="";
  }else{
@@ -1220,7 +1220,7 @@ async function saveTankerPurchase(){
   if(!date||!Number.isInteger(count)||count<=0||!Number.isFinite(rate)||rate<=0){msg("تاریخ، ٹینکروں کی تعداد اور فی ٹینکر قیمت درست درج کریں۔");return;}
   if(!confirmLargeEntry("ٹینکروں کی تعداد",count,5)||!confirmLargeEntry("ٹینکر کی کل رقم",count*rate,100000))return;
   const {error}=await db.from("water_tanker_purchases").insert({
-   purchase_date:date,tanker_count:count,rate_per_tanker:rate,payment_method:"cash",
+   purchase_date:date,water_use:$("waterUse").value,tanker_count:count,rate_per_tanker:rate,payment_method:"cash",
    supplier:$("tankSupplier").value.trim()||null,entered_by:user?.id||null
   });
   if(error){msg("ٹینکر خریداری محفوظ نہیں ہوئی: "+error.message);return;}
@@ -1235,8 +1235,8 @@ async function loadTankerPurchases(){
  ]);
  if(error||openingError){$("moduleTable").textContent="ٹینکر / ابتدائی اسٹاک لوڈ نہیں ہوا: "+(error||openingError).message;return;}
  $("moduleTable").innerHTML='<h3>ٹینکر خریداری اور ابتدائی پانی کی ہسٹری</h3><table><tr><th>تاریخ</th><th>اندراج</th><th>مقدار</th><th>فی ٹینکر / مالیت</th><th>کل رقم</th></tr>'+
- (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td></tr>').join("")+
- (data||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>خریداری</td><td>'+r.tanker_count+' × 1,000 لیٹر</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+'</table>';
+ (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>'+({19L_delivery:"19L ڈلیوری",product_filling:"500ml / 1.5L فلنگ",shop_counter:"6L / 19L کاؤنٹر"}[r.water_use]||r.water_use)+' — ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td></tr>').join("")+
+ (data||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+({19L_delivery:"19L ڈلیوری",product_filling:"500ml / 1.5L فلنگ",shop_counter:"6L / 19L کاؤنٹر"}[r.water_use]||r.water_use)+' — خریداری</td><td>'+r.tanker_count+' × 1,000 لیٹر</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+'</table>';
 }
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
