@@ -1803,7 +1803,7 @@ async function ownerWithdrawalsModule(){
  let owners=[];
  const {data,error}=await db.from("profiles").select("full_name").eq("role","admin").order("full_name");
  if(error){msg("مالکان کی فہرست لوڈ نہیں ہوئی: "+error.message);return;}
- owners=(data||[]).map(x=>x.full_name).filter(Boolean);
+ owners=[...new Set([...(data||[]).map(x=>x.full_name).filter(Boolean),"محمد رفیع مغل"])];
  if(!owners.length){msg("منتظمین کے نام دستیاب نہیں؛ پہلے پروفائل ریکارڈ درست کریں۔");return;}
  const opts=owners.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("");
  $("moduleBody").innerHTML=
