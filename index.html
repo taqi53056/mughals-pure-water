@@ -759,7 +759,7 @@ async function deliveryModule(){
  $("moduleBody").innerHTML=`
  <p class="muted">ہر گاہک کی ایک دن میں ایک انٹری۔ کمپنی کی بوتلیں فروخت نہیں ہوتیں۔</p>
  <select id="dCustomer" onchange="loadSelectedDelivery()">${customerOptions(list)}</select>
- <label for="dWorker">ڈیلیوری کس نے کی؟</label><select id="dWorker" onchange="markDeliveryDirty();calcDelivery()"><option value="">کوئی ورکر مقرر نہیں — مالک / غیر منسوب</option></select><p class="muted">عاقب یا عثمان جیسے ورکر کو منتخب کریں تو ہر کامیاب بوتل پر Rs.20 مزدوری اس کے لیجر میں شمار ہوگی۔ مالک منتخب کرنے پر ورکر کی اجرت نہیں بنے گی؛ خالی چھوڑنے کا مطلب ہے کہ ڈیلیوری کسی ورکر کے نام منسوب نہیں۔</p>
+ <label for="dWorker">ڈیلیوری کس نے کی؟</label><select id="dWorker" onchange="markDeliveryDirty();calcDelivery()"><option value="">کوئی ورکر مقرر نہیں — مالک / غیر منسوب</option></select><p class="muted">عاقب یا عثمان جیسے ورکر کو منتخب کریں تو ہر کامیاب بوتل پر Rs.20 مزدوری اس کے لیجر میں شمار ہوگی۔ اگر ان کے نام فہرست میں نہ ہوں تو ورکر لیجر میں نیا ورکر بنائیں اور 19L ڈیلیوری منتخب کریں۔ مالک منتخب کرنے پر ورکر کی اجرت نہیں بنے گی؛ خالی چھوڑنے کا مطلب ہے کہ ڈیلیوری کسی ورکر کے نام منسوب نہیں۔</p>
  <input id="dDate" type="date" value="${today()}" onchange="loadSelectedDelivery()">
  <input id="dOut" type="number" min="0" placeholder="دی گئی بھری بوتلیں" oninput="markDeliveryDirty();calcDelivery()">
  <input id="dBack" type="number" min="0" placeholder="اسی لوڈ کی واپس خالی بوتلیں" oninput="markDeliveryDirty();calcDelivery()">
