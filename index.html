@@ -4,8 +4,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#087b50">
+<meta name="theme-color" content="#080808">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./logo.svg">
+<link rel="apple-touch-icon" href="./logo.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MUGHAL'S PURE WATER">
 <title>MUGHAL'S PURE WATER</title>
@@ -291,12 +293,22 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
  #app>.card:first-child{padding:12px 13px}#app>.card:first-child #role{margin-inline-start:0}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+
+/* MPW luxury black-and-gold brand identity */
+.brand-header{background:linear-gradient(125deg,#050505,#17130a 58%,#050505);border-bottom:2px solid #c79a3b;color:#f5df9b;padding:18px 18px;box-shadow:0 8px 28px #0003}
+.brand-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand-logo{width:76px;height:76px;object-fit:contain;border:1px solid #c79a3b;border-radius:15px;box-shadow:0 3px 14px #0008}
+.brand-copy{flex:1;min-width:190px}.brand-copy h1{color:#f0cf78;letter-spacing:.055em;font-family:Georgia,serif}.brand-copy>div{color:#d7bd7a}
+.brand-header #installAppButton{background:linear-gradient(135deg,#f1d58d,#a97822);color:#171108;border:1px solid #f7e5ae}
+@media(max-width:520px){.brand-logo{width:62px;height:62px}.brand-wrap{gap:11px}.brand-copy h1{font-size:18px}}
 </style>
 </head>
 <body>
-<header><div class="wrap" style="padding:0">
-<h1>MUGHAL'S PURE WATER</h1>
-<div>دکان اور واٹر بزنس مینجمنٹ</div><button id="installAppButton" class="secondary" type="button" onclick="installMughalApp()" style="width:auto;margin-top:10px">موبائل میں ایپ انسٹال کریں</button>
+<header class="brand-header"><div class="wrap brand-wrap" style="padding:0">
+<img class="brand-logo" src="./logo.svg" alt="MPW — MUGHAL'S PURE WATER">
+<div class="brand-copy"><h1>MUGHAL'S PURE WATER</h1>
+<div>دکان اور واٹر بزنس مینجمنٹ</div></div>
+<button id="installAppButton" class="secondary" type="button" onclick="installMughalApp()" style="width:auto;margin-top:10px">موبائل میں ایپ انسٹال کریں</button>
 </div></header>
 
 <main class="wrap">
