@@ -219,6 +219,14 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 #homeTiles .tile:nth-child(16):before{content:"💧"}
 #homeTiles .tile:nth-child(17):before{content:"↩"}
 #homeTiles .tile:nth-child(18):before{content:"⚙"}
+/* آسان روزمرہ استعمال */
+.module-intro{margin:0 0 15px;padding:11px 14px;border:1px solid #e3eae2;border-right:4px solid #c4a15b;border-radius:13px;background:#f5f8f4;color:#42574b;font-size:14px;line-height:1.9}
+#moduleBody label{display:block;font-weight:700;color:#315448;margin:9px 0 3px}
+#moduleBody details{border:1px solid #e3eae2;border-radius:14px;padding:13px 15px;margin:12px 0;background:#fbfdfb}
+#moduleBody details>summary{cursor:pointer;font-weight:800;color:#174b39;line-height:1.8}
+#moduleBody button:focus-visible,#homeTiles .tile:focus-visible{outline:3px solid #c4a15b;outline-offset:3px}
+#homeTiles .tile.gold{background:linear-gradient(135deg,#80642f,#b08b43);color:#fff}
+#moduleBody .card h3{margin-top:5px}
 /* MUGHALS PREMIUM EXPERIENCE V1 */
 :root{--mp-forest:#103c30;--mp-green:#147052;--mp-gold:#c4a15b;--mp-border:#e2e9e1;--mp-shadow:0 12px 34px rgba(19,55,39,.075)}
 body{background:radial-gradient(ellipse at 50% -15%,#e2eee5 0,transparent 48%),linear-gradient(180deg,#f7f9f6,#f0f4ef);color:#192c24}
@@ -366,6 +374,7 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 <div class="tile teal" onclick="openModule('counterWater')">19L کاؤنٹر فروخت</div>
 <div class="tile red" onclick="openModule('returns')">خراب تیار مال کی واپسی</div>
 <div class="tile teal" onclick="openModule('settings')">ترتیبات / کنٹرول سینٹر</div>
+<div class="tile gold" onclick="openModule('ownerWithdrawals')">مالک کی ذاتی نکاسی</div>
 </div>
 
 <div id="dashboard" class="card">
@@ -377,6 +386,7 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 <div id="module" class="card hidden">
 <button class="secondary" onclick="backHome()">← واپس</button>
 <h2 id="moduleTitle"></h2>
+<p id="moduleIntro" class="module-intro"></p>
 <div id="moduleBody"></div>
 <p id="moduleMsg" class="error"></p>
 <div id="moduleTable" class="tablewrap"></div>
@@ -461,7 +471,28 @@ function confirmLargeEntry(label,value,threshold){
  if(!Number.isFinite(n)||n<=threshold)return true;
  return confirm(`${label} کی مقدار ${n.toLocaleString("en-US")} درج کی گئی ہے، جو مقررہ حد ${threshold.toLocaleString("en-US")} سے زیادہ ہے۔ کیا یہی درست مقدار ہے؟`);
 }
-function setTitle(t){$("moduleTitle").textContent=t;$("moduleMsg").textContent="";$("moduleTable").innerHTML=""}
+const MODULE_HELP={
+ customers:"نیا گاہک شامل کریں، پرانا ریکارڈ دیکھیں یا معلومات درست کریں۔",
+ delivery:"گاہک، تاریخ، دی گئی بھری بوتلیں اور واپس خالی بوتلیں درج کریں۔ باقی حساب خود ہوگا۔",
+ billing:"گاہک اور مہینہ منتخب کریں۔ بل کا حساب ڈلیوری اور ادائیگیوں سے خود بنے گا۔",
+ raw:"خریدے گئے خام مال کی مقدار اور اصل قیمت درج کریں۔ استعمال اور باقی اسٹاک کا حساب رپورٹ میں خود آئے گا۔",
+ tanker:"پانی کس کام کے لیے خریدا ہے منتخب کریں، ٹینکر کی تعداد اور قیمت درج کریں۔",
+ counterWater:"کاؤنٹر پر فروخت ہونے والا پانی درج کریں۔ رقم اور رپورٹ خود اپڈیٹ ہوگی۔",
+ returns:"واپس آنے یا خراب ہونے والا تیار مال درج کریں تاکہ اسٹاک اور نقصان درست رہے۔",
+ finished:"یہاں موجود تیار مال دیکھیں۔ نئی پیداوار پروڈکشن کے اندراج سے خود شامل ہوگی۔",
+ sales:"پروڈکٹ اور مقدار منتخب کریں۔ مقررہ قیمت خود آئے گی؛ فروخت محفوظ ہوتے ہی اسٹاک کم ہوگا۔",
+ expenses:"کاروبار کا خرچ درج کریں۔ مزدوری، خام مال یا ٹینکر کی خریداری یہاں دوبارہ درج نہ کریں۔",
+ income:"صرف فروخت کے علاوہ دوسری آمدن درج کریں۔ 19L یا پروڈکٹ سیل یہاں دوبارہ نہ لکھیں۔",
+ finance:"یہ صفحہ صرف حساب دیکھنے کے لیے ہے۔ تمام فروخت، خریداری، مزدوری اور خرچ اپنے متعلقہ بٹن سے درج کریں۔",
+ reports:"مدت منتخب کرکے رپورٹ دیکھیں۔ اعداد اصل اندراجات سے خود بنتے ہیں۔",
+ workers:"ورکر کا نام اور کام درج کریں۔ اجرت، ایڈوانس اور ادائیگی الگ ریکارڈ ہوگی۔",
+ labor:"کام کی قسم، ورکر اور رقم درج کریں۔ مزدوری کا حساب رپورٹ میں خود شامل ہوگا۔",
+ complaints:"گاہکوں کی شکایات دیکھیں اور ان کا حل درج کریں۔",
+ audit:"یہاں دیکھیں کہ منتظمین نے کب اور کون سی تبدیلی کی۔",
+ settings:"قیمتیں اور کاروبار کی بنیادی ترتیب یہاں سے تبدیل کریں۔",
+ ownerWithdrawals:"مالک اپنی ذاتی ضرورت کے لیے رقم لے تو یہاں درج کریں۔ یہ کاروباری خرچ یا نقصان نہیں ہوگا۔"
+};
+function setTitle(t){$("moduleTitle").textContent=t;const intro=$("moduleIntro");if(intro)intro.textContent=MODULE_HELP[currentModule]||"ضروری معلومات درج کریں، محفوظ کریں، اور نیچے اپنا ریکارڈ دیکھیں۔";$("moduleMsg").textContent="";$("moduleTable").innerHTML=""}
 
 function showSignup(){
  $("loginForm").classList.add("hidden");
@@ -652,6 +683,7 @@ async function openModule(name){
  if(name==="complaints")return complaintsModule();
  if(name==="audit")return auditModule();
  if(name==="settings")return settingsModule();
+ if(name==="ownerWithdrawals")return ownerWithdrawalsModule();
 }
 
 /* گاہک */
@@ -1475,7 +1507,7 @@ async function reportsModule(){
  '<div class="card"><h3>آپ کے کاروبار کا حساب</h3><p class="muted">مدت منتخب کریں، باقی حساب خود ہوگا۔</p><div class="grid"><button class="secondary" onclick="setReportPeriod(&quot;day&quot;)">آج</button><button class="secondary" onclick="setReportPeriod(&quot;month&quot;)">اس ماہ</button><button class="secondary" onclick="setReportPeriod(&quot;year&quot;)">اس سال</button></div><div class="grid"><input id="rStart" type="date" value="'+monthStart+'"><input id="rEnd" type="date" value="'+today()+'"></div><button onclick="runReport()">حساب دکھائیں</button></div>'+
  '<div id="moduleTable"><div class="card muted">حساب تیار ہو رہا ہے...</div></div>'+
  '<details class="card"><summary><b>مزید مالی اختیارات</b></summary><p class="muted">یہ اندراجات صرف سرمایہ، قرض، مالک کی نکاسی یا اثاثوں کے لیے ہیں۔ خریداری، فروخت اور روزمرہ خرچ اپنے متعلقہ بٹن سے درج کریں۔</p>'+
- '<h3>سرمایہ، قرض یا مالک کی رقم</h3><input id="finDate" type="date" value="'+today()+'"><select id="finType" onchange="toggleOwnerWithdrawalField()"><option value="capital_in">مالک نے سرمایہ لگایا</option><option value="owner_withdrawal">مالک نے رقم نکالی</option><option value="loan_received">کاروبار نے قرض لیا</option><option value="loan_repaid">قرض کی اصل رقم واپس کی</option><option value="loan_given">کسی کو قرض / ادھار دیا</option><option value="loan_collected">دوسروں سے قرض / ادھار وصول کیا</option><option value="inventory_loss">اسٹاک ضائع / خراب ہوا</option><option value="fixed_asset_purchase">مشینری / گاڑی / سامان خریدا</option><option value="fixed_asset_sale">مشینری / اثاثہ فروخت کیا</option><option value="depreciation_expense">مشینری / سامان کی فرسودگی</option><option value="interest_expense">قرض کی مالی لاگت</option><option value="interest_income">مالی آمدن</option></select>'+
+ '<h3>سرمایہ، قرض یا مالک کی رقم</h3><input id="finDate" type="date" value="'+today()+'"><select id="finType" onchange="toggleOwnerWithdrawalField()"><option value="capital_in">مالک نے سرمایہ لگایا</option><option value="loan_received">کاروبار نے قرض لیا</option><option value="loan_repaid">قرض کی اصل رقم واپس کی</option><option value="loan_given">کسی کو قرض / ادھار دیا</option><option value="loan_collected">دوسروں سے قرض / ادھار وصول کیا</option><option value="inventory_loss">اسٹاک ضائع / خراب ہوا</option><option value="fixed_asset_purchase">مشینری / گاڑی / سامان خریدا</option><option value="fixed_asset_sale">مشینری / اثاثہ فروخت کیا</option><option value="depreciation_expense">مشینری / سامان کی فرسودگی</option><option value="interest_expense">قرض کی مالی لاگت</option><option value="interest_income">مالی آمدن</option></select>'+
  '<select id="finOwner" class="hidden"><option value="">مالک منتخب کریں</option><option>محمد اسامہ مغل</option><option>محمد مزمل مغل</option><option>محمد تقی مغل</option><option>محمد رفیع مغل</option></select>'+
  '<input id="finAmount" type="number" min="0.01" step="0.01" placeholder="رقم روپے میں"><input id="finCategory" maxlength="100" placeholder="مختصر تفصیل"><input id="finItem" maxlength="120" placeholder="سامان کا نام (اختیاری)"><div class="grid"><input id="finQty" type="number" min="0" step="0.001" placeholder="مقدار (اختیاری)"><input id="finUnit" maxlength="30" placeholder="یونٹ"></div>'+
  '<input id="finParty" maxlength="120" placeholder="کس سے / کس کو"><select id="finMethod"><option value="">ادائیگی کا طریقہ</option><option>نقد</option><option>بینک</option><option>جاز کیش</option><option>ایزی پیسہ</option><option>ادھار</option><option>دیگر</option></select><textarea id="finDetails" maxlength="500" placeholder="اضافی تفصیل (اختیاری)"></textarea><button onclick="saveFinanceEntry()">محفوظ کریں</button></details>'+
@@ -1715,7 +1747,7 @@ async function runReport(){
   });
   const finishedStockValue=finishedStockValuation.reduce((n,x)=>n+(x.value||0),0);
   const finishedStockText=end===today()?finishedStockValuation.map(x=>x.type+": "+x.qty+" "+(x.unit==="bottle"?"بوتل":"کارٹن")+" — "+(x.value===null?"لاگت نامکمل":moneyVal(x.value))).join("؛ "):"پچھلی تاریخ کی رپورٹ میں موجودہ تیار مال کی مالیت شامل نہیں کی گئی؛ آج کی تاریخ منتخب کریں۔";
-  const ownerNames=["محمد اسامہ مغل","محمد مزمل مغل","محمد تقی مغل","محمد رفیع مغل"];
+  const ownerNames=[...new Set(periodFin.filter(x=>x.entry_type==="owner_withdrawal").map(x=>x.counterparty).filter(Boolean))];
   const ownerWithdrawals=ownerNames.map(name=>({name,amount:periodFin.filter(x=>x.entry_type==="owner_withdrawal"&&x.counterparty===name).reduce((n,r)=>n+(Number(r.amount)||0),0)}));
   const totalWithdraw=total(periodFin,"owner_withdrawal");
   const capital=total(allFin,"capital_in");
@@ -1746,7 +1778,7 @@ async function runReport(){
    (complete?"":"<p class='warning'>حتمی منافع کے لیے یہ خریداری لاگتیں درج ہونا ضروری ہیں: "+missing.join("، ")+"۔</p>")+
    "<p class='muted'>ہر شعبے کا الگ نتیجہ مشترکہ اخراجات سے پہلے دکھایا گیا ہے۔ مجموعی نتیجے میں مشترکہ اخراجات منہا ہیں۔ خام مال اور ٹینکر کی خریداری کو فوراً خرچ نہیں گنا؛ استعمال شدہ مال کی لاگت شامل ہے۔</p></div>"+
    "<div class='card'><h3>اسٹاک کی صورتِ حال اور روپے میں مالیت</h3><div class='stat'>موجودہ تیار مال (آج): <b>"+esc(stockText)+"</b></div><div class='stat'>تیار مال کی تخمینی مالیت (خام مال + پانی + پروڈکشن مزدوری): <b>"+(end!==today()?"صرف آج کی رپورٹ میں دستیاب":finishedStockValuation.some(x=>x.value===null)?"کچھ لاگت نامکمل":fmt(finishedStockValue))+"</b><p class='muted'>"+esc(finishedStockText)+"</p></div><div class='stat'>خام مال کی تخمینی موجودہ مالیت: <b>"+(rawStockComplete?fmt(rawStockValue):"نامکمل — خریداری/ابتدائی مقدار یا استعمال کی جانچ کریں")+"</b><p class='muted'>"+esc(rawStockText)+"</p></div><div class='stat'>پانی کا باقی اسٹاک الگ الگ: <b>19L ڈیلیوری "+fmt(deliveryWaterRemaining)+" لیٹر؛ پروڈکشن فلنگ "+fmt(fillWaterRemaining)+" لیٹر؛ دکان / 6L "+fmt(shopWaterRemaining)+" لیٹر</b></div><div class='stat'>اس مدت میں خام مال کی خریداری: <b>"+fmt(rawSpend)+"</b></div><div class='stat'>اس مدت میں ٹینکر خریداری: <b>"+fmt(tankerSpend)+"</b></div><div class='stat'>پانی کی اوسط لاگت: <b>"+(waterPerLitre===null?"19L ڈلیوری کا ریکارڈ موجود نہیں":fmt(waterPerLitre*19)+" فی 19 لیٹر؛ فلنگ "+(waterFill.rate===null?"—":fmt(waterFill.rate)+" فی لیٹر")+"؛ دکان "+(waterShop.rate===null?"—":fmt(waterShop.rate)+" فی لیٹر"))+"</b></div><p class='muted'>یہ تخمینہ ابتدائی اسٹاک اور خریداری میں درج مقداروں سے پیداوار/استعمال منہا کرکے بنتا ہے۔ کلیم کے بدلے مفت بوتلوں، بغیر اندراج کے ضیاع، یا غیر درج شدہ ابتدائی مقدار سے فرق آسکتا ہے۔ منفی خام مال مقدار ہو تو پہلے اسٹاک/استعمال کا ریکارڈ درست کریں۔</p></div>"+
-   "<div class='card'><h3>چاروں مالکان کی ذاتی نکاسی</h3>"+ownerWithdrawals.map(x=>"<div class='stat'>"+x.name+": <b>"+fmt(x.amount)+"</b></div>").join("")+"<div class='total'>چاروں کی مجموعی نکاسی: "+fmt(totalWithdraw)+"</div><p class='muted'>ذاتی نکاسی کاروباری خرچ نہیں، اس لیے اسے منافع سے منہا نہیں کیا گیا۔</p></div>"+
+   "<div class='card'><h3>مالکان کی ذاتی نکاسی</h3>"+(ownerWithdrawals.length?ownerWithdrawals.map(x=>"<div class='stat'>"+esc(x.name)+": <b>"+fmt(x.amount)+"</b></div>").join(""):"اس مدت میں کوئی ذاتی نکاسی درج نہیں ہوئی۔")+"<div class='total'>کل ذاتی نکاسی: "+fmt(totalWithdraw)+"</div><p class='muted'>یہ رقم کاروباری خرچ نہیں، اس لیے منافع یا نقصان سے منہا نہیں ہوتی۔ مکمل ریکارڈ کے لیے الگ بٹن کھولیں۔</p></div>"+
    "<div class='card'><h3>سرمایہ، قرض اور اثاثے</h3><div class='stat'>درج شدہ سرمایہ: <b>"+fmt(capital)+"</b></div><div class='stat'>کاروبار کا قرض: وصول "+fmt(loanIn)+" — اصل رقم واپس "+fmt(loanRepay)+" — باقی "+fmt(loanIn-loanRepay)+"</div><div class='stat'>دوسروں کو دیا قرض: "+fmt(loanGiven)+" — واپس وصول "+fmt(loanCollected)+" — باقی "+fmt(loanGiven-loanCollected)+"</div><div class='stat'>اثاثے خریدے: "+fmt(assetPurchases)+" — اثاثے فروخت: "+fmt(assetSales)+"</div><div class='stat'>اسٹاک اور ٹینکر کی خریداری کی نقد ادائیگی الگ ہے؛ یہ فوری منافع کا خرچ نہیں۔</div></div>";
   const headline=!hasActivity?"ابھی کوئی اندراج نہیں":!complete?"حساب نامکمل":net>=0?"منافع":"نقصان";
   const amountText=hasActivity?fmt(Math.abs(net)):"—";
@@ -1758,6 +1790,61 @@ async function runReport(){
 
  }catch(e){msg("مالی رپورٹ نہیں بنی: "+e.message);}
 }
+/* مالک کی ذاتی نکاسی — کاروباری خرچ سے الگ */
+async function ownerWithdrawalsModule(){
+ setTitle("مالک کی ذاتی نکاسی");
+ let owners=[];
+ const {data,error}=await db.from("profiles").select("full_name").eq("role","admin").order("full_name");
+ if(error){msg("مالکان کی فہرست لوڈ نہیں ہوئی: "+error.message);return;}
+ owners=(data||[]).map(x=>x.full_name).filter(Boolean);
+ if(!owners.length){msg("منتظمین کے نام دستیاب نہیں؛ پہلے پروفائل ریکارڈ درست کریں۔");return;}
+ const opts=owners.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("");
+ $("moduleBody").innerHTML=
+ '<div class="card"><h3>نکالی گئی رقم درج کریں</h3><p class="muted">یہ مالک کی ذاتی رقم ہے، کاروبار کا خرچ نہیں۔ اس لیے منافع یا نقصان کم نہیں ہوگا۔</p>'+
+ '<label for="owDate">تاریخ</label><input id="owDate" type="date" value="'+today()+'">'+
+ '<label for="owOwner">کس مالک نے رقم لی؟</label><select id="owOwner">'+opts+'</select>'+
+ '<label for="owAmount">کتنی رقم؟ (روپے)</label><input id="owAmount" type="number" min="1" step="1" placeholder="مثلاً 5000">'+
+ '<label for="owReason">کس کام کے لیے؟</label><input id="owReason" maxlength="120" placeholder="مثلاً گھر کا خرچ">'+
+ '<label for="owDetails">مزید تفصیل (اختیاری)</label><textarea id="owDetails" maxlength="500" placeholder="رقم کہاں خرچ ہوئی؟"></textarea>'+
+ '<label for="owMethod">رقم کس طرح لی؟</label><select id="owMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>'+
+ '<button id="owSave" onclick="saveOwnerWithdrawal()">نکالی گئی رقم محفوظ کریں</button></div>'+
+ '<div class="card"><h3>اس مہینے کا ریکارڈ</h3><div id="ownerWithdrawalSummary">ریکارڈ لوڈ ہو رہا ہے...</div></div>'+
+ '<div class="card"><h3>پرانا ریکارڈ</h3><label for="owMonth">مہینہ</label><input id="owMonth" type="month" value="'+today().slice(0,7)+'"><button class="secondary" onclick="loadOwnerWithdrawals()">ریکارڈ دیکھیں</button><div id="ownerWithdrawalHistory">ریکارڈ لوڈ ہو رہا ہے...</div></div>';
+ await loadOwnerWithdrawals();
+}
+async function saveOwnerWithdrawal(){
+ const date=$("owDate").value,owner=$("owOwner").value,amount=Number($("owAmount").value),reason=$("owReason").value.trim(),details=$("owDetails").value.trim(),method=$("owMethod").value;
+ if(!date||!owner||!Number.isFinite(amount)||amount<=0||!reason){msg("تاریخ، مالک، درست رقم اور وجہ درج کریں۔");return;}
+ if(!confirmLargeEntry("مالک کی نکالی گئی رقم",amount,100000))return;
+ const button=$("owSave");button.disabled=true;
+ try{
+  const {error}=await db.from("business_finance_ledger").insert({entry_date:date,entry_type:"owner_withdrawal",amount,category:reason,counterparty:owner,payment_method:method,details:details||null,entered_by:user.id});
+  if(error)throw error;
+  msg("مالک کی نکالی گئی رقم محفوظ ہوگئی۔ منافع و نقصان میں اسے خرچ نہیں گنا جائے گا۔",true);
+  $("owAmount").value="";$("owReason").value="";$("owDetails").value="";
+  $("owMonth").value=date.slice(0,7);
+  await Promise.all([loadOwnerWithdrawals(),loadTodaySummary()]);
+ }catch(e){msg("ریکارڈ محفوظ نہیں ہوا: "+(e?.message||String(e)));}
+ finally{button.disabled=false;}
+}
+async function loadOwnerWithdrawals(){
+ const month=$("owMonth")?.value||today().slice(0,7),start=month+"-01";
+ const next=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),1);
+ const end=new Date(next.getTime()-86400000).toISOString().slice(0,10);
+ const {data,error}=await db.from("business_finance_ledger").select("id,entry_date,counterparty,amount,category,details,payment_method").eq("entry_type","owner_withdrawal").gte("entry_date",start).lte("entry_date",end).order("entry_date",{ascending:false}).order("id",{ascending:false});
+ if(error){if($("ownerWithdrawalHistory"))$("ownerWithdrawalHistory").textContent="ریکارڈ لوڈ نہیں ہوا: "+error.message;return;}
+ const rows=data||[],groups={};
+ rows.forEach(r=>{const n=r.counterparty||"نام درج نہیں";groups[n]=(groups[n]||0)+Number(r.amount||0);});
+ if($("ownerWithdrawalSummary"))$("ownerWithdrawalSummary").innerHTML=Object.keys(groups).length?Object.entries(groups).map(([n,v])=>'<div class="stat">'+esc(n)+' — <b>'+money(v)+'</b></div>').join("")+'<div class="total">اس مہینے کی کل نکاسی: <b>'+money(rows.reduce((n,r)=>n+Number(r.amount||0),0))+'</b></div>':"اس مہینے کوئی رقم نہیں نکالی گئی۔";
+ if($("ownerWithdrawalHistory"))$("ownerWithdrawalHistory").innerHTML=rows.length?'<div class="tablewrap"><table><tr><th>تاریخ</th><th>مالک</th><th>وجہ</th><th>تفصیل</th><th>رقم</th><th>عمل</th></tr>'+rows.map(r=>'<tr><td>'+esc(r.entry_date)+'</td><td>'+esc(r.counterparty)+'</td><td>'+esc(r.category)+'</td><td>'+esc(r.details||"—")+'</td><td>'+money(r.amount)+'</td><td><button class="secondary" onclick="deleteOwnerWithdrawal('+Number(r.id)+')">حذف</button></td></tr>').join("")+'</table></div>':"اس مہینے کوئی اندراج نہیں۔";
+}
+async function deleteOwnerWithdrawal(id){
+ if(!confirm("کیا یہ نکاسی کا ریکارڈ حذف کرنا ہے؟ ماہانہ حساب بھی دوبارہ بنے گا۔"))return;
+ const {error}=await db.from("business_finance_ledger").delete().eq("id",id).eq("entry_type","owner_withdrawal");
+ if(error){msg("ریکارڈ حذف نہیں ہوا: "+error.message);return;}
+ msg("نکاسی کا ریکارڈ حذف ہوگیا۔",true);await loadOwnerWithdrawals();
+}
+
 /* ورکرز: الگ لیجر، کام کی اقسام اور ادائیگیاں */
 async function workersModule(){
  setTitle("ورکر لیجر");
