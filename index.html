@@ -37,6 +37,78 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 #login{max-width:560px;margin:28px auto}#app>.card:first-child{background:linear-gradient(110deg,#fff,#f5f7ef);border-top:2px solid var(--gold)}
 @media(min-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{min-height:112px;padding:24px;font-size:18px}#adminPanel{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(0,1.7fr);gap:16px;align-items:start}#homeTiles{grid-column:1;grid-row:1 / span 2}#dashboard,#module{grid-column:2;margin-top:0}#adminPanel #module{grid-column:1 / -1}}
 @media(max-width:520px){.wrap{padding:11px}.card{padding:15px;border-radius:15px}.grid{gap:9px}.tile{min-height:82px;padding:14px;font-size:14px}header{padding:18px 14px}input,select,button,textarea{font-size:16px}}
+
+/* MUGHALS PREMIUM EXPERIENCE V1 */
+:root{--mp-forest:#103c30;--mp-green:#147052;--mp-gold:#c4a15b;--mp-border:#e2e9e1;--mp-shadow:0 12px 34px rgba(19,55,39,.075)}
+body{background:radial-gradient(ellipse at 50% -15%,#e2eee5 0,transparent 48%),linear-gradient(180deg,#f7f9f6,#f0f4ef);color:#192c24}
+header{position:relative;background:linear-gradient(115deg,#092c24,#104c39 58%,#17694d);border-bottom:3px solid var(--mp-gold);padding:22px 18px}
+header:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.12;background-image:radial-gradient(#fff .7px,transparent .7px);background-size:13px 13px}
+header .wrap{position:relative;z-index:1}header h1{font-weight:850;letter-spacing:.025em}
+.wrap{max-width:1320px}.card{border:1px solid var(--mp-border);border-radius:20px;background:rgba(255,255,255,.97);box-shadow:var(--mp-shadow);padding:20px}
+h2{font-weight:800}h3{font-weight:750}
+input,select,textarea{border:1px solid #d9e3da;border-radius:13px;background:#fff;box-shadow:0 1px 2px #193d2910}
+input:hover,select:hover,textarea:hover{border-color:#b7cabb}input:focus,select:focus,textarea:focus{border-color:var(--mp-green);box-shadow:0 0 0 4px #14705218}
+button{border-radius:13px;background:linear-gradient(135deg,#104d39,#197653);border-color:#145e45;box-shadow:0 5px 14px #124d3820;transition:transform .16s,box-shadow .16s}
+button:hover{transform:translateY(-1px);box-shadow:0 8px 18px #124d3826}button:active{transform:translateY(0)}
+button.secondary{background:#f0f5f0;color:#174d39;border:1px solid #dce7dc;box-shadow:none}button.secondary:hover{background:#e8f1e9}
+.tile{position:relative;overflow:hidden;isolation:isolate;border-radius:19px;min-height:104px;box-shadow:0 8px 20px #173d2b1b}
+.tile:after{content:"";position:absolute;z-index:-1;width:125px;height:125px;border:1px solid #ffffff24;border-radius:50%;inset:auto -42px -72px auto;box-shadow:0 0 0 13px #ffffff0a,0 0 0 27px #ffffff08}
+.tile:hover{transform:translateY(-3px);box-shadow:0 13px 26px #183b2b28}#homeTiles .tile{font-size:16px;line-height:1.55;text-shadow:0 1px 2px #0002}
+#login{max-width:570px;margin:34px auto}#login.card{padding:clamp(20px,4vw,34px);border-top:4px solid var(--mp-gold)}#login h2{margin-bottom:17px}
+#app>.card:first-child{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 19px;border-top:3px solid var(--mp-gold)}
+#app>.card:first-child #welcome{font-size:17px;font-weight:800}#app>.card:first-child #role{margin-inline-start:auto}#app>.card:first-child button{width:auto;min-width:105px;margin:0}
+#adminPanel,#customerPanel{min-width:0}#adminPanel #dashboard,#adminPanel #module,#customerPanel>.card{min-width:0;border-radius:21px}
+#adminPanel #module{padding:clamp(16px,2.4vw,28px)}#moduleTitle{padding-bottom:12px;border-bottom:1px solid #e8eee7;margin-bottom:15px}
+#moduleBody{min-width:0}#moduleBody h3,#moduleTable h3{margin:18px 0 10px;padding-right:11px;border-right:3px solid var(--mp-gold);line-height:1.6}
+#moduleBody .muted{line-height:1.85}#moduleBody>p.muted{padding:11px 14px;background:#f4f8f3;border:1px solid #e7eee5;border-radius:13px}
+#moduleBody input:not([type=checkbox]),#moduleBody select,#moduleBody textarea{width:100%;max-width:100%;margin:7px 0}
+#moduleBody button,#module button{width:auto;min-width:112px;min-height:45px;padding:10px 15px;margin:6px 5px 6px 0}
+#moduleBody .card{padding:17px;border-radius:17px;margin:13px 0;background:linear-gradient(145deg,#fff,#fbfdfb)}
+#moduleBody .stat,#moduleTable .stat{border-radius:14px;padding:13px 15px;line-height:1.8}
+#moduleBody .total{display:block;padding:14px 16px;margin:12px 0;background:linear-gradient(110deg,#edf6ee,#f8f6ec);border:1px solid #dfeadd;border-radius:14px;line-height:1.7}
+#moduleTable{min-width:0;margin-top:15px}.tablewrap{max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #e3eae2;border-radius:14px}
+table{border-collapse:separate;border-spacing:0;width:100%}th{background:#edf4ed;color:#214d3a;white-space:nowrap}td,th{padding:11px 12px;line-height:1.65}
+tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-width:74px;padding:8px 11px;margin:3px;font-size:13px}
+#todaySummary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#todaySummary .stat{margin:0;min-height:82px;display:flex;flex-direction:column;justify-content:center;border-radius:15px}
+#todaySummary .stat b{font-size:20px;color:var(--mp-forest);font-variant-numeric:tabular-nums}
+#customerPanel>.card{padding:clamp(16px,2.5vw,25px)}#customerPanel>.card>h2{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid #e9eee8}
+#customerPanel>.card>h2:before{content:"";width:5px;height:25px;border-radius:8px;background:var(--mp-gold)}
+#customerPanel #myAccount{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#customerPanel #myAccount p{margin:0;padding:12px 14px;background:#f5f8f4;border:1px solid #e8eee6;border-radius:13px;overflow-wrap:anywhere}
+#customerPanel #myBill{padding:15px;background:linear-gradient(135deg,#f1f7f1,#faf8ef);border:1px solid #e4ecdf;border-radius:15px;line-height:2}
+#customerPanel #myBill h3{color:#0e6548;font-size:20px}
+#customerPanel #myBillHistory,#customerPanel #myPayments,#customerPanel #myNotifications,#customerPanel #myComplaints{display:grid;gap:9px}
+#customerPanel .stat{border-radius:14px;padding:13px 15px}
+#customerPanel #myDeliveries{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}#customerPanel #myDeliveries table{min-width:720px;font-size:13px}
+#customerPanel #complaintForm{padding:14px;background:#f6f9f5;border:1px solid #e7eee5;border-radius:15px}
+.password-field{position:relative;width:100%;margin:6px 0}.password-field input{padding-left:54px!important;margin:0!important}
+.password-toggle{position:absolute;left:7px;top:50%;transform:translateY(-50%);width:40px!important;min-width:40px!important;height:38px;min-height:38px!important;padding:7px!important;margin:0!important;border:0!important;border-radius:10px!important;background:#eef4ef!important;color:#315a46!important;box-shadow:none!important;display:grid;place-items:center}
+.password-toggle svg{width:20px;height:20px;display:block}
+.audit-card{padding:14px 16px;margin:9px 0;border:1px solid #e4ebe3;border-radius:15px;background:#fff;box-shadow:0 4px 14px #173d2b08}
+.audit-card-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#315448}.audit-card h3{margin:7px 0!important;border:0!important;padding:0!important}.audit-card p{margin:4px 0;line-height:1.8}
+@media(min-width:1100px){
+ .wrap{padding:22px}#adminPanel{display:grid;grid-template-columns:278px minmax(0,1fr);gap:20px;align-items:start}
+ #adminPanel #homeTiles{grid-column:1;grid-row:1 / span 2;display:grid;grid-template-columns:1fr;gap:10px;padding:14px;background:linear-gradient(180deg,#102e25,#174b39);border:1px solid #c8a65a65;border-radius:22px;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;align-content:start}
+ #adminPanel #homeTiles .tile{min-height:66px;justify-content:flex-start;text-align:right;padding:12px 15px;font-size:15px;border-radius:13px}
+ #adminPanel #dashboard,#adminPanel #module{grid-column:2;margin:0}#adminPanel #dashboard{padding:22px}
+ #todaySummary{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #customerPanel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+ #customerPanel>.card{margin:0}#customerPanel>.card:nth-child(n){grid-column:span 1}
+}
+@media(min-width:700px) and (max-width:1099px){#adminPanel #homeTiles{grid-template-columns:repeat(3,minmax(0,1fr))}#adminPanel #dashboard,#adminPanel #module{grid-column:1/-1}#customerPanel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+@media(max-width:699px){
+ header{padding:17px 13px}.wrap{padding:11px}.card{padding:15px;border-radius:17px}
+ #adminPanel #homeTiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ #adminPanel #homeTiles .tile{min-height:88px;padding:12px;font-size:14px;border-radius:15px}
+ #adminPanel #module{padding:14px}#moduleBody button,#module button{min-width:0;min-height:44px;padding:9px 12px;font-size:14px}
+ #moduleBody .card{padding:13px}#moduleTable table{min-width:600px;font-size:13px}#moduleTable td,#moduleTable th{padding:9px 8px}
+ #todaySummary{gap:8px}#todaySummary .stat{padding:11px;min-height:74px;font-size:13px}#todaySummary .stat b{font-size:18px}
+ #customerPanel>.card{margin:10px 0;padding:14px}#customerPanel #myAccount{grid-template-columns:1fr}#customerPanel #myDeliveries table{min-width:700px}
+ #app>.card:first-child{padding:12px 13px}#app>.card:first-child #role{margin-inline-start:0}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -50,7 +122,7 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 <div id="loginForm">
 <h2>لاگ اِن</h2>
 <input id="email" type="email" autocomplete="email" placeholder="ای میل">
-<input id="password" type="password" autocomplete="current-password" placeholder="پاس ورڈ">
+<div class="password-field"><input id="password" type="password" autocomplete="current-password" placeholder="پاس ورڈ"><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('password',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
 <button id="loginButton" type="button" onclick="handleLoginClick()">لاگ اِن</button>
 <button class="secondary" type="button" onclick="showSignup()">نیا کسٹمر اکاؤنٹ بنائیں</button>
 </div>
@@ -61,7 +133,7 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 <input id="signupMobile" type="tel" autocomplete="tel" maxlength="30" placeholder="موبائل نمبر">
 <input id="signupAddress" type="text" autocomplete="street-address" maxlength="300" placeholder="مکمل پتہ">
 <input id="signupEmail" type="email" autocomplete="email" maxlength="254" placeholder="ای میل">
-<input id="signupPassword" type="password" autocomplete="new-password" minlength="8" placeholder="پاس ورڈ (کم از کم 8 حروف)">
+<div class="password-field"><input id="signupPassword" type="password" autocomplete="new-password" minlength="8" placeholder="پاس ورڈ (کم از کم 8 حروف)"><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('signupPassword',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
 <button id="signupButton" type="button" onclick="signupCustomer()">اکاؤنٹ بنائیں</button>
 <button class="secondary" type="button" onclick="showLogin()">واپس لاگ اِن</button>
 </div>
@@ -159,6 +231,13 @@ function confirmLargeEntry(label,value,threshold){
 }
 function setTitle(t){$("moduleTitle").textContent=t;$("moduleMsg").textContent="";$("moduleTable").innerHTML=""}
 
+function togglePasswordVisibility(id,button){
+ const input=$(id);if(!input)return;
+ const show=input.type==="password";input.type=show?"text":"password";
+ button.setAttribute("aria-label",show?"پاس ورڈ چھپائیں":"پاس ورڈ دکھائیں");
+ button.title=show?"پاس ورڈ چھپائیں":"پاس ورڈ دکھائیں";
+ button.innerHTML=show?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a15 15 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.3 0 2.5-.3 3.5-.8"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
 function showSignup(){
  $("loginForm").classList.add("hidden");
  $("signupForm").classList.remove("hidden");
@@ -1099,12 +1178,44 @@ async function markNotificationRead(id){const {error}=await db.rpc("mark_custome
 
 async function auditModule(){
  setTitle("سکیورٹی / آڈٹ لاگ");
- $("moduleBody").innerHTML='<input id="auditSearch" placeholder="ٹیبل، ریکارڈ، عمل یا صارف تلاش کریں" oninput="filterAuditRows()"><button class="secondary" onclick="auditModule()">آڈٹ تازہ کریں</button>';
- const {data,error}=await db.from("audit_log").select("changed_at,table_name,record_id,action,changed_by,old_data,new_data").order("changed_at",{ascending:false}).limit(200);
+ $("moduleBody").innerHTML='<p class="muted">یہاں کاروبار میں ہونے والی اہم تبدیلیوں کا آسان ریکارڈ دکھایا جاتا ہے۔ اصل محفوظ ریکارڈ برقرار رہتا ہے۔</p><input id="auditSearch" placeholder="کام، تاریخ یا ایڈمن تلاش کریں" oninput="filterAuditRows()"><button class="secondary" onclick="auditModule()">فہرست تازہ کریں</button>';
+ const [{data,error},{data:profiles}]=await Promise.all([
+  db.from("audit_log").select("changed_at,table_name,record_id,action,changed_by,old_data,new_data").order("changed_at",{ascending:false}).limit(200),
+  db.from("profiles").select("id,full_name")
+ ]);
  if(error){$("moduleTable").textContent="آڈٹ لاگ لوڈ نہیں ہوا: "+error.message;return;}
+ window.auditProfiles=Object.fromEntries((profiles||[]).map(p=>[p.id,p.full_name]));
  window.auditRows=data||[];filterAuditRows();
 }
-function filterAuditRows(){const q=($("auditSearch")?.value||"").trim().toLowerCase();const rows=(window.auditRows||[]).filter(r=>!q||[r.table_name,r.record_id,r.action,r.changed_by].some(v=>String(v??"").toLowerCase().includes(q)));$("moduleTable").innerHTML='<table><tr><th>وقت</th><th>ٹیبل / ریکارڈ</th><th>عمل / صارف</th><th>پہلے / بعد</th></tr>'+rows.map(r=>`<tr><td>${esc(r.changed_at)}</td><td>${esc(r.table_name)}<br>${esc(r.record_id)}</td><td>${esc(r.action)}<br>${esc(r.changed_by||"")}</td><td><details><summary>تفصیل</summary><b>پہلے:</b><pre>${esc(JSON.stringify(r.old_data,null,2))}</pre><b>بعد:</b><pre>${esc(JSON.stringify(r.new_data,null,2))}</pre></details></td></tr>`).join("")+'</table>'+(rows.length?"":'<p class="muted">کوئی ریکارڈ نہیں ملا۔</p>');
+function auditTime(value){
+ const d=new Date(value);if(Number.isNaN(d.getTime()))return "وقت دستیاب نہیں";
+ return new Intl.DateTimeFormat("ur-PK",{timeZone:"Asia/Karachi",year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:true}).format(d);
+}
+function auditTableLabel(value){
+ return ({product_settings:"مصنوعات کی قیمتیں",workers:"ورکر کا ریکارڈ",customers:"کسٹمر کا ریکارڈ",customer_19l_deliveries:"19L ڈیلیوری",customer_monthly_bills:"ماہانہ بل",customer_payments:"کسٹمر ادائیگی",business_expenses:"کاروباری خرچ",business_income:"کاروباری آمدن",worker_ledger:"ورکر لیجر",production:"پروڈکشن",raw_material_stock:"خام مال",finished_goods:"تیار مال",product_sales:"سیل",customer_complaints:"کسٹمر شکایت"})[value]||"کاروباری ریکارڈ";
+}
+function auditActionLabel(value){return ({INSERT:"نیا ریکارڈ بنایا",UPDATE:"ریکارڈ میں تبدیلی",DELETE:"ریکارڈ حذف کیا"})[value]||"ریکارڈ اپڈیٹ ہوا";}
+function auditFieldLabel(key){return ({default_rate:"مقررہ قیمت",special_100_rate:"خصوصی قیمت",labor_per_unit:"مزدوری",units_per_pack:"پیک میں تعداد",product_type:"پروڈکٹ",full_name:"نام",mobile:"موبائل نمبر",is_active:"فعال حیثیت",amount:"رقم",category:"مد",details:"تفصیل",entry_type:"اندراج کی قسم",work_category:"کام",status:"حیثیت",admin_note:"ایڈمن کا جواب",bottles_delivered:"دی گئی بوتلیں",empty_bottles_returned:"واپس خالی بوتلیں",damaged_caps:"خراب ڈھکن"})[key]||key.replaceAll("_"," ");}
+function auditValue(value){
+ if(value===null||value===undefined)return "خالی";
+ if(typeof value==="boolean")return value?"فعال":"غیر فعال";
+ if(Array.isArray(value))return value.map(v=>String(v)).join("، ")||"کوئی نہیں";
+ if(typeof value==="object")return "تفصیل محفوظ";
+ return String(value);
+}
+function auditChanges(r){
+ const before=r.old_data||{},after=r.new_data||{},keys=[...new Set([...Object.keys(before),...Object.keys(after)])].filter(k=>!["id","created_at","updated_at","record_id","auth_user_id"].includes(k));
+ const changed=keys.filter(k=>JSON.stringify(before[k]??null)!==JSON.stringify(after[k]??null));
+ if(!changed.length)return r.action==="INSERT"?"نیا ریکارڈ درج ہوا":r.action==="DELETE"?"ریکارڈ حذف کیا گیا":"کوئی نمایاں تبدیلی درج نہیں";
+ return changed.slice(0,5).map(k=>auditFieldLabel(k)+": "+auditValue(before[k])+" ← "+auditValue(after[k])).join("؛ ");
+}
+function filterAuditRows(){
+ const q=($("auditSearch")?.value||"").trim().toLowerCase();
+ const rows=(window.auditRows||[]).filter(r=>{const actor=window.auditProfiles?.[r.changed_by]||"ایڈمن";return !q||[auditTableLabel(r.table_name),auditActionLabel(r.action),actor,auditTime(r.changed_at),auditChanges(r)].join(" ").toLowerCase().includes(q);});
+ $("moduleTable").innerHTML=rows.map(r=>{
+  const actor=window.auditProfiles?.[r.changed_by]||"ایڈمن";
+  return '<article class="audit-card"><div class="audit-card-top"><b>'+esc(auditTime(r.changed_at))+'</b><span>'+esc(auditActionLabel(r.action))+'</span></div><h3>'+esc(auditTableLabel(r.table_name))+'</h3><p class="muted">کس نے کیا: '+esc(actor)+'</p><p>'+esc(auditChanges(r))+'</p></article>';
+ }).join("")||'<p class="muted">کوئی ریکارڈ نہیں ملا۔</p>';
 }
 
 async function settingsModule(){
