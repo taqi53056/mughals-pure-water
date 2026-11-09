@@ -164,6 +164,55 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 .worker-entry-card p{margin:5px 0;color:#526158}
 .worker-entry-card strong{display:block;color:#073f32;font-size:18px}
 @media(max-width:520px){.audit-card,.worker-summary-card,.worker-entry-card{padding:12px}.worker-summary-grid{gap:7px}.worker-summary-grid>div{padding:9px}}
+
+/* Site-wide admin usability pass: consistent controls, clear hierarchy and responsive tables */
+#adminPanel{width:100%;min-width:0}
+#adminPanel #homeTiles .tile{font-weight:750;letter-spacing:0;line-height:1.45}
+#adminPanel #dashboard,#adminPanel #module{box-shadow:0 10px 30px #173d2b0b;border:1px solid #e5eae2}
+#adminPanel #module{overflow:hidden}
+#moduleTitle{font-size:clamp(21px,2vw,27px);line-height:1.45;margin:8px 0 16px;padding-bottom:12px;border-bottom:1px solid #e8ece6}
+#moduleBody{min-width:0}
+#moduleBody h3{font-size:17px;line-height:1.55;margin:16px 0 10px;padding-right:10px;border-right:3px solid var(--gold)}
+#moduleBody h4{font-size:15px;color:#315448;margin:15px 0 8px}
+#moduleBody>p.muted{background:#f5f8f4;border:1px solid #e7ede5;border-radius:12px;padding:11px 13px;line-height:1.8}
+#moduleBody input:not([type=checkbox]),#moduleBody select,#moduleBody textarea{width:100%;max-width:100%;margin:7px 0;background:#fff;border-color:#dce5dc;border-radius:12px}
+#moduleBody input[type=checkbox]{accent-color:#0b6b50}
+#moduleBody label{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;margin:4px 5px 4px 0;background:#f5f8f4;border:1px solid #e7ece5;border-radius:11px}
+#moduleBody button,#module button{width:auto;min-width:112px;min-height:44px;padding:10px 16px;margin:6px 5px 6px 0;border-radius:12px;font-size:14px;box-shadow:0 3px 10px #07533f14}
+#moduleBody button.secondary,#module button.secondary{background:#eef4ee;color:#14533f;border:1px solid #dce7dc;box-shadow:none}
+#moduleBody .card{padding:17px;border-radius:16px;margin:13px 0;background:#fbfcfa}
+#moduleBody .stat{border-radius:13px;line-height:1.7}
+#moduleBody .total{display:block;padding:13px 15px;margin:12px 0;background:#edf5ed;border:1px solid #dce9dc;border-radius:13px;line-height:1.7}
+#moduleBody .warning{line-height:1.8}
+#moduleTable{min-width:0;margin-top:16px}
+#moduleTable h3{margin-top:18px}
+#moduleTable .tablewrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff}
+#moduleTable table{width:100%;border-collapse:separate;border-spacing:0;min-width:620px;font-size:14px}
+#moduleTable th{position:sticky;top:0;z-index:1;background:#edf3ed;color:#234b3b;white-space:nowrap}
+#moduleTable td{vertical-align:middle;line-height:1.65}
+#moduleTable tr:nth-child(even) td{background:#fbfcfa}
+#moduleTable td button{min-width:76px;padding:8px 11px;margin:3px;font-size:13px}
+#moduleMsg{padding:0 3px;margin-top:10px;font-weight:650}
+#moduleMsg.success{padding:10px 12px;background:#edf7ef;border:1px solid #d7eadb;border-radius:11px}
+#moduleMsg.error{padding:10px 12px;background:#fff2ef;border:1px solid #f0d8d2;border-radius:11px}
+@media(min-width:1100px){
+ #adminPanel #module{padding:26px 30px}
+ #moduleBody input:not([type=checkbox]),#moduleBody select,#moduleBody textarea{font-size:15px}
+ #moduleTable table{min-width:760px;font-size:14px}
+ #moduleBody .card{padding:20px}
+}
+@media(max-width:699px){
+ #adminPanel #module{border-radius:17px}
+ #moduleTitle{font-size:21px;margin-bottom:12px}
+ #moduleBody h3{font-size:16px}
+ #moduleBody button,#module button{min-width:0;min-height:44px;padding:9px 12px;font-size:14px}
+ #moduleBody .card{padding:13px;margin:10px 0}
+ #moduleTable{margin-top:12px}
+ #moduleTable table{min-width:590px;font-size:13px}
+ #moduleTable td,#moduleTable th{padding:9px 8px}
+}
+@media(prefers-reduced-motion:reduce){.tile,button{transition:none!important}}
+
 </style>
 </head>
 <body>
