@@ -219,6 +219,11 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 #homeTiles .tile:nth-child(16):before{content:"💧"}
 #homeTiles .tile:nth-child(17):before{content:"↩"}
 #homeTiles .tile:nth-child(18):before{content:"⚙"}
+#homeTiles .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center}
+#homeTiles .tile .tile-title{font-weight:850;line-height:1.5}
+#homeTiles .tile small{display:block;font-size:11px;font-weight:550;line-height:1.45;opacity:.9;text-shadow:none}
+@media(min-width:1100px){#adminPanel #homeTiles .tile{align-items:flex-start;text-align:right}#adminPanel #homeTiles .tile small{padding-right:46px}}
+@media(max-width:520px){#homeTiles .tile small{font-size:10px}}
 /* آسان روزمرہ استعمال */
 .module-intro{margin:0 0 15px;padding:11px 14px;border:1px solid #e3eae2;border-right:4px solid #c4a15b;border-radius:13px;background:#f5f8f4;color:#42574b;font-size:14px;line-height:1.9}
 #moduleBody label{display:block;font-weight:700;color:#315448;margin:9px 0 3px}
@@ -356,25 +361,25 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 
 <div id="adminPanel" class="hidden">
 <div id="homeTiles" class="grid">
-<div class="tile green" onclick="openModule('finance')">📊 کاروبار کا منافع / نقصان</div>
-<div class="tile blue" onclick="openModule('customers')">گاہک</div>
-<div class="tile orange" onclick="openModule('delivery')">19L ڈلیوری</div>
-<div class="tile yellow" onclick="openModule('raw')">خام مال کی خریداری</div>
-<div class="tile purple" onclick="openModule('finished')">تیار مال</div>
-<div class="tile teal" onclick="openModule('sales')">سیل / مال کا اخراج</div>
-<div class="tile red" onclick="openModule('expenses')">اخراجات</div>
-<div class="tile green" onclick="openModule('income')">آمدن</div>
-<div class="tile gray" onclick="openModule('billing')">ماہانہ بل</div>
-<div class="tile blue" onclick="openModule('reports')">تفصیلی رپورٹس</div>
-<div class="tile gray" onclick="openModule('workers')">ورکر لیجر</div>
-<div class="tile yellow" onclick="openModule('labor')">صفائی / پروڈکشن / دھلائی</div>
-<div class="tile red" onclick="openModule('complaints')">کسٹمر شکایات</div>
-<div class="tile gray" onclick="openModule('audit')">سکیورٹی / آڈٹ لاگ</div>
-<div class="tile blue" onclick="openModule('tanker')">پانی کی خریداری / ابتدائی اسٹاک</div>
-<div class="tile teal" onclick="openModule('counterWater')">19L کاؤنٹر فروخت</div>
-<div class="tile red" onclick="openModule('returns')">خراب تیار مال کی واپسی</div>
-<div class="tile teal" onclick="openModule('settings')">ترتیبات / کنٹرول سینٹر</div>
-<div class="tile gold" onclick="openModule('ownerWithdrawals')">مالک کی ذاتی نکاسی</div>
+<div class="tile green" onclick="openModule('finance')"><span class="tile-title">📊 کاروبار کا منافع / نقصان</span><small>ماہانہ نفع یا نقصان دیکھیں</small></div>
+<div class="tile blue" onclick="openModule('customers')"><span class="tile-title">گاہک</span><small>نیا گاہک اور اس کا ریکارڈ</small></div>
+<div class="tile orange" onclick="openModule('delivery')"><span class="tile-title">19L ڈلیوری</span><small>روزانہ 19 لیٹر کی ڈلیوری</small></div>
+<div class="tile yellow" onclick="openModule('raw')"><span class="tile-title">خام مال کی خریداری</span><small>بوتل، ڈھکن، کارٹن اور اسٹیکر</small></div>
+<div class="tile purple" onclick="openModule('finished')"><span class="tile-title">تیار مال</span><small>کتنا تیار مال باقی ہے</small></div>
+<div class="tile teal" onclick="openModule('sales')"><span class="tile-title">سیل / مال کا اخراج</span><small>فروخت درج کریں، اسٹاک خود گھٹے</small></div>
+<div class="tile red" onclick="openModule('expenses')"><span class="tile-title">اخراجات</span><small>بجلی، کرایہ اور دوسرے خرچ</small></div>
+<div class="tile green" onclick="openModule('income')"><span class="tile-title">آمدن</span><small>فروخت کے علاوہ دوسری آمدن</small></div>
+<div class="tile gray" onclick="openModule('billing')"><span class="tile-title">ماہانہ بل</span><small>گاہکوں کے ماہانہ بل</small></div>
+<div class="tile blue" onclick="openModule('reports')"><span class="tile-title">تفصیلی رپورٹس</span><small>تفصیلی کاروباری رپورٹ</small></div>
+<div class="tile gray" onclick="openModule('workers')"><span class="tile-title">ورکر لیجر</span><small>ورکر، اجرت اور ادائیگی</small></div>
+<div class="tile yellow" onclick="openModule('labor')"><span class="tile-title">صفائی / پروڈکشن / دھلائی</span><small>پروڈکشن اور صفائی کی مزدوری</small></div>
+<div class="tile red" onclick="openModule('complaints')"><span class="tile-title">کسٹمر شکایات</span><small>گاہکوں کے مسائل</small></div>
+<div class="tile gray" onclick="openModule('audit')"><span class="tile-title">سکیورٹی / آڈٹ لاگ</span><small>تبدیلیوں کا ریکارڈ</small></div>
+<div class="tile blue" onclick="openModule('tanker')"><span class="tile-title">پانی کی خریداری / ابتدائی اسٹاک</span><small>پانی کی خریداری اور اسٹاک</small></div>
+<div class="tile teal" onclick="openModule('counterWater')"><span class="tile-title">19L کاؤنٹر فروخت</span><small>کاؤنٹر سے پانی کی فروخت</small></div>
+<div class="tile red" onclick="openModule('returns')"><span class="tile-title">خراب تیار مال کی واپسی</span><small>واپس یا خراب مال</small></div>
+<div class="tile teal" onclick="openModule('settings')"><span class="tile-title">ترتیبات / کنٹرول سینٹر</span><small>قیمتیں اور بنیادی سیٹنگز</small></div>
+<div class="tile gold" onclick="openModule('ownerWithdrawals')"><span class="tile-title">مالک کی ذاتی نکاسی</span><small>مالک نے کتنی رقم لی؟</small></div>
 </div>
 
 <div id="dashboard" class="card">
@@ -1527,7 +1532,7 @@ async function loadMonthlySnapshots(){
   const result=r.has_pnl_activity?(r.complete?money(seg.net_profit||0):"عارضی — لاگت نامکمل"):(r.has_activity?"صرف اسٹاک / مالی اندراجات؛ ابھی منافع و نقصان نہیں بنا":"کوئی کاروباری اندراج نہیں");
   const missing=(r.missing_costs||[]).length?"<p class='warning'>نامکمل لاگت: "+(r.missing_costs||[]).map(esc).join("، ")+"</p>":"";
   return "<div class='audit-card'><div class='audit-card-top'><b>"+esc(row.month_start)+" تا "+esc(row.month_end)+"</b><span>"+(r.complete?"حساب مکمل":"حساب عارضی")+"</span></div>"+
-   "<div class='worker-summary-grid'><div><small>19L شعبہ</small><b>"+money(seg["19L"]?.profit_before_shared||0)+"</b></div><div><small>مصنوعات کا شعبہ</small><b>"+money(seg.finished_goods?.profit_before_shared||0)+"</b></div><div><small>مجموعی نتیجہ</small><b>"+result+"</b></div><div><small>چاروں مالکان کی نکاسی</small><b>"+money(owners.total||0)+"</b></div></div>"+
+   "<div class='worker-summary-grid'><div><small>19L شعبہ</small><b>"+money(seg["19L"]?.profit_before_shared||0)+"</b></div><div><small>مصنوعات کا شعبہ</small><b>"+money(seg.finished_goods?.profit_before_shared||0)+"</b></div><div><small>مجموعی نتیجہ</small><b>"+result+"</b></div><div><small>مالکان کی ذاتی نکاسی</small><b>"+money(owners.total||0)+"</b></div></div>"+
    "<div class='stat'>500ml فروخت: "+money((r.products?.["500ml"]?.revenue)||0)+" — 1.5L فروخت: "+money((r.products?.["1.5L"]?.revenue)||0)+" — 6L فروخت: "+money((r.products?.["6L"]?.revenue)||0)+"</div>"+
    missing+
    "<p class='muted'>موجودہ محفوظ اسٹاک تخمینہ: 500ml "+(stock.finished_500ml_cartons||0)+" کارٹن، 1.5L "+(stock.finished_1_5l_cartons||0)+" کارٹن، 6L "+(stock.finished_6l_bottles||0)+" بوتلیں۔</p>"+
