@@ -1115,7 +1115,7 @@ const rawMaterialUnits={
 async function rawMaterialsModule(){
  setTitle("خام مال کی خریداری");
  $("moduleBody").innerHTML=
- '<p class="muted">خریداری کے بل کے مطابق صرف خریدی ہوئی مقدار اور کل نقد قیمت درج کریں۔ کلیم کے بدلے آنے والا مال خریداری یا خرچ نہیں ہوگا۔</p>'+
+ '<p class="muted">نئی خریداری یا پہلے سے موجود ابتدائی اسٹاک منتخب کریں۔ ابتدائی اسٹاک کی مقدار اور اندازاً کل مالیت درج ہوگی، اسے نئی نقد خریداری نہیں گنا جائے گا۔ کلیم کے بدلے آنے والا مال بھی خریداری یا اضافی خرچ نہیں ہوگا۔</p>'+
  '<div class="card"><h3>نئی خریداری</h3>'+
  '<input id="rawPurchaseDate" type="date" value="'+today()+'">'+
  '<select id="rawPurchaseKind" onchange="toggleRawPurchaseKind()"><option value="purchase">نئی نقد خریداری</option><option value="opening_stock">پہلے سے موجود ابتدائی اسٹاک</option></select>'+
@@ -1179,7 +1179,7 @@ async function loadRawMaterialPurchases(){
 async function tankerPurchaseModule(){
  setTitle("19L پانی کے ٹینکر");
  $("moduleBody").innerHTML=
- '<p class="muted">ہر گاڑی ایک ہزار لیٹر ہے۔ ایک یا دو ٹینکر آئیں تو تعداد درج کریں؛ فی ٹینکر اصل قیمت 1,200 یا 1,250 وغیرہ درج کریں۔</p>'+
+ '<p class="muted">نیا ٹینکر آئے تو گاڑیوں کی تعداد اور فی 1,000 لیٹر قیمت درج کریں۔ اگر پہلے سے پانی موجود ہے تو ابتدائی لیٹر اور اس کی اندازاً مالیت درج کریں۔</p>'+
  '<div class="card"><select id="tankEntryKind" onchange="toggleTankerEntryKind()"><option value="purchase">نئی ٹینکر خریداری</option><option value="opening_stock">پہلے سے موجود پانی کا ابتدائی اسٹاک</option></select><input id="tankDate" type="date" value="'+today()+'">'+
  '<div id="tankerPurchaseFields"><input id="tankCount" type="number" min="1" step="1" value="1" placeholder="ٹینکروں کی تعداد">'+
  '<input id="tankRate" type="number" min="1" step="0.01" placeholder="فی 1,000 لیٹر ٹینکر کی قیمت">'+
@@ -1495,6 +1495,7 @@ async function loadMonthlySnapshots(){
   const missing=(r.missing_costs||[]).length?"<p class='warning'>نامکمل لاگت: "+(r.missing_costs||[]).map(esc).join("، ")+"</p>":"";
   return "<div class='audit-card'><div class='audit-card-top'><b>"+esc(row.month_start)+" تا "+esc(row.month_end)+"</b><span>"+(r.complete?"حساب مکمل":"حساب عارضی")+"</span></div>"+
    "<div class='worker-summary-grid'><div><small>19L شعبہ</small><b>"+money(seg["19L"]?.profit_before_shared||0)+"</b></div><div><small>مصنوعات کا شعبہ</small><b>"+money(seg.finished_goods?.profit_before_shared||0)+"</b></div><div><small>مجموعی نتیجہ</small><b>"+result+"</b></div><div><small>چاروں مالکان کی نکاسی</small><b>"+money(owners.total||0)+"</b></div></div>"+
+   "<div class='stat'>500ml فروخت: "+money((r.products?.["500ml"]?.revenue)||0)+" — 1.5L فروخت: "+money((r.products?.["1.5L"]?.revenue)||0)+" — 6L فروخت: "+money((r.products?.["6L"]?.revenue)||0)+"</div>"+
    missing+
    "<p class='muted'>موجودہ محفوظ اسٹاک تخمینہ: 500ml "+(stock.finished_500ml_cartons||0)+" کارٹن، 1.5L "+(stock.finished_1_5l_cartons||0)+" کارٹن، 6L "+(stock.finished_6l_bottles||0)+" بوتلیں۔</p>"+
    "<p class='muted'>تیار ہونے کا وقت: "+esc(new Date(row.generated_at).toLocaleString("ur-PK"))+"</p></div>";
