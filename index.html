@@ -1240,57 +1240,106 @@ async function loadTodaySummary(){
 }
 
 async function reportsModule(){
- setTitle("رپورٹس");
+ setTitle("مالی حساب اور رپورٹس");
  $("moduleBody").innerHTML=`
+ <div class="card"><h3>سرمایہ اور مالی لین دین</h3>
+ <p class="muted">کاروبار میں مالک کی لگائی رقم، مالک کی نکالی رقم، قرض وصول اور قرض واپسی الگ درج کریں۔ یہ منافع/نقصان میں فروخت یا خرچہ نہیں بنیں گے۔</p>
+ <input id="capDate" type="date" value="${today()}">
+ <select id="capType"><option value="capital_in">مالک نے سرمایہ لگایا</option><option value="owner_withdrawal">مالک نے رقم نکالی</option><option value="loan_received">قرض وصول ہوا</option><option value="loan_repaid">قرض واپس کیا</option></select>
+ <input id="capAmount" type="number" min="0.01" step="0.01" placeholder="رقم روپے میں">
+ <input id="capDetails" maxlength="250" placeholder="تفصیل / کس مد میں">
+ <button onclick="saveCapitalEntry()">سرمایہ ریکارڈ محفوظ کریں</button>
+ </div>
+ <div class="card"><h3>پروڈکٹ کی اصل فی یونٹ لاگت</h3>
+ <p class="muted">یہاں ایک یونٹ کی مکمل تیاری/خریداری لاگت درج کریں۔ 19L کی لاگت میں ڈلیوری مزدوری شامل نہ کریں؛ وہ الگ خودکار شمار ہوگی۔ 500ml اور 1.5L میں خام مال، پیکنگ اور تیاری مزدوری شامل کرکے فی کارٹن لاگت لکھیں۔</p>
+ <input id="costDate" type="date" value="${today()}">
+ <select id="costType"><option value="19L">19 لیٹر — فی کامیاب بوتل</option><option value="500ml">500ml — فی کارٹن</option><option value="1.5L">1.5L — فی کارٹن</option><option value="6L">6L — فی بوتل</option></select>
+ <input id="costAmount" type="number" min="0" step="0.01" placeholder="اصل لاگت روپے میں">
+ <input id="costDetails" maxlength="250" placeholder="تفصیل / لاگت کی بنیاد">
+ <button onclick="saveProductCostRate()">فی یونٹ لاگت محفوظ کریں</button>
+ </div>
+ <div class="card"><h3>منافع و نقصان کی رپورٹ</h3>
  <input id="rStart" type="date" value="${monthNow()}">
  <input id="rEnd" type="date" value="${today()}">
- <button onclick="runReport()">رپورٹ دکھائیں</button>`;
+ <button onclick="runReport()">رپورٹ دکھائیں</button>
+ </div>`;
  await runReport();
+}
+async function saveCapitalEntry(){
+ const amount=Number($("capAmount").value),entry_date=$("capDate").value,entry_type=$("capType").value,details=$("capDetails").value.trim();
+ if(!entry_date||!Number.isFinite(amount)||amount<=0){msg("تاریخ اور درست رقم درج کریں۔");return}
+ if(!confirmLargeEntry("سرمایہ / مالی لین دین کی رقم",amount,100000))return;
+ const {error}=await db.from("business_capital_entries").insert({entry_date,entry_type,amount,details:details||null,entered_by:user.id});
+ if(error){msg("سرمایہ ریکارڈ محفوظ نہیں ہوا: "+error.message);return}
+ msg("سرمایہ ریکارڈ محفوظ ہوگیا۔",true);$("capAmount").value="";$("capDetails").value="";
+}
+async function saveProductCostRate(){
+ const effective_from=$("costDate").value,product_type=$("costType").value,unit_cost=Number($("costAmount").value),details=$("costDetails").value.trim();
+ if(!effective_from||!Number.isFinite(unit_cost)||unit_cost<0){msg("تاریخ اور درست لاگت درج کریں۔");return}
+ if(!confirm("کیا "+product_type+" کی فی یونٹ لاگت Rs. "+unit_cost+"، تاریخ "+effective_from+" سے لاگو کرنی ہے؟ پرانی تاریخوں کا محفوظ ریکارڈ تبدیل نہیں ہوگا۔"))return;
+ const {error}=await db.from("product_cost_rates").upsert({effective_from,product_type,unit_cost,details:details||null,entered_by:user.id},{onConflict:"product_type,effective_from"});
+ if(error){msg("فی یونٹ لاگت محفوظ نہیں ہوئی: "+error.message);return}
+ msg("فی یونٹ لاگت محفوظ ہوگئی۔",true);$("costAmount").value="";$("costDetails").value="";
 }
 async function runReport(){
  const start=$("rStart").value,end=$("rEnd").value;
  if(!start||!end||start>end){msg("تاریخ کی حد درست منتخب کریں۔");return}
  try{
-  const [dr,sr,er,ir,pr,psr]=await Promise.all([
-   db.from("customer_19l_deliveries").select("successful_bottles,damaged_caps,delivery_labor").gte("delivery_date",start).lte("delivery_date",end),
-   db.from("product_sales").select("product_type,quantity,total_amount").gte("sale_date",start).lte("sale_date",end),
+  const [dr,sr,er,ir,pr,cr,capr]=await Promise.all([
+   db.from("customer_19l_deliveries").select("delivery_date,successful_bottles,damaged_caps,delivery_labor").gte("delivery_date",start).lte("delivery_date",end),
+   db.from("product_sales").select("sale_date,product_type,quantity,total_amount").gte("sale_date",start).lte("sale_date",end),
    db.from("business_expenses").select("amount,category").gte("expense_date",start).lte("expense_date",end),
    db.from("business_income").select("amount,category").gte("income_date",start).lte("income_date",end),
-   db.from("production").select("labor_amount").gte("production_date",start).lte("production_date",end),
-   db.from("product_settings").select("product_type,labor_per_unit").eq("is_active",true)
+   db.from("product_cost_rates").select("product_type,unit_cost,effective_from").lte("effective_from",end).order("effective_from",{ascending:true}),
+   db.from("business_capital_entries").select("entry_type,amount").gte("entry_date",start).lte("entry_date",end),
+   db.from("business_capital_entries").select("entry_type,amount")
   ]);
-  for(const x of [dr,sr,er,ir,pr,psr])if(x.error)throw x.error;
+  for(const x of [dr,sr,er,ir,pr,cr,capr])if(x.error)throw x.error;
+  const deliveries=dr.data||[],sales=sr.data||[],expenses=er.data||[],income=ir.data||[],rates=pr.data||[],capitalPeriod=cr.data||[],capitalAll=capr.data||[];
   const sum=(rows,key)=>(rows||[]).reduce((n,r)=>n+(Number(r[key])||0),0);
-  const deliveries=dr.data||[],sales=sr.data||[],expenses=er.data||[],income=ir.data||[],production=pr.data||[];
-  const rateMap=Object.fromEntries((psr.data||[]).map(x=>[x.product_type,Number(x.labor_per_unit)||0]));
-  const bottles=sum(deliveries,"successful_bottles"),caps=sum(deliveries,"damaged_caps");
-  const revenue19=bottles*100+caps*10;
-  const packRevenue=sum(sales,"total_amount");
-  const otherIncome=sum(income,"amount");
-  const businessExpenses=sum(expenses,"amount");
+  const costAt=(type,date)=>{const matches=rates.filter(x=>x.product_type===type&&x.effective_from<=date);return matches.length?Number(matches[matches.length-1].unit_cost):null};
+  let cogs19=0,missing19=0;
+  for(const r of deliveries){const qty=Number(r.successful_bottles)||0,rate=costAt("19L",r.delivery_date);if(qty&&rate===null)missing19+=qty;else cogs19+=qty*(rate||0);}
+  let packCogs=0,missingPack=0;
+  for(const r of sales){const qty=Number(r.quantity)||0,rate=costAt(r.product_type,r.sale_date);if(qty&&rate===null)missingPack+=qty;else packCogs+=qty*(rate||0);}
+  const bottles=sum(deliveries,"successful_bottles"),caps=sum(deliveries,"damaged_caps"),revenue19=bottles*100+caps*10;
+  const packRevenue=sum(sales,"total_amount"),otherIncome=sum(income,"amount"),businessExpenses=sum(expenses,"amount");
   const deliveryLabor=sum(deliveries,"delivery_labor");
-  const productionLabor=sum(production,"labor_amount");
-  const packLabor=sales.reduce((n,r)=>n+(Number(r.quantity)||0)*(rateMap[r.product_type]||0),0);
   const totalRevenue=revenue19+packRevenue+otherIncome;
-  const totalCosts=businessExpenses+deliveryLabor+productionLabor+packLabor;
-  const net=totalRevenue-totalCosts;
+  const knownCosts=cogs19+packCogs+businessExpenses+deliveryLabor;
+  const complete=missing19===0&&missingPack===0;
+  const net=totalRevenue-knownCosts;
   const moneyVal=n=>money(Math.round((Number(n)||0)*100)/100);
-  $("moduleTable").innerHTML=`<h3>${start} سے ${end} تک — منافع و نقصان</h3>
+  const capSum=t=>capitalPeriod.filter(x=>x.entry_type===t).reduce((n,r)=>n+(Number(r.amount)||0),0);
+  const totalCapIn=capSum("capital_in"),totalWithdraw=capSum("owner_withdrawal"),loansIn=capSum("loan_received"),loansOut=capSum("loan_repaid");
+  const lifetime= t=>capitalAll.filter(x=>x.entry_type===t).reduce((n,r)=>n+(Number(r.amount)||0),0);
+  $("moduleTable").innerHTML=`<h3>${start} سے ${end} تک — مالی نتیجہ</h3>
   <h4>آمدن / فروخت</h4>
-  <div class="stat">19L بل شدہ فروخت (کامیاب بوتلیں + خراب ڈھکن): <b>${moneyVal(revenue19)}</b></div>
+  <div class="stat">19L بل شدہ فروخت: <b>${moneyVal(revenue19)}</b></div>
   <div class="stat">چھوٹے پیک کی فروخت: <b>${moneyVal(packRevenue)}</b></div>
-  <div class="stat">دیگر درج شدہ آمدن: <b>${moneyVal(otherIncome)}</b></div>
+  <div class="stat">دیگر آمدن: <b>${moneyVal(otherIncome)}</b></div>
   <div class="stat">کل آمدن: <b>${moneyVal(totalRevenue)}</b></div>
-  <h4>لاگت / اخراجات</h4>
-  <div class="stat">کاروباری اخراجات (خام مال سمیت جو یہاں درج کیا گیا ہو): <b>${moneyVal(businessExpenses)}</b></div>
+  <h4>فروخت شدہ مال کی لاگت اور اخراجات</h4>
+  <div class="stat">19L فروخت شدہ بوتلوں کی لاگت: <b>${moneyVal(cogs19)}</b></div>
+  <div class="stat">500ml / 1.5L / 6L فروخت شدہ مال کی لاگت: <b>${moneyVal(packCogs)}</b></div>
   <div class="stat">19L ڈلیوری مزدوری: <b>${moneyVal(deliveryLabor)}</b></div>
-  <div class="stat">پروڈکشن مزدوری: <b>${moneyVal(productionLabor)}</b></div>
-  <div class="stat">چھوٹے پیک کی مقررہ مزدوری: <b>${moneyVal(packLabor)}</b></div>
-  <div class="stat">کل شمار شدہ لاگت: <b>${moneyVal(totalCosts)}</b></div>
-  <div class="total">${net>=0?"شمار شدہ منافع":"شمار شدہ نقصان"}: <b>${moneyVal(Math.abs(net))}</b></div>
-  <p class="muted">یہ حساب 19L کی Rs.100 فی کامیاب بوتل اور Rs.10 فی خراب ڈھکن کی مقررہ قیمت پر ہے۔ 19L رقم ڈیلیوری کی تاریخ کے مطابق فروخت شمار ہے، وصول شدہ نقدی نہیں۔ گاہک کی ادائیگیاں الگ سے دوبارہ آمدن میں شامل نہیں کی گئیں۔ چھوٹے پیک کی مزدوری product settings کے labor_per_unit سے نکالی گئی ہے۔</p>
-  <p class="warning">اہم: خام مال، بوتل/ڈھکن، پیکنگ، کرایہ، بجلی، ٹرانسپورٹ اور دیگر ہر لاگت اخراجات میں رقم کے ساتھ درج ہونی چاہیے۔ خام مال اسٹاک کی انٹری صرف مقدار محفوظ کرتی ہے، خریداری کی قیمت نہیں۔ اگر کوئی لاگت درج نہیں تو یہ مکمل/حتمی خالص منافع نہیں بلکہ صرف درج شدہ ریکارڈ کے مطابق نتیجہ ہے۔</p>`;
- }catch(e){msg("منافع و نقصان کی رپورٹ نہیں بنی: "+e.message)}
+  <div class="stat">دیگر کاروباری اخراجات: <b>${moneyVal(businessExpenses)}</b></div>
+  <div class="stat">کل معلوم شدہ لاگت/اخراجات: <b>${moneyVal(knownCosts)}</b></div>
+  <div class="total">${complete?"خالص منافع / نقصان":"عارضی نتیجہ (لاگت نامکمل)"}: <b>${moneyVal(Math.abs(net))} ${net>=0?"منافع":"نقصان"}</b></div>
+  ${complete?"":'<p class="warning">حتمی منافع ابھی نہیں نکالا جا سکتا۔ لاگت درج نہیں: 19L کی '+missing19+' بوتلیں اور دوسرے پیک کی '+missingPack+' یونٹس۔ پہلے اوپر اصل فی یونٹ لاگت درج کریں۔</p>'}
+  <p class="muted">گاہکوں کی وصول شدہ ادائیگیاں دوبارہ فروخت میں شامل نہیں کی گئیں۔ سرمایہ، مالک کی نکالی رقم اور قرض کو منافع سے الگ رکھا گیا ہے۔</p>
+  <h4>سرمایہ اور قرض — منتخب مدت</h4>
+  <div class="stat">مالک کا لگایا سرمایہ: <b>${moneyVal(totalCapIn)}</b></div>
+  <div class="stat">مالک کی نکالی رقم: <b>${moneyVal(totalWithdraw)}</b></div>
+  <div class="stat">وصول شدہ قرض: <b>${moneyVal(loansIn)}</b></div>
+  <div class="stat">واپس کیا گیا قرض: <b>${moneyVal(loansOut)}</b></div>
+  <h4>اب تک کا مجموعی ریکارڈ</h4>
+  <div class="stat">کل سرمایہ: <b>${moneyVal(lifetime("capital_in"))}</b></div>
+  <div class="stat">کل مالک کی نکالی رقم: <b>${moneyVal(lifetime("owner_withdrawal"))}</b></div>
+  <div class="stat">کل قرض وصول: <b>${moneyVal(lifetime("loan_received"))}</b></div>
+  <div class="stat">کل قرض واپسی: <b>${moneyVal(lifetime("loan_repaid"))}</b></div>
+  <p class="warning">اہم: اس رپورٹ میں کاروباری اخراجات وہی شامل ہیں جو اخراجات کے ریکارڈ میں درج ہوں۔ اسٹاک کی موجودہ مالیت اور پرانے غیر درج شدہ سرمایہ/لاگت خودکار طور پر فرض نہیں کیے گئے۔ پرانے ادوار کے درست حساب کے لیے ان کی اصل لاگت اور ابتدائی سرمایہ درج کرنا ہوگا۔</p>`;
+ }catch(e){msg("مالی رپورٹ نہیں بنی: "+e.message)}
 }
 
 /* ورکرز: الگ لیجر، کام کی اقسام اور ادائیگیاں */
