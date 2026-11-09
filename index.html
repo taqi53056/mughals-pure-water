@@ -1605,7 +1605,7 @@ async function runReport(){
   const water19=waterPool("19L_delivery"),waterFill=waterPool("product_filling"),waterShop=waterPool("shop_counter");
   const waterPerLitre=water19.rate;
   const capCost=weightedRate("cap_19l");
-  const stickerCost=1;
+  const stickerCost=weightedRate("sticker")??1;
   const tapeCost=weightedRate("tape_bundle");
   const unitCosts={
    "500ml":weightedRate("bottle_500ml")===null||weightedRate("carton_500ml")===null||tapeCost===null?null:
