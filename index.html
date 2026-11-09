@@ -140,6 +140,14 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
  #adminPanel.module-open #homeTiles{display:grid}
 }
 
+
+/* Compact eye control inside password inputs */
+.password-field{position:relative;width:100%;margin:6px 0}
+.password-field input{margin:0;padding-left:54px}
+.password-field .password-toggle{position:absolute;left:7px;top:50%;transform:translateY(-50%);width:38px;min-width:38px;height:38px;min-height:38px;padding:8px;margin:0;display:grid;place-items:center;background:transparent!important;color:#52675c!important;border:0!important;border-radius:9px;box-shadow:none!important}
+.password-field .password-toggle:hover{background:#edf3ed!important;color:#0b6b50!important}
+.password-field .password-toggle:focus-visible{outline:2px solid #0b6b50;outline-offset:1px}
+.password-field .password-toggle svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
 </style>
 </head>
 <body>
@@ -153,8 +161,7 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 <div id="loginForm">
 <h2>لاگ اِن</h2>
 <input id="email" type="email" autocomplete="email" placeholder="ای میل">
-<input id="password" type="password" autocomplete="current-password" placeholder="پاس ورڈ">
-<button class="secondary" type="button" style="width:auto;margin-top:-8px" onclick="togglePasswordVisibility('password',this)">پاس ورڈ دکھائیں</button>
+<div class="password-field"><input id="password" type="password" autocomplete="current-password" placeholder="پاس ورڈ"><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('password',this)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
 <button id="loginButton" type="button" onclick="handleLoginClick()">لاگ اِن</button>
 <button class="secondary" type="button" onclick="showSignup()">نیا کسٹمر اکاؤنٹ بنائیں</button>
 <button class="secondary" type="button" onclick="resendConfirmationEmail()">تصدیقی ای میل دوبارہ بھیجیں</button>
@@ -166,8 +173,7 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 <input id="signupMobile" type="tel" autocomplete="tel" maxlength="30" placeholder="موبائل نمبر">
 <input id="signupAddress" type="text" autocomplete="street-address" maxlength="300" placeholder="مکمل پتہ">
 <input id="signupEmail" type="email" autocomplete="email" maxlength="254" placeholder="ای میل">
-<input id="signupPassword" type="password" autocomplete="new-password" minlength="8" placeholder="پاس ورڈ (کم از کم 8 حروف)">
-<button class="secondary" type="button" style="width:auto;margin-top:-8px" onclick="togglePasswordVisibility('signupPassword',this)">پاس ورڈ دکھائیں</button>
+<div class="password-field"><input id="signupPassword" type="password" autocomplete="new-password" minlength="8" placeholder="پاس ورڈ (کم از کم 8 حروف)"><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('signupPassword',this)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
 <button id="signupButton" type="button" onclick="signupCustomer()">اکاؤنٹ بنائیں</button>
 <button class="secondary" type="button" onclick="showLogin()">واپس لاگ اِن</button>
 </div>
@@ -310,10 +316,15 @@ function handleLoginClick(){
 
 function togglePasswordVisibility(fieldId,button){
  const field=$(fieldId);
- if(!field)return;
+ if(!field||!button)return;
  const visible=field.type==="password";
  field.type=visible?"text":"password";
- button.textContent=visible?"پاس ورڈ چھپائیں":"پاس ورڈ دکھائیں";
+ const label=visible?"پاس ورڈ چھپائیں":"پاس ورڈ دکھائیں";
+ button.setAttribute("aria-label",label);
+ button.setAttribute("title",label);
+ button.innerHTML=visible
+  ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8"/><path d="M9.9 5.2A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7a10 10 0 004-.8"/></svg>'
+  : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
 }
 
 async function resendConfirmationEmail(){
