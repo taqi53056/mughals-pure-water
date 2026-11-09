@@ -343,6 +343,7 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 
 <div id="adminPanel" class="hidden">
 <div id="homeTiles" class="grid">
+<div class="tile green" onclick="openModule('finance')">📊 کاروبار کا منافع / نقصان</div>
 <div class="tile blue" onclick="openModule('customers')">گاہک</div>
 <div class="tile orange" onclick="openModule('delivery')">19L ڈلیوری</div>
 <div class="tile yellow" onclick="openModule('raw')">خام مال</div>
@@ -351,7 +352,7 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 <div class="tile red" onclick="openModule('expenses')">اخراجات</div>
 <div class="tile green" onclick="openModule('income')">آمدن</div>
 <div class="tile gray" onclick="openModule('billing')">ماہانہ بل</div>
-<div class="tile blue" onclick="openModule('reports')">رپورٹس</div>
+<div class="tile blue" onclick="openModule('reports')">تفصیلی رپورٹس</div>
 <div class="tile gray" onclick="openModule('workers')">ورکر لیجر</div>
 <div class="tile yellow" onclick="openModule('labor')">صفائی / پروڈکشن / دھلائی</div>
 <div class="tile red" onclick="openModule('complaints')">کسٹمر شکایات</div>
@@ -634,7 +635,7 @@ async function openModule(name){
  if(name==="sales")return salesModule();
  if(name==="expenses")return moneyModule("expenses");
  if(name==="income")return moneyModule("income");
- if(name==="reports")return reportsModule();
+ if(name==="finance"||name==="reports")return reportsModule();
  if(name==="workers")return workersModule();
  if(name==="labor")return laborModule();
  if(name==="complaints")return complaintsModule();
