@@ -1575,8 +1575,8 @@ async function runReport(){
   const [deliveries,counterSales,tankers,waterOpening,sales,returns,rawPurchases,production,expenses,income,allFin,periodFin,workerRows,stockResult]=await Promise.all([
    financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor","delivery_date",start,end),
    financeFetchAll("counter_water_sales","sale_date,total_litres,total_amount","sale_date",start,end),
-   financeFetchAll("water_tanker_purchases","purchase_date,tanker_count,rate_per_tanker,total_amount","purchase_date",null,end),
-   financeFetchAll("water_opening_stock","as_of_date,litres,total_value","as_of_date",null,end),
+   financeFetchAll("water_tanker_purchases","purchase_date,water_use,tanker_count,rate_per_tanker,total_amount","purchase_date",null,end),
+   financeFetchAll("water_opening_stock","as_of_date,water_use,litres,total_value","as_of_date",null,end),
    financeFetchAll("product_sales","sale_date,product_type,quantity,total_amount,unit,payment_method","sale_date",start,end),
    financeFetchAll("product_returns","return_date,product_type,quantity,replacement_quantity","return_date",start,end),
    financeFetchAll("raw_material_purchases","purchase_date,record_type,material_type,quantity,total_amount","purchase_date",null,end),
