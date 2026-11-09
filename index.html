@@ -1251,29 +1251,46 @@ async function runReport(){
  const start=$("rStart").value,end=$("rEnd").value;
  if(!start||!end||start>end){msg("تاریخ کی حد درست منتخب کریں۔");return}
  try{
-  const {data:d,error:de}=await db.from("customer_19l_deliveries").select("*").gte("delivery_date",start).lte("delivery_date",end);
-  if(de)throw de;
-  const {data:s,error:se}=await db.from("product_sales").select("*").gte("sale_date",start).lte("sale_date",end);
-  if(se)throw se;
-  const {data:e,error:ee}=await db.from("business_expenses").select("*").gte("expense_date",start).lte("expense_date",end);
-  if(ee)throw ee;
-  const {data:i,error:ie}=await db.from("business_income").select("*").gte("income_date",start).lte("income_date",end);
-  if(ie)throw ie;
-  const {data:f,error:fe}=await db.from("finished_goods").select("*").gte("entry_date",start).lte("entry_date",end);
-  if(fe)throw fe;
+  const [dr,sr,er,ir,pr,psr]=await Promise.all([
+   db.from("customer_19l_deliveries").select("successful_bottles,damaged_caps,delivery_labor").gte("delivery_date",start).lte("delivery_date",end),
+   db.from("product_sales").select("product_type,quantity,total_amount").gte("sale_date",start).lte("sale_date",end),
+   db.from("business_expenses").select("amount,category").gte("expense_date",start).lte("expense_date",end),
+   db.from("business_income").select("amount,category").gte("income_date",start).lte("income_date",end),
+   db.from("production").select("labor_amount").gte("production_date",start).lte("production_date",end),
+   db.from("product_settings").select("product_type,labor_per_unit").eq("is_active",true)
+  ]);
+  for(const x of [dr,sr,er,ir,pr,psr])if(x.error)throw x.error;
   const sum=(rows,key)=>(rows||[]).reduce((n,r)=>n+(Number(r[key])||0),0);
-  const sold=sum(s,"total_amount"),exp=sum(e,"amount"),inc=sum(i,"amount"),labor=sum(d,"delivery_labor");
-  $("moduleTable").innerHTML=`<h3>${start} سے ${end} تک</h3>
-  <div class="stat">19L کامیاب بوتلیں: <b>${sum(d,"successful_bottles")}</b></div>
-  <div class="stat">بوتلوں کا فرق: <b>${sum(d,"bottle_difference")}</b></div>
-  <div class="stat">19L ڈلیوری مزدوری: <b>${money(labor)}</b></div>
-  <div class="stat">چھوٹے پیک کی سیل: <b>${money(sold)}</b></div>
-  <div class="stat">اخراجات: <b>${money(exp)}</b></div>
-  <div class="stat">درج شدہ آمدن: <b>${money(inc)}</b></div>
-  <div class="stat">تیار مال کی انٹریاں: <b>${(f||[]).length}</b></div>
-  <div class="stat">چھوٹے پیک کی سیل منفی درج شدہ کاروباری اخراجات: <b>${money(sold-exp)}</b></div>
-  <p class="muted">یہ صرف چھوٹے پیک کی سیل اور business_expenses کا فرق ہے؛ اس میں 19L بوتلوں کی رقم، 19L ڈلیوری مزدوری، خام مال کی لاگت اور دیگر غیر درج شدہ اخراجات شامل نہیں۔ اسے مکمل خالص منافع نہ سمجھیں۔</p>`;
- }catch(e){msg("رپورٹ نہیں بنی: "+e.message)}
+  const deliveries=dr.data||[],sales=sr.data||[],expenses=er.data||[],income=ir.data||[],production=pr.data||[];
+  const rateMap=Object.fromEntries((psr.data||[]).map(x=>[x.product_type,Number(x.labor_per_unit)||0]));
+  const bottles=sum(deliveries,"successful_bottles"),caps=sum(deliveries,"damaged_caps");
+  const revenue19=bottles*100+caps*10;
+  const packRevenue=sum(sales,"total_amount");
+  const otherIncome=sum(income,"amount");
+  const businessExpenses=sum(expenses,"amount");
+  const deliveryLabor=sum(deliveries,"delivery_labor");
+  const productionLabor=sum(production,"labor_amount");
+  const packLabor=sales.reduce((n,r)=>n+(Number(r.quantity)||0)*(rateMap[r.product_type]||0),0);
+  const totalRevenue=revenue19+packRevenue+otherIncome;
+  const totalCosts=businessExpenses+deliveryLabor+productionLabor+packLabor;
+  const net=totalRevenue-totalCosts;
+  const moneyVal=n=>money(Math.round((Number(n)||0)*100)/100);
+  $("moduleTable").innerHTML=`<h3>${start} سے ${end} تک — منافع و نقصان</h3>
+  <h4>آمدن / فروخت</h4>
+  <div class="stat">19L بل شدہ فروخت (کامیاب بوتلیں + خراب ڈھکن): <b>${moneyVal(revenue19)}</b></div>
+  <div class="stat">چھوٹے پیک کی فروخت: <b>${moneyVal(packRevenue)}</b></div>
+  <div class="stat">دیگر درج شدہ آمدن: <b>${moneyVal(otherIncome)}</b></div>
+  <div class="stat">کل آمدن: <b>${moneyVal(totalRevenue)}</b></div>
+  <h4>لاگت / اخراجات</h4>
+  <div class="stat">کاروباری اخراجات (خام مال سمیت جو یہاں درج کیا گیا ہو): <b>${moneyVal(businessExpenses)}</b></div>
+  <div class="stat">19L ڈلیوری مزدوری: <b>${moneyVal(deliveryLabor)}</b></div>
+  <div class="stat">پروڈکشن مزدوری: <b>${moneyVal(productionLabor)}</b></div>
+  <div class="stat">چھوٹے پیک کی مقررہ مزدوری: <b>${moneyVal(packLabor)}</b></div>
+  <div class="stat">کل شمار شدہ لاگت: <b>${moneyVal(totalCosts)}</b></div>
+  <div class="total">${net>=0?"شمار شدہ منافع":"شمار شدہ نقصان"}: <b>${moneyVal(Math.abs(net))}</b></div>
+  <p class="muted">یہ حساب 19L کی Rs.100 فی کامیاب بوتل اور Rs.10 فی خراب ڈھکن کی مقررہ قیمت پر ہے۔ 19L رقم ڈیلیوری کی تاریخ کے مطابق فروخت شمار ہے، وصول شدہ نقدی نہیں۔ گاہک کی ادائیگیاں الگ سے دوبارہ آمدن میں شامل نہیں کی گئیں۔ چھوٹے پیک کی مزدوری product settings کے labor_per_unit سے نکالی گئی ہے۔</p>
+  <p class="warning">اہم: خام مال، بوتل/ڈھکن، پیکنگ، کرایہ، بجلی، ٹرانسپورٹ اور دیگر ہر لاگت اخراجات میں رقم کے ساتھ درج ہونی چاہیے۔ خام مال اسٹاک کی انٹری صرف مقدار محفوظ کرتی ہے، خریداری کی قیمت نہیں۔ اگر کوئی لاگت درج نہیں تو یہ مکمل/حتمی خالص منافع نہیں بلکہ صرف درج شدہ ریکارڈ کے مطابق نتیجہ ہے۔</p>`;
+ }catch(e){msg("منافع و نقصان کی رپورٹ نہیں بنی: "+e.message)}
 }
 
 /* ورکرز: الگ لیجر، کام کی اقسام اور ادائیگیاں */
