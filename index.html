@@ -1189,12 +1189,13 @@ async function saveRawMaterialPurchase(){
  await loadRawMaterialPurchases();await loadTodaySummary();
 }
 async function loadRawMaterialPurchases(){
- const [{data:purchases,error:pe},{data:production,error:pr}]=await Promise.all([
+ const [{data:purchases,error:pe},{data:production,error:pr},{data:capDeliveries,error:ce}]=await Promise.all([
   db.from("raw_material_purchases").select("*").order("purchase_date",{ascending:false}).limit(1000),
-  db.from("production").select("product_type,quantity,production_date").order("production_date",{ascending:true}).limit(5000)
+  db.from("production").select("product_type,quantity,production_date").order("production_date",{ascending:true}).limit(5000),
+  db.from("customer_19l_deliveries").select("successful_bottles,damaged_caps").limit(10000)
  ]);
- if(pe||pr){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(pe||pr).message;return;}
- const rows=purchases||[],prod=production||[];
+ if(pe||pr||ce){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(pe||pr||ce).message;return;}
+ const rows=purchases||[],prod=production||[],capsUsed=(capDeliveries||[]).reduce((n,r)=>n+Number(r.successful_bottles||0)+Number(r.damaged_caps||0),0);
  const purchased=key=>rows.filter(x=>x.material_type===key).reduce((n,x)=>n+Number(x.quantity||0),0);
  const made=(key)=>prod.filter(x=>x.product_type===key).reduce((n,x)=>n+Number(x.quantity||0),0);
  const used={
@@ -1208,7 +1209,7 @@ async function loadRawMaterialPurchases(){
   const remaining=purchased(k)-used[k];
   const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"?"اسٹیکر":"بوتل";
   return '<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
- }).join("")+'<div class="stat">19L ڈھکن<br><b>'+purchased("cap_19l")+' عدد خریدے گئے</b><small>روزانہ استعمال درج نہیں ہوتا۔</small></div></div>';
+ }).join("")+'<div class="stat">19L ڈھکن<br><b>باقی: '+(purchased("cap_19l")-capsUsed)+' عدد</b><small>خریدے: '+purchased("cap_19l")+' — استعمال: '+capsUsed+' (بھری بوتل + خراب ڈھکن)</small></div></div>';
  $("moduleTable").innerHTML='<h3>خریداری اور ابتدائی اسٹاک کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ لاگت</th><th>سپلائر</th></tr>'+
  rows.map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(r.record_type==="opening_stock"?"ابتدائی اسٹاک":"خریداری")+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
  '</table></div>';
@@ -1216,8 +1217,8 @@ async function loadRawMaterialPurchases(){
 async function tankerPurchaseModule(){
  setTitle("پانی کی خریداری اور ابتدائی اسٹاک");
  $("moduleBody").innerHTML=
- '<p class="muted">ہر پانی کی خریداری کو اس کے اصل استعمال کے مطابق الگ درج کریں تاکہ 19L، 500ml/1.5L اور 6L/کاؤنٹر کا خرچ الگ نکلے۔ ہر ٹینکر 1,000 لیٹر شمار ہوگا۔</p>'+
- '<div class="card"><label>پانی کس کام کے لیے ہے؟</label><select id="waterUse"><option value="19L_delivery">19L ڈلیوری</option><option value="product_filling">500ml / 1.5L فلنگ</option><option value="shop_counter">6L / 19L کاؤنٹر</option></select><select id="tankEntryKind" onchange="toggleTankerEntryKind()"><option value="purchase">نئی ٹینکر خریداری</option><option value="opening_stock">پہلے سے موجود پانی کا ابتدائی اسٹاک</option></select><input id="tankDate" type="date" value="'+today()+'">'+
+ '<p class="muted">صرف دو ٹنکیاں ہیں: دکان والی ٹنکی سے 19L اور 6L؛ پروڈکشن والی ٹنکی سے 500ml اور 1.5L۔ ہر ٹینکر 1,000 لیٹر شمار ہوگا۔</p>'+
+ '<div class="card"><label>پانی کس کام کے لیے ہے؟</label><select id="waterUse"><option value="shop_counter">دکان والی ٹنکی — 19L + 6L</option><option value="product_filling">پروڈکشن والی ٹنکی — 500ml + 1.5L</option></select><select id="tankEntryKind" onchange="toggleTankerEntryKind()"><option value="purchase">نئی ٹینکر خریداری</option><option value="opening_stock">پہلے سے موجود پانی کا ابتدائی اسٹاک</option></select><input id="tankDate" type="date" value="'+today()+'">'+
  '<div id="tankerPurchaseFields"><input id="tankCount" type="number" min="1" step="1" value="1" placeholder="ٹینکروں کی تعداد">'+
  '<input id="tankRate" type="number" min="1" step="0.01" placeholder="فی 1,000 لیٹر ٹینکر کی قیمت">'+
  '<div class="total">کل رقم: <b id="tankTotal">Rs. 0</b></div>'+
@@ -1272,8 +1273,8 @@ async function loadTankerPurchases(){
  ]);
  if(error||openingError){$("moduleTable").textContent="ٹینکر / ابتدائی اسٹاک لوڈ نہیں ہوا: "+(error||openingError).message;return;}
  $("moduleTable").innerHTML='<h3>ٹینکر خریداری اور ابتدائی پانی کی ہسٹری</h3><table><tr><th>تاریخ</th><th>اندراج</th><th>مقدار</th><th>فی ٹینکر / مالیت</th><th>کل رقم</th></tr>'+
- (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>'+({"19L_delivery":"19L ڈلیوری","product_filling":"500ml / 1.5L فلنگ","shop_counter":"6L / 19L کاؤنٹر"}[r.water_use]||r.water_use)+' — ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td></tr>').join("")+
- (data||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+({"19L_delivery":"19L ڈلیوری","product_filling":"500ml / 1.5L فلنگ","shop_counter":"6L / 19L کاؤنٹر"}[r.water_use]||r.water_use)+' — خریداری</td><td>'+r.tanker_count+' × 1,000 لیٹر</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+'</table>';
+ (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||r.water_use)+' — ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td></tr>').join("")+
+ (data||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||r.water_use)+' — خریداری</td><td>'+r.tanker_count+' × 1,000 لیٹر</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+'</table>';
 }
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
@@ -1641,8 +1642,8 @@ async function runReport(){
    const value=sum(tp,"total_amount")+sum(op,"total_value");
    return {litres,value,rate:litres>0?value/litres:null};
   };
-  const water19=waterPool("19L_delivery"),waterFill=waterPool("product_filling"),waterShop=waterPool("shop_counter");
-  const waterPerLitre=water19.rate;
+  const waterShop=waterPool("shop_counter"),waterFill=waterPool("product_filling");
+  const waterPerLitre=waterShop.rate;
   const capCost=weightedRate("cap_19l");
   const stickerCost=weightedRate("sticker")??1;
   const tapeCost=weightedRate("tape_bundle");
@@ -1672,9 +1673,9 @@ async function runReport(){
   const deliveredLitres=successful19*19;
   const fillWaterLitres=sales.reduce((n,r)=>n+Number(r.quantity||0)*(r.product_type==="500ml"?12:r.product_type==="1.5L"?18:0),0)+returns.reduce((n,r)=>n+Number(r.replacement_quantity||0)*(r.product_type==="500ml"?0.5:r.product_type==="1.5L"?1.5:0),0);
   const shopWaterFor6L=sales.filter(r=>r.product_type==="6L").reduce((n,r)=>n+Number(r.quantity||0)*6,0)+returns.filter(r=>r.product_type==="6L").reduce((n,r)=>n+Number(r.replacement_quantity||0)*6,0);
-  const usedWaterLitres=deliveredLitres;
+  const usedWaterLitres=deliveredLitres+counterLitres;
   const waterCogs=waterPerLitre===null?0:usedWaterLitres*waterPerLitre;
-  const counterWaterCogs=waterShop.rate===null?0:counterLitres*waterShop.rate;
+  const counterWaterCogs=0;
   const fillWaterCogs=waterFill.rate===null?0:fillWaterLitres*waterFill.rate;
   const shopWater6LCogs=waterShop.rate===null?0:shopWaterFor6L*waterShop.rate;
   const capCogs=capCost===null?0:(successful19+damagedCaps)*capCost;
@@ -1707,8 +1708,7 @@ async function runReport(){
   const profitProducts=productRevenue-productCogs-returnLoss-productionLabor-supportLabor-expProducts-fillWaterCogs-shopWater6LCogs;
   const net=profit19+profitProducts+otherIncome-expGeneral-interestExpense-depreciation-inventoryLoss;
   const missing=[];
-  if(usedWaterLitres>0&&water19.rate===null)missing.push("19L ڈلیوری پانی کی خریداری / ابتدائی اسٹاک");
-  if(counterLitres>0&&waterShop.rate===null)missing.push("کاؤنٹر پانی کی خریداری / ابتدائی اسٹاک");
+  if(usedWaterLitres>0&&waterShop.rate===null)missing.push("دکان والی ٹنکی (19L / 6L) کی خریداری / ابتدائی اسٹاک");
   if(fillWaterLitres>0&&waterFill.rate===null)missing.push("500ml / 1.5L فلنگ پانی کی خریداری / ابتدائی اسٹاک");
   if(shopWaterFor6L>0&&waterShop.rate===null)missing.push("6L دکان کے پانی کی خریداری / ابتدائی اسٹاک");
   if(successful19+damagedCaps>0&&capCost===null)missing.push("19L ڈھکن کی خریداری");
