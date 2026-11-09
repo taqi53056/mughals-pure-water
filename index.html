@@ -156,6 +156,7 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 <input id="password" type="password" autocomplete="current-password" placeholder="پاس ورڈ">
 <button id="loginButton" type="button" onclick="handleLoginClick()">لاگ اِن</button>
 <button class="secondary" type="button" onclick="showSignup()">نیا کسٹمر اکاؤنٹ بنائیں</button>
+<button class="secondary" type="button" onclick="resendConfirmationEmail()">تصدیقی ای میل دوبارہ بھیجیں</button>
 </div>
 <div id="signupForm" class="hidden">
 <h2>نیا کسٹمر اکاؤنٹ</h2>
@@ -303,6 +304,30 @@ function handleLoginClick(){
  const m=document.getElementById("loginMsg");
  if(typeof login!=="function"){m.textContent="لاگ اِن کوڈ شروع نہیں ہوا۔ فائل دوبارہ کھولیں۔";return;}
  login();
+}
+
+async function resendConfirmationEmail(){
+ const email=$("email").value.trim();
+ if(!email){$("loginMsg").className="error";$("loginMsg").textContent="پہلے اوپر لاگ اِن والے خانے میں اپنا ای میل درج کریں۔";return;}
+ const button=document.querySelector('#loginForm button[onclick="resendConfirmationEmail()"]');
+ if(button){button.disabled=true;button.textContent="ای میل بھیجی جا رہی ہے...";}
+ $("loginMsg").className="error";$("loginMsg").textContent="";
+ try{
+  await ensureSupabase();
+  const {error}=await db.auth.resend({
+   type:"signup",
+   email,
+   options:{emailRedirectTo:"https://taqi53056.github.io/mughals-pure-water/"}
+  });
+  if(error)throw error;
+  $("loginMsg").className="success";
+  $("loginMsg").textContent="اگر اس ای میل کے لیے تصدیق درکار ہے تو نیا تصدیقی لنک بھیج دیا گیا ہے۔ اپنا Inbox اور Spam فولڈر چیک کریں۔";
+ }catch(e){
+  $("loginMsg").className="error";
+  $("loginMsg").textContent="تصدیقی ای میل دوبارہ نہیں بھیجی جا سکی: "+(e?.message||String(e));
+ }finally{
+  if(button){button.disabled=false;button.textContent="تصدیقی ای میل دوبارہ بھیجیں";}
+ }
 }
 
 async function signupCustomer(){
