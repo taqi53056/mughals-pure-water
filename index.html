@@ -1492,7 +1492,7 @@ async function loadMonthlySnapshots(){
  if(!(data||[]).length){el.textContent="پہلی ماہانہ رپورٹ اگلے مہینے کی پہلی تاریخ کو خودکار طور پر تیار ہوگی۔";return;}
  el.innerHTML=(data||[]).map(row=>{
   const r=row.report||{},seg=r.segments||{},owners=r.owner_withdrawals||{},stock=r.stock_estimate||{};
-  const result=r.has_activity?(r.complete?money(seg.net_profit||0):"عارضی — لاگت نامکمل"):"کوئی کاروباری اندراج نہیں";
+  const result=r.has_pnl_activity?(r.complete?money(seg.net_profit||0):"عارضی — لاگت نامکمل"):(r.has_activity?"صرف اسٹاک / مالی اندراجات؛ ابھی منافع و نقصان نہیں بنا":"کوئی کاروباری اندراج نہیں");
   const missing=(r.missing_costs||[]).length?"<p class='warning'>نامکمل لاگت: "+(r.missing_costs||[]).map(esc).join("، ")+"</p>":"";
   return "<div class='audit-card'><div class='audit-card-top'><b>"+esc(row.month_start)+" تا "+esc(row.month_end)+"</b><span>"+(r.complete?"حساب مکمل":"حساب عارضی")+"</span></div>"+
    "<div class='worker-summary-grid'><div><small>19L شعبہ</small><b>"+money(seg["19L"]?.profit_before_shared||0)+"</b></div><div><small>مصنوعات کا شعبہ</small><b>"+money(seg.finished_goods?.profit_before_shared||0)+"</b></div><div><small>مجموعی نتیجہ</small><b>"+result+"</b></div><div><small>چاروں مالکان کی نکاسی</small><b>"+money(owners.total||0)+"</b></div></div>"+
