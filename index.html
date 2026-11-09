@@ -1189,13 +1189,15 @@ async function saveRawMaterialPurchase(){
  await loadRawMaterialPurchases();await loadTodaySummary();
 }
 async function loadRawMaterialPurchases(){
- const [{data:purchases,error:pe},{data:production,error:pr},{data:capDeliveries,error:ce}]=await Promise.all([
-  db.from("raw_material_purchases").select("*").order("purchase_date",{ascending:false}).limit(1000),
-  db.from("production").select("product_type,quantity,production_date").order("production_date",{ascending:true}).limit(5000),
-  db.from("customer_19l_deliveries").select("successful_bottles,damaged_caps").limit(10000)
- ]);
- if(pe||pr||ce){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(pe||pr||ce).message;return;}
- const rows=purchases||[],prod=production||[],capsUsed=(capDeliveries||[]).reduce((n,r)=>n+Number(r.successful_bottles||0)+Number(r.damaged_caps||0),0);
+ let rows=[],prod=[],capDeliveries=[];
+ try{
+  [rows,prod,capDeliveries]=await Promise.all([
+   financeFetchAll("raw_material_purchases","*","purchase_date",null,null),
+   financeFetchAll("production","product_type,quantity,production_date","production_date",null,null),
+   financeFetchAll("customer_19l_deliveries","successful_bottles,damaged_caps","delivery_date",null,null)
+  ]);
+ }catch(e){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
+ const capsUsed=capDeliveries.reduce((n,r)=>n+Number(r.successful_bottles||0)+Number(r.damaged_caps||0),0);
  const purchased=key=>rows.filter(x=>x.material_type===key).reduce((n,x)=>n+Number(x.quantity||0),0);
  const made=(key)=>prod.filter(x=>x.product_type===key).reduce((n,x)=>n+Number(x.quantity||0),0);
  const used={
