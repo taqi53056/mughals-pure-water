@@ -1252,10 +1252,11 @@ async function saveProductReturn(){
  const quantity=Number($("returnQty").value),reason=$("returnReason").value.trim();
  if(!return_date||!Number.isInteger(quantity)||quantity<=0||!reason){msg("تاریخ، خراب بوتلوں کی تعداد اور وجہ درج کریں۔");return;}
  if(!confirmLargeEntry("واپس آنے والی خراب بوتلیں",quantity,100))return;
- const {error}=await db.from("product_returns").insert({
-  return_date,product_type,quantity,replacement_quantity:quantity,reason,entered_by:user?.id||null
+ const {data,error}=await db.rpc("record_product_return",{
+  p_return_date:return_date,p_product_type:product_type,p_quantity:quantity,p_reason:reason
  });
  if(error){msg("واپسی محفوظ نہیں ہوئی: "+error.message);return;}
+ if(!data||!data.return_id){msg("ڈیٹابیس سے واپسی کی تصدیق موصول نہیں ہوئی۔");return;}
  msg("خراب مال کی واپسی اور متبادل بوتلوں کا اندراج محفوظ ہوگیا۔",true);
  $("returnQty").value="";$("returnReason").value="";
  await loadProductReturns();await loadTodaySummary();
@@ -1589,7 +1590,7 @@ async function runReport(){
   if(damagedCaps>0&&capCost===null)missing.push("19L ڈھکن کی خریداری");
   if(missingProductCosts.length)missing.push("خام مال: "+[...new Set(missingProductCosts)].join("، "));
   const complete=missing.length===0;
-  const hasActivity=deliveries.length||counterSales.length||sales.length||returns.length||expenses.length||income.length||production.some(x=>Number(x.labor_amount)>0)||workerRows.length||total(periodFin,"depreciation_expense")>0||total(periodFin,"inventory_loss")>0||total(periodFin,"interest_expense")>0||total(periodFin,"interest_income")>0;
+  const hasActivity=deliveries.length||counterSales.length||sales.length||returns.length||expenses.length||income.length||production.some(x=>Number(x.labor_amount)>0)||workerRows.some(x=>x.entry_type==="earning")||total(periodFin,"depreciation_expense")>0||total(periodFin,"inventory_loss")>0||total(periodFin,"interest_expense")>0||total(periodFin,"interest_income")>0;
   const stockRows=stockResult?.data||[];
   const stockText=stockResult?.error?"تیار مال کا اسٹاک ابھی لوڈ نہیں ہوا":stockRows.map(x=>x.product_type+": "+Number(x.available_quantity||0)+" "+(x.unit==="bottle"?"بوتل":"کارٹن")).join(" — ");
   const ownerNames=["محمد اسامہ مغل","محمد مزمل مغل","محمد تقی مغل","محمد رفیع مغل"];
