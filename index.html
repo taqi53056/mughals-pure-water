@@ -1292,25 +1292,37 @@ async function saveProductCostRate(){
  if(!confirm("کیا "+product_type+" کی فی یونٹ لاگت Rs. "+unit_cost+"، تاریخ "+effective_from+" سے لاگو کرنی ہے؟"))return;
  const {error}=await db.from("product_cost_rates").upsert({effective_from,product_type,unit_cost,details:details||null,entered_by:user.id},{onConflict:"product_type,effective_from"});
  if(error){msg("فی یونٹ لاگت محفوظ نہیں ہوئی: "+error.message);return}
- msg("فی یونٹ لاگت محفوظ ہوگئی۔",true);$("costAmount").value="";$("costDetails").value="";await runReport();
+ msg("فی یونٹ لاگت محفوظ ہوگئی۔",true);$("costAmount").value="";$("costDetails").value="";await Promise.all([runReport(),loadCostRateHistory()]);
+}
+async function financeFetchAll(table,columns,dateColumn,start,end){
+ let rows=[],offset=0;
+ while(true){
+  let query=db.from(table).select(columns);
+  if(start)query=query.gte(dateColumn,start);
+  if(end)query=query.lte(dateColumn,end);
+  const {data,error}=await query.order(dateColumn,{ascending:true}).order("id",{ascending:true}).range(offset,offset+999);
+  if(error)throw error;
+  const page=data||[];rows.push(...page);
+  if(page.length<1000)break;
+  offset+=1000;
+ }
+ return rows;
 }
 async function runReport(){
  const start=$("rStart").value,end=$("rEnd").value;
  if(!start||!end||start>end){msg("تاریخ کی حد درست منتخب کریں۔");return}
  try{
-  const [dr,sr,er,ir,pr,oldCapR,allFinR,periodFinR,wr]=await Promise.all([
-   db.from("customer_19l_deliveries").select("delivery_date,successful_bottles,damaged_caps,delivery_labor").gte("delivery_date",start).lte("delivery_date",end),
-   db.from("product_sales").select("sale_date,product_type,quantity,total_amount").gte("sale_date",start).lte("sale_date",end),
-   db.from("business_expenses").select("amount,category").gte("expense_date",start).lte("expense_date",end),
-   db.from("business_income").select("amount,category").gte("income_date",start).lte("income_date",end),
-   db.from("product_cost_rates").select("product_type,unit_cost,effective_from").lte("effective_from",end).order("effective_from",{ascending:true}),
-   db.from("business_capital_entries").select("entry_type,amount").lte("entry_date",end),
-   db.from("business_finance_ledger").select("entry_type,amount").lte("entry_date",end),
-   db.from("business_finance_ledger").select("entry_type,amount").gte("entry_date",start).lte("entry_date",end),
-   db.from("worker_ledger").select("entry_type,work_category,amount,entry_date").gte("entry_date",start).lte("entry_date",end)
+  const [deliveries,sales,expenses,income,rates,oldCaps,allFin,periodFin,workerRows]=await Promise.all([
+   financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor","delivery_date",start,end),
+   financeFetchAll("product_sales","sale_date,product_type,quantity,total_amount","sale_date",start,end),
+   financeFetchAll("business_expenses","amount,category","expense_date",start,end),
+   financeFetchAll("business_income","amount,category","income_date",start,end),
+   financeFetchAll("product_cost_rates","product_type,unit_cost,effective_from","effective_from",null,end),
+   financeFetchAll("business_capital_entries","entry_type,amount","entry_date",null,end),
+   financeFetchAll("business_finance_ledger","entry_type,amount","entry_date",null,end),
+   financeFetchAll("business_finance_ledger","entry_type,amount","entry_date",start,end),
+   financeFetchAll("worker_ledger","entry_type,work_category,amount,entry_date","entry_date",start,end)
   ]);
-  for(const x of [dr,sr,er,ir,pr,oldCapR,allFinR,periodFinR,wr])if(x.error)throw x.error;
-  const deliveries=dr.data||[],sales=sr.data||[],expenses=er.data||[],income=ir.data||[],rates=pr.data||[],oldCaps=oldCapR.data||[],allFin=allFinR.data||[],periodFin=periodFinR.data||[],workerRows=wr.data||[];
   const sum=(rows,key)=>(rows||[]).reduce((n,r)=>n+(Number(r[key])||0),0);
   const total=(rows,type)=>rows.filter(x=>x.entry_type===type).reduce((n,r)=>n+(Number(r.amount)||0),0);
   const costAt=(type,date)=>{const matches=rates.filter(x=>x.product_type===type&&x.effective_from<=date);return matches.length?Number(matches[matches.length-1].unit_cost):null};
