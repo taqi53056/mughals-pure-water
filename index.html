@@ -1118,11 +1118,12 @@ async function rawMaterialsModule(){
  '<p class="muted">خریداری کے بل کے مطابق صرف خریدی ہوئی مقدار اور کل نقد قیمت درج کریں۔ کلیم کے بدلے آنے والا مال خریداری یا خرچ نہیں ہوگا۔</p>'+
  '<div class="card"><h3>نئی خریداری</h3>'+
  '<input id="rawPurchaseDate" type="date" value="'+today()+'">'+
+ '<select id="rawPurchaseKind" onchange="toggleRawPurchaseKind()"><option value="purchase">نئی نقد خریداری</option><option value="opening_stock">پہلے سے موجود ابتدائی اسٹاک</option></select>'+
  '<select id="rawPurchaseType">'+
  Object.keys(rawMaterialLabels).map(k=>'<option value="'+k+'">'+rawMaterialLabels[k]+'</option>').join("")+
  '</select>'+
  '<input id="rawPurchaseQty" type="number" min="1" step="1" placeholder="بل کے مطابق مقدار">'+
- '<input id="rawPurchaseAmount" type="number" min="0.01" step="0.01" placeholder="کل ادا شدہ رقم (روپے)">'+
+ '<input id="rawPurchaseAmount" type="number" min="0.01" step="0.01" placeholder="کل ادا شدہ رقم / ابتدائی مالیت (روپے)">'+
  '<input id="rawPurchaseSupplier" maxlength="120" placeholder="سپلائر (اختیاری)">'+
  '<textarea id="rawPurchaseDetails" maxlength="300" placeholder="بل نمبر / تفصیل (اختیاری)"></textarea>'+
  '<button onclick="saveRawMaterialPurchase()">خریداری محفوظ کریں</button></div>'+
@@ -1136,11 +1137,12 @@ async function saveRawMaterialPurchase(){
   msg("تاریخ، مکمل مقدار اور کل ادا شدہ رقم درست درج کریں۔");return;
  }
  if(!confirmLargeEntry("خام مال کی مقدار",quantity,1000)||!confirmLargeEntry("خریداری کی رقم",total_amount,100000))return;
+ const record_type=$("rawPurchaseKind").value;
  const payload={
-  purchase_date:date,material_type:type,quantity,unit:rawMaterialUnits[type],
+  purchase_date:date,record_type,material_type:type,quantity,unit:rawMaterialUnits[type],
   total_amount,supplier:$("rawPurchaseSupplier").value.trim()||null,
-  payment_method:"cash",details:$("rawPurchaseDetails").value.trim()||null,
-  entered_by:user?.id||null
+  payment_method:record_type==="opening_stock"?"opening":"cash",
+  details:$("rawPurchaseDetails").value.trim()||null,entered_by:user?.id||null
  };
  const {error}=await db.from("raw_material_purchases").insert(payload);
  if(error){msg("خریداری محفوظ نہیں ہوئی: "+error.message);return;}
@@ -1170,44 +1172,70 @@ async function loadRawMaterialPurchases(){
   const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"?"اسٹیکر":"بوتل";
   return '<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
  }).join("")+'<div class="stat">19L ڈھکن<br><b>'+purchased("cap_19l")+' عدد خریدے گئے</b><small>روزانہ استعمال درج نہیں ہوتا۔</small></div></div>';
- $("moduleTable").innerHTML='<h3>خریداری کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>خام مال</th><th>مقدار</th><th>کل رقم</th><th>فی یونٹ لاگت</th><th>سپلائر</th></tr>'+
- rows.map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
+ $("moduleTable").innerHTML='<h3>خریداری اور ابتدائی اسٹاک کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ لاگت</th><th>سپلائر</th></tr>'+
+ rows.map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(r.record_type==="opening_stock"?"ابتدائی اسٹاک":"خریداری")+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
  '</table></div>';
 }
 async function tankerPurchaseModule(){
  setTitle("19L پانی کے ٹینکر");
  $("moduleBody").innerHTML=
  '<p class="muted">ہر گاڑی ایک ہزار لیٹر ہے۔ ایک یا دو ٹینکر آئیں تو تعداد درج کریں؛ فی ٹینکر اصل قیمت 1,200 یا 1,250 وغیرہ درج کریں۔</p>'+
- '<div class="card"><input id="tankDate" type="date" value="'+today()+'">'+
- '<input id="tankCount" type="number" min="1" step="1" value="1" placeholder="ٹینکروں کی تعداد">'+
+ '<div class="card"><select id="tankEntryKind" onchange="toggleTankerEntryKind()"><option value="purchase">نئی ٹینکر خریداری</option><option value="opening_stock">پہلے سے موجود پانی کا ابتدائی اسٹاک</option></select><input id="tankDate" type="date" value="'+today()+'">'+
+ '<div id="tankerPurchaseFields"><input id="tankCount" type="number" min="1" step="1" value="1" placeholder="ٹینکروں کی تعداد">'+
  '<input id="tankRate" type="number" min="1" step="0.01" placeholder="فی 1,000 لیٹر ٹینکر کی قیمت">'+
  '<div class="total">کل رقم: <b id="tankTotal">Rs. 0</b></div>'+
- '<input id="tankSupplier" maxlength="120" placeholder="سپلائر (اختیاری)">'+
- '<button onclick="saveTankerPurchase()">ٹینکر خریداری محفوظ کریں</button></div>';
+ '<input id="tankSupplier" maxlength="120" placeholder="سپلائر (اختیاری)"></div>'+
+ '<div id="tankerOpeningFields" class="hidden"><input id="tankOpeningLitres" type="number" min="0.01" step="0.01" placeholder="ابتدائی پانی کے لیٹر">'+
+ '<input id="tankOpeningValue" type="number" min="0.01" step="0.01" placeholder="ابتدائی پانی کی کل مالیت (روپے)"></div>'+
+ '<button onclick="saveTankerPurchase()">اندراج محفوظ کریں</button></div>';
  $("tankCount").addEventListener("input",updateTankerTotal);$("tankRate").addEventListener("input",updateTankerTotal);
  await loadTankerPurchases();
+}
+function toggleRawPurchaseKind(){
+ const opening=$("rawPurchaseKind")?.value==="opening_stock";
+ if($("rawPurchaseAmount"))$("rawPurchaseAmount").placeholder=opening?"پہلے سے موجود اسٹاک کی اندازاً کل مالیت":"کل ادا شدہ رقم (روپے)";
+ if($("rawPurchaseDetails")&&opening)$("rawPurchaseDetails").placeholder="ابتدائی اسٹاک کی تاریخ / اندازاً مالیت کی بنیاد";
 }
 function updateTankerTotal(){
  const n=Number($("tankCount")?.value)||0,r=Number($("tankRate")?.value)||0;
  if($("tankTotal"))$("tankTotal").textContent=money(n*r);
 }
+function toggleTankerEntryKind(){
+ const opening=$("tankEntryKind")?.value==="opening_stock";
+ $("tankerPurchaseFields")?.classList.toggle("hidden",opening);
+ $("tankerOpeningFields")?.classList.toggle("hidden",!opening);
+}
 async function saveTankerPurchase(){
- const date=$("tankDate").value,count=Number($("tankCount").value),rate=Number($("tankRate").value);
- if(!date||!Number.isInteger(count)||count<=0||!Number.isFinite(rate)||rate<=0){msg("تاریخ، ٹینکروں کی تعداد اور فی ٹینکر قیمت درست درج کریں۔");return;}
- if(!confirmLargeEntry("ٹینکروں کی تعداد",count,5)||!confirmLargeEntry("ٹینکر کی کل رقم",count*rate,100000))return;
- const {error}=await db.from("water_tanker_purchases").insert({
-  purchase_date:date,tanker_count:count,rate_per_tanker:rate,
-  payment_method:"cash",supplier:$("tankSupplier").value.trim()||null,
-  entered_by:user?.id||null
- });
- if(error){msg("ٹینکر خریداری محفوظ نہیں ہوئی: "+error.message);return;}
- msg("ٹینکر خریداری محفوظ ہوگئی۔",true);$("tankSupplier").value="";await loadTankerPurchases();await loadTodaySummary();
+ const date=$("tankDate").value;
+ if($("tankEntryKind").value==="opening_stock"){
+  const litres=Number($("tankOpeningLitres").value),total_value=Number($("tankOpeningValue").value);
+  if(!date||!Number.isFinite(litres)||litres<=0||!Number.isFinite(total_value)||total_value<=0){msg("ابتدائی پانی کے لیٹر اور اس کی کل مالیت درست درج کریں۔");return;}
+  if(!confirmLargeEntry("ابتدائی پانی کے لیٹر",litres,5000)||!confirmLargeEntry("ابتدائی پانی کی مالیت",total_value,100000))return;
+  const {error}=await db.from("water_opening_stock").upsert({as_of_date:date,litres,total_value,details:"ابتدائی موجود پانی",entered_by:user?.id||null},{onConflict:"as_of_date"});
+  if(error){msg("ابتدائی پانی کا اسٹاک محفوظ نہیں ہوا: "+error.message);return;}
+  msg("ابتدائی پانی کا اسٹاک محفوظ ہوگیا۔",true);$("tankOpeningLitres").value="";$("tankOpeningValue").value="";
+ }else{
+  const count=Number($("tankCount").value),rate=Number($("tankRate").value);
+  if(!date||!Number.isInteger(count)||count<=0||!Number.isFinite(rate)||rate<=0){msg("تاریخ، ٹینکروں کی تعداد اور فی ٹینکر قیمت درست درج کریں۔");return;}
+  if(!confirmLargeEntry("ٹینکروں کی تعداد",count,5)||!confirmLargeEntry("ٹینکر کی کل رقم",count*rate,100000))return;
+  const {error}=await db.from("water_tanker_purchases").insert({
+   purchase_date:date,tanker_count:count,rate_per_tanker:rate,payment_method:"cash",
+   supplier:$("tankSupplier").value.trim()||null,entered_by:user?.id||null
+  });
+  if(error){msg("ٹینکر خریداری محفوظ نہیں ہوئی: "+error.message);return;}
+  msg("ٹینکر خریداری محفوظ ہوگئی۔",true);$("tankSupplier").value="";
+ }
+ await loadTankerPurchases();await loadTodaySummary();
 }
 async function loadTankerPurchases(){
- const {data,error}=await db.from("water_tanker_purchases").select("*").order("purchase_date",{ascending:false}).limit(100);
- if(error){$("moduleTable").textContent=error.message;return;}
- $("moduleTable").innerHTML='<h3>ٹینکر خریداری کی ہسٹری</h3><table><tr><th>تاریخ</th><th>ٹینکر</th><th>فی ٹینکر</th><th>کل رقم</th></tr>'+
- (data||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+r.tanker_count+' × 1,000 لیٹر</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+'</table>';
+ const [{data,error},{data:opening,error:openingError}]=await Promise.all([
+  db.from("water_tanker_purchases").select("*").order("purchase_date",{ascending:false}).limit(100),
+  db.from("water_opening_stock").select("*").order("as_of_date",{ascending:false}).limit(100)
+ ]);
+ if(error||openingError){$("moduleTable").textContent="ٹینکر / ابتدائی اسٹاک لوڈ نہیں ہوا: "+(error||openingError).message;return;}
+ $("moduleTable").innerHTML='<h3>ٹینکر خریداری اور ابتدائی پانی کی ہسٹری</h3><table><tr><th>تاریخ</th><th>اندراج</th><th>مقدار</th><th>فی ٹینکر / مالیت</th><th>کل رقم</th></tr>'+
+ (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td></tr>').join("")+
+ (data||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>خریداری</td><td>'+r.tanker_count+' × 1,000 لیٹر</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+'</table>';
 }
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
@@ -1542,10 +1570,11 @@ async function runReport(){
  const start=$("rStart").value,end=$("rEnd").value;
  if(!start||!end||start>end){msg("تاریخ کی حد درست منتخب کریں۔");return;}
  try{
-  const [deliveries,counterSales,tankers,sales,returns,rawPurchases,production,expenses,income,allFin,periodFin,workerRows,stockResult]=await Promise.all([
+  const [deliveries,counterSales,tankers,waterOpening,sales,returns,rawPurchases,production,expenses,income,allFin,periodFin,workerRows,stockResult]=await Promise.all([
    financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor","delivery_date",start,end),
    financeFetchAll("counter_water_sales","sale_date,total_litres,total_amount","sale_date",start,end),
    financeFetchAll("water_tanker_purchases","purchase_date,tanker_count,rate_per_tanker,total_amount","purchase_date",null,end),
+   financeFetchAll("water_opening_stock","as_of_date,litres,total_value","as_of_date",null,end),
    financeFetchAll("product_sales","sale_date,product_type,quantity,total_amount,unit,payment_method","sale_date",start,end),
    financeFetchAll("product_returns","return_date,product_type,quantity,replacement_quantity","return_date",start,end),
    financeFetchAll("raw_material_purchases","purchase_date,material_type,quantity,total_amount","purchase_date",null,end),
@@ -1564,8 +1593,9 @@ async function runReport(){
    const list=rawPurchases.filter(x=>x.material_type===type);
    const q=sum(list,"quantity");return q>0?sum(list,"total_amount")/q:null;
   };
-  const tankerLitres=sum(tankers,"tanker_count")*1000;
-  const waterPerLitre=tankerLitres>0?sum(tankers,"total_amount")/tankerLitres:null;
+  const tankerLitres=sum(tankers,"tanker_count")*1000+sum(waterOpening,"litres");
+  const waterTotalValue=sum(tankers,"total_amount")+sum(waterOpening,"total_value");
+  const waterPerLitre=tankerLitres>0?waterTotalValue/tankerLitres:null;
   const capCost=weightedRate("cap_19l");
   const stickerCost=1;
   const tapeCost=weightedRate("tape_bundle");
@@ -1625,7 +1655,7 @@ async function runReport(){
   const capital=total(allFin,"capital_in");
   const loanIn=total(allFin,"loan_received"),loanRepay=total(allFin,"loan_repaid");
   const loanGiven=total(allFin,"loan_given"),loanCollected=total(allFin,"loan_collected");
-  const rawSpend=rawPurchases.filter(x=>x.purchase_date>=start).reduce((n,r)=>n+(Number(r.total_amount)||0),0);
+  const rawSpend=rawPurchases.filter(x=>x.purchase_date>=start&&x.record_type!=="opening_stock").reduce((n,r)=>n+(Number(r.total_amount)||0),0);
   const tankerSpend=tankers.filter(x=>x.purchase_date>=start).reduce((n,r)=>n+(Number(r.total_amount)||0),0);
   const assetPurchases=total(periodFin,"fixed_asset_purchase"),assetSales=total(periodFin,"fixed_asset_sale");
   const fmt=(n)=>moneyVal(n);
