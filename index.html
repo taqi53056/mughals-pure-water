@@ -213,6 +213,84 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 }
 @media(prefers-reduced-motion:reduce){.tile,button{transition:none!important}}
 
+/* MUGHALS PREMIUM EXPERIENCE V1 */
+:root{--mp-forest:#103c30;--mp-green:#147052;--mp-gold:#c4a15b;--mp-border:#e2e9e1;--mp-shadow:0 12px 34px rgba(19,55,39,.075)}
+body{background:radial-gradient(ellipse at 50% -15%,#e2eee5 0,transparent 48%),linear-gradient(180deg,#f7f9f6,#f0f4ef);color:#192c24}
+header{position:relative;background:linear-gradient(115deg,#092c24,#104c39 58%,#17694d);border-bottom:3px solid var(--mp-gold);padding:22px 18px}
+header:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.12;background-image:radial-gradient(#fff .7px,transparent .7px);background-size:13px 13px}
+header .wrap{position:relative;z-index:1}header h1{font-weight:850;letter-spacing:.025em}
+.wrap{max-width:1320px}.card{border:1px solid var(--mp-border);border-radius:20px;background:rgba(255,255,255,.97);box-shadow:var(--mp-shadow);padding:20px}
+h2{font-weight:800}h3{font-weight:750}
+input,select,textarea{border:1px solid #d9e3da;border-radius:13px;background:#fff;box-shadow:0 1px 2px #193d2910}
+input:hover,select:hover,textarea:hover{border-color:#b7cabb}input:focus,select:focus,textarea:focus{border-color:var(--mp-green);box-shadow:0 0 0 4px #14705218}
+button{border-radius:13px;background:linear-gradient(135deg,#104d39,#197653);border-color:#145e45;box-shadow:0 5px 14px #124d3820;transition:transform .16s,box-shadow .16s}
+button:hover{transform:translateY(-1px);box-shadow:0 8px 18px #124d3826}button:active{transform:translateY(0)}
+button.secondary{background:#f0f5f0;color:#174d39;border:1px solid #dce7dc;box-shadow:none}button.secondary:hover{background:#e8f1e9}
+.tile{position:relative;overflow:hidden;isolation:isolate;border-radius:19px;min-height:104px;box-shadow:0 8px 20px #173d2b1b}
+.tile:after{content:"";position:absolute;z-index:-1;width:125px;height:125px;border:1px solid #ffffff24;border-radius:50%;inset:auto -42px -72px auto;box-shadow:0 0 0 13px #ffffff0a,0 0 0 27px #ffffff08}
+.tile:hover{transform:translateY(-3px);box-shadow:0 13px 26px #183b2b28}#homeTiles .tile{font-size:16px;line-height:1.55;text-shadow:0 1px 2px #0002}
+#homeTiles .tile:before{content:"";display:inline-grid;place-items:center;flex:0 0 36px;width:36px;height:36px;margin-left:11px;border-radius:12px;background:#ffffff20;border:1px solid #ffffff30;font-size:20px;line-height:1}
+#homeTiles .tile:nth-child(1):before{content:"♙"}#homeTiles .tile:nth-child(2):before{content:"↗"}#homeTiles .tile:nth-child(3):before{content:"▤"}#homeTiles .tile:nth-child(4):before{content:"▣"}#homeTiles .tile:nth-child(5):before{content:"⇢"}#homeTiles .tile:nth-child(6):before{content:"−"}#homeTiles .tile:nth-child(7):before{content:"＋"}#homeTiles .tile:nth-child(8):before{content:"▧"}#homeTiles .tile:nth-child(9):before{content:"▥"}#homeTiles .tile:nth-child(10):before{content:"♧"}#homeTiles .tile:nth-child(11):before{content:"⚒"}#homeTiles .tile:nth-child(12):before{content:"✉"}#homeTiles .tile:nth-child(13):before{content:"◷"}#homeTiles .tile:nth-child(14):before{content:"⚙"}
+#customerPanel>.card:nth-child(1)>h2:after{content:"♙";margin-inline-start:auto;color:#a78b4e;font-size:17px}
+#customerPanel>.card:nth-child(2)>h2:after{content:"▤";margin-inline-start:auto;color:#a78b4e;font-size:17px}
+#customerPanel>.card:nth-child(3)>h2:after{content:"↗";margin-inline-start:auto;color:#a78b4e;font-size:17px}
+#customerPanel>.card:nth-child(4)>h2:after{content:"◉";margin-inline-start:auto;color:#a78b4e;font-size:17px}
+#customerPanel>.card:nth-child(5)>h2:after{content:"✉";margin-inline-start:auto;color:#a78b4e;font-size:17px}
+
+#login{max-width:570px;margin:34px auto}#login.card{padding:clamp(20px,4vw,34px);border-top:4px solid var(--mp-gold)}#login h2{margin-bottom:17px}
+#app>.card:first-child{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 19px;border-top:3px solid var(--mp-gold)}
+#app>.card:first-child #welcome{font-size:17px;font-weight:800}#app>.card:first-child #role{margin-inline-start:auto}#app>.card:first-child button{width:auto;min-width:105px;margin:0}
+#adminPanel,#customerPanel{min-width:0}#adminPanel #dashboard,#adminPanel #module,#customerPanel>.card{min-width:0;border-radius:21px}
+#adminPanel #module{padding:clamp(16px,2.4vw,28px)}#moduleTitle{padding-bottom:12px;border-bottom:1px solid #e8eee7;margin-bottom:15px}
+#moduleBody{min-width:0}#moduleBody h3,#moduleTable h3{margin:18px 0 10px;padding-right:11px;border-right:3px solid var(--mp-gold);line-height:1.6}
+#moduleBody .muted{line-height:1.85}#moduleBody>p.muted{padding:11px 14px;background:#f4f8f3;border:1px solid #e7eee5;border-radius:13px}
+#moduleBody input:not([type=checkbox]),#moduleBody select,#moduleBody textarea{width:100%;max-width:100%;margin:7px 0}
+#moduleBody button,#module button{width:auto;min-width:112px;min-height:45px;padding:10px 15px;margin:6px 5px 6px 0}
+#moduleBody .card{padding:17px;border-radius:17px;margin:13px 0;background:linear-gradient(145deg,#fff,#fbfdfb)}
+#moduleBody .stat,#moduleTable .stat{border-radius:14px;padding:13px 15px;line-height:1.8}
+#moduleBody .total{display:block;padding:14px 16px;margin:12px 0;background:linear-gradient(110deg,#edf6ee,#f8f6ec);border:1px solid #dfeadd;border-radius:14px;line-height:1.7}
+#moduleTable{min-width:0;margin-top:15px}.tablewrap{max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #e3eae2;border-radius:14px}
+table{border-collapse:separate;border-spacing:0;width:100%}th{background:#edf4ed;color:#214d3a;white-space:nowrap}td,th{padding:11px 12px;line-height:1.65}
+tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-width:74px;padding:8px 11px;margin:3px;font-size:13px}
+#todaySummary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#todaySummary .stat{margin:0;min-height:82px;display:flex;flex-direction:column;justify-content:center;border-radius:15px}
+#todaySummary .stat b{font-size:20px;color:var(--mp-forest);font-variant-numeric:tabular-nums}
+#customerPanel>.card{padding:clamp(16px,2.5vw,25px)}#customerPanel>.card>h2{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid #e9eee8}
+#customerPanel>.card>h2:before{content:"";width:5px;height:25px;border-radius:8px;background:var(--mp-gold)}
+#customerPanel #myAccount{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#customerPanel #myAccount p{margin:0;padding:12px 14px;background:#f5f8f4;border:1px solid #e8eee6;border-radius:13px;overflow-wrap:anywhere}
+#customerPanel #myBill{padding:15px;background:linear-gradient(135deg,#f1f7f1,#faf8ef);border:1px solid #e4ecdf;border-radius:15px;line-height:2}
+#customerPanel #myBill h3{color:#0e6548;font-size:20px}
+#customerPanel #myBillHistory,#customerPanel #myPayments,#customerPanel #myNotifications,#customerPanel #myComplaints{display:grid;gap:9px}
+#customerPanel .stat{border-radius:14px;padding:13px 15px}
+#customerPanel #myDeliveries{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}#customerPanel #myDeliveries table{min-width:720px;font-size:13px}
+#customerPanel #complaintForm{padding:14px;background:#f6f9f5;border:1px solid #e7eee5;border-radius:15px}
+.password-field{position:relative;width:100%;margin:6px 0}.password-field input{padding-left:54px!important;margin:0!important}
+.password-toggle{position:absolute;left:7px;top:50%;transform:translateY(-50%);width:40px!important;min-width:40px!important;height:38px;min-height:38px!important;padding:7px!important;margin:0!important;border:0!important;border-radius:10px!important;background:#eef4ef!important;color:#315a46!important;box-shadow:none!important;display:grid;place-items:center}
+.password-toggle svg{width:20px;height:20px;display:block}
+.audit-card{padding:14px 16px;margin:9px 0;border:1px solid #e4ebe3;border-radius:15px;background:#fff;box-shadow:0 4px 14px #173d2b08}
+.audit-card-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#315448}.audit-card h3{margin:7px 0!important;border:0!important;padding:0!important}.audit-card p{margin:4px 0;line-height:1.8}
+@media(min-width:1100px){
+ .wrap{padding:22px}#adminPanel{display:grid;grid-template-columns:278px minmax(0,1fr);gap:20px;align-items:start}
+ #adminPanel #homeTiles{grid-column:1;grid-row:1 / span 2;display:grid;grid-template-columns:1fr;gap:10px;padding:14px;background:linear-gradient(180deg,#102e25,#174b39);border:1px solid #c8a65a65;border-radius:22px;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;align-content:start}
+ #adminPanel #homeTiles .tile{min-height:66px;justify-content:flex-start;text-align:right;padding:12px 15px;font-size:15px;border-radius:13px}
+ #adminPanel #dashboard,#adminPanel #module{grid-column:2;margin:0}#adminPanel #dashboard{padding:22px}
+ #todaySummary{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #customerPanel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+ #customerPanel>.card{margin:0}#customerPanel>.card:nth-child(n){grid-column:span 1}
+}
+@media(min-width:700px) and (max-width:1099px){#adminPanel #homeTiles{grid-template-columns:repeat(3,minmax(0,1fr))}#adminPanel #dashboard,#adminPanel #module{grid-column:1/-1}#customerPanel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+@media(max-width:699px){
+ header{padding:17px 13px}.wrap{padding:11px}.card{padding:15px;border-radius:17px}
+ #adminPanel #homeTiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ #adminPanel #homeTiles .tile{min-height:88px;padding:12px;font-size:14px;border-radius:15px}#adminPanel #homeTiles .tile{align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:7px}#adminPanel #homeTiles .tile:before{margin:0;width:34px;height:34px;flex-basis:34px;font-size:19px}
+ #adminPanel #module{padding:14px}#moduleBody button,#module button{min-width:0;min-height:44px;padding:9px 12px;font-size:14px}
+ #moduleBody .card{padding:13px}#moduleTable table{min-width:600px;font-size:13px}#moduleTable td,#moduleTable th{padding:9px 8px}
+ #todaySummary{gap:8px}#todaySummary .stat{padding:11px;min-height:74px;font-size:13px}#todaySummary .stat b{font-size:18px}
+ #customerPanel>.card{margin:10px 0;padding:14px}#customerPanel #myAccount{grid-template-columns:1fr}#customerPanel #myDeliveries table{min-width:700px}
+ #app>.card:first-child{padding:12px 13px}#app>.card:first-child #role{margin-inline-start:0}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -527,13 +605,13 @@ window.addEventListener("load",restoreSavedSession,{once:true});
 async function logout(){if(!db)return;await db.auth.signOut();location.reload()}
 
 function backHome(){
- $("module").classList.add("hidden");$("homeTiles").classList.remove("hidden");$("dashboard").classList.remove("hidden");editingId=null;
+ $("adminPanel").classList.remove("module-open");$("module").classList.add("hidden");$("homeTiles").classList.remove("hidden");$("dashboard").classList.remove("hidden");editingId=null;
  loadTodaySummary();
 }
 
 async function openModule(name){
  currentModule=name;editingId=null;
- $("dashboard").classList.add("hidden");$("module").classList.remove("hidden");
+ $("adminPanel").classList.add("module-open");$("dashboard").classList.add("hidden");$("module").classList.remove("hidden");
  setTitle("");
  if(name==="customers")return customersModule();
  if(name==="delivery")return deliveryModule();
