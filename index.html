@@ -1325,7 +1325,7 @@ async function salesModule(){
  <div class="stat">فی یونٹ قیمت: <b id="salePrice">Rs. ${default500}</b></div>
  <div class="stat" id="saleSpecialNote">100 یا زیادہ کارٹن پر مقررہ خصوصی قیمت خود منتخب ہوگی۔</div>
  <div class="total">کل رقم: <span id="saleTotal">Rs. 0</span></div>
- <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.280 فی کارٹن ہے۔ 6L کی کم از کم قیمت Rs.55 فی بوتل ہے؛ اصل فروخت قیمت درج کریں۔</p>
+ <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.270 فی کارٹن ہے؛ عمومی قیمت Rs.280 اور خصوصی قیمت Rs.270 ہے۔ 6L کی کم از کم قیمت Rs.55 فی بوتل ہے؛ اصل فروخت قیمت درج کریں۔</p>
  <button onclick="saveSale()">سیل محفوظ کریں</button>
  <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button>`;
  salePricePreview(false,true);
@@ -1340,18 +1340,18 @@ function getSaleCalc(){
 }
 function salePricePreview(autoSpecial=false,resetDefault=false){
  const type=$("saleType").value,is6=type==="6L",setting=saleSettings[type]||{};
- $("saleUnitPrice").disabled=is6;
+ $("saleUnitPrice").disabled=false;
  if(is6){
   const current=Number($("saleUnitPrice").value);
   if(resetDefault||!Number.isFinite(current)||current<55)$("saleUnitPrice").value="55";
  }else{
   const defaultRate=Number(setting.default_rate)||280;
-  if(resetDefault||!Number.isFinite(Number($("saleUnitPrice").value))||Number($("saleUnitPrice").value)<280){
+  if(resetDefault||!Number.isFinite(Number($("saleUnitPrice").value))||Number($("saleUnitPrice").value)<270){
    $("saleUnitPrice").value=String(defaultRate);
   }
   const special=setting.special_100_rate==null?null:Number(setting.special_100_rate);
   if(autoSpecial){
-   $("saleUnitPrice").value=String(Number($("saleQty").value)>=100&&special!==null&&Number.isFinite(special)&&special>=280?special:defaultRate);
+   $("saleUnitPrice").value=String(Number($("saleQty").value)>=100&&special!==null&&Number.isFinite(special)&&special>=270?special:defaultRate);
   }
  }
  const c=getSaleCalc();
@@ -1370,7 +1370,7 @@ function salePricePreview(autoSpecial=false,resetDefault=false){
 async function saveSale(){
  const c=getSaleCalc(),button=document.querySelector('button[onclick="saveSale()"]');
  if(!Number.isInteger(c.qty)||c.qty<=0){msg("کارٹن یا 6L بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
- if((c.type==="6L"&&(!Number.isFinite(c.price)||c.price<55))||(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<280))){msg(c.type==="6L"?"6L کی قیمت کم از کم 55 روپے فی بوتل ہونی چاہیے۔":"500ml اور 1.5L کی قیمت کم از کم 280 روپے فی کارٹن ہونی چاہیے۔");return}
+ if((c.type==="6L"&&(!Number.isFinite(c.price)||c.price<55))||(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<270))){msg(c.type==="6L"?"6L کی قیمت کم از کم 55 روپے فی بوتل ہونی چاہیے۔":"500ml اور 1.5L کی قیمت کم از کم 270 روپے فی کارٹن ہونی چاہیے۔");return}
  if(!confirmLargeEntry("فروخت کی مقدار",c.qty,100)||!confirmLargeEntry("فروخت کی کل رقم (روپے)",c.total,1000))return;
  if(button)button.disabled=true;
  try{
