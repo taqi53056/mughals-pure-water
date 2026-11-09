@@ -1333,10 +1333,13 @@ async function runReport(){
   const businessExpenses=sum(expenses,"amount")+total(periodFin,"interest_expense");
   const depreciation=total(periodFin,"depreciation_expense"),inventoryLoss=total(periodFin,"inventory_loss");
   const deliveryLabor=sum(deliveries,"delivery_labor");
-  const supportLabor=workerRows.filter(r=>r.entry_type==="earning"&&["carton loading/unloading","cleaning","bottle washing"].includes(r.work_category)).reduce((n,r)=>n+(Number(r.amount)||0),0);
+  const supportLabor=workerRows.filter(r=>r.entry_type==="earning"&&["carton loading/unloading","cleaning","bottle washing","manual adjustment"].includes(r.work_category)).reduce((n,r)=>n+(Number(r.amount)||0),0);
   const totalRevenue=revenue19+packRevenue+otherIncome;
   const knownCosts=cogs19+packCogs+businessExpenses+deliveryLabor+supportLabor+depreciation+inventoryLoss;
   const complete=missing19===0&&missingPack===0,net=totalRevenue-knownCosts;
+  const hasActivity=deliveries.length>0||sales.length>0||expenses.length>0||income.length>0||deliveryLabor>0||supportLabor>0||depreciation>0||inventoryLoss>0||total(periodFin,"interest_expense")>0||total(periodFin,"interest_income")>0;
+  const resultTitle=!hasActivity?"کاروباری نتیجہ ابھی دستیاب نہیں":complete?"خالص منافع / نقصان":"عارضی نتیجہ — لاگت نامکمل";
+  const resultValue=!hasActivity?"ابھی آمدن یا خرچ کا ریکارڈ درج نہیں":moneyVal(Math.abs(net))+" "+(net>=0?"منافع":"نقصان");
   const moneyVal=n=>money(Math.round((Number(n)||0)*100)/100);
   const oldCap=type=>oldCaps.filter(x=>x.entry_type===type).reduce((n,r)=>n+(Number(r.amount)||0),0);
   const capital=oldCap("capital_in")+total(allFin,"capital_in");
@@ -1349,7 +1352,7 @@ async function runReport(){
   $("moduleTable").innerHTML="<h3>"+start+" سے "+end+" تک — کاروبار کا مالی نتیجہ</h3>"+
   "<h4>فروخت اور آمدن</h4><div class='stat'>19L فروخت: <b>"+moneyVal(revenue19)+"</b></div><div class='stat'>چھوٹے پیک کی فروخت: <b>"+moneyVal(packRevenue)+"</b></div><div class='stat'>دیگر اور مالی آمدن: <b>"+moneyVal(otherIncome)+"</b></div><div class='stat'>کل آمدن: <b>"+moneyVal(totalRevenue)+"</b></div>"+
   "<h4>مال کی لاگت اور اخراجات</h4><div class='stat'>19L فروخت شدہ بوتلوں کی لاگت: <b>"+moneyVal(cogs19)+"</b></div><div class='stat'>پیک شدہ مصنوعات کی لاگت: <b>"+moneyVal(packCogs)+"</b></div><div class='stat'>19L ڈلیوری مزدوری: <b>"+moneyVal(deliveryLabor)+"</b></div><div class='stat'>کارٹن لوڈنگ، صفائی اور بوتل دھلائی کی واجب الادا مزدوری: <b>"+moneyVal(supportLabor)+"</b></div><div class='stat'>کاروباری اخراجات و مالی لاگت: <b>"+moneyVal(businessExpenses)+"</b></div><div class='stat'>اثاثوں کی فرسودگی: <b>"+moneyVal(depreciation)+"</b></div><div class='stat'>اسٹاک ضائع ہونے کا نقصان: <b>"+moneyVal(inventoryLoss)+"</b></div><div class='stat'>کل معلوم لاگت/اخراجات: <b>"+moneyVal(knownCosts)+"</b></div>"+
-  "<div class='total'>"+(complete?"خالص منافع / نقصان":"عارضی نتیجہ — لاگت نامکمل")+": <b>"+moneyVal(Math.abs(net))+" "+(net>=0?"منافع":"نقصان")+"</b></div>"+
+  "<div class='total'>"+resultTitle+": <b>"+resultValue+"</b></div>"+
   (complete?"":"<p class='warning'>حتمی منافع ابھی نہیں۔ فی یونٹ لاگت درج نہیں: 19L کی "+missing19+" بوتلیں اور دوسرے پیک کی "+missingPack+" یونٹس۔ متعلقہ تاریخ سے پہلے کی فی یونٹ لاگت درج کریں۔")+
   "<h4>سرمایہ پر کمائی</h4><div class='stat'>مالک کا مجموعی سرمایہ (آخری تاریخ تک): <b>"+moneyVal(capital)+"</b></div><div class='stat'>مالک کی نکالی رقم: <b>"+moneyVal(withdraw)+"</b></div><div class='stat'>خالص لگایا ہوا سرمایہ: <b>"+moneyVal(netCapital)+"</b></div><div class='stat'>اس مدت کا منافع / نقصان، خالص سرمایہ کے مقابلے میں: <b>"+(roi===null?"سرمایہ درج نہیں":roi.toFixed(2)+"%")+"</b></div>"+
   "<h4>قرض، اسٹاک اور اثاثے</h4><div class='stat'>کاروبار کا قرض: وصول <b>"+moneyVal(loanIn)+"</b> — اصل رقم واپس <b>"+moneyVal(loanRepay)+"</b> — باقی قرض <b>"+moneyVal(loanIn-loanRepay)+"</b></div><div class='stat'>دوسروں سے وصول طلب: دیا <b>"+moneyVal(loanGiven)+"</b> — واپس ملا <b>"+moneyVal(loanCollected)+"</b> — باقی وصول طلب <b>"+moneyVal(loanGiven-loanCollected)+"</b></div><div class='stat'>اس مدت میں اسٹاک / خام مال کی خریداری: <b>"+moneyVal(stockPurchases)+"</b> (فوری منافع کا خرچ نہیں؛ فروخت شدہ مال کی لاگت اوپر شمار ہے)</div><div class='stat'>اس مدت میں مشینری / اثاثے خریدے: <b>"+moneyVal(assetPurchases)+"</b> — فروخت: <b>"+moneyVal(assetSales)+"</b></div>"+
