@@ -2126,7 +2126,7 @@ async function loadRawMaterialPurchases(){
   [rows,prod,capDeliveries]=await Promise.all([
    financeFetchAll("raw_material_purchases","*","purchase_date",null,null),
    financeFetchAll("production","product_type,quantity,production_date","production_date",null,null),
-   financeFetchAll("customer_19l_deliveries","successful_bottles,damaged_caps","delivery_date",null,null)
+   financeFetchAll("customer_19l_deliveries","bottles_delivered,damaged_caps,delivery_date","delivery_date",null,null)
   ]);
  }catch(e){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
  const rawOpeningDate=key=>rows.find(x=>x.record_type==="opening_stock"&&x.material_type===key)?.purchase_date||null;
@@ -2134,7 +2134,7 @@ async function loadRawMaterialPurchases(){
  const purchased=key=>relevantRawRows(key).reduce((n,x)=>n+Number(x.quantity||0),0);
  const made=(key,materialKey=key)=>prod.filter(x=>x.product_type===key&&(!rawOpeningDate(materialKey)||x.production_date>=rawOpeningDate(materialKey))).reduce((n,x)=>n+Number(x.quantity||0),0);
  const capBase=rawOpeningDate("cap_19l");
- const capsUsed=capDeliveries.filter(r=>!capBase||r.delivery_date>=capBase).reduce((n,r)=>n+Number(r.successful_bottles||0)+Number(r.damaged_caps||0),0);
+ const capsUsed=capDeliveries.filter(r=>!capBase||r.delivery_date>=capBase).reduce((n,r)=>n+Number(r.bottles_delivered||0)+Number(r.damaged_caps||0),0);
  const capUsed={
   cap_500ml:made("500ml","cap_500ml")*24,
   cap_1_5l:made("1.5L","cap_1_5l")*12,
@@ -2152,7 +2152,7 @@ async function loadRawMaterialPurchases(){
   const remaining=purchased(k)-used[k];
   const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"?"اسٹیکر":k.startsWith("cap_")?"عدد":"بوتل";
   return '<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
- }).join("")+'<div class="stat">19L ڈھکن<br><b>باقی: '+(purchased("cap_19l")-capsUsed)+' عدد</b><small>خریدے: '+purchased("cap_19l")+' — استعمال: '+capsUsed+' (بھری بوتل + خراب ڈھکن)</small></div></div>';
+ }).join("")+'<div class="stat">19L ڈھکن<br><b>باقی: '+(purchased("cap_19l")-capsUsed)+' عدد</b><small>خریدے: '+purchased("cap_19l")+' — استعمال: '+capsUsed+' (دی گئی بھری بوتل + خراب ڈھکن)</small></div></div>';
  $("moduleTable").innerHTML='<h3>خریداری اور ابتدائی اسٹاک کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ لاگت</th><th>سپلائر</th></tr>'+
  rows.map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(r.record_type==="opening_stock"?"ابتدائی اسٹاک":"خریداری")+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
  '</table></div>';

@@ -377,6 +377,27 @@ try {
       failures.push("Customer access actions do not match the account approval state");
     }
 
+    const capBalanceResult = await page.evaluate(async () => {
+      const root = document.querySelector("#moduleBody");
+      root.innerHTML = '<div id="rawStockBalance"></div><div id="moduleTable"></div>';
+      const originalFetchAll = window.financeFetchAll;
+      window.financeFetchAll = async (table) => {
+        if (table === "raw_material_purchases") return [
+          { record_type: "opening_stock", material_type: "cap_19l", purchase_date: "2026-11-10", quantity: 11, unit: "piece", total_amount: 11, supplier: null }
+        ];
+        if (table === "production") return [];
+        if (table === "customer_19l_deliveries") return [
+          { delivery_date: "2026-11-10", bottles_delivered: 10, successful_bottles: 8, damaged_caps: 1 }
+        ];
+        return [];
+      };
+      await loadRawMaterialPurchases();
+      const text = document.querySelector("#rawStockBalance")?.textContent || "";
+      window.financeFetchAll = originalFetchAll;
+      return { text, hasZeroBalance: /19L ڈھکن[\s\S]*?باقی:\s*0 عدد/.test(text) };
+    });
+    if (!capBalanceResult.hasZeroBalance) failures.push("19L cap balance does not subtract all delivered bottles and damaged-cap replacements after opening date");
+
     await page.close();
   }
 } finally {
