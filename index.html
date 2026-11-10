@@ -1265,11 +1265,12 @@ async function loadApp(){
 // محفوظ Supabase سیشن کی بحالی: ایپ دوبارہ کھولنے پر لاگ اِن اسکرین پر نہ رکے۔
 async function restoreSavedSession(){
  try{
-  await ensureSupabase();
-  if(new URLSearchParams(window.location.hash.slice(1)).get("type")==="recovery"){
+  const recoveryLink=new URLSearchParams(window.location.hash.slice(1)).get("type")==="recovery";
+  if(recoveryLink){
    showPasswordResetComplete();
    return;
   }
+  await ensureSupabase();
   const {data,error}=await db.auth.getSession();
   if(error)throw error;
   if(data?.session)await loadApp();
