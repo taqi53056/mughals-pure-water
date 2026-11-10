@@ -507,10 +507,15 @@ async function updateCustomerPushStatus(){
 async function notifyCustomerPush(customerId,title,message){
  try{
   const {data,error}=await db.functions.invoke("send-customer-push",{body:{customer_id:Number(customerId),title:String(title||""),message:String(message||"")}});
-  if(error)console.warn("Push notification was not delivered",error.message);
-  else if(data?.error)console.warn("Push notification was not delivered",data.error);
-  return data;
- }catch(e){console.warn("Push notification request failed",e);return null;}
+  if(error){
+   let details=error.message||"سرور سے رابطہ نہیں ہوسکا۔";
+   try{const body=await error.context?.json?.();details=body?.error||body?.message||details;}catch(_){}
+   console.warn("Push notification was not delivered",details);
+   return {sent:0,error:details};
+  }
+  if(data?.error){console.warn("Push notification was not delivered",data.error);return {sent:0,error:data.error};}
+  return data||{sent:0,error:"سرور سے کوئی جواب موصول نہیں ہوا۔"};
+ }catch(e){const details=e?.message||String(e);console.warn("Push notification request failed",details);return {sent:0,error:details};}
 }
 
 function normalizePkPhone(value){let p=String(value||"").replace(/\D/g,"");if(p.startsWith("00"))p=p.slice(2);if(p.startsWith("0"))p="92"+p.slice(1);if(p.length===10&&p.startsWith("3"))p="92"+p;return p;}
@@ -877,7 +882,7 @@ async function deliveryModule(){
  let list;
  try{list=await getActiveCustomers()}catch(e){msg("گاہک لوڈ نہیں ہوئے: "+e.message);return}
  $("moduleBody").innerHTML=`
- <p class="muted">ہر گاہک کی ایک دن میں ایک انٹری۔ کمپنی کی بوتلیں فروخت نہیں ہوتیں۔</p>
+ <p class="muted">ایک ہی دن میں ایک گاہک کی متعدد ڈلیوریاں الگ الگ محفوظ ہو سکتی ہیں۔ ہر ڈلیوری کی اپنی ہسٹری ہوگی۔ کمپنی کی بوتلیں فروخت نہیں ہوتیں۔</p>
  <select id="dCustomer" onchange="loadSelectedDelivery()">${customerOptions(list)}</select>
  <label for="dWorker">ڈیلیوری کس نے کی؟</label><select id="dWorker" onchange="markDeliveryDirty();calcDelivery()"><option value="">کوئی ورکر مقرر نہیں — مالک / غیر منسوب</option></select><p class="muted">اصل ورکر کو منتخب کریں تو ہر کامیاب بوتل پر Rs.20 مزدوری اس کے لیجر میں شمار ہوگی۔ اگر ان کے نام فہرست میں نہ ہوں تو ورکر لیجر میں نیا ورکر بنائیں اور 19L ڈیلیوری منتخب کریں۔ مالک منتخب کرنے پر ورکر کی اجرت نہیں بنے گی؛ خالی چھوڑنے کا مطلب ہے کہ ڈیلیوری کسی ورکر کے نام منسوب نہیں۔</p>
  <input id="dDate" type="date" value="${today()}" onchange="loadSelectedDelivery()">
@@ -940,39 +945,33 @@ async function saveDelivery(){
  if(!confirmLargeEntry("19L بوتلوں کی تعداد",c.out,100)||!confirmLargeEntry("خراب ڈھکنوں کی تعداد",c.caps,50))return;
  const workerId=$("dWorker")?.value||null;
  const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
- const {data:old,error:e}=await db.from("customer_19l_deliveries").select("id").eq("customer_id",id).eq("delivery_date",date).maybeSingle();
- if(e){msg(e.message);return}
- const r=old?await db.from("customer_19l_deliveries").update(payload).eq("id",old.id):await db.from("customer_19l_deliveries").insert(payload);
- if(r.error){msg("محفوظ نہیں ہوا: "+r.error.message);return}
+ // ہر محفوظ کرنے پر نئی ڈلیوری بنے گی؛ اسی دن کا پرانا ریکارڈ overwrite نہیں ہوگا۔
+ const {data:saved,error:saveError}=await db.from("customer_19l_deliveries").insert(payload).select("id").single();
+ if(saveError){msg("ڈلیوری محفوظ نہیں ہوئی: "+saveError.message);return}
  setDeliverySavedState(true);
  let billSyncWarning="";
  try{await syncBillBottles(Number(id),date.slice(0,7)+"-01")}
  catch(e){billSyncWarning=" ڈلیوری محفوظ ہے، مگر ماہانہ بل اپڈیٹ نہیں ہوا: "+e.message}
  let notificationWarning="";
+ const customerName=customerList.find(x=>Number(x.id)===Number(id))?.name||"گاہک";
  const deliveryNotice={
   customer_id:Number(id),
-  title:"آج کی ڈلیوری درج ہوگئی",
-  message:`السلام علیکم ${customerList.find(x=>Number(x.id)===Number(id))?.name||"گاہک"} صاحب! ${date} کو ${c.success} کامیاب 19L بوتلوں کی ڈلیوری درج ہوگئی۔ خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,
+  title:"نئی ڈلیوری درج ہوگئی",
+  message:`السلام علیکم ${customerName} صاحب! ${date} کو ${c.out} بھری بوتلیں دی گئیں، ${c.back} خالی واپس آئیں اور ${c.success} کامیاب بوتلیں درج ہوئیں۔ خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,
   notification_type:"delivery",
-  reference_key:`delivery:${date}`
+  reference_key:`delivery:${date}:${saved.id}`
  };
- const {data:existingNotice,error:noticeLookupError}=await db.from("customer_notifications")
-  .select("id").eq("customer_id",Number(id)).eq("reference_key",deliveryNotice.reference_key).maybeSingle();
- let notificationError=noticeLookupError;
- if(!notificationError){
-  const noticeResult=existingNotice
-   ?await db.from("customer_notifications").update({
-      title:deliveryNotice.title,message:deliveryNotice.message,is_read:false,created_at:new Date().toISOString()
-    }).eq("id",existingNotice.id)
-   :await db.from("customer_notifications").insert(deliveryNotice);
-  notificationError=noticeResult.error;
-  if(!notificationError)await notifyCustomerPush(Number(id),deliveryNotice.title,deliveryNotice.message);
+ const {error:noticeError}=await db.from("customer_notifications").insert(deliveryNotice);
+ if(noticeError){
+  console.error("Notification could not be saved",noticeError);
+  notificationWarning=" کسٹمر کی ایپ اطلاع محفوظ نہیں ہوئی: "+noticeError.message;
+ }else{
+  const pushResult=await notifyCustomerPush(Number(id),deliveryNotice.title,deliveryNotice.message);
+  if(pushResult?.error||Number(pushResult?.sent||0)<1){
+   notificationWarning=" ایپ میں اطلاع محفوظ ہے، مگر موبائل Push نہیں پہنچی: "+(pushResult?.error||pushResult?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔");
+  }
  }
- if(notificationError){
-  console.error("Notification could not be saved",notificationError);
-  notificationWarning=" کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+notificationError.message;
- }
- msg("ڈلیوری محفوظ ہوگئی۔ مزدوری "+money(c.labor)+billSyncWarning+notificationWarning,!billSyncWarning&&!notificationWarning);
+ msg("نئی ڈلیوری محفوظ ہوگئی۔ مزدوری "+money(c.labor)+billSyncWarning+notificationWarning,!billSyncWarning&&!notificationWarning);
  await loadDailyDeliveries();await loadTodaySummary();
 }
 
