@@ -924,7 +924,7 @@ function calcDelivery(){
  if($("dOwnerSaving"))$("dOwnerSaving").textContent=money(isOwner?success*20:0);
  if($("dCapAmount"))$("dCapAmount").textContent=money(caps*10);
  $("dWarn").classList.toggle("hidden",diff===0);
- const labor=isOwner?0:success*20;
+ const labor=workerSelected&&!isOwner?success*20:0;
  return {out,back,caps,capAmount:caps*10,success,diff,labor,isOwner,ownerSaving:isOwner?success*20:0,invalid:back>out};
 }
 
