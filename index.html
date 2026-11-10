@@ -746,6 +746,11 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 </div>
 
 <div id="adminPanel" class="hidden">
+<div id="adminSignupNotice" class="card hidden" role="status" aria-live="polite">
+ <strong>نئی گاہک رجسٹریشن</strong>
+ <span id="adminSignupNoticeText"></span>
+ <button class="secondary" type="button" onclick="openModule('customers')">درخواستیں دیکھیں</button>
+</div>
 <div id="homeTiles" class="grid">
 <nav class="admin-module-filter" role="group" aria-label="انتظامی ماڈیولز کی اقسام">
 <button type="button" class="secondary active" data-filter="operations" onclick="filterAdminModules(this.dataset.filter)">روزمرہ کام</button>
@@ -950,12 +955,58 @@ function shareCurrentDeliveryWhatsApp(){shareCurrentDelivery("whatsapp")} functi
 function shareCurrentBill(channel){if(!currentBillSaved){alert("پہلے بل محفوظ کریں، پھر پیغام تیار کریں۔");return}const id=Number(document.getElementById("bCustomer")?.value),month=document.getElementById("bMonth")?.value,c=(customerList||[]).find(x=>Number(x.id)===id);if(!c||!month){alert("پہلے گاہک اور مہینہ منتخب کریں۔");return}const n=Number(document.getElementById("bBottles")?.textContent)||0,k=Number(document.getElementById("bCaps")?.textContent)||0;const message="السلام علیکم "+c.name+" صاحب! MUGHAL’S PURE WATER کا "+month+" کا بل تیار ہے۔ کامیاب 19L بوتلیں: "+n+" (رقم "+document.getElementById("bBottleAmt")?.textContent+")، خراب ڈھکن: "+k+" (رقم "+document.getElementById("bCapAmt")?.textContent+")، پچھلا بقایا: "+document.getElementById("bPrev")?.textContent+"، استعمال شدہ ایڈوانس: "+document.getElementById("bAdvance")?.textContent+"، ادائیگیاں: "+document.getElementById("bPaid")?.textContent+"، باقی قابل ادائیگی: "+document.getElementById("bDue")?.textContent+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
 function shareCurrentDelivery(channel){if(!currentDeliverySaved){alert("پہلے ڈلیوری محفوظ کریں، پھر پیغام تیار کریں۔");return}const id=Number(document.getElementById("dCustomer")?.value),c=(customerList||[]).find(x=>Number(x.id)===id);if(!c){alert("پہلے گاہک منتخب کریں۔");return}const date=document.getElementById("dDate")?.value||"",n=Number(document.getElementById("dSuccess")?.textContent)||0,k=Number(document.getElementById("dCaps")?.value)||0;const message="السلام علیکم "+c.name+" صاحب! "+date+" کو "+n+" کامیاب 19L بوتلوں کی ڈلیوری درج ہوئی۔ خراب ڈھکن: "+k+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
 let user=null, myCustomer=null, customerList=[], currentModule="", editingId=null, currentDeliverySaved=false, currentBillSaved=false;
+let adminCustomerRealtimeChannel=null;
 function setBillSavedState(saved){currentBillSaved=!!saved;const a=document.getElementById("billWhatsAppButton"),b=document.getElementById("billSMSButton");if(a)a.disabled=!currentBillSaved;if(b)b.disabled=!currentBillSaved;}
 function markBillDirty(){setBillSavedState(false);}
 function setDeliverySavedState(saved){currentDeliverySaved=!!saved;const a=document.getElementById("deliveryWhatsAppButton"),b=document.getElementById("deliverySMSButton");if(a)a.disabled=!currentDeliverySaved;if(b)b.disabled=!currentDeliverySaved;}
 function markDeliveryDirty(){setDeliverySavedState(false);}
 
 function msg(t,ok=false){$("moduleMsg").className=ok?"success":"error";$("moduleMsg").textContent=t}
+function renderAdminSignupNotice(rows,count,newCustomer=null){
+ const box=$("adminSignupNotice"),text=$("adminSignupNoticeText");
+ if(!box||!text)return;
+ const total=Number(count)||0;
+ if(total<1){box.classList.add("hidden");text.textContent="";return;}
+ box.classList.remove("hidden");
+ let message=total+" گاہک منظوری کے منتظر ہیں۔";
+ const latest=(rows||[]).slice(0,2).map(c=>[c.name,c.mobile].filter(Boolean).join(" — ")).filter(Boolean).join("، ");
+ if(latest)message+=" تازہ درخواستیں: "+latest+"۔";
+ if(newCustomer)message="نئی درخواست موصول ہوئی: "+String(newCustomer.name||"نیا گاہک")+" — "+String(newCustomer.mobile||"موبائل درج نہیں")+"۔ کل زیرِ منظوری درخواستیں: "+total+"۔";
+ text.textContent=message;
+}
+async function refreshAdminSignupNotice(newCustomer=null){
+ if(!db||!user)return;
+ const {data,error,count}=await db.from("customers")
+  .select("id,name,mobile,created_at,is_active",{count:"exact"})
+  .eq("is_active",false)
+  .order("created_at",{ascending:false})
+  .limit(5);
+ if(error){console.warn("Pending customer summary failed",error);return;}
+ renderAdminSignupNotice(data||[],count,newCustomer);
+}
+async function startAdminCustomerRealtime(){
+ if(!db||!user)return;
+ if(adminCustomerRealtimeChannel){
+  try{await db.removeChannel(adminCustomerRealtimeChannel);}catch(e){console.warn("Old admin realtime channel cleanup failed",e);}
+  adminCustomerRealtimeChannel=null;
+ }
+ adminCustomerRealtimeChannel=db.channel("mpw-admin-customer-signups-"+user.id)
+  .on("postgres_changes",{event:"INSERT",schema:"public",table:"customers"},payload=>{
+   const customer=payload?.new;
+   if(!customer||customer.is_active!==false)return;
+   refreshAdminSignupNotice(customer);
+   if(currentModule==="customers")loadCustomers();
+  })
+  .subscribe((status,error)=>{
+   if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")console.warn("Admin signup realtime unavailable",error||status);
+   if(status==="SUBSCRIBED")refreshAdminSignupNotice();
+  });
+}
+async function stopAdminCustomerRealtime(){
+ if(!db||!adminCustomerRealtimeChannel)return;
+ try{await db.removeChannel(adminCustomerRealtimeChannel);}catch(e){console.warn("Admin realtime cleanup failed",e);}
+ adminCustomerRealtimeChannel=null;
+}
 // بڑی مقدار یا رقم پر آخری تصدیق: عام اندراجات بلا رکاوٹ رہتے ہیں۔
 function confirmLargeEntry(label,value,threshold){
  const n=Number(value);
@@ -1059,7 +1110,7 @@ async function signupCustomer(){
  if(!name||!mobileInput||!address||!email||!password){$("loginMsg").textContent="تمام معلومات درج کریں۔";return}
  if(!mobile){$("loginMsg").textContent="موبائل نمبر درست درج کریں؛ مثال: 03001234567 یا +923001234567۔";$("signupMobile").focus();return}
  if(password.length<8){$("loginMsg").textContent="پاس ورڈ کم از کم 8 حروف کا ہونا چاہیے۔";return}
- button.disabled=true;button.textContent="اکاؤنٹ بنایا جا رہا ہے...";
+ button.disabled=true;button.textContent="درخواست جمع ہو رہی ہے...";
  $("loginMsg").textContent="";
  try{
   await ensureSupabase();
@@ -1071,13 +1122,17 @@ async function signupCustomer(){
    }
   });
   if(error)throw error;
-  if(data?.session){
-   await loadApp();
-   if(!$("app").classList.contains("hidden")) return;
+  if(Array.isArray(data?.user?.identities)&&data.user.identities.length===0){
+   throw new Error("یہ ای میل پہلے سے رجسٹرڈ ہے۔ لاگ اِن کریں یا دوسری ای میل استعمال کریں۔");
+  }
+  if(!data?.user)throw new Error("اکاؤنٹ کی درخواست کی تصدیق نہیں ہوسکی۔ دوبارہ کوشش کریں۔");
+  if(data.session){
+   await db.auth.signOut();
+   throw new Error("اکاؤنٹ کی حفاظت کے لیے ای میل کی تصدیق لازمی ہے۔ منتظم سے رابطہ کریں۔");
   }
   showLogin();
   $("loginMsg").className="success";
-  $("loginMsg").textContent="رجسٹریشن موصول ہوگئی۔ اگر ای میل تصدیق مانگی جائے تو اپنے ای میل کا لنک کھولیں، پھر لاگ اِن کریں۔ آپ کا Customer ID خودکار بنے گا۔";
+  $("loginMsg").textContent="آپ کی رجسٹریشن موصول ہوگئی ہے۔ ای میل پر بھیجا گیا تصدیقی لنک کھولیں۔ آپ کی منظوری کی درخواست منتظم کو بھی پہنچ گئی ہے؛ منظوری اور ای میل تصدیق کے بعد لاگ اِن کریں۔";
  }catch(e){
   $("loginMsg").className="error";
   $("loginMsg").textContent="رجسٹریشن ناکام: "+(e?.message||String(e));
@@ -1142,7 +1197,8 @@ async function loadApp(){
   $("role").textContent=" | منتظم";
   $("customerPanel").classList.add("hidden");$("adminPanel").classList.remove("hidden");
    filterAdminModules("operations");
-  await Promise.all([loadTodaySummary(),loadExecutiveDashboard()]);
+  startAdminCustomerRealtime();
+  await Promise.all([loadTodaySummary(),loadExecutiveDashboard(),refreshAdminSignupNotice()]);
  }
 }
 
@@ -1159,7 +1215,7 @@ async function restoreSavedSession(){
 }
 window.addEventListener("load",restoreSavedSession,{once:true});
 
-async function logout(){if(!db)return;await db.auth.signOut();location.reload()}
+async function logout(){if(!db)return;await stopAdminCustomerRealtime();await db.auth.signOut();location.reload()}
 
 
 function filterAdminModules(category){
@@ -1256,7 +1312,7 @@ async function approveCustomer(id){
  const {error}=await db.from("customers").update({is_active:true}).eq("id",id);
  if(!error && c.auth_user_id){const approvalTitle="آپ کا اکاؤنٹ منظور ہوگیا",approvalMessage="السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔";const approvalNotice=await db.from("customer_notifications").insert({customer_id:id,title:approvalTitle,message:approvalMessage,notification_type:"account",reference_key:"account-approved"});if(!approvalNotice.error)await notifyCustomerPush(id,approvalTitle,approvalMessage);}
  if(error){msg("منظوری محفوظ نہیں ہوئی: "+error.message);return;}
- msg("گاہک کی منظوری ہوگئی۔",true);await loadCustomers();
+ msg("گاہک کی منظوری ہوگئی۔",true);await Promise.all([loadCustomers(),refreshAdminSignupNotice()]);
 }
 
 
@@ -1267,7 +1323,7 @@ async function toggleCustomerStatus(id){
  if(!confirm("کیا "+(c.name||"اس کسٹمر")+" کا اکاؤنٹ "+action+" کرنا ہے؟ "+(next?"کسٹمر دوبارہ لاگ اِن کرسکے گا۔":"کسٹمر لاگ اِن نہیں کرسکے گا؛ پرانا مالی ریکارڈ محفوظ رہے گا۔")))return;
  const {error}=await db.from("customers").update({is_active:next}).eq("id",id);
  if(error){msg("اکاؤنٹ کی حیثیت تبدیل نہیں ہوئی: "+error.message);return;}
- msg("کسٹمر اکاؤنٹ "+(next?"فعال":"غیر فعال")+" ہوگیا۔",true);await loadCustomers();
+ msg("کسٹمر اکاؤنٹ "+(next?"فعال":"غیر فعال")+" ہوگیا۔",true);await Promise.all([loadCustomers(),refreshAdminSignupNotice()]);
 }
 
 function renderCustomers(){
