@@ -488,8 +488,8 @@ async function enableCustomerPush(){
   if(error)throw error;
   say("موبائل اطلاعات فعال ہوگئیں۔ نئی ڈیلیوری، بل اور ادائیگی کی اطلاع موبائل پر آئے گی۔");
   if(button){button.textContent="موبائل اطلاعات فعال ہیں";button.disabled=true;}
- }catch(e){console.error("Push subscription failed",e);say("اطلاعات فعال نہیں ہوئیں: "+(e?.message||String(e)));}
- finally{if(button&&Notification.permission!=="granted"){button.disabled=false;button.textContent="موبائل پر اطلاعات فعال کریں";}}
+ }catch(e){console.error("Push subscription failed",e);say("اطلاعات فعال نہیں ہوئیں: "+(e?.message||String(e)));if(button){button.disabled=false;button.textContent="موبائل پر اطلاعات فعال کریں";}}
+ finally{}
 }
 async function updateCustomerPushStatus(){
  const status=$("pushStatus"),button=$("enablePushButton");if(!status||!button)return;
