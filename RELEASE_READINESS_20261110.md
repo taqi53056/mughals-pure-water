@@ -1,7 +1,8 @@
 # MUGHAL'S PURE WATER — Brand and Single-Delivery Guard Release
 
 Date: 2026-11-10  
-Base: `357000100903eb1a14322b8fb2023de79d1ce1dd`
+Base: `357000100903eb1a14322b8fb2023de79d1ce1dd`  
+Live Supabase migration version: `20261110170207`
 
 ## Included changes
 - Replaced the previous crown/wordmark artwork with a single scalable emerald, water and champagne-gold MPW identity.

@@ -13,7 +13,7 @@ HTML = ROOT / "index.html"
 MANIFEST = ROOT / "manifest.webmanifest"
 SW = ROOT / "SW.js"
 LOGO = ROOT / "logo.svg"
-DELIVERY_MIGRATION = ROOT / "supabase/migrations/20261110170000_one_customer_delivery_per_day.sql"
+DELIVERY_MIGRATION = ROOT / "supabase/migrations/20261110170207_one_customer_delivery_per_day.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
