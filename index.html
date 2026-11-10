@@ -722,7 +722,6 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 <div class="password-field"><input id="password" type="password" autocomplete="current-password" placeholder="پاس ورڈ"><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('password',this)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
 <button id="loginButton" type="button" onclick="handleLoginClick()">لاگ اِن</button>
 <button class="secondary" type="button" onclick="showSignup()">نیا کسٹمر اکاؤنٹ بنائیں</button>
-<button class="secondary" type="button" onclick="resendConfirmationEmail()">تصدیقی ای میل دوبارہ بھیجیں</button>
 </div>
 <div id="signupForm" class="hidden">
 <h2>نیا کسٹمر اکاؤنٹ</h2>
@@ -1118,7 +1117,6 @@ async function signupCustomer(){
    email,password,
    options:{
     data:{full_name:name,mobile,address},
-    emailRedirectTo:"https://taqi53056.github.io/mughals-pure-water/"
    }
   });
   if(error)throw error;
@@ -1126,13 +1124,13 @@ async function signupCustomer(){
    throw new Error("یہ ای میل پہلے سے رجسٹرڈ ہے۔ لاگ اِن کریں یا دوسری ای میل استعمال کریں۔");
   }
   if(!data?.user)throw new Error("اکاؤنٹ کی درخواست کی تصدیق نہیں ہوسکی۔ دوبارہ کوشش کریں۔");
-  if(data.session){
-   await db.auth.signOut();
-   throw new Error("اکاؤنٹ کی حفاظت کے لیے ای میل کی تصدیق لازمی ہے۔ منتظم سے رابطہ کریں۔");
+  if(!data.session){
+   throw new Error("درخواست محفوظ ہوئی، مگر ای میل تصدیق ابھی فعال ہے۔ منتظم کو کہیں کہ Supabase میں Confirm email بند کرے؛ اس کے بعد گاہک کو تصدیقی ای میل نہیں آئے گی۔");
   }
+  await db.auth.signOut();
   showLogin();
   $("loginMsg").className="success";
-  $("loginMsg").textContent="آپ کی رجسٹریشن موصول ہوگئی ہے۔ ای میل پر بھیجا گیا تصدیقی لنک کھولیں۔ آپ کی منظوری کی درخواست منتظم کو بھی پہنچ گئی ہے؛ منظوری اور ای میل تصدیق کے بعد لاگ اِن کریں۔";
+  $("loginMsg").textContent="آپ کی درخواست موصول ہوگئی ہے۔ اب ای میل کھولنے کی ضرورت نہیں۔ منتظم کو درخواست مل گئی ہے؛ منظوری کے بعد اسی ای میل اور پاس ورڈ سے لاگ اِن کریں۔";
  }catch(e){
   $("loginMsg").className="error";
   $("loginMsg").textContent="رجسٹریشن ناکام: "+(e?.message||String(e));
@@ -2715,13 +2713,13 @@ async function ownerWithdrawalsModule(){
  '<div class="owner-withdrawal-hero"><div><span class="owner-eyebrow">OWNER WITHDRAWALS</span><h3>مالکان کی ذاتی نکاسی</h3><p>یہ کاروباری خرچ نہیں۔ نکالی گئی رقم منافع و نقصان سے الگ رہے گی۔</p></div><div class="owner-hero-mark">↗</div></div>'+
  '<div class="card owner-entry-card"><h3>نکاسی کا نیا اندراج</h3><p class="muted">ہر نکاسی الگ درج کریں۔ پہلے تاریخ، وصول کنندہ، رقم اور وجہ چیک کریں۔</p>'+
  '<label for="owDate">تاریخ</label><input id="owDate" type="date" value="'+today()+'">'+
- '<label for="owOwner">رقم کس نے لی؟</label><select id="owOwner">'+opts+'</select>'+
+ '<label for="owOwner">رقم کس نے وصول کی؟</label><select id="owOwner">'+opts+'</select><p class="muted">M. Rafi Mughal اس فہرست میں صرف رقم وصول کرنے والے ہیں؛ انہیں منتظم کا کوئی اختیار حاصل نہیں۔</p>'+
  '<label for="owAmount">رقم (روپے)</label><input id="owAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="مثلاً 5000">'+
  '<label for="owReason">نکاسی کی وجہ</label><input id="owReason" maxlength="120" placeholder="مثلاً ذاتی ضرورت">'+
  '<label for="owDetails">اضافی وضاحت (اختیاری)</label><textarea id="owDetails" maxlength="500" placeholder="ضرورت ہو تو تفصیل لکھیں"></textarea>'+
  '<label for="owMethod">ادائیگی کا طریقہ</label><select id="owMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>'+
  '<button id="owSave" onclick="saveOwnerWithdrawal()">نکاسی محفوظ کریں</button></div>'+
- '<div class="card"><div class="owner-section-head"><div><h3>ماہانہ خلاصہ</h3><p class="muted">چاروں مقررہ وصول کنندگان کا الگ حساب</p></div><span class="owner-month-tag" id="ownerMonthTag">'+today().slice(0,7)+'</span></div><div id="ownerWithdrawalSummary">ریکارڈ لوڈ ہو رہا ہے...</div></div>'+
+ '<div class="card"><div class="owner-section-head"><div><h3>ماہانہ خلاصہ</h3><p class="muted">چاروں مقررہ وصول کنندگان کا الگ حساب — یہ منتظمین کی فہرست نہیں</p></div><span class="owner-month-tag" id="ownerMonthTag">'+today().slice(0,7)+'</span></div><div id="ownerWithdrawalSummary">ریکارڈ لوڈ ہو رہا ہے...</div></div>'+
  '<div class="card"><h3>نکاسی کی مکمل ہسٹری</h3><label for="owMonth">مطلوبہ مہینہ</label><input id="owMonth" type="month" value="'+today().slice(0,7)+'"><button class="secondary" onclick="loadOwnerWithdrawals()">مہینے کا حساب دکھائیں</button><div id="ownerWithdrawalHistory">ریکارڈ لوڈ ہو رہا ہے...</div></div>';
  await loadOwnerWithdrawals();
 }
