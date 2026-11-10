@@ -1654,9 +1654,12 @@ async function saveProductReturn(){
  if(!confirmLargeEntry("واپس آنے والی خراب بوتلیں",quantity,100))return;
  const button=$("returnSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
-  const {data,error}=await db.rpc("record_product_return",{p_return_date:return_date,p_product_type:product_type,p_quantity:quantity,p_reason:reason});
+  const requestSignature=[return_date,product_type,quantity,reason].join("|");
+  const requestId=mpwPendingRequestId("product-return",requestSignature);
+  const {data,error}=await db.rpc("record_product_return",{p_return_date:return_date,p_product_type:product_type,p_quantity:quantity,p_reason:reason,p_request_id:requestId});
   if(error)throw error;
   if(!data||!data.return_id)throw new Error("ڈیٹابیس سے واپسی کی تصدیق موصول نہیں ہوئی۔");
+  mpwClearPendingRequestId("product-return");
   msg("خراب مال کی واپسی اور متبادل بوتلوں کا اندراج محفوظ ہوگیا۔",true);
   $("returnQty").value="";$("returnReason").value="";
   await loadProductReturns();await loadTodaySummary();
@@ -2544,9 +2547,12 @@ async function saveProduction(){
  }
  const button=document.querySelector('button[onclick="saveProduction()"]');if(button)button.disabled=true;
  try{
-  const {data,error}=await db.rpc("record_production_with_workers",{p_production_date:date,p_product_type:productType,p_quantity:qty,p_allocations:allocations});
+  const requestSignature=[date,productType,qty,JSON.stringify(allocations)].join("|");
+  const requestId=mpwPendingRequestId("production",requestSignature);
+  const {data,error}=await db.rpc("record_production_with_workers",{p_production_date:date,p_product_type:productType,p_quantity:qty,p_allocations:allocations,p_request_id:requestId});
   if(error)throw error;
   if(!data||!data.production_id)throw new Error("ڈیٹابیس سے پروڈکشن کی تصدیق موصول نہیں ہوئی۔");
+  mpwClearPendingRequestId("production");
   msg("پروڈکشن محفوظ ہوگئی۔ مزدوروں کی واجب الادا اجرت: "+money(data.worker_labor_total)+"۔ مالک کی ممکنہ بچت: "+money(data.owner_saved_labor||0)+"۔ مالک کے کارٹن: "+(data.owner_cartons||0),true);
   $("prodQty").value="";$("prodAllocations").innerHTML="";if(productType!=="6L")addProductionWorkerRow();updateProductionAllocationTotal();await loadLaborHistory();
  }catch(e){msg("پروڈکشن محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
