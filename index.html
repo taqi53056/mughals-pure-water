@@ -730,10 +730,10 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 <h2>نیا کسٹمر اکاؤنٹ</h2>
 <p class="muted">اپنی درست معلومات درج کریں۔ Customer ID خودکار بنے گی۔</p>
 <label for="signupName">پورا نام</label><input id="signupName" type="text" autocomplete="name" maxlength="120" placeholder="اپنا مکمل نام درج کریں" required>
-<label for="signupMobile">موبائل نمبر</label><input id="signupMobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="03XXXXXXXXX یا +923XXXXXXXXX" aria-describedby="signupMobileHelp"><small id="signupMobileHelp" class="muted">پاکستانی موبائل نمبر درج کریں؛ مثال: 03XXXXXXXXX</small>
+<label for="signupMobile">موبائل نمبر</label><input id="signupMobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="03XXXXXXXXX یا +923XXXXXXXXX" aria-describedby="signupMobileHelp" required><small id="signupMobileHelp" class="muted">پاکستانی موبائل نمبر درج کریں؛ مثال: 03XXXXXXXXX</small>
 <label for="signupAddress">مکمل پتہ</label><input id="signupAddress" type="text" autocomplete="street-address" maxlength="300" placeholder="گھر، گلی اور علاقے کا پتہ" required>
 <label for="signupEmail">ای میل</label><input id="signupEmail" type="email" autocomplete="email" maxlength="254" placeholder="مثلاً name@example.com" required>
-<div class="password-field"><label for="signupPassword">پاس ورڈ</label><input id="signupPassword" type="password" autocomplete="new-password" minlength="8" placeholder="کم از کم 8 حروف" required><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('signupPassword',this)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+<label for="signupPassword">پاس ورڈ</label><div class="password-field"><input id="signupPassword" type="password" autocomplete="new-password" minlength="8" placeholder="کم از کم 8 حروف" required><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('signupPassword',this)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
 <button id="signupButton" type="submit">اکاؤنٹ بنائیں</button>
 <button class="secondary" type="button" onclick="showLogin()">واپس لاگ اِن</button>
 </form>
