@@ -791,7 +791,7 @@ async function approveCustomer(id){
  const c=customerList.find(x=>Number(x.id)===Number(id));if(!c||c.is_active===true)return;
  if(!confirm("کیا "+(c.name||"اس گاہک")+" کو اکاؤنٹ استعمال کرنے کی منظوری دینی ہے؟"))return;
  const {error}=await db.from("customers").update({is_active:true}).eq("id",id);
- if(!error && c.auth_user_id){await db.from("customer_notifications").insert({customer_id:id,title:"آپ کا اکاؤنٹ منظور ہوگیا",message:"السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔",notification_type:"account"});}
+ if(!error && c.auth_user_id){const approvalTitle="آپ کا اکاؤنٹ منظور ہوگیا",approvalMessage="السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔";const approvalNotice=await db.from("customer_notifications").insert({customer_id:id,title:approvalTitle,message:approvalMessage,notification_type:"account"});if(!approvalNotice.error)await notifyCustomerPush(id,approvalTitle,approvalMessage);}
  if(error){msg("منظوری محفوظ نہیں ہوئی: "+error.message);return;}
  msg("گاہک کی منظوری ہوگئی۔",true);await loadCustomers();
 }
@@ -969,6 +969,7 @@ async function saveDelivery(){
     }).eq("id",existingNotice.id)
    :await db.from("customer_notifications").insert(deliveryNotice);
   notificationError=noticeResult.error;
+  if(!notificationError)await notifyCustomerPush(Number(id),deliveryNotice.title,deliveryNotice.message);
  }
  if(notificationError){
   console.error("Notification could not be saved",notificationError);
@@ -1102,7 +1103,7 @@ async function saveBill(){
    ?await db.from("customer_notifications").update({title:notice.title,message:notice.message,is_read:false,created_at:new Date().toISOString()}).eq("id",existing[0].id)
    :await db.from("customer_notifications").insert(notice);
   if(nr.error)msg("بل دوبارہ حساب ہوگیا، مگر کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+nr.error.message);
-  else {setBillSavedState(true);msg("بل دوبارہ حساب ہوگیا اور مکمل تفصیل کے ساتھ کسٹمر کی اطلاع محفوظ ہوگئی۔",true);}
+  else {await notifyCustomerPush(Number(id),notice.title,notice.message);setBillSavedState(true);msg("بل دوبارہ حساب ہوگیا اور مکمل تفصیل کے ساتھ کسٹمر کی اطلاع محفوظ ہوگئی۔",true);}
  }catch(e){msg("بل یا اطلاع مکمل نہیں ہوسکی: "+e.message)}
 }
 
@@ -1129,6 +1130,7 @@ async function recordCustomerPayment(){
   };
   const {error:noticeError}=await db.from("customer_notifications").insert(notice);
   if(noticeError){msg("ادائیگی محفوظ ہوگئی، مگر کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+noticeError.message);return}
+  await notifyCustomerPush(customerId,notice.title,notice.message);
   msg("ادائیگی محفوظ ہوگئی، بل دوبارہ حساب ہوگیا اور کسٹمر کو اطلاع بھی درج ہوگئی۔",true);
  }catch(e){msg("ادائیگی محفوظ ہوگئی، مگر بل یا کسٹمر اطلاع مکمل نہیں ہوسکی: "+e.message)}
 }
@@ -2100,7 +2102,7 @@ async function loadComplaints(){
  const labels={new:"نئی",in_progress:"جاری",resolved:"حل ہوگئی"};
  $("moduleTable").innerHTML='<table><tr><th>کسٹمر</th><th>قسم / تفصیل</th><th>حیثیت اور جواب</th><th>محفوظ</th></tr>'+(data||[]).map(c=>`<tr><td>${esc(c.customers?.name||c.customer_id)}</td><td>${esc(c.category)}<p>${esc(c.details)}</p></td><td><select id="cs${c.id}"><option value="new" ${c.status==='new'?'selected':''}>نئی</option><option value="in_progress" ${c.status==='in_progress'?'selected':''}>جاری</option><option value="resolved" ${c.status==='resolved'?'selected':''}>حل ہوگئی</option></select><textarea id="cn${c.id}" rows="2" placeholder="کسٹمر کے لیے جواب / نوٹ">${esc(c.admin_note||"")}</textarea></td><td><button onclick="updateComplaint(${c.id})">محفوظ</button></td></tr>`).join("")+'</table>';
 }
-async function updateComplaint(id){const status=$("cs"+id).value,admin_note=$("cn"+id).value.trim();const {data:complaint,error:ce}=await db.from("customer_complaints").select("customer_id,category,status,admin_note").eq("id",id).maybeSingle();if(ce||!complaint){msg("شکایت کا ریکارڈ نہیں ملا: "+(ce?.message||""));return;}const {error}=await db.from("customer_complaints").update({status,admin_note:admin_note||null,updated_at:new Date().toISOString()}).eq("id",id);if(error){msg("شکایت اپڈیٹ نہیں ہوئی: "+error.message);return;}if(status!==complaint.status||admin_note!==(complaint.admin_note||"")){const message=`آپ کی شکایت (${complaint.category}) اپڈیٹ ہوئی ہے۔ حیثیت: ${status==="resolved"?"حل ہوگئی":status==="in_progress"?"زیرِ کارروائی":"موصول"}۔`+(admin_note?" منتظم کا جواب: "+admin_note:"");const nr=await db.from("customer_notifications").insert({customer_id:complaint.customer_id,title:"آپ کی شکایت کی تازہ کاری",message,notification_type:"complaint"});if(nr.error){msg("شکایت محفوظ ہوئی مگر اطلاع نہ بھیجی جا سکی: "+nr.error.message);await loadComplaints();return;}}msg("شکایت اور منتظم کا جواب محفوظ ہوگیا۔",true);await loadComplaints();}
+async function updateComplaint(id){const status=$("cs"+id).value,admin_note=$("cn"+id).value.trim();const {data:complaint,error:ce}=await db.from("customer_complaints").select("customer_id,category,status,admin_note").eq("id",id).maybeSingle();if(ce||!complaint){msg("شکایت کا ریکارڈ نہیں ملا: "+(ce?.message||""));return;}const {error}=await db.from("customer_complaints").update({status,admin_note:admin_note||null,updated_at:new Date().toISOString()}).eq("id",id);if(error){msg("شکایت اپڈیٹ نہیں ہوئی: "+error.message);return;}if(status!==complaint.status||admin_note!==(complaint.admin_note||"")){const message=`آپ کی شکایت (${complaint.category}) اپڈیٹ ہوئی ہے۔ حیثیت: ${status==="resolved"?"حل ہوگئی":status==="in_progress"?"زیرِ کارروائی":"موصول"}۔`+(admin_note?" منتظم کا جواب: "+admin_note:"");const nr=await db.from("customer_notifications").insert({customer_id:complaint.customer_id,title:"آپ کی شکایت کی تازہ کاری",message,notification_type:"complaint"});if(nr.error){msg("شکایت محفوظ ہوئی مگر اطلاع نہ بھیجی جا سکی: "+nr.error.message);await loadComplaints();return;}await notifyCustomerPush(complaint.customer_id,"آپ کی شکایت کی تازہ کاری",message);}msg("شکایت اور منتظم کا جواب محفوظ ہوگیا۔",true);await loadComplaints();}
 async function submitComplaint(){const category=$("complaintCategory").value,details=$("complaintDetails").value.trim();if(!details){$("myComplaints").textContent="براہ کرم مسئلے کی تفصیل لکھیں۔";return;}const {error}=await db.from("customer_complaints").insert({customer_id:myCustomer.id,category,details});if(error){$("myComplaints").textContent="شکایت محفوظ نہیں ہوئی: "+error.message;return;}$("complaintDetails").value="";await loadCustomerComplaints();}
 async function loadCustomerComplaints(){const {data,error}=await db.from("customer_complaints").select("category,details,status,created_at,admin_note").eq("customer_id",myCustomer.id).order("created_at",{ascending:false});if(error){$("myComplaints").textContent="شکایات لوڈ نہیں ہوئیں";return;}const labels={new:"موصول",in_progress:"زیرِ کارروائی",resolved:"حل ہوگئی"};$("myComplaints").innerHTML=(data||[]).map(c=>`<div class="stat"><b>${esc(c.category)}</b> — ${labels[c.status]||c.status}<p>${esc(c.details)}</p><small>${esc(c.admin_note||"")}</small></div>`).join("")||"ابھی کوئی شکایت درج نہیں۔";}
 async function loadCustomerNotifications(){const {data,error}=await db.from("customer_notifications").select("id,title,message,is_read,created_at").eq("customer_id",myCustomer.id).order("created_at",{ascending:false}).limit(30);if(error){$("myNotifications").textContent="اطلاعات لوڈ نہیں ہوئیں";return;}$("myNotifications").innerHTML=(data||[]).map(n=>`<div class="stat"><b>${esc(n.title)}</b><p>${esc(n.message)}</p><small>${esc(n.created_at)}</small>${!n.is_read?`<button class="secondary" onclick="markNotificationRead(${n.id})">پڑھ لیا</button>`:""}</div>`).join("")||"ابھی کوئی نئی اطلاع نہیں۔";}
