@@ -1737,7 +1737,10 @@ async function saveTankerPurchase(){
   if(result.error)throw result.error;
   saved=true;
   if(opening){msg("ابتدائی پانی کا اسٹاک محفوظ ہوگیا۔",true);$("tankOpeningLitres").value="";$("tankOpeningValue").value="";}
-  else{msg("ٹینکر خریداری محفوظ ہوگئی۔",true);$("tankSupplier").value="";}
+  else{
+   msg("ٹینکر خریداری محفوظ ہوگئی۔ اگلی خریداری کے لیے مقدار اور قیمت دوبارہ درج کریں۔",true);
+   $("tankCount").value="";$("tankRate").value="";$("tankSupplier").value="";$("tankPaymentMethod").value="cash";updateTankerTotal();
+  }
   await Promise.all([loadTankerPurchases(),loadTodaySummary()]);
  }catch(e){msg(saved?"پانی کا اندراج محفوظ ہوگیا، مگر فہرست تازہ نہیں ہوسکی: "+(e?.message||String(e)):(opening?"ابتدائی پانی کا اسٹاک":"ٹینکر خریداری")+" محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
@@ -1755,12 +1758,12 @@ async function loadTankerPurchases(){
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
  $("moduleBody").innerHTML=
- '<p class="muted">گاہکوں کی الگ الگ تفصیل نہیں چاہیے۔ پورے دن کے کُل فروخت شدہ لیٹر اور کُل وصول شدہ رقم ایک ہی انٹری میں درج کریں۔</p>'+
+ '<p class="muted">پورے دن کے کُل فروخت شدہ لیٹر اور کُل وصول شدہ رقم درج کریں۔ اس تاریخ کا ریکارڈ پہلے موجود ہو تو خانے اسی کل سے بھر جائیں گے؛ نئی رقم جمع نہ کریں بلکہ پورے دن کا درست مجموعہ درج کرکے اسی ریکارڈ کو اپڈیٹ کریں۔</p>'+
  '<div class="card"><input id="counterDate" type="date" value="'+today()+'">'+
  '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنے لیٹر فروخت ہوئے؟">'+
  '<input id="counterAmount" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنی رقم وصول ہوئی؟">'+
  '<select id="counterMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="mixed">مختلف ذرائع</option></select>'+
- '<button onclick="saveCounterWaterSale()">روزانہ کاؤنٹر فروخت محفوظ کریں</button></div>';
+ '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ کاؤنٹر فروخت محفوظ کریں</button></div>';
  $("counterDate").addEventListener("change",loadCounterWaterForDate);await loadCounterWaterForDate();
 }
 async function loadCounterWaterForDate(){
@@ -1770,6 +1773,8 @@ async function loadCounterWaterForDate(){
  $("counterLitres").value=data?.total_litres??"";
  $("counterAmount").value=data?.total_amount??"";
  $("counterMethod").value=data?.payment_method||"cash";
+ const saveButton=$("counterSaveButton");
+ if(saveButton)saveButton.textContent=data?"روزانہ کا کُل اپڈیٹ کریں":"روزانہ کاؤنٹر فروخت محفوظ کریں";
  const {data:history}=await db.from("counter_water_sales").select("*").order("sale_date",{ascending:false}).limit(30);
  $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر فروخت کی ہسٹری</h3><table><tr><th>تاریخ</th><th>لیٹر</th><th>وصول شدہ رقم</th><th>فی لیٹر اوسط</th></tr>'+
  (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.total_litres))+'</td></tr>').join("")+'</table>';
@@ -1778,11 +1783,17 @@ async function saveCounterWaterSale(){
  const sale_date=$("counterDate").value,total_litres=Number($("counterLitres").value),total_amount=Number($("counterAmount").value);
  if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<=0){msg("تاریخ، کل لیٹر اور وصول شدہ رقم درست درج کریں۔");return;}
  if(!confirmLargeEntry("کاؤنٹر فروخت کے لیٹر",total_litres,1000)||!confirmLargeEntry("وصول شدہ رقم",total_amount,100000))return;
- const payload={sale_date,total_litres,total_amount,payment_method:$("counterMethod").value,entered_by:user?.id||null};
- const {error}=await db.from("counter_water_sales").upsert(payload,{onConflict:"sale_date"});
- if(error){msg("کاؤنٹر فروخت محفوظ نہیں ہوئی: "+error.message);return;}
- msg("روزانہ کاؤنٹر فروخت محفوظ ہوگئی۔",true);await loadCounterWaterForDate();await loadTodaySummary();
+ const button=$("counterSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const payload={sale_date,total_litres,total_amount,payment_method:$("counterMethod").value,entered_by:user?.id||null};
+  const {error}=await db.from("counter_water_sales").upsert(payload,{onConflict:"sale_date"});
+  if(error)throw error;
+  msg("اس تاریخ کی روزانہ کاؤنٹر فروخت محفوظ/اپڈیٹ ہوگئی؛ دوسرا ریکارڈ نہیں بنایا گیا۔",true);
+  await loadCounterWaterForDate();await loadTodaySummary();
+ }catch(error){msg("کاؤنٹر فروخت محفوظ نہیں ہوئی: "+(error?.message||String(error)));}
+ finally{if(button)button.disabled=false;}
 }
+
 async function productReturnsModule(){
  setTitle("خراب تیار مال کی واپسی");
  $("moduleBody").innerHTML=
