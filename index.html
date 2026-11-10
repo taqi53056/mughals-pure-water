@@ -1225,12 +1225,13 @@ async function rawMaterialsModule(){
  '<p class="muted">نئی خریداری یا پہلے سے موجود ابتدائی اسٹاک منتخب کریں۔ ابتدائی اسٹاک کی مقدار اور اندازاً کل مالیت درج ہوگی، اسے نئی نقد خریداری نہیں گنا جائے گا۔ کلیم کے بدلے آنے والا مال بھی خریداری یا اضافی خرچ نہیں ہوگا۔</p>'+
  '<div class="card"><h3>نئی خریداری</h3>'+
  '<input id="rawPurchaseDate" type="date" value="'+today()+'">'+
- '<select id="rawPurchaseKind" onchange="toggleRawPurchaseKind()"><option value="purchase">نئی نقد خریداری</option><option value="opening_stock">پہلے سے موجود ابتدائی اسٹاک</option></select>'+
+ '<select id="rawPurchaseKind" onchange="toggleRawPurchaseKind()"><option value="purchase">نئی خریداری</option><option value="opening_stock">پہلے سے موجود ابتدائی اسٹاک</option></select>'+
  '<select id="rawPurchaseType">'+
  Object.keys(rawMaterialLabels).map(k=>'<option value="'+k+'">'+rawMaterialLabels[k]+'</option>').join("")+
  '</select>'+
- '<input id="rawPurchaseQty" type="number" min="1" step="1" placeholder="بل کے مطابق مقدار">'+
+ '<input id="rawPurchaseQty" type="number" min="1" step="1" placeholder="مقدار: بوتل / کارٹن / بنڈل / عدد">'+
  '<input id="rawPurchaseAmount" type="number" min="0.01" step="0.01" placeholder="کل ادا شدہ رقم / ابتدائی مالیت (روپے)">'+
+ '<div id="rawPaymentWrap"><label>ادائیگی کا طریقہ</label><select id="rawPurchaseMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select></div>'+
  '<input id="rawPurchaseSupplier" maxlength="120" placeholder="سپلائر (اختیاری)">'+
  '<textarea id="rawPurchaseDetails" maxlength="300" placeholder="بل نمبر / تفصیل (اختیاری)"></textarea>'+
  '<button id="rawPurchaseSaveButton" onclick="saveRawMaterialPurchase()">خریداری محفوظ کریں</button></div>'+
@@ -1248,7 +1249,7 @@ async function saveRawMaterialPurchase(){
  const payload={
   purchase_date:date,record_type,material_type:type,quantity,unit:rawMaterialUnits[type],
   total_amount,supplier:$("rawPurchaseSupplier").value.trim()||null,
-  payment_method:record_type==="opening_stock"?"opening":"cash",
+  payment_method:record_type==="opening_stock"?"opening":$("rawPurchaseMethod").value,
   details:$("rawPurchaseDetails").value.trim()||null,entered_by:user?.id||null
  };
  const {error}=await db.from("raw_material_purchases").insert(payload);
@@ -1294,7 +1295,8 @@ async function tankerPurchaseModule(){
  '<div id="tankerPurchaseFields"><input id="tankCount" type="number" min="1" step="1" value="1" placeholder="ٹینکروں کی تعداد">'+
  '<input id="tankRate" type="number" min="1" step="0.01" placeholder="فی 1,000 لیٹر ٹینکر کی قیمت">'+
  '<div class="total">کل رقم: <b id="tankTotal">Rs. 0</b></div>'+
- '<input id="tankSupplier" maxlength="120" placeholder="سپلائر (اختیاری)"></div>'+
+ '<input id="tankSupplier" maxlength="120" placeholder="سپلائر (اختیاری)">'+
+ '<label>ادائیگی کا طریقہ</label><select id="tankPaymentMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select></div>'+
  '<div id="tankerOpeningFields" class="hidden"><input id="tankOpeningLitres" type="number" min="0.01" step="0.01" placeholder="ابتدائی پانی کے لیٹر">'+
  '<input id="tankOpeningValue" type="number" min="0.01" step="0.01" placeholder="ابتدائی پانی کی کل مالیت (روپے)"></div>'+
  '<button onclick="saveTankerPurchase()">اندراج محفوظ کریں</button></div>';
@@ -1306,6 +1308,7 @@ function toggleRawPurchaseKind(){
  if($("rawPurchaseAmount"))$("rawPurchaseAmount").placeholder=opening?"پہلے سے موجود اسٹاک کی اندازاً کل مالیت":"کل ادا شدہ رقم (روپے)";
  if($("rawPurchaseDetails")&&opening)$("rawPurchaseDetails").placeholder="ابتدائی اسٹاک کی تاریخ / اندازاً مالیت کی بنیاد";
  if($("rawPurchaseSaveButton"))$("rawPurchaseSaveButton").textContent=opening?"ابتدائی اسٹاک محفوظ کریں":"خریداری محفوظ کریں";
+ if($("rawPaymentWrap"))$("rawPaymentWrap").classList.toggle("hidden",opening);
 }
 function updateTankerTotal(){
  const n=Number($("tankCount")?.value)||0,r=Number($("tankRate")?.value)||0;
@@ -1330,7 +1333,7 @@ async function saveTankerPurchase(){
   if(!date||!Number.isInteger(count)||count<=0||!Number.isFinite(rate)||rate<=0){msg("تاریخ، ٹینکروں کی تعداد اور فی ٹینکر قیمت درست درج کریں۔");return;}
   if(!confirmLargeEntry("ٹینکروں کی تعداد",count,5)||!confirmLargeEntry("ٹینکر کی کل رقم",count*rate,100000))return;
   const {error}=await db.from("water_tanker_purchases").insert({
-   purchase_date:date,water_use:$("waterUse").value,tanker_count:count,rate_per_tanker:rate,payment_method:"cash",
+   purchase_date:date,water_use:$("waterUse").value,tanker_count:count,rate_per_tanker:rate,total_amount:count*rate,payment_method:$("tankPaymentMethod").value,
    supplier:$("tankSupplier").value.trim()||null,entered_by:user?.id||null
   });
   if(error){msg("ٹینکر خریداری محفوظ نہیں ہوئی: "+error.message);return;}
