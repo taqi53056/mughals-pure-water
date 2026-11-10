@@ -64,6 +64,12 @@ try {
     if (state.direction !== "rtl") failures.push("Document direction is not RTL");
     if (state.width > state.viewport + 1) failures.push(`Horizontal overflow at ${viewport.width}px`);
     if (!state.manifest) failures.push("PWA manifest link is missing");
+    const logoResponse = await page.request.get("http://localhost:4173/logo.svg");
+    if (!logoResponse.ok()) failures.push("Unified MPW logo did not load");
+    if (!(await page.locator(".brand-logo").isVisible())) failures.push("Brand logo is not visible in the app header");
+    const logoAlt = await page.locator(".brand-logo").getAttribute("alt");
+    if (!logoAlt?.includes("MUGHAL'S PURE WATER")) failures.push("Brand logo accessible text is missing");
+
     const manifestResponse = await page.request.get("http://localhost:4173/manifest.webmanifest");
     if (!manifestResponse.ok()) failures.push("PWA manifest did not load");
     else {
