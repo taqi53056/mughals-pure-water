@@ -894,7 +894,7 @@ async function deliveryModule(){
  <div class="stat">بوتلوں کا فرق: <b id="dDiff">0</b></div>
  <div class="stat">مزدور کی واجب الادا مزدوری: <b id="dLabor">Rs. 0</b></div><div class="stat">مالک کی ممکنہ بچت: <b id="dOwnerSaving">Rs. 0</b></div>
  <div id="dWarn" class="warning hidden">بوتلوں میں فرق ہے؛ اسی دن جانچیں۔</div>
- <button onclick="saveDelivery()">ڈلیوری محفوظ کریں</button>
+ <button id="deliverySaveButton" onclick="saveDelivery()">ڈلیوری محفوظ کریں</button>
  <p class="muted">ڈلیوری محفوظ ہونے کے بعد ہی پیغام تیار کیا جا سکے گا؛ پیغام فون میں کھلے گا، Send آپ کریں گے۔</p><button id="deliveryWhatsAppButton" class="secondary" disabled onclick="shareCurrentDeliveryWhatsApp()">WhatsApp پیغام تیار کریں</button><button id="deliverySMSButton" class="secondary" disabled onclick="shareCurrentDeliverySMS()">SMS پیغام تیار کریں</button>
  <button class="secondary" onclick="loadDailyDeliveries()">تمام ڈلیوریاں تازہ کریں</button>`;
  await loadWorkerOptions();
@@ -948,47 +948,57 @@ async function saveDelivery(){
  if(c.diff>0&&!confirm("بوتلوں میں "+c.diff+" کا فرق ہے۔ کیا محفوظ کرنا ہے؟"))return;
  if(c.caps>0&&!confirm(c.caps+" خراب ڈھکن × Rs.10 = "+money(c.capAmount)+". کیا محفوظ کرنا ہے؟"))return;
  if(!confirmLargeEntry("19L بوتلوں کی تعداد",c.out,100)||!confirmLargeEntry("خراب ڈھکنوں کی تعداد",c.caps,50))return;
- const workerId=c.isOwner?null:($("dWorker")?.value||null);
- const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
- // ہر محفوظ کرنے پر نئی ڈلیوری بنے گی؛ اسی دن کا پرانا ریکارڈ overwrite نہیں ہوگا۔
- const {data:saved,error:saveError}=await db.from("customer_19l_deliveries").insert(payload).select("id").single();
- if(saveError){msg("ڈلیوری محفوظ نہیں ہوئی: "+saveError.message);return}
- setDeliverySavedState(true);
- let billSyncWarning="";
- try{await syncBillBottles(Number(id),date.slice(0,7)+"-01")}
- catch(e){billSyncWarning=" ڈلیوری محفوظ ہے، مگر ماہانہ بل اپڈیٹ نہیں ہوا: "+e.message}
- let notificationWarning="";
- const customerName=customerList.find(x=>Number(x.id)===Number(id))?.name||"گاہک";
- const deliveryNotice={
-  customer_id:Number(id),
-  title:"نئی ڈلیوری درج ہوگئی",
-  message:`السلام علیکم ${customerName} صاحب! ${date} کو ${c.out} بھری بوتلیں دی گئیں، ${c.back} خالی واپس آئیں اور ${c.success} کامیاب بوتلیں درج ہوئیں۔ خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,
-  notification_type:"delivery",
-  reference_key:`delivery:${date}:${saved.id}`
- };
- const {error:noticeError}=await db.from("customer_notifications").insert(deliveryNotice);
- if(noticeError){
-  console.error("Notification could not be saved",noticeError);
-  notificationWarning=" کسٹمر کی ایپ اطلاع محفوظ نہیں ہوئی: "+noticeError.message;
- }else{
-  const pushResult=await notifyCustomerPush(Number(id),deliveryNotice.title,deliveryNotice.message);
-  if(pushResult?.error||Number(pushResult?.sent||0)<1){
-   notificationWarning=" ایپ میں اطلاع محفوظ ہے، مگر موبائل Push نہیں پہنچی: "+(pushResult?.error||pushResult?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔");
+ const button=$("deliverySaveButton");
+ if(button?.disabled)return;
+ if(button)button.disabled=true;
+ try{
+  const workerId=c.isOwner?null:($("dWorker")?.value||null);
+  const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
+  const {data:saved,error:saveError}=await db.from("customer_19l_deliveries").insert(payload).select("id").single();
+  if(saveError)throw saveError;
+  setDeliverySavedState(true);
+  let billSyncWarning="";
+  try{await syncBillBottles(Number(id),date.slice(0,7)+"-01")}
+  catch(e){billSyncWarning=" ڈلیوری محفوظ ہے، مگر ماہانہ بل اپڈیٹ نہیں ہوا: "+e.message}
+  let notificationWarning="";
+  const customerName=customerList.find(x=>Number(x.id)===Number(id))?.name||"گاہک";
+  const deliveryNotice={
+   customer_id:Number(id),
+   title:"نئی ڈلیوری درج ہوگئی",
+   message:`السلام علیکم ${customerName} صاحب! ${date} کو ${c.out} بھری بوتلیں دی گئیں، ${c.back} خالی واپس آئیں اور ${c.success} کامیاب بوتلیں درج ہوئیں۔ خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,
+   notification_type:"delivery",
+   reference_key:`delivery:${date}:${saved.id}`
+  };
+  const {error:noticeError}=await db.from("customer_notifications").insert(deliveryNotice);
+  if(noticeError){
+   console.error("Notification could not be saved",noticeError);
+   notificationWarning=" کسٹمر کی ایپ اطلاع محفوظ نہیں ہوئی: "+noticeError.message;
+  }else{
+   const pushResult=await notifyCustomerPush(Number(id),deliveryNotice.title,deliveryNotice.message);
+   if(pushResult?.error||Number(pushResult?.sent||0)<1){
+    notificationWarning=" ایپ میں اطلاع محفوظ ہے، مگر موبائل Push ابھی تصدیق نہیں ہوئی: "+(pushResult?.error||pushResult?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔");
+   }
   }
+  msg("نئی ڈلیوری محفوظ ہوگئی۔ مزدوری "+money(c.labor)+billSyncWarning+notificationWarning,!billSyncWarning&&!notificationWarning);
+  await Promise.all([loadDailyDeliveries(),loadTodaySummary()]);
+ }catch(e){
+  console.error("Delivery save failed",e);
+  msg("ڈلیوری محفوظ نہیں ہوئی: "+(e?.message||String(e)));
+ }finally{
+  if(button)button.disabled=false;
  }
- msg("نئی ڈلیوری محفوظ ہوگئی۔ مزدوری "+money(c.labor)+billSyncWarning+notificationWarning,!billSyncWarning&&!notificationWarning);
- await loadDailyDeliveries();await loadTodaySummary();
 }
 
 async function loadDailyDeliveries(){
  if(!$("dDate"))return;
- const date=$("dDate").value;
- const {data,error}=await db.from("customer_19l_deliveries").select("*").order("delivery_date",{ascending:false}).order("id",{ascending:false});
- if(error){$("moduleTable").textContent=error.message;return}
+ let data;
+ try{
+  data=await financeFetchAll("customer_19l_deliveries","*","delivery_date",null,null);
+ }catch(error){$("moduleTable").textContent="ڈلیوریاں لوڈ نہیں ہوئیں: "+(error?.message||String(error));return;}
  const names=await getActiveCustomers().catch(()=>customerList);
  const {data:workers}=await db.from("workers").select("id,full_name,is_owner");
  $("moduleTable").innerHTML="<h3>تمام ڈلیوریاں (نئی تاریخ پہلے)</h3><table><tr><th>تاریخ</th><th>گاہک</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th><th>ورکر</th><th>حقیقی مزدوری خرچ</th><th>مالک کی مزدوری بچت</th></tr>"+
- (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));let w=(workers||[]).find(x=>Number(x.id)===Number(d.worker_id));return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${d.empty_bottles_returned}</td><td>${d.successful_bottles}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${esc(w?.full_name||(Number(d.owner_labor_saving)>0?"مالک":"غیر منسوب"))}</td><td>${money(d.delivery_labor)}</td><td>${money(d.owner_labor_saving)}</td></tr>`}).join("")+"</table>";
+ (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));let w=(workers||[]).find(x=>Number(x.id)===Number(d.worker_id));const who=w?.full_name||(Number(d.owner_labor_saving)>0?"مالک":"غیر منسوب");return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${d.empty_bottles_returned}</td><td>${d.successful_bottles}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${esc(who)}</td><td>${money(d.delivery_labor)}</td><td>${money(d.owner_labor_saving)}</td></tr>`}).join("")+"</table>";
 }
 
 /* ماہانہ بل */
