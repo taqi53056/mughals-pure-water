@@ -36,7 +36,7 @@ button:hover{filter:brightness(1.06)}button:disabled{opacity:.55;cursor:not-allo
 table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10px;border-bottom:1px solid var(--line);text-align:right}th{color:#315448;background:#f5f7f2;font-weight:700}
 .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}.stat{background:linear-gradient(110deg,#f1f6f0,#f8f7ef);border:1px solid #e7ebdf;border-radius:12px;padding:13px;margin:8px 0}
 .total{font-size:21px;font-weight:800;color:var(--emerald)}.warning{background:#fff5db;border:1px solid #efdfb2;padding:12px;border-radius:12px;margin:9px 0}
-#login{max-width:560px;margin:28px auto}#login .auth-form{display:grid;gap:10px}#login .auth-form>label{font-size:14px;font-weight:750;color:#244c3c;margin-top:4px}#login .auth-form input{width:100%;min-height:52px}#login .auth-form .password-field{margin:0}#login .auth-form button{min-height:48px}#login #loginMsg{margin-top:12px;line-height:1.8}#app>.card:first-child{background:linear-gradient(110deg,#fff,#f5f7ef);border-top:2px solid var(--gold)}
+#moduleBody label{display:block;color:#244c3c;font-size:14px;font-weight:700;margin:9px 0 4px}#login{max-width:560px;margin:28px auto}#login .auth-form{display:grid;gap:10px}#login .auth-form>label{font-size:14px;font-weight:750;color:#244c3c;margin-top:4px}#login .auth-form input{width:100%;min-height:52px}#login .auth-form .password-field{margin:0}#login .auth-form button{min-height:48px}#login #loginMsg{margin-top:12px;line-height:1.8}#app>.card:first-child{background:linear-gradient(110deg,#fff,#f5f7ef);border-top:2px solid var(--gold)}
 @media(min-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{min-height:112px;padding:24px;font-size:18px}#adminPanel{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(0,1.7fr);gap:16px;align-items:start}#homeTiles{grid-column:1;grid-row:1 / span 2}#dashboard,#module{grid-column:2;margin-top:0}#adminPanel #module{grid-column:1 / -1}}
 @media(max-width:520px){.wrap{padding:11px}.card{padding:15px;border-radius:15px}.grid{gap:9px}.tile{min-height:82px;padding:14px;font-size:14px}header{padding:18px 14px}input,select,button,textarea{font-size:16px}}
 
@@ -1519,12 +1519,17 @@ async function deliveryModule(){
  try{list=await getActiveCustomers()}catch(e){msg("گاہک لوڈ نہیں ہوئے: "+e.message);return}
  $("moduleBody").innerHTML=`
  <p class="muted">ہر گاہک کی ایک تاریخ میں صرف ایک ڈلیوری محفوظ ہوگی۔ اگر اسی تاریخ کا ریکارڈ موجود ہو تو نیا ریکارڈ بنانے کے بجائے اسی میں ترمیم کریں۔ کمپنی کی بوتلیں فروخت نہیں ہوتیں۔</p>
- <select id="dCustomer" onchange="loadSelectedDelivery()">${customerOptions(list)}</select>
+ <label for="dCustomer">گاہک منتخب کریں</label>
+ <select id="dCustomer" required onchange="loadSelectedDelivery()">${customerOptions(list)}</select>
  <label for="dWorker">ڈیلیوری کس نے کی؟</label><select id="dWorker" onchange="markDeliveryDirty();calcDelivery()"><option value="">ورکر مقرر نہیں — مزدوری/بچت شمار نہیں ہوگی</option></select><p class="muted">مالک خود ڈلیوری کرے تو مالک منتخب کریں؛ ہر کامیاب بوتل پر Rs.20 ممکنہ بچت ہوگی۔ ملازم منتخب کریں تو Rs.20 حقیقی مزدوری اس کے لیجر میں جائے گی۔ خالی انتخاب صرف غیر منسوب ڈلیوری ہے، اس پر نہ مزدوری بنے گی نہ مالک کی بچت۔</p>
- <input id="dDate" type="date" value="${today()}" onchange="loadSelectedDelivery()">
- <input id="dOut" type="number" min="0" placeholder="دی گئی بھری بوتلیں" oninput="markDeliveryDirty();calcDelivery()">
- <input id="dBack" type="number" min="0" placeholder="اسی لوڈ کی واپس خالی بوتلیں" oninput="markDeliveryDirty();calcDelivery()">
- <input id="dCaps" type="number" min="0" step="1" placeholder="خراب ڈھکنوں کی تعداد (ہر ڈھکن Rs.10)" oninput="markDeliveryDirty();calcDelivery()">
+ <label for="dDate">ڈلیوری کی تاریخ</label>
+ <input id="dDate" type="date" value="${today()}" required onchange="loadSelectedDelivery()">
+ <label for="dOut">دی گئی بھری بوتلیں</label>
+ <input id="dOut" type="number" min="1" step="1" inputmode="numeric" placeholder="مثال: 12" required oninput="markDeliveryDirty();calcDelivery()">
+ <label for="dBack">واپس خالی بوتلیں (نہ ہوں تو 0)</label>
+ <input id="dBack" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="واپس آنے والی خالی بوتلوں کی تعداد" oninput="markDeliveryDirty();calcDelivery()">
+ <label for="dCaps">خراب ڈھکن (نہ ہوں تو 0)</label>
+ <input id="dCaps" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="خراب ڈھکنوں کی تعداد؛ فی ڈھکن Rs.10" oninput="markDeliveryDirty();calcDelivery()">
  <div class="stat">خراب ڈھکنوں کی رقم: <b id="dCapAmount">Rs. 0</b></div>
  <div class="stat">کامیاب بوتلیں: <b id="dSuccess">0</b></div>
  <div class="stat">بوتلوں کا فرق: <b id="dDiff">0</b></div>
@@ -1571,7 +1576,7 @@ async function loadSelectedDelivery(){
  const button=$("deliverySaveButton");
  window.currentDeliveryRecordId=null;
  if(!customerId||!date){
-  $("dOut").value="";$("dBack").value="";$("dCaps").value="";
+  $("dOut").value="";$("dBack").value="0";$("dCaps").value="0";
   if($("dWorker"))$("dWorker").value=String(window.deliveryOwnerId||"");
   if(button)button.textContent="ڈلیوری محفوظ کریں";
   calcDelivery();return;
@@ -1590,7 +1595,7 @@ async function loadSelectedDelivery(){
    if(button)button.textContent="موجودہ ڈلیوری میں ترمیم محفوظ کریں";
    msg("اس تاریخ کا ریکارڈ پہلے سے موجود ہے؛ نیا ریکارڈ نہیں بنے گا، اسی میں ترمیم ہوگی۔",true);
   }else{
-   $("dOut").value="";$("dBack").value="";$("dCaps").value="";
+   $("dOut").value="";$("dBack").value="0";$("dCaps").value="0";
    if($("dWorker"))$("dWorker").value=String(window.deliveryOwnerId||"");
    if(button)button.textContent="ڈلیوری محفوظ کریں";
   }
@@ -1600,15 +1605,25 @@ async function loadSelectedDelivery(){
  }
 }
 
+function deliveryConfirmationSummary(c){
+ const items=[];
+ if(c.diff>0)items.push("بوتلوں کا فرق: "+c.diff);
+ if(c.caps>0)items.push("خراب ڈھکن: "+c.caps+" × Rs.10 = "+money(c.capAmount));
+ if(c.out>100)items.push("ڈلیوری کی بڑی مقدار: "+c.out+" بوتلیں");
+ if(c.caps>50)items.push("خراب ڈھکنوں کی غیرمعمولی مقدار: "+c.caps);
+ return items.length
+  ?"محفوظ کرنے سے پہلے یہ تفصیل دیکھ لیں:\n"+items.join("\n")+"\nکیا یہ سب درست ہے؟"
+  :"";
+}
+
 async function saveDelivery(){
  const id=$("dCustomer").value,date=$("dDate").value,c=calcDelivery();
  if(!id||!date){msg("گاہک اور تاریخ منتخب کریں۔");return}
  if(c.invalid){msg("واپس آنے والی خالی بوتلیں دی گئی بوتلوں سے زیادہ نہیں ہوسکتیں۔");return}
  if(!Number.isInteger(c.out)||!Number.isInteger(c.back)||c.out<=0||c.back<0){msg("دی گئی اور واپس آنے والی بوتلوں کی تعداد مکمل عدد میں درج کریں۔");return}
  if(!Number.isInteger(c.caps)||c.caps<0){msg("خراب ڈھکنوں کی تعداد صحیح عدد میں درج کریں۔");return}
- if(c.diff>0&&!confirm("بوتلوں میں "+c.diff+" کا فرق ہے۔ کیا محفوظ کرنا ہے؟"))return;
- if(c.caps>0&&!confirm(c.caps+" خراب ڈھکن × Rs.10 = "+money(c.capAmount)+". کیا محفوظ کرنا ہے؟"))return;
- if(!confirmLargeEntry("19L بوتلوں کی تعداد",c.out,100)||!confirmLargeEntry("خراب ڈھکنوں کی تعداد",c.caps,50))return;
+ const confirmationText=deliveryConfirmationSummary(c);
+ if(confirmationText&&!confirm(confirmationText))return;
  const button=$("deliverySaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  let deliverySaved=false;
  const wasEditing=!!window.currentDeliveryRecordId;

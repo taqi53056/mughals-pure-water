@@ -189,6 +189,19 @@ try {
     }
     if (!deliveryMath.invalid.invalid) failures.push("19L returned-bottles validation is incorrect");
 
+    const deliveryConfirmation = await page.evaluate(() => ({
+      warning: window.deliveryConfirmationSummary({ out: 120, diff: 2, caps: 3, capAmount: 30 }),
+      normal: window.deliveryConfirmationSummary({ out: 10, diff: 0, caps: 0, capAmount: 0 })
+    }));
+    if (!deliveryConfirmation.warning.includes("بوتلوں کا فرق: 2") ||
+        !deliveryConfirmation.warning.includes("خراب ڈھکن: 3") ||
+        !deliveryConfirmation.warning.includes("ڈلیوری کی بڑی مقدار: 120")) {
+      failures.push("19L delivery confirmation summary is missing important checks");
+    }
+    if (deliveryConfirmation.normal !== "") {
+      failures.push("Normal 19L delivery should not trigger an extra confirmation");
+    }
+
     const settingsResult = await page.evaluate(async () => {
       const mockData = {
         product_settings: [

@@ -106,4 +106,12 @@ if "async function loadSelectedDelivery()" not in source or "window.currentDeliv
 if "async function readBillSummary(" not in source:
     fail("read-only bill summary helper is missing")
 
-print("PASS: app shell files, unique IDs, local assets, onclick handlers, manifest JSON, inline JavaScript, Service Worker syntax, and legacy branding.")
+for field_id in ("dCustomer", "dDate", "dOut", "dBack", "dCaps"):
+    if f'<label for="{field_id}">' not in source:
+        fail("19L delivery field is missing its visible label: " + field_id)
+if "function deliveryConfirmationSummary(c)" not in source:
+    fail("19L combined confirmation summary helper is missing")
+if 'if(c.diff>0&&!confirm(' in source or 'if(c.caps>0&&!confirm(' in source:
+    fail("19L delivery still has separate repeated confirmation dialogs")
+
+print("PASS: app shell files, unique IDs, local assets, onclick handlers, manifest JSON, inline JavaScript, Service Worker syntax, legacy branding, and 19L delivery UX guards.")
