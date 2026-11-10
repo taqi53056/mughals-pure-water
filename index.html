@@ -36,7 +36,7 @@ button:hover{filter:brightness(1.06)}button:disabled{opacity:.55;cursor:not-allo
 table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10px;border-bottom:1px solid var(--line);text-align:right}th{color:#315448;background:#f5f7f2;font-weight:700}
 .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}.stat{background:linear-gradient(110deg,#f1f6f0,#f8f7ef);border:1px solid #e7ebdf;border-radius:12px;padding:13px;margin:8px 0}
 .total{font-size:21px;font-weight:800;color:var(--emerald)}.warning{background:#fff5db;border:1px solid #efdfb2;padding:12px;border-radius:12px;margin:9px 0}
-#moduleBody label{display:block;color:#244c3c;font-size:14px;font-weight:700;margin:9px 0 4px}#login{max-width:560px;margin:28px auto}#login .auth-form{display:grid;gap:10px}#login .auth-form>label{font-size:14px;font-weight:750;color:#244c3c;margin-top:4px}#login .auth-form input{width:100%;min-height:52px}#login .auth-form .password-field{margin:0}#login .auth-form button{min-height:48px}#login #loginMsg{margin-top:12px;line-height:1.8}#app>.card:first-child{background:linear-gradient(110deg,#fff,#f5f7ef);border-top:2px solid var(--gold)}
+#moduleBody label{display:block;color:#244c3c;font-size:14px;font-weight:700;margin:9px 0 4px}#moduleBody label.mpw-field-label{margin:11px 0 5px;color:#244c3c;font-size:13px;font-weight:750;line-height:1.5}#moduleBody label.mpw-field-label+input,#moduleBody label.mpw-field-label+select,#moduleBody label.mpw-field-label+textarea{margin-top:0}#login{max-width:560px;margin:28px auto}#login .auth-form{display:grid;gap:10px}#login .auth-form>label{font-size:14px;font-weight:750;color:#244c3c;margin-top:4px}#login .auth-form input{width:100%;min-height:52px}#login .auth-form .password-field{margin:0}#login .auth-form button{min-height:48px}#login #loginMsg{margin-top:12px;line-height:1.8}#app>.card:first-child{background:linear-gradient(110deg,#fff,#f5f7ef);border-top:2px solid var(--gold)}
 @media(min-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{min-height:112px;padding:24px;font-size:18px}#adminPanel{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(0,1.7fr);gap:16px;align-items:start}#homeTiles{grid-column:1;grid-row:1 / span 2}#dashboard,#module{grid-column:2;margin-top:0}#adminPanel #module{grid-column:1 / -1}}
 @media(max-width:520px){.wrap{padding:11px}.card{padding:15px;border-radius:15px}.grid{gap:9px}.tile{min-height:82px;padding:14px;font-size:14px}header{padding:18px 14px}input,select,button,textarea{font-size:16px}}
 
@@ -1306,6 +1306,59 @@ function backHome(){
  $("adminPanel").classList.remove("module-open");$("module").classList.add("hidden");$("homeTiles").classList.remove("hidden");$("dashboard").classList.remove("hidden");editingId=null;
  Promise.all([loadTodaySummary(),loadExecutiveDashboard()]);
 }
+
+const MPW_FIELD_LABELS = {
+ execMonth:"رپورٹ کا مہینہ", customerSearch:"گاہک تلاش کریں",
+ cCode:"کسٹمر آئی ڈی", cName:"گاہک کا نام", cMobile:"موبائل نمبر", cAddress:"مکمل پتہ",
+ dWorker:"ڈلیوری کرنے والا ورکر", dBack:"واپس آنے والی خالی بوتلیں", dCaps:"خراب ڈھکن",
+ bCustomer:"گاہک منتخب کریں", bMonth:"بلنگ کا مہینہ", paymentDate:"ادائیگی کی تاریخ", paymentAmount:"وصول شدہ رقم (روپے)", paymentType:"ادائیگی کی قسم",
+ sDate:"اسٹاک کی تاریخ", sType:"پروڈکٹ / خام مال کی قسم", sQty:"مقدار", sNote:"تفصیل (اختیاری)",
+ adjDate:"درستگی کی تاریخ", adjType:"پروڈکٹ", adjDirection:"اسٹاک میں تبدیلی", adjQty:"درستگی کی مقدار", adjReason:"درستگی کی وجہ",
+ rawPurchaseDate:"اندراج کی تاریخ", rawPurchaseKind:"اندراج کی قسم", rawPurchaseType:"خام مال کی قسم", rawPurchaseQty:"مقدار", rawPurchaseAmount:"کل رقم یا ابتدائی مالیت (روپے)", rawPurchaseMethod:"ادائیگی کا طریقہ", rawPurchaseSupplier:"سپلائر (اختیاری)", rawPurchaseDetails:"بل نمبر / اضافی تفصیل (اختیاری)",
+ waterUse:"پانی کا استعمال", tankEntryKind:"اندراج کی قسم", tankDate:"تاریخ", tankCount:"ٹینکروں کی تعداد", tankRate:"فی 1,000 لیٹر ٹینکر کی قیمت", tankSupplier:"سپلائر (اختیاری)", tankPaymentMethod:"ادائیگی کا طریقہ", tankOpeningLitres:"ابتدائی پانی (لیٹر)", tankOpeningValue:"ابتدائی پانی کی کل مالیت (روپے)",
+ counterDate:"فروخت کی تاریخ", counterLitres:"فروخت شدہ پانی (لیٹر)", counterAmount:"وصول شدہ رقم (روپے)", counterMethod:"وصولی کا طریقہ",
+ returnDate:"واپسی کی تاریخ", returnType:"پروڈکٹ", returnQty:"خراب بوتلوں کی تعداد", returnReason:"واپسی کی وجہ",
+ saleDate:"سیل کی تاریخ", saleType:"پروڈکٹ", saleWorker:"سیل / لوڈنگ ورکر", saleQty:"مقدار", saleUnitPrice:"فی یونٹ فروخت قیمت (روپے)", salePaymentMethod:"وصولی کا طریقہ",
+ mDate:"تاریخ", mCategory:"آمدن / خرچ کی مد", mSegment:"خرچ کس شعبے سے متعلق ہے؟", mMethod:"ادائیگی کا طریقہ", mAmount:"رقم (روپے)", mDetails:"تفصیل (اختیاری)",
+ rStart:"رپورٹ شروع ہونے کی تاریخ", rEnd:"رپورٹ ختم ہونے کی تاریخ",
+ finDate:"مالی اندراج کی تاریخ", finType:"مالی اندراج کی قسم", finOwner:"رقم وصول کرنے والا مالک", finAmount:"رقم (روپے)", finCategory:"زمرہ / وجہ", finItem:"سامان کا نام (اختیاری)", finQty:"مقدار (اختیاری)", finUnit:"اکائی", finParty:"کس سے / کس کو رقم دی یا لی؟", finMethod:"ادائیگی کا طریقہ", finDetails:"اضافی تفصیل (اختیاری)",
+ owDate:"نکاسی کی تاریخ", owOwner:"رقم کس نے وصول کی؟", owAmount:"نکالی گئی رقم (روپے)", owReason:"نکاسی کی وجہ", owDetails:"اضافی تفصیل (اختیاری)", owMethod:"ادائیگی کا طریقہ", owMonth:"خلاصے کا مہینہ",
+ wName:"ورکر کا پورا نام", wMobile:"ورکر کا موبائل نمبر (اختیاری)",
+ wlMonth:"اجرت کا مہینہ", wlWorker:"ورکر منتخب کریں", wlDate:"اندراج کی تاریخ", wlType:"لیجر اندراج کی قسم", wlCategory:"کام کی قسم", wlAmount:"رقم (روپے)", wlNote:"تفصیل",
+ cleanDate:"صفائی کی تاریخ", cleanWorker:"صفائی کرنے والا ورکر", cleanAmount:"صفائی کی مزدوری (روپے)", cleanNote:"تفصیل (اختیاری)",
+ prodDate:"پروڈکشن کی تاریخ", prodType:"تیار کی جانے والی پروڈکٹ", prodQty:"تیار شدہ مقدار",
+ washDate:"بوتل دھلائی کی تاریخ", washWorker:"دھلائی کرنے والا ورکر", washAmount:"دھلائی کی مزدوری (روپے)", washNote:"تفصیل (اختیاری)",
+ complaintCategory:"شکایت کی قسم", complaintDetails:"شکایت کی تفصیل", auditSearch:"آڈٹ ریکارڈ تلاش کریں"
+};
+function mpwFieldLabelText(field){
+ const id=field.id||"";
+ if(MPW_FIELD_LABELS[id])return MPW_FIELD_LABELS[id];
+ if(/^cs\d+$/.test(id))return "شکایت کی موجودہ حیثیت";
+ if(/^cn\d+$/.test(id))return "گاہک کے لیے جواب / نوٹ";
+ if(/^psDefault_\d+$/.test(id))return "معمول کی فی یونٹ قیمت (روپے)";
+ if(/^psSpecial_\d+$/.test(id))return "خصوصی فی یونٹ قیمت (روپے)";
+ return field.getAttribute("placeholder")||field.getAttribute("aria-label")||"";
+}
+function enhanceModuleControls(root=$("moduleBody")){
+ if(!root)return;
+ root.querySelectorAll("input[id],select[id],textarea[id]").forEach(field=>{
+  if(field.type==="checkbox"||field.type==="radio"||field.labels?.length||field.closest("label"))return;
+  const text=mpwFieldLabelText(field).trim();
+  if(!text)return;
+  const label=document.createElement("label");
+  label.className="mpw-field-label";
+  label.htmlFor=field.id;
+  label.textContent=text;
+  field.before(label);
+ });
+}
+(function observeModuleFields(){
+ const root=$("moduleBody");
+ if(!root||typeof MutationObserver==="undefined")return;
+ const observer=new MutationObserver(()=>enhanceModuleControls(root));
+ observer.observe(root,{childList:true,subtree:true});
+ enhanceModuleControls(root);
+})();
 
 async function openModule(name){
  currentModule=name;editingId=null;
