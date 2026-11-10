@@ -1378,8 +1378,15 @@ async function saveStock(type){
  const button=$("stockSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
   const payload=raw?{entry_date:date,product_type:product,cartons:qty,notes:$("sNote").value.trim()||null}:{entry_date:date,product_type:product,quantity:qty,unit:product==="6L"?"bottle":"carton",notes:$("sNote").value.trim()||null};
-  const r=await db.from(table).insert(payload);
+  const signature=[type,date,product,qty,payload.unit||"carton",payload.notes||""].join("|");
+  const requestId=mpwPendingRequestId("opening-stock-"+type,signature);
+  const r=await db.from(table).upsert({...payload,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
   if(r.error)throw r.error;
+  if(!r.data){
+   const existing=await db.from(table).select("id").eq("request_id",requestId).maybeSingle();
+   if(existing.error||!existing.data)throw existing.error||new Error("سابقہ ابتدائی اسٹاک کی تصدیق نہیں ہوئی۔");
+  }
+  mpwClearPendingRequestId("opening-stock-"+type);
   msg("ریکارڈ محفوظ ہوگیا۔",true);$("sQty").value="";await loadStock(type);await loadTodaySummary();
  }catch(e){msg("محفوظ نہیں ہوا: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
@@ -2434,8 +2441,16 @@ async function saveWorkerEntry(){
  if(!confirmLargeEntry("ورکر لیجر کی رقم (روپے)",amount,1000))return;
  const button=$("workerEntrySaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
-  const {error}=await db.from("worker_ledger").insert({worker_id:workerId,entry_date:date,entry_type:type,work_category:category,amount,note:$("wlNote").value.trim()||null,entered_by:user?.id||null});
+  const note=$("wlNote").value.trim()||null;
+  const signature=[workerId,date,type,category,amount,note||""].join("|");
+  const requestId=mpwPendingRequestId("worker-ledger",signature);
+  const {data:saved,error}=await db.from("worker_ledger").upsert({worker_id:workerId,entry_date:date,entry_type:type,work_category:category,amount,note,entered_by:user?.id||null,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
   if(error)throw error;
+  if(!saved){
+   const existing=await db.from("worker_ledger").select("id").eq("request_id",requestId).maybeSingle();
+   if(existing.error||!existing.data)throw existing.error||new Error("سابقہ ورکر انٹری کی تصدیق نہیں ہوئی۔");
+  }
+  mpwClearPendingRequestId("worker-ledger");
   msg("ورکر کی انٹری محفوظ ہوگئی۔",true);$("wlAmount").value="";$("wlNote").value="";await loadWorkers();
  }catch(e){msg("لیجر انٹری محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
@@ -2488,10 +2503,20 @@ async function saveCleaningLabor(){
  const button=$("cleanSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
   const payload={worker_id:worker,entry_date:date,entry_type:"earning",work_category:"cleaning",amount,note:$("cleanNote").value.trim()||"صفائی کی مزدوری"};
+  const tokenKey=worker?"worker-cleaning":"owner-cleaning";
+  const signature=[worker||"owner",date,amount,payload.note].join("|");
+  const requestId=mpwPendingRequestId(tokenKey,signature);
   const result=worker
-   ?await db.from("worker_ledger").insert({...payload,entered_by:user?.id||null})
-   :await db.from("daily_cleaning_labor").insert({labor_date:date,worker_name:"مالک",worker_id:null,work_category:"cleaning",amount,note:payload.note});
+   ?await db.from("worker_ledger").upsert({...payload,entered_by:user?.id||null,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle()
+   :await db.from("daily_cleaning_labor").upsert({labor_date:date,worker_name:"مالک",worker_id:null,work_category:"cleaning",amount,note:payload.note,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
   if(result.error)throw result.error;
+  if(!result.data){
+   const existing=worker
+    ?await db.from("worker_ledger").select("id").eq("request_id",requestId).maybeSingle()
+    :await db.from("daily_cleaning_labor").select("id").eq("request_id",requestId).maybeSingle();
+   if(existing.error||!existing.data)throw existing.error||new Error("سابقہ صفائی انٹری کی تصدیق نہیں ہوئی۔");
+  }
+  mpwClearPendingRequestId(tokenKey);
   msg(worker?"صفائی کی مزدوری ورکر لیجر میں محفوظ ہوگئی۔":"مالک کی صفائی ممکنہ بچت میں محفوظ ہوگئی۔",true);
   $("cleanAmount").value="";$("cleanNote").value="";await loadLaborHistory();
  }catch(e){msg("صفائی کی مزدوری محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
@@ -2564,10 +2589,20 @@ async function saveWashingLabor(){
  if(!confirmLargeEntry("بوتل دھلائی کی مزدوری (روپے)",amount,1000))return;
  const button=$("washSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
+  const tokenKey=worker?"worker-washing":"owner-washing";
+  const signature=[worker||"owner",date,amount,note||"بوتل دھلائی کی مزدوری"].join("|");
+  const requestId=mpwPendingRequestId(tokenKey,signature);
   const result=worker
-   ?await db.from("worker_ledger").insert({worker_id:worker,entry_date:date,entry_type:"earning",work_category:"bottle washing",amount,note:note||"بوتل دھلائی کی مزدوری",entered_by:user?.id||null})
-   :await db.from("daily_cleaning_labor").insert({labor_date:date,worker_name:"مالک",worker_id:null,work_category:"bottle washing",amount,note:note||"مالک کی بوتل دھلائی"});
+   ?await db.from("worker_ledger").upsert({worker_id:worker,entry_date:date,entry_type:"earning",work_category:"bottle washing",amount,note:note||"بوتل دھلائی کی مزدوری",entered_by:user?.id||null,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle()
+   :await db.from("daily_cleaning_labor").upsert({labor_date:date,worker_name:"مالک",worker_id:null,work_category:"bottle washing",amount,note:note||"مالک کی بوتل دھلائی",request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
   if(result.error)throw result.error;
+  if(!result.data){
+   const existing=worker
+    ?await db.from("worker_ledger").select("id").eq("request_id",requestId).maybeSingle()
+    :await db.from("daily_cleaning_labor").select("id").eq("request_id",requestId).maybeSingle();
+   if(existing.error||!existing.data)throw existing.error||new Error("سابقہ دھلائی انٹری کی تصدیق نہیں ہوئی۔");
+  }
+  mpwClearPendingRequestId(tokenKey);
   msg(worker?"دھلائی کی مزدوری ورکر لیجر میں محفوظ ہوگئی۔":"مالک کی بوتل دھلائی ممکنہ بچت میں محفوظ ہوگئی۔",true);
   $("washAmount").value="";$("washNote").value="";await loadLaborHistory();
  }catch(e){msg("دھلائی کی مزدوری محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
