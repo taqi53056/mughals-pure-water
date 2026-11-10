@@ -1053,14 +1053,26 @@ async function recordCustomerPayment(){
  const customerId=Number($("bCustomer").value),amount=Number($("paymentAmount").value),paymentDate=$("paymentDate").value,paymentType=$("paymentType").value;
  if(!customerId||!paymentDate||!Number.isFinite(amount)||amount<=0){msg("گاہک، تاریخ اور صفر سے زیادہ رقم درج کریں۔");return}
  if(!confirmLargeEntry("ادائیگی کی رقم (روپے)",amount,1000))return;
- const {error}=await db.from("customer_payments").insert({customer_id:customerId,amount,payment_date:paymentDate,payment_type:paymentType,entered_by:user?.id||null});
+ const {data:payment,error}=await db.from("customer_payments").insert({customer_id:customerId,amount,payment_date:paymentDate,payment_type:paymentType,entered_by:user?.id||null}).select("id").single();
  if(error){msg("ادائیگی محفوظ نہیں ہوئی: "+error.message);return}
  $("paymentAmount").value="";
  try{
-  await syncBillBottles(customerId,paymentDate.slice(0,7)+"-01");
+  const month=paymentDate.slice(0,7)+"-01";
+  const bill=await syncBillBottles(customerId,month);
   await loadSelectedBill();
-  msg("ادائیگی محفوظ ہوگئی اور متعلقہ مہینے کے بعد کے بل بھی دوبارہ حساب ہوگئے۔",true);
- }catch(e){msg("ادائیگی محفوظ ہوگئی، مگر بل دوبارہ حساب نہیں ہوسکا: "+e.message)}
+  const customer=(customerList||[]).find(c=>Number(c.id)===customerId);
+  const typeLabels={bill_payment:"بل کی ادائیگی",advance:"ایڈوانس",refund:"واپسی / ریفنڈ"};
+  const notice={
+   customer_id:customerId,
+   title:paymentType==="refund"?"رقم واپس کی گئی":"ادائیگی موصول ہوگئی",
+   message:"السلام علیکم "+(customer?.name||"محترم گاہک")+" صاحب! آپ کے اکاؤنٹ میں "+paymentDate+" کو "+money(amount)+" کی "+(typeLabels[paymentType]||"ادائیگی")+" درج ہوگئی ہے۔\nنومبر/متعلقہ بل کا تازہ بقایا: "+money(bill.payable)+"۔\nشکریہ۔",
+   notification_type:"payment",
+   reference_key:"payment:"+payment.id
+  };
+  const {error:noticeError}=await db.from("customer_notifications").insert(notice);
+  if(noticeError){msg("ادائیگی محفوظ ہوگئی، مگر کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+noticeError.message);return}
+  msg("ادائیگی محفوظ ہوگئی، بل دوبارہ حساب ہوگیا اور کسٹمر کو اطلاع بھی درج ہوگئی۔",true);
+ }catch(e){msg("ادائیگی محفوظ ہوگئی، مگر بل یا کسٹمر اطلاع مکمل نہیں ہوسکی: "+e.message)}
 }
 
 /* خام مال اور تیار مال */
