@@ -1967,7 +1967,7 @@ async function stockModule(type){
  const raw=type==="raw";
  setTitle(raw?"خام مال":"تیار مال — ابتدائی اسٹاک");
  $("moduleBody").innerHTML=`
- <p class="muted">${raw?"یہاں موجودہ خام مال کا ابتدائی اسٹاک یا نئی خریداری درج کریں۔ ہر خام شے الگ درج کریں۔":"یہاں صرف پہلے سے موجود ابتدائی تیار مال درج کریں۔ روزانہ پیداوار الگ پروڈکشن اندراج سے خود اسٹاک میں شامل ہوتی ہے؛ اسے یہاں دوبارہ درج نہ کریں۔ ایک تاریخ پر ہر پروڈکٹ کی ایک ہی ابتدائی انٹری ہوگی؛ دوبارہ محفوظ کرنے سے پچھلی مقدار اپڈیٹ ہوگی، جمع نہیں ہوگی۔"}</p>
+ <p class="muted">${raw?"یہاں موجودہ خام مال کا ابتدائی اسٹاک یا نئی خریداری درج کریں۔ ہر خام شے الگ درج کریں۔":"یہاں صرف پہلے سے موجود ابتدائی تیار مال درج کریں۔ روزانہ پیداوار الگ پروڈکشن اندراج سے خود اسٹاک میں شامل ہوتی ہے؛ اسے یہاں دوبارہ درج نہ کریں۔ ہر پروڈکٹ کی صرف ایک ابتدائی انٹری ہوگی؛ اسی تاریخ پر مقدار درست کرنے کے لیے دوبارہ محفوظ کریں، بعد کی کمی بیشی کے لیے اسٹاک درستگی استعمال کریں۔"}</p>
  <h3>${raw?"نئی خام مال انٹری":"ابتدائی تیار مال کی انٹری"}</h3>
  <input id="sDate" type="date" value="${today()}">
  <select id="sType">
@@ -2007,6 +2007,9 @@ async function saveFinishedAdjustment(){
  finally{if(button)button.disabled=false;}
 }
 
+function canUpdateFinishedOpeningStock(existing,selectedDate){
+ return !existing||existing.entry_date===selectedDate;
+}
 async function saveStock(type){
  const raw=type==="raw",table=raw?"raw_material_stock":"finished_goods",product=$("sType").value,qty=Number($("sQty").value),date=$("sDate").value;
  if(!date||!Number.isInteger(qty)||qty<=0){msg("تاریخ اور کارٹن یا بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
@@ -2014,9 +2017,17 @@ async function saveStock(type){
  const button=$("stockSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
   const payload=raw?{entry_date:date,product_type:product,cartons:qty,notes:$("sNote").value.trim()||null}:{entry_date:date,product_type:product,quantity:qty,unit:product==="6L"?"bottle":"carton",notes:$("sNote").value.trim()||null};
+  if(!raw){
+   const {data:existing,error:lookupError}=await db.from("finished_goods").select("id,entry_date").eq("product_type",product).maybeSingle();
+   if(lookupError)throw lookupError;
+   if(!canUpdateFinishedOpeningStock(existing,date)){
+    msg("اس پروڈکٹ کا ابتدائی اسٹاک پہلے ہی "+existing.entry_date+" کی تاریخ پر درج ہے۔ دوسری تاریخ پر نئی ابتدائی انٹری نہ بنائیں؛ اسی تاریخ پر مقدار درست کریں یا اسٹاک درستگی استعمال کریں۔");
+    return;
+   }
+  }
   const signature=[type,date,product,qty,payload.unit||"carton",payload.notes||""].join("|");
   const requestId=mpwPendingRequestId("opening-stock-"+type,signature);
-  const conflictTarget=raw?"request_id":"entry_date,product_type";
+  const conflictTarget=raw?"request_id":"product_type";
   const r=await db.from(table).upsert({...payload,request_id:requestId},{onConflict:conflictTarget,ignoreDuplicates:false}).select("id").maybeSingle();
   if(r.error)throw r.error;
   if(!r.data){
