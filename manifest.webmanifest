@@ -2,7 +2,7 @@
   "id": "./",
   "name": "MUGHAL'S PURE WATER",
   "short_name": "MPW",
-  "description": "دکان اور واٹر بزنس مینجمنٹ",
+  "description": "مکمل کاروباری انتظامی نظام",
   "lang": "ur",
   "dir": "rtl",
   "start_url": "./index.html",
@@ -11,6 +11,11 @@
   "background_color": "#080808",
   "theme_color": "#080808",
   "icons": [
-    { "src": "./logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    {
+      "src": "./logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ]
 }
