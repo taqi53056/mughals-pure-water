@@ -79,7 +79,7 @@ except Exception as exc:
 
 if not any(icon.get("src") == "./logo.svg" for icon in manifest_data.get("icons", [])):
     fail("PWA manifest does not use the unified MPW logo")
-if 'src="./logo.svg"' not in source or 'icon: "./logo.svg"' not in SW:
+if 'src="./logo.svg"' not in source or 'icon: "./logo.svg"' not in SW.read_text(encoding="utf-8"):
     fail("App header or push notification does not use the unified MPW logo")
 if "CREATE UNIQUE INDEX IF NOT EXISTS customer_19l_deliveries_customer_date_uidx" not in DELIVERY_MIGRATION.read_text(encoding="utf-8"):
     fail("One-delivery-per-customer/date database guard is missing")
