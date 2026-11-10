@@ -394,7 +394,7 @@ try {
       await loadRawMaterialPurchases();
       const text = document.querySelector("#rawStockBalance")?.textContent || "";
       window.financeFetchAll = originalFetchAll;
-      return { text, hasZeroBalance: /19L ڈھکن[\s\S]*?باقی:\\s*0 عدد/.test(text) };
+      return { text, hasZeroBalance: /19L ڈھکن[\s\S]*?باقی:\s*0 عدد/.test(text) };
     });
     if (!capBalanceResult.hasZeroBalance) failures.push("19L cap balance does not subtract all delivered bottles and damaged-cap replacements after opening date");
 
