@@ -107,7 +107,10 @@ try {
       if (!(await field.getAttribute("required"))) failures.push("Signup field is not required: " + id);
       if (!(await page.locator('label[for="' + id + '"]').count())) failures.push("Signup field has no visible label: " + id);
     }
-    await page.evaluate(() => window.showPasswordResetComplete());
+    await page.evaluate(async () => {
+      history.replaceState(null, document.title, window.location.pathname + "#type=recovery");
+      await window.restoreSavedSession();
+    });
     await page.locator("#passwordResetCompleteForm").waitFor({ state: "visible" });
     if (!(await page.locator("#newPassword").getAttribute("required")) ||
         !(await page.locator("#confirmNewPassword").getAttribute("required"))) {
