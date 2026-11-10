@@ -398,6 +398,27 @@ try {
     });
     if (!capBalanceResult.hasZeroBalance) failures.push("19L cap balance does not subtract all delivered bottles and damaged-cap replacements after opening date");
 
+    const inactiveBillingResult = await page.evaluate(() => {
+      const active = { is_active: true, approved_at: "2026-11-01T00:00:00Z" };
+      const inactiveApproved = { is_active: false, approved_at: "2026-11-01T00:00:00Z" };
+      const pending = { is_active: false, approved_at: null };
+      return {
+        activeBillable: isBillableCustomer(active),
+        inactiveBillable: isBillableCustomer(inactiveApproved),
+        pendingBillable: isBillableCustomer(pending),
+        activeCanReceiveNotice: customerCanReceiveAppNotice(active),
+        inactiveCanReceiveNotice: customerCanReceiveAppNotice(inactiveApproved),
+        inactiveOptionLabel: customerOptions([inactiveApproved]).includes("غیر فعال (سابقہ حساب)")
+      };
+    });
+    if (!inactiveBillingResult.activeBillable || !inactiveBillingResult.inactiveBillable || inactiveBillingResult.pendingBillable) {
+      failures.push("Billing eligibility does not include active and previously approved customers while excluding pending signups");
+    }
+    if (!inactiveBillingResult.activeCanReceiveNotice || inactiveBillingResult.inactiveCanReceiveNotice) {
+      failures.push("Inactive customers are not correctly excluded from automatic app notifications");
+    }
+    if (!inactiveBillingResult.inactiveOptionLabel) failures.push("Inactive customer billing option is not clearly labeled");
+
     await page.close();
   }
 } finally {
