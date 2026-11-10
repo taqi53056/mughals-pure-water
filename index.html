@@ -1572,8 +1572,20 @@ async function getActiveCustomers(){
  customerList=data||[];
  return customerList.filter(c=>c.is_active===true);
 }
+function isBillableCustomer(customer){
+ return customer?.is_active===true||Boolean(customer?.approved_at);
+}
+function customerCanReceiveAppNotice(customer){
+ return customer?.is_active===true;
+}
+async function getBillableCustomers(){
+ const {data,error}=await db.from("customers").select("id,name,customer_code,mobile,is_active,approved_at").order("name");
+ if(error)throw error;
+ customerList=(data||[]).filter(isBillableCustomer);
+ return customerList;
+}
 function customerOptions(list){
- return `<option value="">گاہک منتخب کریں</option>`+list.map(c=>`<option value="${c.id}">${esc(c.name)} — ${esc(c.customer_code)}</option>`).join("");
+ return `<option value="">گاہک منتخب کریں</option>`+list.map(c=>`<option value="${c.id}">${esc(c.name)} — ${esc(c.customer_code)}${c.is_active===true?"":" — غیر فعال (سابقہ حساب)"}</option>`).join("");
 }
 
 /* 19L ڈلیوری */
@@ -1779,9 +1791,9 @@ async function loadDailyDeliveries(){
 async function billingModule(){
  setTitle("ماہانہ بل اور ادائیگیاں");
  let list;
- try{list=await getActiveCustomers()}catch(e){msg("گاہک لوڈ نہیں ہوئے: "+e.message);return}
+ try{list=await getBillableCustomers()}catch(e){msg("گاہک لوڈ نہیں ہوئے: "+e.message);return}
  $("moduleBody").innerHTML=`
- <p class="muted">19L کامیاب بوتل Rs.100، خراب ڈھکن Rs.10۔ ادائیگیاں الگ ریکارڈ ہوں گی؛ بل خود حساب ہوگا۔</p>
+ <p class="muted">19L کامیاب بوتل Rs.100، خراب ڈھکن Rs.10۔ فعال اور پہلے سے منظور شدہ غیر فعال گاہکوں کے سابقہ بل/ادائیگیاں بھی یہاں دیکھی اور درست کی جا سکتی ہیں۔ غیر فعال اکاؤنٹ کو خودکار ایپ اطلاع نہیں بھیجی جائے گی۔</p>
  <select id="bCustomer" onchange="markBillDirty();loadSelectedBill()">${customerOptions(list)}</select>
  <input id="bMonth" type="month" value="${today().slice(0,7)}" onchange="markBillDirty();loadSelectedBill()">
  <div class="grid"><div class="stat">کامیاب بوتلیں: <b id="bBottles">0</b></div><div class="stat">خراب ڈھکن: <b id="bCaps">0</b></div>
@@ -1864,7 +1876,14 @@ async function saveBill(){
   const month=selectedBillMonth();
   const result=await syncBillBottles(Number(id),month);
   await loadSelectedBill();
-  const customerName=customerList.find(x=>Number(x.id)===Number(id))?.name||"محترم گاہک";
+  const customer=customerList.find(x=>Number(x.id)===Number(id));
+  if(!customer)throw new Error("منتخب گاہک کا ریکارڈ فہرست میں نہیں ملا۔");
+  if(!customerCanReceiveAppNotice(customer)){
+   setBillSavedState(true);
+   msg("غیر فعال گاہک کا بل محفوظ اور حساب تازہ ہوگیا۔ اس اکاؤنٹ کو ایپ Push اطلاع نہیں بھیجی گئی؛ ضرورت ہو تو WhatsApp یا SMS سے بل شیئر کریں۔",true);
+   return;
+  }
+  const customerName=customer.name||"محترم گاہک";
   const notice={
    customer_id:Number(id),title:"ماہانہ بل تیار ہے",
    message:`السلام علیکم ${customerName} صاحب! MUGHAL'S PURE WATER کا ${month.slice(0,7)} کا ماہانہ بل تیار ہے۔\nبلنگ مدت: ${month.slice(0,7)}\nکامیاب 19L بوتلیں: ${result.bottles}\nبوتلوں کے چارجز: ${money(result.bottleAmount)}\nخراب ڈھکن: ${result.caps} عدد × Rs.10 = ${money(result.capAmount)}\nاس ماہ کے کل چارجز: ${money(result.charges)}\nپچھلا بقایا: ${money(result.previousDue)}\nپچھلا دستیاب ایڈوانس: ${money(result.previousAdvance)}\nاس ماہ استعمال شدہ ایڈوانس: ${money(result.advanceUsed)}\nاس ماہ کی خالص ادائیگیاں: ${money(result.netPayments)}\nاب قابل ادائیگی بقایا: ${money(result.payable)}\nاختتامی ایڈوانس: ${money(result.closingAdvance)}\nآپ کے تعاون کا شکریہ۔`,
@@ -1917,6 +1936,14 @@ async function recordCustomerPayment(){
   const bill=await readBillSummary(customerId,month);
   await loadSelectedBill();
   const customer=(customerList||[]).find(c=>Number(c.id)===customerId);
+  $("paymentAmount").value="";
+  mpwClearPendingRequestId("customer-payment");
+  setBillSavedState(true);
+  if(!customer)throw new Error("ادائیگی محفوظ ہوگئی، مگر گاہک کا ریکارڈ فہرست میں نہیں ملا۔");
+  if(!customerCanReceiveAppNotice(customer)){
+   msg("ادائیگی محفوظ ہوگئی اور بل دوبارہ حساب ہوگیا۔ اکاؤنٹ غیر فعال ہونے کی وجہ سے گاہک کو ایپ اطلاع نہیں بھیجی گئی۔",true);
+   return;
+  }
   const typeLabels={bill_payment:"بل کی ادائیگی",advance:"ایڈوانس",refund:"واپسی / ریفنڈ"};
   const notice={
    customer_id:customerId,
@@ -1928,9 +1955,6 @@ async function recordCustomerPayment(){
   const {error:noticeError}=await db.from("customer_notifications").insert(notice);
   if(noticeError&&noticeError.code!=="23505")throw noticeError;
   const push=noticeError?null:await notifyCustomerPush(customerId,notice.title,notice.message);
-  $("paymentAmount").value="";
-  mpwClearPendingRequestId("customer-payment");
-  setBillSavedState(true);
   if(push?.error||Number(push?.sent||0)<1)msg("ادائیگی محفوظ، بل دوبارہ حساب اور ایپ اطلاع درج ہوگئی؛ موبائل Push نہیں پہنچی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔"));
   else msg("ادائیگی محفوظ ہوگئی، بل دوبارہ حساب ہوگیا اور موبائل Push بھی بھیج دی گئی۔",true);
  }catch(e){
