@@ -1357,8 +1357,15 @@ async function saveFinishedAdjustment(){
  if(!confirmLargeEntry("اسٹاک درستگی کی مقدار",qty,100))return;
  const button=$("adjustmentSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
-  const r=await db.from("finished_stock_adjustments").insert({product_type:product,quantity:qty,adjustment_type:direction,adjustment_date:date,reason,entered_by:user.id});
+  const signature=[product,qty,direction,date,reason].join("|");
+  const requestId=mpwPendingRequestId("finished-stock-adjustment",signature);
+  const r=await db.from("finished_stock_adjustments").upsert({product_type:product,quantity:qty,adjustment_type:direction,adjustment_date:date,reason,entered_by:user.id,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
   if(r.error)throw r.error;
+  if(!r.data){
+   const existing=await db.from("finished_stock_adjustments").select("id").eq("request_id",requestId).maybeSingle();
+   if(existing.error||!existing.data)throw existing.error||new Error("سابقہ اسٹاک درستگی کی تصدیق نہیں ہوئی۔");
+  }
+  mpwClearPendingRequestId("finished-stock-adjustment");
   msg("اسٹاک درستگی محفوظ ہوگئی۔",true);$("adjQty").value="";$("adjReason").value="";await loadStock("finished");await loadTodaySummary();
  }catch(e){msg("اسٹاک درستگی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
@@ -1466,8 +1473,15 @@ async function saveRawMaterialPurchase(){
     :await db.from("raw_material_purchases").insert(payload);
    if(result.error)throw result.error;
   }else{
-   const {error}=await db.from("raw_material_purchases").insert(payload);
+   const signature=[date,record_type,type,quantity,total_amount,payload.supplier||"",payload.payment_method,payload.details||""].join("|");
+   const requestId=mpwPendingRequestId("raw-material-purchase",signature);
+   const {data:purchase,error}=await db.from("raw_material_purchases").upsert({...payload,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
    if(error)throw error;
+   if(!purchase){
+    const existing=await db.from("raw_material_purchases").select("id").eq("request_id",requestId).maybeSingle();
+    if(existing.error||!existing.data)throw existing.error||new Error("سابقہ خریداری کی تصدیق نہیں ہوئی۔");
+   }
+   mpwClearPendingRequestId("raw-material-purchase");
   }
   saved=true;
   msg(record_type==="opening_stock"?"ابتدائی خام مال اسٹاک محفوظ ہوگیا۔":"خام مال کی خریداری محفوظ ہوگئی۔",true);
@@ -1560,9 +1574,19 @@ async function saveTankerPurchase(){
  if(button)button.disabled=true;
  let saved=false;
  try{
-  const result=opening
-   ?await db.from("water_opening_stock").upsert(payload,{onConflict:"water_use"})
-   :await db.from("water_tanker_purchases").insert(payload);
+  let result;
+  if(opening){
+   result=await db.from("water_opening_stock").upsert(payload,{onConflict:"water_use"});
+  }else{
+   const signature=[date,payload.water_use,payload.tanker_count,payload.rate_per_tanker,payload.payment_method,payload.supplier||""].join("|");
+   const requestId=mpwPendingRequestId("water-tanker-purchase",signature);
+   result=await db.from("water_tanker_purchases").upsert({...payload,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
+   if(!result.error&&!result.data){
+    const existing=await db.from("water_tanker_purchases").select("id").eq("request_id",requestId).maybeSingle();
+    if(existing.error||!existing.data)throw existing.error||new Error("سابقہ ٹینکر خریداری کی تصدیق نہیں ہوئی۔");
+   }
+   if(!result.error)mpwClearPendingRequestId("water-tanker-purchase");
+  }
   if(result.error)throw result.error;
   saved=true;
   if(opening){msg("ابتدائی پانی کا اسٹاک محفوظ ہوگیا۔",true);$("tankOpeningLitres").value="";$("tankOpeningValue").value="";}
@@ -1786,7 +1810,19 @@ async function saveMoney(type){
  const button=$("moneySaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
   const payload=exp?{expense_date:$("mDate").value,category,amount,business_segment:$("mSegment").value,payment_method:$("mMethod").value,details:$("mDetails").value.trim()||null}:{income_date:$("mDate").value,category,amount,details:$("mDetails").value.trim()||null};
-  const r=moneyEditingId?await db.from(table).update(payload).eq("id",moneyEditingId):await db.from(table).insert(payload);
+  let r;
+  if(moneyEditingId){
+   r=await db.from(table).update(payload).eq("id",moneyEditingId);
+  }else{
+   const signature=[type,$("mDate").value,category,amount,exp?$("mSegment").value:"",exp?$("mMethod").value:"",payload.details||""].join("|");
+   const requestId=mpwPendingRequestId("money-"+type,signature);
+   r=await db.from(table).upsert({...payload,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
+   if(!r.error&&!r.data){
+    const existing=await db.from(table).select("id").eq("request_id",requestId).maybeSingle();
+    if(existing.error||!existing.data)throw existing.error||new Error("سابقہ مالی اندراج کی تصدیق نہیں ہوئی۔");
+   }
+   if(!r.error)mpwClearPendingRequestId("money-"+type);
+  }
   if(r.error)throw r.error;
   moneyEditingId=null;msg("ریکارڈ محفوظ ہوگیا۔",true);$("mDate").value=today();$("mCategory").value="";$("mAmount").value="";$("mDetails").value="";if(exp){$("mSegment").value="general";$("mMethod").value="cash";}$("moneySaveButton").textContent="محفوظ کریں";await loadMoney(type);await loadTodaySummary();
  }catch(e){msg("ریکارڈ محفوظ نہیں ہوا: "+(e?.message||String(e)));}
@@ -2050,8 +2086,15 @@ async function saveFinanceEntry(){
  if(!confirmLargeEntry("مالی اندراج",amount,100000))return;
  const button=$("finSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
-  const {error}=await db.from("business_finance_ledger").insert({entry_date,entry_type,amount,category:category||null,item_name:item_name||null,quantity,unit:unit||null,counterparty:counterparty||null,payment_method:payment_method||null,details:details||null,entered_by:user.id});
+  const signature=[entry_date,entry_type,amount,category||"",item_name||"",quantity??"",unit||"",counterparty||"",payment_method||"",details||""].join("|");
+  const requestId=mpwPendingRequestId("finance-entry",signature);
+  const {data:saved,error}=await db.from("business_finance_ledger").upsert({entry_date,entry_type,amount,category:category||null,item_name:item_name||null,quantity,unit:unit||null,counterparty:counterparty||null,payment_method:payment_method||null,details:details||null,entered_by:user.id,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
   if(error)throw error;
+  if(!saved){
+   const existing=await db.from("business_finance_ledger").select("id").eq("request_id",requestId).maybeSingle();
+   if(existing.error||!existing.data)throw existing.error||new Error("سابقہ مالی اندراج کی تصدیق نہیں ہوئی۔");
+  }
+  mpwClearPendingRequestId("finance-entry");
   msg("مالی اندراج محفوظ ہوگیا۔",true);
   if($("finOwner"))$("finOwner").value="";
   toggleOwnerWithdrawalField();
