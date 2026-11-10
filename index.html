@@ -1801,9 +1801,12 @@ async function loadStock(type){
 
 /* مربوط خام مال، ٹینکر، کاؤنٹر فروخت اور تیار مال کی واپسی */
 const rawMaterialLabels={
- bottle_500ml:"500ml بوتل + ڈھکن",
- bottle_1_5l:"1.5L بوتل + ڈھکن",
- bottle_6l:"6L بوتل + ڈھکن",
+ bottle_500ml:"500ml خالی بوتل",
+ cap_500ml:"500ml ڈھکن",
+ bottle_1_5l:"1.5L خالی بوتل",
+ cap_1_5l:"1.5L ڈھکن",
+ bottle_6l:"6L خالی بوتل",
+ cap_6l:"6L ڈھکن",
  carton_500ml:"500ml کارٹن",
  carton_1_5l:"1.5L کارٹن",
  tape_bundle:"ٹیپ کا بنڈل",
@@ -1812,8 +1815,9 @@ const rawMaterialLabels={
 };
 const rawMaterialUnits={
  bottle_500ml:"bottle",bottle_1_5l:"bottle",bottle_6l:"bottle",
+ cap_500ml:"piece",cap_1_5l:"piece",cap_6l:"piece",cap_19l:"piece",
  carton_500ml:"carton",carton_1_5l:"carton",tape_bundle:"bundle",
- sticker:"piece",cap_19l:"piece"
+ sticker:"piece"
 };
 async function rawMaterialsModule(){
  setTitle("خام مال کی خریداری");
@@ -1899,16 +1903,22 @@ async function loadRawMaterialPurchases(){
  const made=(key,materialKey=key)=>prod.filter(x=>x.product_type===key&&(!rawOpeningDate(materialKey)||x.production_date>=rawOpeningDate(materialKey))).reduce((n,x)=>n+Number(x.quantity||0),0);
  const capBase=rawOpeningDate("cap_19l");
  const capsUsed=capDeliveries.filter(r=>!capBase||r.delivery_date>=capBase).reduce((n,r)=>n+Number(r.successful_bottles||0)+Number(r.damaged_caps||0),0);
+ const capUsed={
+  cap_500ml:made("500ml","cap_500ml")*24,
+  cap_1_5l:made("1.5L","cap_1_5l")*12,
+  cap_6l:made("6L","cap_6l")
+ };
  const used={
   bottle_500ml:made("500ml")*24,bottle_1_5l:made("1.5L")*12,bottle_6l:made("6L"),
   carton_500ml:made("500ml"),carton_1_5l:made("1.5L"),
   tape_bundle:(made("500ml","tape_bundle")+made("1.5L","tape_bundle"))/200,
-  sticker:made("500ml","sticker")*24+made("1.5L","sticker")*12+made("6L","sticker")
+  sticker:made("500ml","sticker")*24+made("1.5L","sticker")*12+made("6L","sticker"),
+  ...capUsed
  };
- const balanceKeys=["bottle_500ml","bottle_1_5l","bottle_6l","carton_500ml","carton_1_5l","tape_bundle","sticker"];
+ const balanceKeys=["bottle_500ml","cap_500ml","bottle_1_5l","cap_1_5l","bottle_6l","cap_6l","carton_500ml","carton_1_5l","tape_bundle","sticker"];
  $("rawStockBalance").innerHTML='<div class="grid">'+balanceKeys.map(k=>{
   const remaining=purchased(k)-used[k];
-  const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"?"اسٹیکر":"بوتل";
+  const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"?"اسٹیکر":k.startsWith("cap_")?"عدد":"بوتل";
   return '<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
  }).join("")+'<div class="stat">19L ڈھکن<br><b>باقی: '+(purchased("cap_19l")-capsUsed)+' عدد</b><small>خریدے: '+purchased("cap_19l")+' — استعمال: '+capsUsed+' (بھری بوتل + خراب ڈھکن)</small></div></div>';
  $("moduleTable").innerHTML='<h3>خریداری اور ابتدائی اسٹاک کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ لاگت</th><th>سپلائر</th></tr>'+
