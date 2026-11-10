@@ -3,16 +3,22 @@ const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./logo.svg"]
 const APP_SHELL_PATHS = new Set(APP_SHELL.map(path => new URL(path, self.location.href).pathname));
 
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(APP_SHELL);
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(
-    keys.filter(key => key.startsWith("mughals-pure-water-") && key !== CACHE_NAME)
-      .map(key => caches.delete(key))
-  )));
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys.filter(key => key.startsWith("mughals-pure-water-") && key !== CACHE_NAME)
+        .map(key => caches.delete(key))
+    );
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener("fetch", event => {
@@ -61,11 +67,16 @@ self.addEventListener("push", event => {
 
 self.addEventListener("notificationclick", event => {
   event.notification.close();
-  const target = new URL(event.notification.data?.url || "./", self.location.origin).href;
+  const appBase = new URL("./", self.location.href);
+  const requested = new URL(event.notification.data?.url || "./", appBase);
+  const target = requested.origin === appBase.origin && requested.pathname.startsWith(appBase.pathname)
+    ? requested.href
+    : appBase.href;
   event.waitUntil((async () => {
     const windows = await clients.matchAll({ type: "window", includeUncontrolled: true });
     for (const client of windows) {
-      if (client.url.startsWith(self.location.origin)) {
+      const clientUrl = new URL(client.url);
+      if (clientUrl.origin === appBase.origin && clientUrl.pathname.startsWith(appBase.pathname)) {
         await client.focus();
         if ("navigate" in client) await client.navigate(target);
         return;
