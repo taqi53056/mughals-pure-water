@@ -457,7 +457,7 @@ const today=()=>{let d=new Date();return d.getFullYear()+"-"+String(d.getMonth()
 const monthNow=()=>today().slice(0,7)+"-01";
 const money=n=>"Rs. "+(Number(n)||0).toLocaleString("en-PK");
 
-const MPW_VAPID_PUBLIC_KEY="BJwzIqdEq4ixMfLo1Vyhaj9gkcxwQyioy0xUge32EUxivE9D2SW3SesdbyJ-EpwDyI_7WKYd3abAy6TBjzgceGM";
+const MPW_VAPID_PUBLIC_KEY="BHYf15h0Vy6ZhbpnbadH2yBSyH-KqA3n8P3c03bgf_PHxF24PMwdLzEKpHkb99H7gC0dotl7U0fewxz5Je4zhxo";
 function mpwBase64UrlToBytes(value){
  const padding="=".repeat((4-value.length%4)%4);
  const base64=(value+padding).replace(/-/g,"+").replace(/_/g,"/");
