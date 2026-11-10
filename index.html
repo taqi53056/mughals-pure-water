@@ -1431,7 +1431,7 @@ async function salesModule(){
  <input id="saleDate" type="date" value="${today()}">
  <select id="saleType" onchange="salePricePreview(false,true)">
  <option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
- <select id="saleWorker"><option value="">کارٹن کی مزدوری نہیں (مالک کا کام)</option></select>
+ <select id="saleWorker"><option value="">ورکر مقرر نہیں — بچت شمار نہیں ہوگی</option></select>
  <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview(true,false)">
  <input id="saleUnitPrice" type="number" min="55" step="1" value="${default500}" placeholder="اصل فی کارٹن / بوتل قیمت" oninput="salePricePreview(false,false)">
  <select id="salePaymentMethod"><option value="cash">نقد وصولی</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>
@@ -1443,8 +1443,12 @@ async function salesModule(){
  <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button>`;
  salePricePreview(false,true);
  await loadSales();
- const {data:workers}=await db.from("workers").select("id,full_name,is_owner").eq("is_active",true).contains("work_categories",["carton loading/unloading"]).order("full_name");
- $("saleWorker").innerHTML=`<option value="">مالک / غیر منسوب</option>`+(workers||[]).map(w=>`<option value="${w.id}" data-owner="${w.is_owner===true}">${esc(w.is_owner?"Owner (مالک)":w.full_name)}</option>`).join("");
+ const {data:workers,error:workerError}=await db.from("workers").select("id,full_name,is_owner,work_categories").eq("is_active",true).order("full_name");
+ if(workerError){$("moduleMsg").textContent="ورکر فہرست لوڈ نہیں ہوئی: "+workerError.message;return;}
+ const eligible=(workers||[]).filter(w=>w.is_owner||(w.work_categories||[]).includes("carton loading/unloading"));
+ const owner=eligible.find(w=>w.is_owner===true);
+ $("saleWorker").innerHTML=(owner?`<option value="${owner.id}" data-owner="true">مالک نے خود سیل کی</option>`:"")+`<option value="">ورکر مقرر نہیں — بچت شمار نہیں ہوگی</option>`+eligible.filter(w=>!w.is_owner).map(w=>`<option value="${w.id}" data-owner="false">${esc(w.full_name)}</option>`).join("");
+ if(owner)$("saleWorker").value=String(owner.id);
 }
 function getSaleCalc(){
  const type=$("saleType").value,qty=Number($("saleQty").value)||0;
@@ -1707,7 +1711,7 @@ async function runReport(){
    financeFetchAll("business_finance_ledger","entry_type,amount,counterparty,category","entry_date",null,end),
    financeFetchAll("business_finance_ledger","entry_type,amount,counterparty,category","entry_date",start,end),
    financeFetchAll("worker_ledger","entry_type,work_category,amount,entry_date","entry_date",start,end),
-   financeFetchAll("daily_cleaning_labor","amount,labor_date","labor_date",start,end),
+   financeFetchAll("daily_cleaning_labor","amount,labor_date,worker_id,worker_name","labor_date",start,end),
    db.rpc("get_finished_stock_summary"),
    db.from("product_settings").select("product_type,labor_per_unit")
   ]);
@@ -1780,7 +1784,8 @@ async function runReport(){
    return productLaborRate(type)*(sold+replacements/divisor);
   };
   const productionLabor=["500ml","1.5L","6L"].reduce((n,type)=>n+productLaborCost(type),0);
-  const supportLabor=workerRows.filter(r=>r.entry_type==="earning"&&["carton loading/unloading","cleaning","bottle washing","manual adjustment"].includes(r.work_category)).reduce((n,r)=>n+(Number(r.amount)||0),0)+sum(dailyCleaningRows,"amount");
+  const ownerCleaningSaving=sum(dailyCleaningRows.filter(r=>r.worker_id===null&&r.worker_name==="مالک"),"amount");
+  const supportLabor=workerRows.filter(r=>r.entry_type==="earning"&&["carton loading/unloading","cleaning","bottle washing","manual adjustment"].includes(r.work_category)).reduce((n,r)=>n+(Number(r.amount)||0),0)+sum(dailyCleaningRows.filter(r=>r.worker_id!==null),"amount");
   const exp19=expenses.filter(x=>x.business_segment==="19L").reduce((n,r)=>n+(Number(r.amount)||0),0);
   const expProducts=expenses.filter(x=>x.business_segment==="finished_goods").reduce((n,r)=>n+(Number(r.amount)||0),0);
   const expGeneral=expenses.filter(x=>!x.business_segment||x.business_segment==="general").reduce((n,r)=>n+(Number(r.amount)||0),0);
@@ -1857,7 +1862,7 @@ async function runReport(){
   });
   const detailedMarkup=
    "<h3>"+start+" سے "+end+" تک — تفصیلی حساب</h3>"+
-   "<div class='card'><h3>19L پانی کا شعبہ</h3><div class='stat'>گھریلو ڈلیوری اور ڈھکن آمدن: <b>"+fmt(successful19*100+damagedCaps*10)+"</b></div><div class='stat'>کاؤنٹر فروخت: <b>"+fmt(sum(counterSales,"total_amount"))+"</b> — "+counterLitres+" لیٹر</div><div class='stat'>19L کی کل آمدن: <b>"+fmt(revenue19)+"</b></div><div class='stat'>19L ڈلیوری پانی کی لاگت: <b>"+fmt(waterCogs)+"</b></div><div class='stat'>19L کاؤنٹر پانی کی لاگت: <b>"+fmt(counterWaterCogs)+"</b></div><div class='stat'>تمام استعمال شدہ ڈھکنوں کی لاگت (کامیاب بوتلیں + خراب ڈھکن): <b>"+fmt(capCogs)+"</b></div><div class='stat'>ملازمین کی حقیقی ڈلیوری مزدوری: <b>"+fmt(deliveryLabor)+"</b></div><div class='stat'>مالک کی اپنی ڈلیوری سے مزدوری کی بچت: <b>"+fmt(ownerDeliverySaving)+"</b></div><div class='stat'>19L شعبے کے اخراجات: <b>"+fmt(exp19)+"</b></div><div class='total'>19L شعبے کا نتیجہ: "+fmt(profit19)+"</div></div>"+
+   "<div class='card'><h3>19L پانی کا شعبہ</h3><div class='stat'>گھریلو ڈلیوری اور ڈھکن آمدن: <b>"+fmt(successful19*100+damagedCaps*10)+"</b></div><div class='stat'>کاؤنٹر فروخت: <b>"+fmt(sum(counterSales,"total_amount"))+"</b> — "+counterLitres+" لیٹر</div><div class='stat'>19L کی کل آمدن: <b>"+fmt(revenue19)+"</b></div><div class='stat'>19L ڈلیوری پانی کی لاگت: <b>"+fmt(waterCogs)+"</b></div><div class='stat'>19L کاؤنٹر پانی کی لاگت: <b>"+fmt(counterWaterCogs)+"</b></div><div class='stat'>تمام استعمال شدہ ڈھکنوں کی لاگت (کامیاب بوتلیں + خراب ڈھکن): <b>"+fmt(capCogs)+"</b></div><div class='stat'>ملازمین کی حقیقی ڈلیوری مزدوری: <b>"+fmt(deliveryLabor)+"</b></div><div class='stat'>مالک کی اپنی ڈلیوری سے مزدوری کی بچت: <b>"+fmt(ownerDeliverySaving)+"</b></div><div class='stat'>مالک کی صفائی سے ممکنہ بچت: <b>"+fmt(ownerCleaningSaving)+"</b></div><div class='stat'>19L شعبے کے اخراجات: <b>"+fmt(exp19)+"</b></div><div class='total'>19L شعبے کا نتیجہ: "+fmt(profit19)+"</div></div>"+
    "<div class='card'><h3>500ml، 1.5L اور 6L مصنوعات</h3>"+
    productBreakdown.map(x=>"<div class='stat'><b>"+x.type+"</b><br>فروخت: "+fmt(x.rev)+"<br>خام مال / پیکنگ: "+(x.cost===null?"لاگت نامکمل":fmt(x.cost))+"<br>متبادل بوتلوں کا نقصان: "+(x.loss===null?"لاگت نامکمل":fmt(x.loss))+"<br>پروڈکشن مزدوری: "+fmt(x.labor)+"<br><b>مشترکہ خرچ سے پہلے حصہ: "+(x.known===null?"لاگت نامکمل":fmt(x.known))+"</b></div>").join("")+
    "<div class='stat'>تینوں مصنوعات کی مجموعی فروخت: <b>"+fmt(productRevenue)+"</b></div><div class='stat'>خام مال اور پیکنگ کی مجموعی لاگت: <b>"+fmt(productCogs)+"</b></div><div class='stat'>خراب مال کی تبدیلی کا نقصان: <b>"+fmt(returnLoss)+"</b></div><div class='stat'>فلنگ پانی: "+fillWaterLitres+" لیٹر — "+fmt(fillWaterCogs)+"</div><div class='stat'>6L پانی: "+shopWaterFor6L+" لیٹر — "+fmt(shopWater6LCogs)+"</div><div class='stat'>پروڈکشن مزدوری: <b>"+fmt(productionLabor)+"</b></div><div class='stat'>مشترکہ لوڈنگ، صفائی اور دھلائی مزدوری: <b>"+fmt(supportLabor)+"</b></div><div class='stat'>مصنوعات کی ترسیل اور دیگر اخراجات: <b>"+fmt(expProducts)+"</b></div><div class='total'>مصنوعات کے شعبے کا نتیجہ: "+fmt(profitProducts)+"</div><p class='muted'>ہر پروڈکٹ کا حصہ مشترکہ لوڈنگ، صفائی اور ترسیل کے اخراجات سے پہلے ہے؛ یہ اخراجات نیچے شعبے کے مجموعی حساب میں شامل ہیں۔</p></div>"+
@@ -2089,7 +2094,7 @@ async function loadLaborHistory(){
  const person=id=>(workers||[]).find(w=>Number(w.id)===Number(id));
  const name=id=>{const w=person(id);return w?.is_owner?"Owner (مالک)":w?.full_name||"مالک / غیر منسلک";};
  const os=ownerSummary||{};
- $("moduleTable").innerHTML=`<h3>مالک کے کام کی الگ رپورٹ</h3><div class="stat">مالک کے پروڈکشن کارٹن: <b>${Number(os.production_cartons)||0}</b> — ممکنہ بچت: <b>${money(os.production_saving||0)}</b></div><div class="stat">مالک کی کامیاب 19L ڈیلیوریاں: <b>${Number(os.delivery_bottles)||0}</b> — ممکنہ بچت: <b>${money(os.delivery_saving||0)}</b></div><div class="stat">مالک کے سیل/کارٹن کام: <b>${Number(os.sales_cartons)||0}</b> — ممکنہ بچت: <b>${money(os.sales_saving||0)}</b></div><div class="stat">کل ممکنہ بچت: <b>${money(os.total_saving||0)}</b></div>`+'<h3>صفائی</h3><table><tr><th>تاریخ</th><th>ورکر</th><th>رقم</th><th>تفصیل</th></tr>'+(clean||[]).map(r=>`<tr><td>${esc(r.labor_date)}</td><td>${esc(r.worker_name||name(r.worker_id))}</td><td>${money(r.amount)}</td><td>${esc(r.note||"")}</td></tr>`).join("")+'</table><h3>پروڈکشن</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>شرح</th><th>مزدوروں کی واجب الادا اجرت</th><th>مالک کی ممکنہ بچت</th><th>تقسیم</th></tr>'+(prod||[]).map(r=>{const parts=(allocations||[]).filter(a=>Number(a.production_id)===Number(r.id));const ownerCartons=parts.filter(a=>person(a.worker_id)?.is_owner).reduce((n,a)=>n+Number(a.cartons),0);const ownerSaving=ownerCartons*productionRate(r.product_type);const split=parts.length?parts.map(a=>`${esc(name(a.worker_id))}: ${a.cartons} کارٹن`).join("، "):r.worker_id?`${esc(name(r.worker_id))} (پرانا ریکارڈ)`:"کوئی تقسیم درج نہیں";return `<tr><td>${esc(r.production_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity}</td><td>${money(r.labor_rate)}</td><td>${money(r.labor_amount)}</td><td>${money(ownerSaving)}</td><td>${split}</td></tr>`}).join("")+'</table><h3>ورکر کی صفائی اور بوتل دھلائی</h3><table><tr><th>تاریخ</th><th>ورکر</th><th>کام</th><th>رقم</th><th>تفصیل</th></tr>'+(ledger||[]).map(r=>`<tr><td>${esc(r.entry_date)}</td><td>${esc(name(r.worker_id))}</td><td>${r.work_category==="cleaning"?"صفائی":"بوتل دھلائی"}</td><td>${money(r.amount)}</td><td>${esc(r.note||"")}</td></tr>`).join("")+'</table>';
+ $("moduleTable").innerHTML=`<h3>مالک کے کام کی الگ رپورٹ</h3><div class="stat">مالک کے پروڈکشن کارٹن: <b>${Number(os.production_cartons)||0}</b> — ممکنہ بچت: <b>${money(os.production_saving||0)}</b></div><div class="stat">مالک کی کامیاب 19L ڈیلیوریاں: <b>${Number(os.delivery_bottles)||0}</b> — ممکنہ بچت: <b>${money(os.delivery_saving||0)}</b></div><div class="stat">مالک کے سیل/کارٹن کام: <b>${Number(os.sales_cartons)||0}</b> — ممکنہ بچت: <b>${money(os.sales_saving||0)}</b></div><div class="stat">مالک کی صفائی: ممکنہ بچت: <b>${money(os.cleaning_saving||0)}</b></div><div class="stat">کل ممکنہ بچت: <b>${money(os.total_saving||0)}</b></div>`+'<h3>صفائی</h3><table><tr><th>تاریخ</th><th>ورکر</th><th>رقم</th><th>تفصیل</th></tr>'+(clean||[]).map(r=>`<tr><td>${esc(r.labor_date)}</td><td>${esc(r.worker_name||name(r.worker_id))}</td><td>${money(r.amount)}</td><td>${esc(r.note||"")}</td></tr>`).join("")+'</table><h3>پروڈکشن</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>شرح</th><th>مزدوروں کی واجب الادا اجرت</th><th>مالک کی ممکنہ بچت</th><th>تقسیم</th></tr>'+(prod||[]).map(r=>{const parts=(allocations||[]).filter(a=>Number(a.production_id)===Number(r.id));const ownerCartons=parts.filter(a=>person(a.worker_id)?.is_owner).reduce((n,a)=>n+Number(a.cartons),0);const ownerSaving=ownerCartons*productionRate(r.product_type);const split=parts.length?parts.map(a=>`${esc(name(a.worker_id))}: ${a.cartons} کارٹن`).join("، "):r.worker_id?`${esc(name(r.worker_id))} (پرانا ریکارڈ)`:"کوئی تقسیم درج نہیں";return `<tr><td>${esc(r.production_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity}</td><td>${money(r.labor_rate)}</td><td>${money(r.labor_amount)}</td><td>${money(ownerSaving)}</td><td>${split}</td></tr>`}).join("")+'</table><h3>ورکر کی صفائی اور بوتل دھلائی</h3><table><tr><th>تاریخ</th><th>ورکر</th><th>کام</th><th>رقم</th><th>تفصیل</th></tr>'+(ledger||[]).map(r=>`<tr><td>${esc(r.entry_date)}</td><td>${esc(name(r.worker_id))}</td><td>${r.work_category==="cleaning"?"صفائی":"بوتل دھلائی"}</td><td>${money(r.amount)}</td><td>${esc(r.note||"")}</td></tr>`).join("")+'</table>';
 }
 
 /* شکایات */
