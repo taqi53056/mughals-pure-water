@@ -1454,15 +1454,18 @@ async function saveProductReturn(){
  const quantity=Number($("returnQty").value),reason=$("returnReason").value.trim();
  if(!return_date||!Number.isInteger(quantity)||quantity<=0||!reason){msg("تاریخ، خراب بوتلوں کی تعداد اور وجہ درج کریں۔");return;}
  if(!confirmLargeEntry("واپس آنے والی خراب بوتلیں",quantity,100))return;
- const {data,error}=await db.rpc("record_product_return",{
-  p_return_date:return_date,p_product_type:product_type,p_quantity:quantity,p_reason:reason
- });
- if(error){msg("واپسی محفوظ نہیں ہوئی: "+error.message);return;}
- if(!data||!data.return_id){msg("ڈیٹابیس سے واپسی کی تصدیق موصول نہیں ہوئی۔");return;}
- msg("خراب مال کی واپسی اور متبادل بوتلوں کا اندراج محفوظ ہوگیا۔",true);
- $("returnQty").value="";$("returnReason").value="";
- await loadProductReturns();await loadTodaySummary();
+ const button=$("returnSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const {data,error}=await db.rpc("record_product_return",{p_return_date:return_date,p_product_type:product_type,p_quantity:quantity,p_reason:reason});
+  if(error)throw error;
+  if(!data||!data.return_id)throw new Error("ڈیٹابیس سے واپسی کی تصدیق موصول نہیں ہوئی۔");
+  msg("خراب مال کی واپسی اور متبادل بوتلوں کا اندراج محفوظ ہوگیا۔",true);
+  $("returnQty").value="";$("returnReason").value="";
+  await loadProductReturns();await loadTodaySummary();
+ }catch(e){msg("واپسی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
+
 async function loadProductReturns(){
  const {data,error}=await db.from("product_returns").select("*").order("return_date",{ascending:false}).limit(100);
  if(error){$("moduleTable").textContent=error.message;return;}
