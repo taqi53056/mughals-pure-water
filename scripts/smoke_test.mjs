@@ -419,6 +419,15 @@ try {
     }
     if (!inactiveBillingResult.inactiveOptionLabel) failures.push("Inactive customer billing option is not clearly labeled");
 
+    const finishedOpeningResult = await page.evaluate(() => ({
+      firstEntry: canUpdateFinishedOpeningStock(null, "2026-11-11"),
+      sameDateCorrection: canUpdateFinishedOpeningStock({ id: 1, entry_date: "2026-11-11" }, "2026-11-11"),
+      differentDateRejected: !canUpdateFinishedOpeningStock({ id: 1, entry_date: "2026-11-10" }, "2026-11-11")
+    }));
+    if (!finishedOpeningResult.firstEntry || !finishedOpeningResult.sameDateCorrection || !finishedOpeningResult.differentDateRejected) {
+      failures.push("Finished-goods opening stock can be duplicated across different dates");
+    }
+
     await page.close();
   }
 } finally {
