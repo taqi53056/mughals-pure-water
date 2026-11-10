@@ -4,9 +4,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#080808">
+<meta name="theme-color" content="#082f27">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="./logo.svg">
+<link rel="apple-touch-icon" href="./logo.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MUGHAL'S PURE WATER">
 <title>MUGHAL'S PURE WATER</title>
@@ -312,12 +313,13 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 
 /* MPW luxury black-and-gold brand identity */
-.brand-header{background:linear-gradient(125deg,#050505,#17130a 58%,#050505);border-bottom:2px solid #c79a3b;color:#f5df9b;padding:18px 18px;box-shadow:0 8px 28px #0003}
-.brand-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.brand-logo{width:76px;height:76px;object-fit:contain;border:1px solid #c79a3b;border-radius:15px;box-shadow:0 3px 14px #0008}
-.brand-copy{flex:1;min-width:190px}.brand-copy h1{color:#f0cf78;letter-spacing:.055em;font-family:Georgia,serif}.brand-copy>div{color:#d7bd7a}
-.brand-header #installAppButton{background:linear-gradient(135deg,#f1d58d,#a97822);color:#171108;border:1px solid #f7e5ae}
-@media(max-width:520px){.brand-logo{width:62px;height:62px}.brand-wrap{gap:11px}.brand-copy h1{font-size:18px}}
+.brand-header{position:relative;background:linear-gradient(118deg,#061c18 0%,#0b3c30 56%,#071f1a 100%);border-bottom:3px solid #c7a66a;color:#f7f2e7;padding:17px 18px;box-shadow:0 10px 30px #082c241f;overflow:hidden}
+.brand-header:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.1;background-image:radial-gradient(#e8d5a8 .7px,transparent .7px);background-size:17px 17px}
+.brand-wrap{position:relative;z-index:1;display:flex;align-items:center;gap:17px;flex-wrap:wrap}
+.brand-logo{width:82px;height:82px;flex:0 0 82px;object-fit:contain;border:1px solid #c7a66a;border-radius:20px;box-shadow:0 5px 18px #0005;background:#071d19}
+.brand-copy{flex:1;min-width:190px}.brand-copy h1{color:#f3dca5;letter-spacing:.065em;font-family:Georgia,serif;font-size:clamp(19px,2.3vw,27px);font-weight:800}.brand-copy>div{color:#e2e9e1;font-size:13px;letter-spacing:.025em}
+.brand-header #installAppButton{background:linear-gradient(135deg,#f2dfb0,#bd9651);color:#142b23;border:1px solid #f7e9c8;box-shadow:0 5px 15px #0002}
+@media(max-width:520px){.brand-header{padding:14px 12px}.brand-logo{width:66px;height:66px;flex-basis:66px;border-radius:16px}.brand-wrap{gap:11px}.brand-copy{min-width:155px}.brand-copy h1{font-size:17px;letter-spacing:.035em}.brand-copy>div{font-size:11px}}
 
 /* Role-based module grouping */
 .admin-module-filter{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 16px;padding:10px;background:#f2f6f1;border:1px solid #e1e9df;border-radius:14px}
@@ -453,7 +455,7 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 <header class="brand-header"><div class="wrap brand-wrap" style="padding:0">
 <img class="brand-logo" src="./logo.svg" alt="MPW — MUGHAL'S PURE WATER">
 <div class="brand-copy"><h1>MUGHAL'S PURE WATER</h1>
-<div>مکمل کاروباری انتظامی نظام</div></div>
+<div>خالص پانی • منظم کاروبار • قابلِ اعتماد خدمت</div></div>
 <button id="installAppButton" class="secondary" type="button" onclick="installMughalApp()" style="width:auto;margin-top:10px">موبائل میں ایپ انسٹال کریں</button>
 </div></header>
 
@@ -1118,7 +1120,7 @@ async function deliveryModule(){
  let list;
  try{list=await getActiveCustomers()}catch(e){msg("گاہک لوڈ نہیں ہوئے: "+e.message);return}
  $("moduleBody").innerHTML=`
- <p class="muted">ایک ہی دن میں ایک گاہک کی متعدد ڈلیوریاں الگ الگ محفوظ ہو سکتی ہیں۔ ہر ڈلیوری کی اپنی ہسٹری ہوگی۔ کمپنی کی بوتلیں فروخت نہیں ہوتیں۔</p>
+ <p class="muted">ہر گاہک کی ایک تاریخ میں صرف ایک ڈلیوری محفوظ ہوگی۔ اگر اسی تاریخ کا ریکارڈ موجود ہو تو نیا ریکارڈ بنانے کے بجائے اسی میں ترمیم کریں۔ کمپنی کی بوتلیں فروخت نہیں ہوتیں۔</p>
  <select id="dCustomer" onchange="loadSelectedDelivery()">${customerOptions(list)}</select>
  <label for="dWorker">ڈیلیوری کس نے کی؟</label><select id="dWorker" onchange="markDeliveryDirty();calcDelivery()"><option value="">ورکر مقرر نہیں — مزدوری/بچت شمار نہیں ہوگی</option></select><p class="muted">مالک خود ڈلیوری کرے تو مالک منتخب کریں؛ ہر کامیاب بوتل پر Rs.20 ممکنہ بچت ہوگی۔ ملازم منتخب کریں تو Rs.20 حقیقی مزدوری اس کے لیجر میں جائے گی۔ خالی انتخاب صرف غیر منسوب ڈلیوری ہے، اس پر نہ مزدوری بنے گی نہ مالک کی بچت۔</p>
  <input id="dDate" type="date" value="${today()}" onchange="loadSelectedDelivery()">
@@ -1134,6 +1136,7 @@ async function deliveryModule(){
  <p class="muted">ڈلیوری محفوظ ہونے کے بعد ہی پیغام تیار کیا جا سکے گا؛ پیغام فون میں کھلے گا، Send آپ کریں گے۔</p><button id="deliveryWhatsAppButton" class="secondary" disabled onclick="shareCurrentDeliveryWhatsApp()">WhatsApp پیغام تیار کریں</button><button id="deliverySMSButton" class="secondary" disabled onclick="shareCurrentDeliverySMS()">SMS پیغام تیار کریں</button>
  <button class="secondary" onclick="loadDailyDeliveries()">تمام ڈلیوریاں تازہ کریں</button>`;
  await loadWorkerOptions();
+ await loadSelectedDelivery();
  await loadDailyDeliveries();
 }
 
@@ -1165,14 +1168,38 @@ function calcDelivery(){
 }
 
 async function loadSelectedDelivery(){
- // ہر نئی انٹری میں فیلڈز خالی رہیں؛ پچھلی ڈلیوری خودکار طور پر فارم میں نہ آئے۔
- // اگر اسی گاہک/تاریخ کا ریکارڈ پہلے سے موجود ہو تو saveDelivery اسی ریکارڈ کو اپڈیٹ کرے گا۔
  setDeliverySavedState(false);
- $("dOut").value="";
- $("dBack").value="";
- $("dCaps").value="";
- if($("dWorker"))$("dWorker").value=String(window.deliveryOwnerId||"");
- calcDelivery();
+ const customerId=Number($("dCustomer")?.value),date=$("dDate")?.value;
+ const button=$("deliverySaveButton");
+ window.currentDeliveryRecordId=null;
+ if(!customerId||!date){
+  $("dOut").value="";$("dBack").value="";$("dCaps").value="";
+  if($("dWorker"))$("dWorker").value=String(window.deliveryOwnerId||"");
+  if(button)button.textContent="ڈلیوری محفوظ کریں";
+  calcDelivery();return;
+ }
+ try{
+  const {data,error}=await db.from("customer_19l_deliveries")
+   .select("id,bottles_delivered,empty_bottles_returned,damaged_caps,worker_id,owner_labor_saving")
+   .eq("customer_id",customerId).eq("delivery_date",date).maybeSingle();
+  if(error)throw error;
+  if(data){
+   window.currentDeliveryRecordId=Number(data.id);
+   $("dOut").value=String(data.bottles_delivered);
+   $("dBack").value=String(data.empty_bottles_returned);
+   $("dCaps").value=String(data.damaged_caps);
+   if($("dWorker"))$("dWorker").value=data.worker_id?String(data.worker_id):(Number(data.owner_labor_saving)>0?String(window.deliveryOwnerId||""):"");
+   if(button)button.textContent="موجودہ ڈلیوری میں ترمیم محفوظ کریں";
+   msg("اس تاریخ کا ریکارڈ پہلے سے موجود ہے؛ نیا ریکارڈ نہیں بنے گا، اسی میں ترمیم ہوگی۔",true);
+  }else{
+   $("dOut").value="";$("dBack").value="";$("dCaps").value="";
+   if($("dWorker"))$("dWorker").value=String(window.deliveryOwnerId||"");
+   if(button)button.textContent="ڈلیوری محفوظ کریں";
+  }
+  calcDelivery();
+ }catch(error){
+  msg("موجودہ ڈلیوری چیک نہیں ہوسکی؛ محفوظ کرنے سے پہلے دوبارہ کوشش کریں: "+(error?.message||String(error)));
+ }
 }
 
 async function saveDelivery(){
@@ -1184,56 +1211,78 @@ async function saveDelivery(){
  if(c.diff>0&&!confirm("بوتلوں میں "+c.diff+" کا فرق ہے۔ کیا محفوظ کرنا ہے؟"))return;
  if(c.caps>0&&!confirm(c.caps+" خراب ڈھکن × Rs.10 = "+money(c.capAmount)+". کیا محفوظ کرنا ہے؟"))return;
  if(!confirmLargeEntry("19L بوتلوں کی تعداد",c.out,100)||!confirmLargeEntry("خراب ڈھکنوں کی تعداد",c.caps,50))return;
- const button=$("deliverySaveButton");
- if(button?.disabled)return;
- if(button)button.disabled=true;
+ const button=$("deliverySaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  let deliverySaved=false;
+ const wasEditing=!!window.currentDeliveryRecordId;
  try{
   const workerId=c.isOwner?null:($("dWorker")?.value||null);
-  const requestSignature=[id,date,c.out,c.back,c.caps,workerId||"owner"].join("|");
-  const requestId=mpwPendingRequestId("delivery",requestSignature);
-  const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null,request_id:requestId};
-  const {data:saved,error:saveError}=await db.from("customer_19l_deliveries").upsert(payload,{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
-  if(saveError)throw saveError;
-  let deliveryRecord=saved;
-  if(!deliveryRecord){
-   const {data:existing,error:lookupError}=await db.from("customer_19l_deliveries").select("id").eq("request_id",requestId).maybeSingle();
-   if(lookupError||!existing)throw lookupError||new Error("ڈلیوری کا سابقہ محفوظ ریکارڈ نہیں مل سکا۔");
-   deliveryRecord=existing;
+  const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
+  let deliveryRecord=null;
+  if(window.currentDeliveryRecordId){
+   const {data,error}=await db.from("customer_19l_deliveries").update(payload)
+    .eq("id",window.currentDeliveryRecordId).eq("customer_id",Number(id)).eq("delivery_date",date).select("id").single();
+   if(error)throw error;
+   deliveryRecord=data;
+  }else{
+   const requestSignature=[id,date,c.out,c.back,c.caps,workerId||"owner"].join("|");
+   const requestId=mpwPendingRequestId("delivery",requestSignature);
+   const {data,error}=await db.from("customer_19l_deliveries").insert({...payload,request_id:requestId}).select("id").single();
+   if(error){
+    if(error.code==="23505"){
+     const {data:retry,error:retryError}=await db.from("customer_19l_deliveries").select("id").eq("request_id",requestId).maybeSingle();
+     if(retryError)throw retryError;
+     if(retry){deliveryRecord=retry;}
+     else{
+      const {data:dayRecord,error:dayError}=await db.from("customer_19l_deliveries").select("id").eq("customer_id",Number(id)).eq("delivery_date",date).maybeSingle();
+      if(dayError)throw dayError;
+      if(dayRecord){
+       window.currentDeliveryRecordId=Number(dayRecord.id);
+       await loadSelectedDelivery();
+       throw new Error("اس گاہک کی اس تاریخ کی ڈلیوری پہلے محفوظ ہوچکی ہے۔ ریکارڈ کھول دیا گیا ہے؛ ضرورت ہو تو اسی میں ترمیم کریں۔");
+      }
+      throw error;
+     }
+    }else throw error;
+   }else deliveryRecord=data;
   }
+  if(!deliveryRecord?.id)throw new Error("محفوظ ڈلیوری کی تصدیق نہیں ہوسکی۔");
   deliverySaved=true;
+  window.currentDeliveryRecordId=Number(deliveryRecord.id);
+  mpwClearPendingRequestId("delivery");
   setDeliverySavedState(true);
-  let billSyncWarning="";
-  try{await syncBillBottles(Number(id),date.slice(0,7)+"-01")}
-  catch(e){billSyncWarning=" ڈلیوری محفوظ ہے، مگر ماہانہ بل اپڈیٹ نہیں ہوا: "+e.message}
-  let notificationWarning="";
+  if(button)button.textContent="موجودہ ڈلیوری میں ترمیم محفوظ کریں";
   const customerName=customerList.find(x=>Number(x.id)===Number(id))?.name||"گاہک";
   const deliveryNotice={
-   customer_id:Number(id),
-   title:"نئی ڈلیوری درج ہوگئی",
-   message:`السلام علیکم ${customerName} صاحب! ${date} کو ${c.out} بھری بوتلیں دی گئیں، ${c.back} خالی واپس آئیں اور ${c.success} کامیاب بوتلیں درج ہوئیں۔ خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,
-   notification_type:"delivery",
-   reference_key:`delivery:${date}:${deliveryRecord.id}`
+   customer_id:Number(id),title:"ڈلیوری ریکارڈ اپڈیٹ ہوگیا",
+   message:`السلام علیکم ${customerName} صاحب! ${date} کی ڈلیوری کی تفصیل درج/اپڈیٹ ہوگئی ہے۔ دی گئی بھری بوتلیں: ${c.out}، واپس خالی: ${c.back}، کامیاب بوتلیں: ${c.success}، خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,
+   notification_type:"delivery",reference_key:`delivery:${date}:${deliveryRecord.id}`
   };
-  const {error:noticeError}=await db.from("customer_notifications").insert(deliveryNotice);
-  if(noticeError&&noticeError.code!=="23505"){
-   console.error("Notification could not be saved",noticeError);
-   notificationWarning=" کسٹمر کی ایپ اطلاع محفوظ نہیں ہوئی: "+noticeError.message;
-  }else if(!noticeError){
-   const pushResult=await notifyCustomerPush(Number(id),deliveryNotice.title,deliveryNotice.message);
-   if(pushResult?.error||Number(pushResult?.sent||0)<1){
-    notificationWarning=" ایپ میں اطلاع محفوظ ہے، مگر موبائل Push ابھی تصدیق نہیں ہوئی: "+(pushResult?.error||pushResult?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔");
+  let shouldPush=false;
+  const {data:oldNotice,error:noticeLookupError}=await db.from("customer_notifications").select("id,message")
+   .eq("customer_id",Number(id)).eq("reference_key",deliveryNotice.reference_key).maybeSingle();
+  if(noticeLookupError)throw noticeLookupError;
+  if(oldNotice){
+   shouldPush=oldNotice.message!==deliveryNotice.message;
+   if(shouldPush){
+    const {error}=await db.from("customer_notifications").update({title:deliveryNotice.title,message:deliveryNotice.message,is_read:false,created_at:new Date().toISOString()}).eq("id",oldNotice.id);
+    if(error)throw error;
    }
+  }else{
+   const {error}=await db.from("customer_notifications").insert(deliveryNotice);
+   if(error)throw error;
+   shouldPush=true;
   }
-  if(!billSyncWarning&&!notificationWarning)mpwClearPendingRequestId("delivery");
-  msg("نئی ڈلیوری محفوظ ہوگئی۔ مزدوری "+money(c.labor)+billSyncWarning+notificationWarning,!billSyncWarning&&!notificationWarning);
+  let notificationWarning="";
+  if(shouldPush){
+   const push=await notifyCustomerPush(Number(id),deliveryNotice.title,deliveryNotice.message);
+   if(push?.error||Number(push?.sent||0)<1)notificationWarning=" ایپ میں اطلاع محفوظ ہے، مگر موبائل Push کی تصدیق نہیں ہوئی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔");
+  }
+  msg((wasEditing?"ڈلیوری ریکارڈ اپڈیٹ ہوگیا۔ ":"نئی ڈلیوری محفوظ ہوگئی۔ ")+"مزدوری "+money(c.labor)+notificationWarning,!notificationWarning);
   await Promise.all([loadDailyDeliveries(),loadTodaySummary()]);
  }catch(e){
   console.error("Delivery save failed",e);
-  msg(deliverySaved?"ڈلیوری محفوظ ہوگئی، مگر بعد کی تازہ کاری مکمل نہیں ہوئی: "+(e?.message||String(e)):"ڈلیوری محفوظ نہیں ہوئی: "+(e?.message||String(e)));
- }finally{
-  if(button)button.disabled=false;
- }
+  msg(deliverySaved?"ڈلیوری محفوظ ہوگئی، مگر اطلاع یا بعد کی تازہ کاری مکمل نہیں ہوئی: "+(e?.message||String(e)):"ڈلیوری محفوظ نہیں ہوئی: "+(e?.message||String(e)));
+ }finally{if(button)button.disabled=false;}
 }
 
 async function loadDailyDeliveries(){
@@ -1275,13 +1324,7 @@ async function billingModule(){
 }
 
 function selectedBillMonth(){return $("bMonth").value.slice(0,7)+"-01";}
-async function syncBillBottles(customerId,month){
- // مرکزی حساب Supabase کے محفوظ admin-only فنکشن سے ہوگا؛ براؤزر میں الگ حساب یا براہِ راست bill upsert نہیں ہوگا۔
- const {error:calcError}=await db.rpc("recalculate_customer_bills_from",{
-  p_customer_id:customerId,
-  p_start_month:month
- });
- if(calcError)throw calcError;
+async function readBillSummary(customerId,month){
  const start=new Date(month+"T00:00:00");
  const endDate=new Date(start);endDate.setMonth(endDate.getMonth()+1);
  const end=endDate.getFullYear()+"-"+String(endDate.getMonth()+1).padStart(2,"0")+"-01";
@@ -1290,24 +1333,16 @@ async function syncBillBottles(customerId,month){
   db.from("customer_monthly_bills").select("current_due,closing_advance").eq("customer_id",customerId).lt("bill_month",month).order("bill_month",{ascending:false}).limit(1).maybeSingle(),
   db.from("customer_payments").select("amount,payment_type").eq("customer_id",customerId).gte("payment_date",month).lt("payment_date",end)
  ]);
- if(billError)throw billError;
- if(previousError)throw previousError;
- if(paymentError)throw paymentError;
+ if(billError)throw billError;if(previousError)throw previousError;if(paymentError)throw paymentError;
  if(!bill)throw new Error("بل کا ریکارڈ تیار نہیں ہوا۔");
  const netPayments=(payments||[]).reduce((n,r)=>n+(r.payment_type==="refund"?-Number(r.amount):Number(r.amount)),0);
- return {
-  bottles:Number(bill.bottles_19l)||0,
-  caps:Number(bill.damaged_caps)||0,
-  previousDue:Number(previous?.current_due)||0,
-  previousAdvance:Number(previous?.closing_advance)||0,
-  netPayments,
-  bottleAmount:Number(bill.bottle_amount)||0,
-  capAmount:Number(bill.cap_amount)||0,
-  charges:(Number(bill.bottle_amount)||0)+(Number(bill.cap_amount)||0),
-  payable:Number(bill.current_due)||0,
-  closingAdvance:Number(bill.closing_advance)||0,
-  advanceUsed:Number(bill.advance_used)||0
- };
+ return {bottles:Number(bill.bottles_19l)||0,caps:Number(bill.damaged_caps)||0,previousDue:Number(previous?.current_due)||0,previousAdvance:Number(previous?.closing_advance)||0,netPayments,bottleAmount:Number(bill.bottle_amount)||0,capAmount:Number(bill.cap_amount)||0,charges:(Number(bill.bottle_amount)||0)+(Number(bill.cap_amount)||0),payable:Number(bill.current_due)||0,closingAdvance:Number(bill.closing_advance)||0,advanceUsed:Number(bill.advance_used)||0};
+}
+async function syncBillBottles(customerId,month){
+ // صرف صریح بل ریفریش/تیاری پر حساب دوبارہ چلائیں؛ عام ڈلیوری اور ادائیگی پر ڈیٹابیس ٹرگر خود حساب کرتا ہے۔
+ const {error}=await db.rpc("recalculate_customer_bills_from",{p_customer_id:customerId,p_start_month:month});
+ if(error)throw error;
+ return readBillSummary(customerId,month);
 }
 
 async function loadBillDeliveryHistory(customerId,month){
@@ -1335,7 +1370,7 @@ async function loadSelectedBill(){
  const id=$("bCustomer").value,month=$("bMonth").value;if(!id||!month)return;
  const m=month.slice(0,7)+"-01";
  try{
-  const b=await syncBillBottles(Number(id),m);
+  const b=await readBillSummary(Number(id),m);
   $("bBottles").textContent=b.bottles;$("bCaps").textContent=b.caps;
   $("bBottleAmt").textContent=money(b.bottles*100);$("bCapAmt").textContent=money(b.caps*10);
   $("bPrev").textContent=money(b.previousDue);$("bAdvance").textContent=money(Math.min(b.previousAdvance,Math.max(b.charges-b.previousDue,0)));
@@ -1402,7 +1437,7 @@ async function recordCustomerPayment(){
   }
   paymentSaved=true;
   const month=paymentDate.slice(0,7)+"-01";
-  const bill=await syncBillBottles(customerId,month);
+  const bill=await readBillSummary(customerId,month);
   await loadSelectedBill();
   const customer=(customerList||[]).find(c=>Number(c.id)===customerId);
   const typeLabels={bill_payment:"بل کی ادائیگی",advance:"ایڈوانس",refund:"واپسی / ریفنڈ"};
@@ -1702,7 +1737,10 @@ async function saveTankerPurchase(){
   if(result.error)throw result.error;
   saved=true;
   if(opening){msg("ابتدائی پانی کا اسٹاک محفوظ ہوگیا۔",true);$("tankOpeningLitres").value="";$("tankOpeningValue").value="";}
-  else{msg("ٹینکر خریداری محفوظ ہوگئی۔",true);$("tankSupplier").value="";}
+  else{
+   msg("ٹینکر خریداری محفوظ ہوگئی۔ اگلی خریداری کے لیے مقدار اور قیمت دوبارہ درج کریں۔",true);
+   $("tankCount").value="";$("tankRate").value="";$("tankSupplier").value="";$("tankPaymentMethod").value="cash";updateTankerTotal();
+  }
   await Promise.all([loadTankerPurchases(),loadTodaySummary()]);
  }catch(e){msg(saved?"پانی کا اندراج محفوظ ہوگیا، مگر فہرست تازہ نہیں ہوسکی: "+(e?.message||String(e)):(opening?"ابتدائی پانی کا اسٹاک":"ٹینکر خریداری")+" محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
@@ -1720,12 +1758,12 @@ async function loadTankerPurchases(){
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
  $("moduleBody").innerHTML=
- '<p class="muted">گاہکوں کی الگ الگ تفصیل نہیں چاہیے۔ پورے دن کے کُل فروخت شدہ لیٹر اور کُل وصول شدہ رقم ایک ہی انٹری میں درج کریں۔</p>'+
+ '<p class="muted">پورے دن کے کُل فروخت شدہ لیٹر اور کُل وصول شدہ رقم درج کریں۔ اس تاریخ کا ریکارڈ پہلے موجود ہو تو خانے اسی کل سے بھر جائیں گے؛ نئی رقم جمع نہ کریں بلکہ پورے دن کا درست مجموعہ درج کرکے اسی ریکارڈ کو اپڈیٹ کریں۔</p>'+
  '<div class="card"><input id="counterDate" type="date" value="'+today()+'">'+
  '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنے لیٹر فروخت ہوئے؟">'+
  '<input id="counterAmount" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنی رقم وصول ہوئی؟">'+
  '<select id="counterMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="mixed">مختلف ذرائع</option></select>'+
- '<button onclick="saveCounterWaterSale()">روزانہ کاؤنٹر فروخت محفوظ کریں</button></div>';
+ '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ کاؤنٹر فروخت محفوظ کریں</button></div>';
  $("counterDate").addEventListener("change",loadCounterWaterForDate);await loadCounterWaterForDate();
 }
 async function loadCounterWaterForDate(){
@@ -1735,6 +1773,8 @@ async function loadCounterWaterForDate(){
  $("counterLitres").value=data?.total_litres??"";
  $("counterAmount").value=data?.total_amount??"";
  $("counterMethod").value=data?.payment_method||"cash";
+ const saveButton=$("counterSaveButton");
+ if(saveButton)saveButton.textContent=data?"روزانہ کا کُل اپڈیٹ کریں":"روزانہ کاؤنٹر فروخت محفوظ کریں";
  const {data:history}=await db.from("counter_water_sales").select("*").order("sale_date",{ascending:false}).limit(30);
  $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر فروخت کی ہسٹری</h3><table><tr><th>تاریخ</th><th>لیٹر</th><th>وصول شدہ رقم</th><th>فی لیٹر اوسط</th></tr>'+
  (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.total_litres))+'</td></tr>').join("")+'</table>';
@@ -1743,11 +1783,17 @@ async function saveCounterWaterSale(){
  const sale_date=$("counterDate").value,total_litres=Number($("counterLitres").value),total_amount=Number($("counterAmount").value);
  if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<=0){msg("تاریخ، کل لیٹر اور وصول شدہ رقم درست درج کریں۔");return;}
  if(!confirmLargeEntry("کاؤنٹر فروخت کے لیٹر",total_litres,1000)||!confirmLargeEntry("وصول شدہ رقم",total_amount,100000))return;
- const payload={sale_date,total_litres,total_amount,payment_method:$("counterMethod").value,entered_by:user?.id||null};
- const {error}=await db.from("counter_water_sales").upsert(payload,{onConflict:"sale_date"});
- if(error){msg("کاؤنٹر فروخت محفوظ نہیں ہوئی: "+error.message);return;}
- msg("روزانہ کاؤنٹر فروخت محفوظ ہوگئی۔",true);await loadCounterWaterForDate();await loadTodaySummary();
+ const button=$("counterSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const payload={sale_date,total_litres,total_amount,payment_method:$("counterMethod").value,entered_by:user?.id||null};
+  const {error}=await db.from("counter_water_sales").upsert(payload,{onConflict:"sale_date"});
+  if(error)throw error;
+  msg("اس تاریخ کی روزانہ کاؤنٹر فروخت محفوظ/اپڈیٹ ہوگئی؛ دوسرا ریکارڈ نہیں بنایا گیا۔",true);
+  await loadCounterWaterForDate();await loadTodaySummary();
+ }catch(error){msg("کاؤنٹر فروخت محفوظ نہیں ہوئی: "+(error?.message||String(error)));}
+ finally{if(button)button.disabled=false;}
 }
+
 async function productReturnsModule(){
  setTitle("خراب تیار مال کی واپسی");
  $("moduleBody").innerHTML=

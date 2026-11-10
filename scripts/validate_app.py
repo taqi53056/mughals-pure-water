@@ -6,11 +6,14 @@ import json
 import re
 import subprocess
 import tempfile
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 HTML = ROOT / "index.html"
 MANIFEST = ROOT / "manifest.webmanifest"
 SW = ROOT / "SW.js"
+LOGO = ROOT / "logo.svg"
+DELIVERY_MIGRATION = ROOT / "supabase/migrations/20261110170000_one_customer_delivery_per_day.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
@@ -43,7 +46,7 @@ class AppParser(HTMLParser):
 def fail(message):
     raise SystemExit("FAIL: " + message)
 
-if not all(path.exists() for path in (HTML, MANIFEST, SW)):
+if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION)):
     fail("required app shell file is missing")
 
 source = HTML.read_text(encoding="utf-8")
@@ -65,9 +68,21 @@ for ref in parser.local_refs:
         fail("missing local HTML asset: " + ref)
 
 try:
-    json.loads(MANIFEST.read_text(encoding="utf-8"))
+    manifest_data = json.loads(MANIFEST.read_text(encoding="utf-8"))
 except Exception as exc:
     fail("manifest JSON is invalid: " + str(exc))
+
+try:
+    ET.parse(LOGO)
+except Exception as exc:
+    fail("MPW logo SVG is invalid: " + str(exc))
+
+if not any(icon.get("src") == "./logo.svg" for icon in manifest_data.get("icons", [])):
+    fail("PWA manifest does not use the unified MPW logo")
+if 'src="./logo.svg"' not in source or 'icon: "./logo.svg"' not in SW.read_text(encoding="utf-8"):
+    fail("App header or push notification does not use the unified MPW logo")
+if "CREATE UNIQUE INDEX IF NOT EXISTS customer_19l_deliveries_customer_date_uidx" not in DELIVERY_MIGRATION.read_text(encoding="utf-8"):
+    fail("One-delivery-per-customer/date database guard is missing")
 
 js_files = [(SW.name, SW.read_text(encoding="utf-8"))]
 js_files += [(f"inline-script-{i}.js", code) for i, code in enumerate(parser.inline_scripts) if code.strip()]
@@ -83,5 +98,12 @@ for name, code in js_files:
 for path in (HTML, MANIFEST, SW):
     if "kiswa" in path.read_text(encoding="utf-8").lower():
         fail("legacy Kiswa branding remains in " + path.name)
+
+if "ایک ہی دن میں ایک گاہک کی متعدد ڈلیوریاں" in source:
+    fail("delivery UI still permits multiple daily entries for one customer")
+if "async function loadSelectedDelivery()" not in source or "window.currentDeliveryRecordId" not in source:
+    fail("delivery edit-in-place guard is missing")
+if "async function readBillSummary(" not in source:
+    fail("read-only bill summary helper is missing")
 
 print("PASS: app shell files, unique IDs, local assets, onclick handlers, manifest JSON, inline JavaScript, Service Worker syntax, and legacy branding.")
