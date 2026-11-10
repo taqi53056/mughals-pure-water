@@ -329,6 +329,48 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 .owner-bar{height:7px;background:#edf0eb;border-radius:99px;overflow:hidden;margin-bottom:6px}.owner-bar i{height:100%;display:block;border-radius:99px;background:linear-gradient(90deg,#176047,#c3a15c)}
 .owner-history-list{display:grid;gap:8px;margin-top:13px}.owner-history-row{display:grid;grid-template-columns:minmax(75px,.6fr) minmax(0,1.5fr) auto auto;align-items:center;gap:10px;padding:12px;border:1px solid #e6ebe4;border-radius:13px;background:#fff}.owner-history-date b,.owner-history-date small,.owner-history-main b,.owner-history-main small{display:block}.owner-history-date b,.owner-history-main b{font-size:13px;color:#213b2f}.owner-history-date small,.owner-history-main small{font-size:11px;color:#78847c;overflow-wrap:anywhere}.owner-history-row>strong{white-space:nowrap;color:#174b39;font-size:14px}.owner-history-row button{min-width:54px!important;margin:0!important;padding:7px 9px!important;font-size:12px!important}.owner-empty{padding:18px;text-align:center;border:1px dashed #cbd7ca;border-radius:14px;color:#65736b;background:#f8faf7}
 @media(max-width:520px){.owner-withdrawal-hero{padding:17px;border-radius:17px}.owner-withdrawal-hero h3{font-size:19px}.owner-hero-mark{width:48px;height:48px;flex-basis:48px}.owner-recipient-grid{gap:8px}.owner-recipient-card{padding:11px}.owner-recipient-top b{font-size:12px}.owner-recipient-card>strong{font-size:17px}.owner-history-row{grid-template-columns:1fr auto;gap:7px}.owner-history-main{grid-column:1}.owner-history-row>strong{grid-column:2;grid-row:1}.owner-history-row button{grid-column:2;grid-row:2}}
+
+/* Enterprise-style owner dashboard and month controls */
+.executive-dashboard{padding:24px}
+.executive-heading,.executive-section-title,.exec-status-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.executive-heading{padding-bottom:16px;border-bottom:1px solid #e5e9e2;margin-bottom:16px}
+.executive-filter{display:flex;align-items:center;gap:8px;min-width:230px}
+.executive-filter input{max-width:170px;margin:0}
+.executive-filter button{width:auto;margin:0;white-space:nowrap}
+.exec-kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
+.exec-kpi{background:linear-gradient(145deg,#fff,#f5f7f1);border:1px solid #e3e9e1;border-radius:15px;padding:16px;min-width:0}
+.exec-kpi span{display:block;color:#65746b;font-size:13px;font-weight:700}
+.exec-kpi strong{display:block;color:#163f31;font-size:clamp(18px,2vw,27px);margin:7px 0;overflow-wrap:anywhere}
+.exec-kpi small{color:#718078;font-size:12px}
+.exec-two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0}
+.exec-panel{background:#fff;border:1px solid #e4e9e2;border-radius:16px;padding:16px;min-width:0}
+.exec-panel h3{margin-bottom:13px}
+.exec-line{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #edf0eb;font-size:14px}
+.exec-line b{white-space:nowrap}
+.exec-net{font-weight:800;color:#173f31;border-top:1px solid #dce5db;margin-top:4px}
+.exec-status{font-size:12px;font-weight:800;padding:6px 11px;border-radius:999px}
+.exec-status.closed{background:#e5f3e9;color:#17613c}
+.exec-status.open{background:#fff2d6;color:#79551b}
+.exec-stock-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.exec-stock-item{background:#f5f7f2;border:1px solid #e8ede5;border-radius:10px;padding:10px;display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.exec-stock-item b{color:#174d3a}
+.exec-quality{padding:12px 0}
+.executive-today{border-top:1px solid #e4e9e2;margin-top:18px;padding-top:16px}
+.executive-section-title{margin-bottom:10px}
+.executive-section-title button{width:auto;margin:0}
+.exec-today-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.danger-button{background:#8a3939!important;border-color:#8a3939!important}
+#moduleBody #monthClosePreview{margin:12px 0;line-height:1.6}
+#moduleBody #monthClosePreview .exec-line{margin:0}
+@media(min-width:1100px){.executive-dashboard{padding:26px}.exec-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.exec-two-col{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:699px){
+ .executive-dashboard{padding:14px}.executive-heading{align-items:flex-start}
+ .executive-filter{width:100%;min-width:0}.executive-filter input{max-width:none;flex:1}
+ .exec-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.exec-kpi{padding:12px}
+ .exec-two-col{grid-template-columns:1fr;gap:10px}.exec-panel{padding:13px}
+ .exec-today-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.exec-stock-grid{grid-template-columns:1fr}
+}
+
 </style></head>
 <body>
 <header class="brand-header"><div class="wrap brand-wrap" style="padding:0">
@@ -390,12 +432,19 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 <div class="tile red" onclick="openModule('returns')"><span class="tile-title">خراب تیار مال کی واپسی</span><small>واپس یا خراب مال</small></div>
 <div class="tile teal" onclick="openModule('settings')"><span class="tile-title">ترتیبات / کنٹرول سینٹر</span><small>قیمتیں اور بنیادی سیٹنگز</small></div>
 <div class="tile gold" onclick="openModule('ownerWithdrawals')"><span class="tile-title">مالک کی ذاتی نکاسی</span><small>مالک نے کتنی رقم لی؟</small></div>
+<div class="tile green" onclick="openModule('monthClose')"><span class="tile-title">ماہانہ کلوزنگ</span><small>حساب کی جانچ، رپورٹ اور مہینہ بند کریں</small></div>
 </div>
 
-<div id="dashboard" class="card">
-<h2>آج کا خلاصہ</h2>
-<div id="todaySummary">خلاصہ لوڈ ہو رہا ہے...</div>
-<button class="secondary" onclick="loadTodaySummary()">خلاصہ تازہ کریں</button>
+<div id="dashboard" class="card executive-dashboard">
+ <div class="executive-heading">
+  <div><h2>مالکین کا کاروباری کنٹرول سینٹر</h2><p class="muted">ماہانہ کارکردگی، منافع، وصولیاں، بقایا اور اسٹاک — ایک ہی مستند حساب سے</p></div>
+  <div class="executive-filter"><input id="execMonth" type="month" value="${today().slice(0,7)}"><button class="secondary" onclick="loadExecutiveDashboard()">رپورٹ تازہ کریں</button></div>
+ </div>
+ <div id="execDashboard"><p class="muted">کاروباری ڈیش بورڈ لوڈ ہو رہا ہے...</p></div>
+ <div class="executive-today">
+  <div class="executive-section-title"><h3>آج کی سرگرمی</h3><button class="secondary" onclick="loadTodaySummary()">تازہ کریں</button></div>
+  <div id="todaySummary" class="exec-today-grid">خلاصہ لوڈ ہو رہا ہے...</div>
+ </div>
 </div>
 
 <div id="module" class="card hidden">
@@ -738,7 +787,7 @@ async function loadApp(){
   $("welcome").textContent="السلام علیکم، "+(p.data?.full_name||"ایڈمن")+" صاحب";
   $("role").textContent=" | انتظامی پینل";
   $("customerPanel").classList.add("hidden");$("adminPanel").classList.remove("hidden");
-  await loadTodaySummary();
+  await Promise.all([loadTodaySummary(),loadExecutiveDashboard()]);
  }
 }
 
@@ -759,7 +808,7 @@ async function logout(){if(!db)return;await db.auth.signOut();location.reload()}
 
 function backHome(){
  $("adminPanel").classList.remove("module-open");$("module").classList.add("hidden");$("homeTiles").classList.remove("hidden");$("dashboard").classList.remove("hidden");editingId=null;
- loadTodaySummary();
+ Promise.all([loadTodaySummary(),loadExecutiveDashboard()]);
 }
 
 async function openModule(name){
@@ -784,6 +833,7 @@ async function openModule(name){
  if(name==="audit")return auditModule();
  if(name==="settings")return settingsModule();
  if(name==="ownerWithdrawals")return ownerWithdrawalsModule();
+ if(name==="monthClose")return monthCloseModule();
 }
 
 /* گاہک */
@@ -792,6 +842,7 @@ async function customersModule(){
  $("moduleBody").innerHTML=`
  <p class="muted">نئے گاہک خود رجسٹریشن کریں گے۔ منظوری کے بعد ہی انہیں بل اور ڈلیوری نظر آئے گی۔</p>
  <div class="card"><h3>منظوری کے منتظر گاہک</h3><div id="pendingCustomers">فہرست لوڈ ہو رہی ہے...</div></div>
+ <div class="card"><h3>آرکائیو شدہ گاہک — صرف غیر شناختی مالی خلاصہ</h3><div id="customerArchiveJobs">آرکائیو کام لوڈ ہو رہے ہیں...</div><div id="customerArchiveHistory">آرکائیو ہسٹری لوڈ ہو رہی ہے...</div></div>
  <input id="customerSearch" placeholder="نام، Customer ID یا موبائل تلاش کریں" oninput="renderCustomers()">
  <button class="secondary" onclick="loadCustomers()">فہرست تازہ کریں</button>
  <div id="customerFullAccount" class="card hidden" aria-live="polite">
@@ -809,6 +860,7 @@ async function customersModule(){
   <button class="secondary" onclick="cancelCustomerEdit()">منسوخ کریں</button>
  </div>`;
  await loadCustomers();
+ await loadCustomerArchiveHistory();
 }
 
 async function loadCustomers(){
@@ -847,8 +899,8 @@ async function toggleCustomerStatus(id){
 function renderCustomers(){
  const q=($("customerSearch")?.value||"").toLowerCase();
  const rows=customerList.filter(c=>[c.name,c.customer_code,c.mobile].some(x=>String(x||"").toLowerCase().includes(q)));
- $("moduleTable").innerHTML="<table><tr><th>نام</th><th>ID</th><th>موبائل</th><th>حیثیت</th><th>مکمل اکاؤنٹ</th><th>ترمیم</th><th>رسائی</th></tr>"+
- rows.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td>${c.is_active===true?"فعال":"غیر فعال / زیرِ منظوری"}</td><td><button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button></td><td><button onclick="editCustomer(${c.id})">ترمیم</button></td><td><button class="secondary" onclick="toggleCustomerStatus(${Number(c.id)})">${c.is_active===true?"غیر فعال کریں":"فعال کریں"}</button></td></tr>`).join("")+"</table>";
+ $("moduleTable").innerHTML="<table><tr><th>نام</th><th>ID</th><th>موبائل</th><th>حیثیت</th><th>مکمل اکاؤنٹ</th><th>ترمیم</th><th>رسائی</th><th>مستقل آرکائیو</th></tr>"+
+ rows.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td>${c.is_active===true?"فعال":"غیر فعال / زیرِ منظوری"}</td><td><button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button></td><td><button onclick="editCustomer(${c.id})">ترمیم</button></td><td><button class="secondary" onclick="toggleCustomerStatus(${Number(c.id)})">${c.is_active===true?"غیر فعال کریں":"فعال کریں"}</button></td><td><button class="danger-button" onclick="archiveCustomer(${Number(c.id)})">آرکائیو + مستقل حذف</button></td></tr>`).join("")+"</table>";
 }
 
 async function showCustomerFullAccount(id){
@@ -873,6 +925,59 @@ async function showCustomerFullAccount(id){
  <h4>ادائیگیوں کی مکمل ہسٹری</h4>${ps.length?`<table><tr><th>تاریخ</th><th>قسم</th><th>رقم</th></tr>${ps.map(r=>`<tr><td>${esc(r.payment_date)}</td><td>${esc(r.payment_type)}</td><td>${money(r.amount)}</td></tr>`).join("")}</table>`:"ابھی ادائیگی موجود نہیں۔"}
  <h4>19L ڈلیوری ہسٹری</h4>${ds.length?`<table><tr><th>تاریخ</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>مزدوری</th></tr>${ds.map(r=>`<tr><td>${esc(r.delivery_date)}</td><td>${Number(r.bottles_delivered)||0}</td><td>${Number(r.empty_bottles_returned)||0}</td><td>${Number(r.successful_bottles)||0}</td><td>${Number(r.bottle_difference)||0}</td><td>${Number(r.damaged_caps)||0}</td><td>${money(r.delivery_labor)}</td></tr>`).join("")}</table>`:"ابھی ڈلیوری موجود نہیں۔"}`;
 }
+
+async function loadCustomerArchiveHistory(){
+ const jobsBox=$("customerArchiveJobs"),historyBox=$("customerArchiveHistory");
+ if(!jobsBox||!historyBox)return;
+ const [jobs,summaries]=await Promise.all([
+  db.from("customer_archive_jobs").select("id,archive_id,status,last_error,created_at").eq("status","pending_auth_deletion").order("created_at",{ascending:false}),
+  db.from("customer_archive_summaries").select("archive_ref,archived_at,total_19l_bottles,damaged_caps,billed_amount,net_collected,final_due,final_advance,owner_labor_saving,profit_note").order("archived_at",{ascending:false}).limit(50)
+ ]);
+ if(jobs.error){jobsBox.textContent="زیرِ تکمیل آرکائیو کام لوڈ نہیں ہوئے: "+jobs.error.message;}
+ else{
+  const pending=jobs.data||[];
+  jobsBox.innerHTML=pending.length
+   ?"<p class='warning'>کچھ اکاؤنٹس کا لاگ اِن حذف ہونا باقی ہے؛ دوبارہ کوشش کریں۔</p><table><tr><th>Job</th><th>حیثیت</th><th>خرابی</th><th>عمل</th></tr>"+pending.map(j=>`<tr><td>${j.id}</td><td>لاگ اِن حذف باقی</td><td>${esc(j.last_error||"—")}</td><td><button onclick="retryCustomerArchive(${Number(j.id)})">دوبارہ کوشش</button></td></tr>`).join("")+"</table>"
+   :"کوئی زیرِ تکمیل آرکائیو کام نہیں۔";
+ }
+ if(summaries.error){historyBox.textContent="آرکائیو ہسٹری لوڈ نہیں ہوئی: "+summaries.error.message;return;}
+ const rows=summaries.data||[];
+ historyBox.innerHTML=rows.length
+  ?"<div class='tablewrap'><table><tr><th>آرکائیو حوالہ</th><th>تاریخ</th><th>19L بوتلیں</th><th>خراب ڈھکن</th><th>بل شدہ رقم</th><th>خالص وصولی</th><th>آخری بقایا</th><th>ایڈوانس</th><th>مالک کی مزدوری بچت</th></tr>"+rows.map(r=>`<tr><td>${esc(r.archive_ref)}</td><td>${esc(r.archived_at?.slice(0,10)||"")}</td><td>${Number(r.total_19l_bottles)||0}</td><td>${Number(r.damaged_caps)||0}</td><td>${money(r.billed_amount)}</td><td>${money(r.net_collected)}</td><td>${money(r.final_due)}</td><td>${money(r.final_advance)}</td><td>${money(r.owner_labor_saving)}</td></tr>`).join("")+"</table></div><p class='muted'>"+esc(rows[0]?.profit_note||"منافع الگ مختص لاگت کے بغیر شمار نہیں کیا گیا۔")+"</p>"
+  :"ابھی کوئی کسٹمر آرکائیو نہیں ہوا۔";
+}
+async function archiveCustomer(id){
+ const customer=customerList.find(c=>Number(c.id)===Number(id));
+ if(!customer)return;
+ const warning="یہ مستقل کارروائی ہے۔ "+(customer.name||"اس کسٹمر")+" کی ذاتی معلومات، لاگ اِن، ڈلیوری، ادائیگی، بل، اطلاعات، پش سبسکرپشن اور شکایات حذف ہوں گی۔ صرف غیر شناختی مالی خلاصہ باقی رہے گا۔";
+ if(!confirm(warning))return;
+ if(!confirm("آخری تصدیق: کیا آپ واقعی اس کسٹمر کا مکمل ذاتی اور تفصیلی ریکارڈ مستقل حذف کرنا چاہتے ہیں؟"))return;
+ try{
+  const {data,error}=await db.functions.invoke("archive-customer",{body:{customer_id:Number(id)}});
+  if(error)throw error;
+  if(!data)throw new Error("آرکائیو سرور سے تصدیق موصول نہیں ہوئی۔");
+  if(data.status==="pending_auth_deletion"){
+   msg("ذاتی ریکارڈ آرکائیو ہوگیا، مگر کسٹمر لاگ اِن حذف کرنے کا مرحلہ باقی ہے۔ Job ID: "+data.job_id);
+  }else{
+   msg("کسٹمر کا ذاتی ریکارڈ حذف اور مالی خلاصہ محفوظ ہوگیا۔ حوالہ: "+(data.archive_ref||data.archive_id),true);
+  }
+  await Promise.all([loadCustomers(),loadCustomerArchiveHistory()]);
+ }catch(e){
+  msg("آرکائیو مکمل نہیں ہوا: "+(e?.message||String(e)));
+  await loadCustomerArchiveHistory();
+ }
+}
+async function retryCustomerArchive(jobId){
+ if(!confirm("کیا اس آرکائیو کام کا باقی لاگ اِن حذف کرنے والا مرحلہ دوبارہ چلانا ہے؟"))return;
+ try{
+  const {data,error}=await db.functions.invoke("archive-customer",{body:{job_id:Number(jobId)}});
+  if(error)throw error;
+  if(data?.status!=="completed")throw new Error(data?.error||"کام ابھی مکمل نہیں ہوا۔");
+  msg("آرکائیو کا باقی مرحلہ مکمل ہوگیا۔",true);
+  await loadCustomerArchiveHistory();
+ }catch(e){msg("دوبارہ کوشش مکمل نہیں ہوئی: "+(e?.message||String(e)));await loadCustomerArchiveHistory();}
+}
+
 function closeCustomerFullAccount(){ $("customerFullAccount")?.classList.add("hidden"); }
 
 function editCustomer(id){
@@ -1728,6 +1833,157 @@ async function loadTodaySummary(){
   <div class="stat">اخراجات: <b>${money(expenses)}</b></div>
   <div class="stat">درج شدہ آمدن: <b>${money(income)}</b></div>`;
  }catch(e){el.textContent="خلاصہ لوڈ نہیں ہوا: "+e.message}
+}
+
+
+function monthDateRange(month){
+ const [year,monthNumber]=month.split("-").map(Number);
+ const start=month+"-01";
+ const end=year+"-"+String(monthNumber).padStart(2,"0")+"-"+String(new Date(year,monthNumber,0).getDate()).padStart(2,"0");
+ return {start,end};
+}
+async function loadExecutiveDashboard(){
+ const box=$("execDashboard");if(!box)return;
+ const month=$("execMonth")?.value||today().slice(0,7);
+ if(!/^\\d{4}-\\d{2}$/.test(month)){box.textContent="درست مہینہ منتخب کریں۔";return;}
+ box.innerHTML="<p class='muted'>مالی اعداد و شمار محفوظ ڈیٹابیس سے حاصل ہو رہے ہیں...</p>";
+ try{
+  const range=monthDateRange(month);
+  const {data,error}=await db.rpc("get_management_dashboard",{p_month_start:range.start,p_month_end:range.end});
+  if(error)throw error;
+  const report=data?.profit_and_loss||{},segments=report.segments||{};
+  const water=segments["19L"]||{},finished=segments.finished_goods||{},shared=segments.shared||{};
+  const revenue=Number(water.revenue||0)+Number(finished.revenue||0);
+  const net=Number(segments.net_profit||0);
+  const contribution=Number(water.profit_before_shared||0)+Number(finished.profit_before_shared||0);
+  const previous=data?.previous_period?.segments||{};
+  const previousNet=Number(previous.net_profit||0);
+  const previousRevenue=Number(previous["19L"]?.revenue||0)+Number(previous.finished_goods?.revenue||0);
+  const margin=revenue>0?(net/revenue*100):null;
+  const missing=Array.isArray(report.missing_costs)?report.missing_costs:[];
+  const stock=report.stock_estimate||{};
+  const closed=data.month_closed===true;
+  const fmt=n=>money(Number(n)||0);
+  const status=report.complete===true&&missing.length===0?"حسابی لاگت کی جانچ مکمل":"حساب میں کمی کی جانچ درکار";
+  const kpis=[
+   ["کل فروخت / آمدن",fmt(revenue),"19L + تیار مال کی فروخت"],
+   ["سیکشن کنٹریبیوشن",fmt(contribution),"براہِ راست سیکشن اخراجات کے بعد"],
+   ["خالص منافع / نقصان",fmt(net),margin===null?"فروخت موجود نہیں":"خالص مارجن "+margin.toFixed(1)+"%"],
+   ["گاہکوں سے بقایا",fmt(data.receivables),"بقایا رکھنے والے گاہک: "+(data.customers_with_due||0)],
+   ["مدت کی وصولیاں",fmt(data.recorded_collections),"درج شدہ وصولیاں، نقد بیلنس نہیں"],
+   ["مالکین کی نکاسی",fmt(data.owner_withdrawals),"منافع کے خرچ میں شامل نہیں"]
+  ];
+  const products=report.products||{};
+  const productRows=Object.entries(products).map(([name,r])=>`<tr><td>${esc(name)}</td><td>${Number(r.quantity)||0}</td><td>${fmt(r.revenue)}</td><td>${r.unit_cost==null?"لاگت نامکمل":fmt(r.unit_cost)}</td><td>${fmt(r.material_cost)}</td><td>${fmt(r.production_labor)}</td></tr>`).join("");
+  const stockRows=[
+   ["تیار 500ml کارٹن",stock.finished_500ml_cartons],
+   ["تیار 1.5L کارٹن",stock.finished_1_5l_cartons],
+   ["تیار 6L بوتلیں",stock.finished_6l_bottles],
+   ["خام 19L ڈھکن",stock.raw_19l_caps],
+   ["پانی کا مجموعی تخمینہ (لیٹر)",stock.water_litres],
+   ["خام 500ml بوتلیں",stock.raw_500ml_bottles],
+   ["خام 1.5L بوتلیں",stock.raw_1_5l_bottles],
+   ["خام 6L بوتلیں",stock.raw_6l_bottles]
+  ].map(([label,value])=>`<div class="exec-stock-item"><span>${label}</span><b>${Number(value)||0}</b></div>`).join("");
+  const quality=Array.isArray(data.quality_flags)?data.quality_flags:[];
+  box.innerHTML=`
+   <div class="exec-status-row"><span class="exec-status ${closed?"closed":"open"}">${closed?"مہینہ بند ہے":"مہینہ ابھی کھلا ہے"}</span><span class="muted">${esc(range.start)} تا ${esc(range.end)} · ${esc(status)}</span></div>
+   <div class="exec-kpi-grid">${kpis.map(([label,value,note])=>`<div class="exec-kpi"><span>${label}</span><strong>${value}</strong><small>${note}</small></div>`).join("")}</div>
+   <div class="exec-two-col">
+    <section class="exec-panel"><h3>منافع و نقصان — سیکشن وار</h3>
+     <div class="exec-line"><span>19L سیکشن کنٹریبیوشن</span><b>${fmt(water.profit_before_shared)}</b></div>
+     <div class="exec-line"><span>تیار مال سیکشن کنٹریبیوشن</span><b>${fmt(finished.profit_before_shared)}</b></div>
+     <div class="exec-line"><span>عمومی کاروباری اخراجات</span><b>${fmt(shared.general_expenses)}</b></div>
+     <div class="exec-line"><span>فرسودگی</span><b>${fmt(shared.depreciation)}</b></div>
+     <div class="exec-line"><span>مالی لاگت</span><b>${fmt(shared.interest_expense)}</b></div>
+     <div class="exec-line exec-net"><span>خالص نتیجہ</span><b>${fmt(net)}</b></div>
+     <p class="muted">گزشتہ مہینہ: فروخت ${fmt(previousRevenue)} · خالص نتیجہ ${fmt(previousNet)} · فرق ${fmt(net-previousNet)}</p>
+    </section>
+    <section class="exec-panel"><h3>نقدی کی حرکت اور کاروباری پوزیشن</h3>
+     <div class="exec-line"><span>درج شدہ وصولیاں</span><b>${fmt(data.recorded_collections)}</b></div>
+     <div class="exec-line"><span>درج شدہ نقد اخراجات</span><b>${fmt(data.recorded_cash_outflows)}</b></div>
+     <div class="exec-line exec-net"><span>درج شدہ خالص نقد حرکت</span><b>${fmt(data.recorded_net_cash_movement)}</b></div>
+     <div class="exec-line"><span>فعال گاہک</span><b>${Number(data.active_customers)||0}</b></div>
+     <div class="exec-line"><span>اس مہینے کے بل باقی</span><b>${Number(data.unbilled_customers)||0}</b></div>
+     <div class="exec-line"><span>بقایا رکھنے والے گاہک</span><b>${Number(data.customers_with_due)||0}</b></div>
+     <p class="warning">${esc(data.cash_balance_note||"نقد بیلنس کی تصدیق دستیاب نہیں۔")}</p>
+    </section>
+   </div>
+   <div class="exec-two-col">
+    <section class="exec-panel"><h3>پروڈکٹ کارکردگی</h3><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>مقدار</th><th>فروخت</th><th>فی یونٹ لاگت</th><th>مواد</th><th>مزدوری</th></tr>${productRows||"<tr><td colspan='6'>ابھی فروخت درج نہیں۔</td></tr>"}</table></div></section>
+    <section class="exec-panel"><h3>اسٹاک کا خلاصہ</h3><div class="exec-stock-grid">${stockRows}</div><p class="muted">اسٹاک کے اعداد موجودہ ماڈل کے تخمینے ہیں؛ مفت کلیم بوتلوں کی مکمل مقدار درج نہ ہونے پر کچھ خام مال کا تخمینہ محدود ہے۔</p></section>
+   </div>
+   ${missing.length?'<div class="warning"><b>لاگت کی کمی — کلوزنگ سے پہلے درست کریں</b><ul>'+missing.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':""}
+   ${quality.length?'<div class="muted exec-quality">'+quality.map(x=>esc(x)).join(" · ")+'</div>':""}
+   ${report.has_activity===false?'<div class="warning">اس مدت میں ابھی کوئی کاروباری سرگرمی درج نہیں؛ اعداد صفر ہیں، یہ حقیقی منافع کی تصدیق نہیں۔</div>':""}
+  `;
+ }catch(e){box.textContent="کاروباری ڈیش بورڈ لوڈ نہیں ہوا: "+(e?.message||String(e));}
+}
+async function monthCloseModule(){
+ const d=new Date();d.setMonth(d.getMonth()-1);
+ const month=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+ setTitle("ماہانہ کلوزنگ اور مالی کنٹرول");
+ $("moduleBody").innerHTML=`
+  <p class="muted">مہینہ بند کرنے سے پہلے بل، لاگت اور اسٹاک کی جانچ ہوگی۔ بند مہینے کے اصل ریکارڈ میں تبدیلی نہیں ہوگی؛ اصلاح موجودہ مہینے میں الگ اندراج سے ہوگی۔</p>
+  <div class="card"><label for="closeMonth">جس مہینے کو بند کرنا ہے</label><input id="closeMonth" type="month" value="${month}">
+   <button onclick="previewMonthClose()">پہلے مکمل جانچ کریں</button>
+   <div id="monthClosePreview" class="muted">پہلے جانچ چلائیں۔</div>
+   <button id="closeMonthButton" disabled onclick="closeSelectedMonth()">ماہانہ رپورٹ محفوظ کرکے مستقل بند کریں</button>
+  </div>
+  <div class="card"><h3>پہلے بند کیے گئے مہینے</h3><div id="monthCloseHistory">ہسٹری لوڈ ہو رہی ہے...</div></div>`;
+ await loadMonthCloseHistory();
+}
+async function previewMonthClose(){
+ const box=$("monthClosePreview"),button=$("closeMonthButton");
+ if(button)button.disabled=true;
+ const month=$("closeMonth")?.value||"";
+ if(!/^\\d{4}-\\d{2}$/.test(month)){box.textContent="درست مہینہ منتخب کریں۔";return;}
+ try{
+  const range=monthDateRange(month);
+  const {data,error}=await db.rpc("get_management_dashboard",{p_month_start:range.start,p_month_end:range.end});
+  if(error)throw error;
+  const report=data.profit_and_loss||{},missing=Array.isArray(report.missing_costs)?report.missing_costs:[];
+  const stock=report.stock_estimate||{};
+  const negatives=Object.entries(stock).filter(([k,v])=>Number(v)<0);
+  const d=new Date(),currentMonth=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+  const isPast=month<currentMonth;
+  const billsReady=Number(data.unbilled_customers||0)===0;
+  const ready=isPast&&!data.month_closed&&report.complete===true&&missing.length===0&&negatives.length===0&&billsReady;
+  const reason=[];
+  if(!isPast)reason.push("موجودہ یا آئندہ مہینہ بند نہیں ہو سکتا۔");
+  if(data.month_closed)reason.push("یہ مہینہ پہلے ہی بند ہے۔");
+  if(missing.length)reason.push("لاگت نامکمل: "+missing.join("، "));
+  if(negatives.length)reason.push("منفی اسٹاک: "+negatives.map(x=>x[0]).join("، "));
+  if(!billsReady)reason.push("فعال گاہکوں کے "+data.unbilled_customers+" بل ابھی باقی ہیں۔");
+  if(report.complete!==true)reason.push("مالی رپورٹ مکمل نہیں۔");
+  box.innerHTML=`
+   <div class="exec-status-row"><b>${esc(range.start)} تا ${esc(range.end)}</b><span class="exec-status ${ready?"closed":"open"}">${ready?"کلوزنگ کے لیے تیار":data.month_closed?"پہلے سے بند":"مزید اصلاح درکار"}</span></div>
+   <div class="exec-line"><span>فروخت / آمدن</span><b>${money(Number(report.segments?.["19L"]?.revenue||0)+Number(report.segments?.finished_goods?.revenue||0))}</b></div>
+   <div class="exec-line"><span>خالص منافع / نقصان</span><b>${money(report.segments?.net_profit||0)}</b></div>
+   <div class="exec-line"><span>کسٹمر بل باقی</span><b>${Number(data.unbilled_customers)||0}</b></div>
+   ${reason.length?'<div class="warning"><b>کلوزنگ ابھی نہیں ہو سکتی:</b><ul>'+reason.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':'<p class="success">تمام بنیادی کلوزنگ چیکس پاس ہیں۔ اب مستقل کلوزنگ کی جا سکتی ہے۔</p>'}
+   ${data.month_closed?'<p class="muted">یہ مہینہ پہلے ہی محفوظ اور بند ہے۔</p>':""}
+  `;
+  if(button)button.disabled=!ready;
+ }catch(e){box.textContent="کلوزنگ جانچ ناکام: "+(e?.message||String(e));}
+}
+async function closeSelectedMonth(){
+ const month=$("closeMonth")?.value||"";
+ if(!month||!confirm("آخری تصدیق: اس مہینے کی رپورٹ محفوظ ہوگی اور اصل مالی اندراجات میں تبدیلی بند ہو جائے گی۔ کیا آگے بڑھیں؟"))return;
+ const button=$("closeMonthButton");if(button)button.disabled=true;
+ try{
+  const {data,error}=await db.rpc("close_business_month",{p_month_start:month+"-01"});
+  if(error)throw error;
+  msg(data?.status==="already_closed"?"یہ مہینہ پہلے ہی بند ہے۔":"ماہانہ رپورٹ محفوظ اور مہینہ مستقل بند ہوگیا۔",true);
+  await Promise.all([loadMonthCloseHistory(),previewMonthClose()]);
+ }catch(e){msg("مہینہ بند نہیں ہوا: "+(e?.message||String(e)));if(button)button.disabled=false;}
+}
+async function loadMonthCloseHistory(){
+ const box=$("monthCloseHistory");if(!box)return;
+ const {data,error}=await db.from("business_month_closings").select("month_start,month_end,status,quality_flags,closed_at").order("month_start",{ascending:false}).limit(24);
+ if(error){box.textContent="کلوزنگ ہسٹری لوڈ نہیں ہوئی: "+error.message;return;}
+ const rows=data||[];
+ box.innerHTML=rows.length?"<div class='tablewrap'><table><tr><th>مہینہ</th><th>حیثیت</th><th>تاریخِ بندش</th><th>نوٹس</th></tr>"+rows.map(r=>`<tr><td>${esc(r.month_start)}</td><td>مستقل بند</td><td>${esc(r.closed_at?.slice(0,10)||"")}</td><td>${esc((r.quality_flags||[]).join("؛ ")||"—")}</td></tr>`).join("")+"</table></div>":"ابھی کوئی مہینہ بند نہیں کیا گیا۔";
 }
 
 async function reportsModule(){
