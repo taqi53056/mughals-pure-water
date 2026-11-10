@@ -1599,7 +1599,7 @@ async function reportsModule(){
  '<div id="moduleTable"><div class="card muted">حساب تیار ہو رہا ہے...</div></div>'+
  '<details class="card"><summary><b>مزید مالی اختیارات</b></summary><p class="muted">یہ اندراجات صرف سرمایہ، قرض، مالک کی نکاسی یا اثاثوں کے لیے ہیں۔ خریداری، فروخت اور روزمرہ خرچ اپنے متعلقہ بٹن سے درج کریں۔</p>'+
  '<h3>سرمایہ، قرض یا مالک کی رقم</h3><input id="finDate" type="date" value="'+today()+'"><select id="finType" onchange="toggleOwnerWithdrawalField()"><option value="capital_in">مالک نے سرمایہ لگایا</option><option value="loan_received">کاروبار نے قرض لیا</option><option value="loan_repaid">قرض کی اصل رقم واپس کی</option><option value="loan_given">کسی کو قرض / ادھار دیا</option><option value="loan_collected">دوسروں سے قرض / ادھار وصول کیا</option><option value="inventory_loss">اسٹاک ضائع / خراب ہوا</option><option value="fixed_asset_purchase">مشینری / گاڑی / سامان خریدا</option><option value="fixed_asset_sale">مشینری / اثاثہ فروخت کیا</option><option value="depreciation_expense">مشینری / سامان کی فرسودگی</option><option value="interest_expense">قرض کی مالی لاگت</option><option value="interest_income">مالی آمدن</option></select>'+
- '<select id="finOwner" class="hidden"><option value="">مالک منتخب کریں</option><option>محمد اسامہ مغل</option><option>محمد مزمل مغل</option><option>محمد تقی مغل</option><option value="محمد رفیع مغل">M. Rafi Mughal</option></select>'+
+ '<select id="finOwner" class="hidden"><option value="">مالک منتخب کریں</option><option value="M.Usama Mughal">M.Usama Mughal</option><option value="M. Muzamil Mughal">M. Muzamil Mughal</option><option value="M.Taqi Mughal">M.Taqi Mughal</option></select>'+
  '<input id="finAmount" type="number" min="0.01" step="0.01" placeholder="رقم روپے میں"><input id="finCategory" maxlength="100" placeholder="مختصر تفصیل"><input id="finItem" maxlength="120" placeholder="سامان کا نام (اختیاری)"><div class="grid"><input id="finQty" type="number" min="0" step="0.001" placeholder="مقدار (اختیاری)"><input id="finUnit" maxlength="30" placeholder="یونٹ"></div>'+
  '<input id="finParty" maxlength="120" placeholder="کس سے / کس کو"><select id="finMethod"><option value="">ادائیگی کا طریقہ</option><option>نقد</option><option>بینک</option><option>جاز کیش</option><option>ایزی پیسہ</option><option>ادھار</option><option>دیگر</option></select><textarea id="finDetails" maxlength="500" placeholder="اضافی تفصیل (اختیاری)"></textarea><button onclick="saveFinanceEntry()">محفوظ کریں</button></details>'+
  '<details class="card"><summary><b>محفوظ ماہانہ رپورٹس</b></summary><div id="monthlySnapshots" class="muted">رپورٹس لوڈ ہو رہی ہیں...</div><button class="secondary" onclick="loadMonthlySnapshots()">تازہ کریں</button></details>'+
@@ -1889,7 +1889,7 @@ async function ownerWithdrawalsModule(){
  let owners=[];
  const {data,error}=await db.from("profiles").select("full_name").eq("role","admin").order("full_name");
  if(error){msg("مالکان کی فہرست لوڈ نہیں ہوئی: "+error.message);return;}
- owners=[...new Set([...(data||[]).map(x=>x.full_name).filter(Boolean),"محمد رفیع مغل"])];
+ owners=[...new Set((data||[]).map(x=>x.full_name).filter(Boolean))];
  if(!owners.length){msg("منتظمین کے نام دستیاب نہیں؛ پہلے پروفائل ریکارڈ درست کریں۔");return;}
  const opts=owners.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("");
  $("moduleBody").innerHTML=
