@@ -466,6 +466,28 @@ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const today=()=>{let d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const monthNow=()=>today().slice(0,7)+"-01";
 const money=n=>"Rs. "+(Number(n)||0).toLocaleString("en-PK");
+function mpwNewRequestId(){
+ if(window.crypto&&typeof window.crypto.randomUUID==="function")return window.crypto.randomUUID();
+ return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==="x"?r:(r&3|8)).toString(16);});
+}
+function mpwPendingRequestId(key,signature){
+ const storageKey="mpw.pending."+key;
+ try{
+  const old=JSON.parse(sessionStorage.getItem(storageKey)||"null");
+  if(old&&old.signature===signature&&old.id)return old.id;
+ }catch(e){}
+ const memory=window.__mpwPendingRequests||(window.__mpwPendingRequests={});
+ if(memory[key]&&memory[key].signature===signature)return memory[key].id;
+ const item={signature,id:mpwNewRequestId()};
+ memory[key]=item;
+ try{sessionStorage.setItem(storageKey,JSON.stringify(item));}catch(e){}
+ return item.id;
+}
+function mpwClearPendingRequestId(key){
+ const memory=window.__mpwPendingRequests||{};
+ delete memory[key];
+ try{sessionStorage.removeItem("mpw.pending."+key);}catch(e){}
+}
 
 const MPW_VAPID_PUBLIC_KEY="BHYf15h0Vy6ZhbpnbadH2yBSyH-KqA3n8P3c03bgf_PHxF24PMwdLzEKpHkb99H7gC0dotl7U0fewxz5Je4zhxo";
 function mpwBase64UrlToBytes(value){
@@ -964,9 +986,17 @@ async function saveDelivery(){
  let deliverySaved=false;
  try{
   const workerId=c.isOwner?null:($("dWorker")?.value||null);
-  const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
-  const {data:saved,error:saveError}=await db.from("customer_19l_deliveries").insert(payload).select("id").single();
+  const requestSignature=[id,date,c.out,c.back,c.caps,workerId||"owner"].join("|");
+  const requestId=mpwPendingRequestId("delivery",requestSignature);
+  const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null,request_id:requestId};
+  const {data:saved,error:saveError}=await db.from("customer_19l_deliveries").upsert(payload,{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
   if(saveError)throw saveError;
+  let deliveryRecord=saved;
+  if(!deliveryRecord){
+   const {data:existing,error:lookupError}=await db.from("customer_19l_deliveries").select("id").eq("request_id",requestId).maybeSingle();
+   if(lookupError||!existing)throw lookupError||new Error("ڈلیوری کا سابقہ محفوظ ریکارڈ نہیں مل سکا۔");
+   deliveryRecord=existing;
+  }
   deliverySaved=true;
   setDeliverySavedState(true);
   let billSyncWarning="";
@@ -979,7 +1009,7 @@ async function saveDelivery(){
    title:"نئی ڈلیوری درج ہوگئی",
    message:`السلام علیکم ${customerName} صاحب! ${date} کو ${c.out} بھری بوتلیں دی گئیں، ${c.back} خالی واپس آئیں اور ${c.success} کامیاب بوتلیں درج ہوئیں۔ خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,
    notification_type:"delivery",
-   reference_key:`delivery:${date}:${saved.id}`
+   reference_key:`delivery:${date}:${deliveryRecord.id}`
   };
   const {error:noticeError}=await db.from("customer_notifications").insert(deliveryNotice);
   if(noticeError){
@@ -991,6 +1021,7 @@ async function saveDelivery(){
     notificationWarning=" ایپ میں اطلاع محفوظ ہے، مگر موبائل Push ابھی تصدیق نہیں ہوئی: "+(pushResult?.error||pushResult?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔");
    }
   }
+  mpwClearPendingRequestId("delivery");
   msg("نئی ڈلیوری محفوظ ہوگئی۔ مزدوری "+money(c.labor)+billSyncWarning+notificationWarning,!billSyncWarning&&!notificationWarning);
   await Promise.all([loadDailyDeliveries(),loadTodaySummary()]);
  }catch(e){
@@ -1155,8 +1186,16 @@ async function recordCustomerPayment(){
  const button=$("paymentSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  let paymentSaved=false;
  try{
-  const {data:payment,error}=await db.from("customer_payments").insert({customer_id:customerId,amount,payment_date:paymentDate,payment_type:paymentType,entered_by:user?.id||null}).select("id").single();
+  const requestSignature=[customerId,paymentDate,amount,paymentType].join("|");
+  const requestId=mpwPendingRequestId("customer-payment",requestSignature);
+  const {data:payment,error}=await db.from("customer_payments").upsert({customer_id:customerId,amount,payment_date:paymentDate,payment_type:paymentType,entered_by:user?.id||null,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
   if(error)throw error;
+  let paymentRecord=payment;
+  if(!paymentRecord){
+   const {data:existing,error:lookupError}=await db.from("customer_payments").select("id").eq("request_id",requestId).maybeSingle();
+   if(lookupError||!existing)throw lookupError||new Error("ادائیگی کا سابقہ محفوظ ریکارڈ نہیں مل سکا۔");
+   paymentRecord=existing;
+  }
   paymentSaved=true;$("paymentAmount").value="";
   const month=paymentDate.slice(0,7)+"-01";
   const bill=await syncBillBottles(customerId,month);
@@ -1168,11 +1207,12 @@ async function recordCustomerPayment(){
    title:paymentType==="refund"?"رقم واپس کی گئی":"ادائیگی موصول ہوگئی",
    message:"السلام علیکم "+(customer?.name||"محترم گاہک")+" صاحب! آپ کے اکاؤنٹ میں "+paymentDate+" کو "+money(amount)+" کی "+(typeLabels[paymentType]||"ادائیگی")+" درج ہوگئی ہے۔\n"+paymentDate.slice(0,7)+" کے بل کا تازہ بقایا: "+money(bill.payable)+"۔\nشکریہ۔",
    notification_type:"payment",
-   reference_key:"payment:"+payment.id
+   reference_key:"payment:"+paymentRecord.id
   };
   const {error:noticeError}=await db.from("customer_notifications").insert(notice);
   if(noticeError)throw noticeError;
   const push=await notifyCustomerPush(customerId,notice.title,notice.message);
+  mpwClearPendingRequestId("customer-payment");
   setBillSavedState(true);
   if(push?.error||Number(push?.sent||0)<1)msg("ادائیگی محفوظ، بل دوبارہ حساب اور ایپ اطلاع درج ہوگئی؛ موبائل Push نہیں پہنچی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔"));
   else msg("ادائیگی محفوظ ہوگئی، بل دوبارہ حساب ہوگیا اور موبائل Push بھی بھیج دی گئی۔",true);
@@ -2009,8 +2049,15 @@ async function saveOwnerWithdrawal(){
  if(!confirmLargeEntry("مالک کی نکالی گئی رقم",amount,100000))return;
  const button=$("owSave");button.disabled=true;
  try{
-  const {error}=await db.from("business_finance_ledger").insert({entry_date:date,entry_type:"owner_withdrawal",amount,category:reason,counterparty:owner,payment_method:method,details:details||null,entered_by:user.id});
+  const requestSignature=[date,owner,amount,reason,details,method].join("|");
+  const requestId=mpwPendingRequestId("owner-withdrawal",requestSignature);
+  const {data:saved,error}=await db.from("business_finance_ledger").upsert({entry_date:date,entry_type:"owner_withdrawal",amount,category:reason,counterparty:owner,payment_method:method,details:details||null,entered_by:user.id,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
   if(error)throw error;
+  if(!saved){
+   const {data:existing,error:lookupError}=await db.from("business_finance_ledger").select("id").eq("request_id",requestId).eq("entry_type","owner_withdrawal").maybeSingle();
+   if(lookupError||!existing)throw lookupError||new Error("نکاسی کا سابقہ محفوظ ریکارڈ نہیں مل سکا۔");
+  }
+  mpwClearPendingRequestId("owner-withdrawal");
   msg("مالک کی نکالی گئی رقم محفوظ ہوگئی۔ منافع و نقصان میں اسے خرچ نہیں گنا جائے گا۔",true);
   $("owAmount").value="";$("owReason").value="";$("owDetails").value="";
   $("owMonth").value=date.slice(0,7);
