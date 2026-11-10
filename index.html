@@ -36,7 +36,7 @@ button:hover{filter:brightness(1.06)}button:disabled{opacity:.55;cursor:not-allo
 table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10px;border-bottom:1px solid var(--line);text-align:right}th{color:#315448;background:#f5f7f2;font-weight:700}
 .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}.stat{background:linear-gradient(110deg,#f1f6f0,#f8f7ef);border:1px solid #e7ebdf;border-radius:12px;padding:13px;margin:8px 0}
 .total{font-size:21px;font-weight:800;color:var(--emerald)}.warning{background:#fff5db;border:1px solid #efdfb2;padding:12px;border-radius:12px;margin:9px 0}
-#moduleBody label{display:block;color:#244c3c;font-size:14px;font-weight:700;margin:9px 0 4px}#moduleBody label.mpw-field-label{margin:11px 0 5px;color:#244c3c;font-size:13px;font-weight:750;line-height:1.5}#moduleBody label.mpw-field-label+input,#moduleBody label.mpw-field-label+select,#moduleBody label.mpw-field-label+textarea{margin-top:0}#login{max-width:560px;margin:28px auto}#login .auth-form{display:grid;gap:10px}#login .auth-form>label{font-size:14px;font-weight:750;color:#244c3c;margin-top:4px}#login .auth-form input{width:100%;min-height:52px}#login .auth-form .password-field{margin:0}#login .auth-form button{min-height:48px}#login #loginMsg{margin-top:12px;line-height:1.8}#app>.card:first-child{background:linear-gradient(110deg,#fff,#f5f7ef);border-top:2px solid var(--gold)}
+#moduleBody label{display:block;color:#244c3c;font-size:14px;font-weight:700;margin:9px 0 4px}.app-toast{position:fixed;z-index:10000;inset:auto 14px 16px;max-width:640px;margin-inline:auto;padding:14px 18px;border-radius:14px;background:#17372c;color:#fff;box-shadow:0 12px 32px #0003;font-size:14px;font-weight:650;line-height:1.8}.app-toast.is-success{background:#145a42}.app-toast.is-error{background:#8a302b}#moduleBody label.mpw-field-label{margin:11px 0 5px;color:#244c3c;font-size:13px;font-weight:750;line-height:1.5}#moduleBody label.mpw-field-label+input,#moduleBody label.mpw-field-label+select,#moduleBody label.mpw-field-label+textarea{margin-top:0}#login{max-width:560px;margin:28px auto}#login .auth-form{display:grid;gap:10px}#login .auth-form>label{font-size:14px;font-weight:750;color:#244c3c;margin-top:4px}#login .auth-form input{width:100%;min-height:52px}#login .auth-form .password-field{margin:0}#login .auth-form button{min-height:48px}#login #loginMsg{margin-top:12px;line-height:1.8}#app>.card:first-child{background:linear-gradient(110deg,#fff,#f5f7ef);border-top:2px solid var(--gold)}
 @media(min-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{min-height:112px;padding:24px;font-size:18px}#adminPanel{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(0,1.7fr);gap:16px;align-items:start}#homeTiles{grid-column:1;grid-row:1 / span 2}#dashboard,#module{grid-column:2;margin-top:0}#adminPanel #module{grid-column:1 / -1}}
 @media(max-width:520px){.wrap{padding:11px}.card{padding:15px;border-radius:15px}.grid{gap:9px}.tile{min-height:82px;padding:14px;font-size:14px}header{padding:18px 14px}input,select,button,textarea{font-size:16px}}
 
@@ -816,7 +816,7 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 <h2 id="moduleTitle"></h2>
 <details id="moduleHelp" class="module-help"><summary>اس حصے کی رہنمائی</summary><p id="moduleIntro" class="module-intro"></p></details>
 <div id="moduleBody"></div>
-<p id="moduleMsg" class="error"></p>
+<p id="moduleMsg" class="error" role="status" aria-live="polite" aria-atomic="true"></p>
 <div id="moduleTable" class="tablewrap"></div>
 </div>
 </div>
@@ -964,13 +964,13 @@ async function notifyCustomerPush(customerId,title,message){
 }
 
 function normalizePkPhone(value){let p=String(value||"").replace(/\D/g,"");if(p.startsWith("00"))p=p.slice(2);if(p.startsWith("0"))p="92"+p.slice(1);if(p.length===10&&p.startsWith("3"))p="92"+p;return p;}
-function shareCustomerMessage(phone,message,channel){const number=normalizePkPhone(phone);if(!number){alert("اس گاہک کا درست موبائل نمبر درج نہیں۔");return}if(channel==="whatsapp")window.open("https://wa.me/"+number+"?text="+encodeURIComponent(message),"_blank","noopener");else location.href="sms:+"+number+"?body="+encodeURIComponent(message);}
-function shareCustomerTestWhatsApp(id){const c=(customerList||[]).find(x=>Number(x.id)===Number(id));if(!c){alert("گاہک کا ریکارڈ نہیں ملا۔");return}const message="السلام علیکم "+c.name+" صاحب! یہ MUGHAL’S PURE WATER کی طرف سے WhatsApp رابطے کا آزمائشی پیغام ہے۔ براہ کرم صرف اسی صورت جواب دیں جب یہ نمبر آپ کا ہو۔ شکریہ۔";shareCustomerMessage(c.mobile,message,"whatsapp");}
-function shareCustomerTestSMS(id){const c=(customerList||[]).find(x=>Number(x.id)===Number(id));if(!c){alert("گاہک کا ریکارڈ نہیں ملا۔");return}const message="MUGHAL’S PURE WATER: "+c.name+" صاحب، یہ SMS رابطے کا آزمائشی پیغام ہے۔ براہ کرم نمبر درست ہونے کی تصدیق کریں۔ شکریہ۔";shareCustomerMessage(c.mobile,message,"sms");}
+function shareCustomerMessage(phone,message,channel){const number=normalizePkPhone(phone);if(!number){msg("اس گاہک کا درست موبائل نمبر درج نہیں۔");return}if(channel==="whatsapp")window.open("https://wa.me/"+number+"?text="+encodeURIComponent(message),"_blank","noopener");else location.href="sms:+"+number+"?body="+encodeURIComponent(message);}
+function shareCustomerTestWhatsApp(id){const c=(customerList||[]).find(x=>Number(x.id)===Number(id));if(!c){msg("گاہک کا ریکارڈ نہیں ملا۔");return}const message="السلام علیکم "+c.name+" صاحب! یہ MUGHAL’S PURE WATER کی طرف سے WhatsApp رابطے کا آزمائشی پیغام ہے۔ براہ کرم صرف اسی صورت جواب دیں جب یہ نمبر آپ کا ہو۔ شکریہ۔";shareCustomerMessage(c.mobile,message,"whatsapp");}
+function shareCustomerTestSMS(id){const c=(customerList||[]).find(x=>Number(x.id)===Number(id));if(!c){msg("گاہک کا ریکارڈ نہیں ملا۔");return}const message="MUGHAL’S PURE WATER: "+c.name+" صاحب، یہ SMS رابطے کا آزمائشی پیغام ہے۔ براہ کرم نمبر درست ہونے کی تصدیق کریں۔ شکریہ۔";shareCustomerMessage(c.mobile,message,"sms");}
 function shareCurrentBillWhatsApp(){shareCurrentBill("whatsapp")} function shareCurrentBillSMS(){shareCurrentBill("sms")}
 function shareCurrentDeliveryWhatsApp(){shareCurrentDelivery("whatsapp")} function shareCurrentDeliverySMS(){shareCurrentDelivery("sms")}
-function shareCurrentBill(channel){if(!currentBillSaved){alert("پہلے بل محفوظ کریں، پھر پیغام تیار کریں۔");return}const id=Number(document.getElementById("bCustomer")?.value),month=document.getElementById("bMonth")?.value,c=(customerList||[]).find(x=>Number(x.id)===id);if(!c||!month){alert("پہلے گاہک اور مہینہ منتخب کریں۔");return}const n=Number(document.getElementById("bBottles")?.textContent)||0,k=Number(document.getElementById("bCaps")?.textContent)||0;const message="السلام علیکم "+c.name+" صاحب! MUGHAL’S PURE WATER کا "+month+" کا بل تیار ہے۔ کامیاب 19L بوتلیں: "+n+" (رقم "+document.getElementById("bBottleAmt")?.textContent+")، خراب ڈھکن: "+k+" (رقم "+document.getElementById("bCapAmt")?.textContent+")، پچھلا بقایا: "+document.getElementById("bPrev")?.textContent+"، استعمال شدہ ایڈوانس: "+document.getElementById("bAdvance")?.textContent+"، ادائیگیاں: "+document.getElementById("bPaid")?.textContent+"، باقی قابل ادائیگی: "+document.getElementById("bDue")?.textContent+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
-function shareCurrentDelivery(channel){if(!currentDeliverySaved){alert("پہلے ڈلیوری محفوظ کریں، پھر پیغام تیار کریں۔");return}const id=Number(document.getElementById("dCustomer")?.value),c=(customerList||[]).find(x=>Number(x.id)===id);if(!c){alert("پہلے گاہک منتخب کریں۔");return}const date=document.getElementById("dDate")?.value||"",n=Number(document.getElementById("dSuccess")?.textContent)||0,k=Number(document.getElementById("dCaps")?.value)||0;const message="السلام علیکم "+c.name+" صاحب! "+date+" کو "+n+" کامیاب 19L بوتلوں کی ڈلیوری درج ہوئی۔ خراب ڈھکن: "+k+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
+function shareCurrentBill(channel){if(!currentBillSaved){msg("پہلے بل محفوظ کریں، پھر پیغام تیار کریں۔");return}const id=Number(document.getElementById("bCustomer")?.value),month=document.getElementById("bMonth")?.value,c=(customerList||[]).find(x=>Number(x.id)===id);if(!c||!month){msg("پہلے گاہک اور مہینہ منتخب کریں۔");return}const n=Number(document.getElementById("bBottles")?.textContent)||0,k=Number(document.getElementById("bCaps")?.textContent)||0;const message="السلام علیکم "+c.name+" صاحب! MUGHAL’S PURE WATER کا "+month+" کا بل تیار ہے۔ کامیاب 19L بوتلیں: "+n+" (رقم "+document.getElementById("bBottleAmt")?.textContent+")، خراب ڈھکن: "+k+" (رقم "+document.getElementById("bCapAmt")?.textContent+")، پچھلا بقایا: "+document.getElementById("bPrev")?.textContent+"، استعمال شدہ ایڈوانس: "+document.getElementById("bAdvance")?.textContent+"، ادائیگیاں: "+document.getElementById("bPaid")?.textContent+"، باقی قابل ادائیگی: "+document.getElementById("bDue")?.textContent+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
+function shareCurrentDelivery(channel){if(!currentDeliverySaved){msg("پہلے ڈلیوری محفوظ کریں، پھر پیغام تیار کریں۔");return}const id=Number(document.getElementById("dCustomer")?.value),c=(customerList||[]).find(x=>Number(x.id)===id);if(!c){msg("پہلے گاہک منتخب کریں۔");return}const date=document.getElementById("dDate")?.value||"",n=Number(document.getElementById("dSuccess")?.textContent)||0,k=Number(document.getElementById("dCaps")?.value)||0;const message="السلام علیکم "+c.name+" صاحب! "+date+" کو "+n+" کامیاب 19L بوتلوں کی ڈلیوری درج ہوئی۔ خراب ڈھکن: "+k+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
 let user=null, myCustomer=null, customerList=[], currentModule="", editingId=null, currentDeliverySaved=false, currentBillSaved=false;
 let adminCustomerRealtimeChannel=null;
 function setBillSavedState(saved){currentBillSaved=!!saved;const a=document.getElementById("billWhatsAppButton"),b=document.getElementById("billSMSButton");if(a)a.disabled=!currentBillSaved;if(b)b.disabled=!currentBillSaved;}
@@ -3343,7 +3343,35 @@ async function loadCustomerPanel(){
 }
 </script>
 <script>
-let mughalInstallPrompt=null;window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();mughalInstallPrompt=event;});async function installMughalApp(){if(window.matchMedia("(display-mode: standalone)").matches||navigator.standalone){alert("ایپ پہلے ہی انسٹال ہے۔");return}if(mughalInstallPrompt){mughalInstallPrompt.prompt();await mughalInstallPrompt.userChoice;mughalInstallPrompt=null;return}alert("Android: Chrome مینو ⋮ سے Install app یا Add to Home screen منتخب کریں۔ iPhone: Safari Share سے Add to Home Screen منتخب کریں۔");}
+let mughalInstallPrompt=null;window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();mughalInstallPrompt=event;});function showAppToast(message,kind="info"){
+ let toast=$("appToast");
+ if(!toast){
+  toast=document.createElement("div");
+  toast.id="appToast";
+  toast.setAttribute("role","status");
+  toast.setAttribute("aria-live","polite");
+  toast.setAttribute("aria-atomic","true");
+  toast.dir="rtl";
+  document.body.appendChild(toast);
+ }
+ toast.className="app-toast"+(kind==="error"?" is-error":kind==="success"?" is-success":"");
+ toast.textContent=message;
+ if(window.mpwToastTimer)clearTimeout(window.mpwToastTimer);
+ window.mpwToastTimer=setTimeout(()=>{toast.classList.add("hidden");},6500);
+}
+async function installMughalApp(){
+ if(window.matchMedia("(display-mode: standalone)").matches||navigator.standalone){
+  showAppToast("ایپ پہلے ہی آپ کے موبائل میں انسٹال ہے۔","success");return;
+ }
+ if(mughalInstallPrompt){
+  mughalInstallPrompt.prompt();
+  const choice=await mughalInstallPrompt.userChoice;
+  mughalInstallPrompt=null;
+  showAppToast(choice?.outcome==="accepted"?"ایپ انسٹال کرنے کا عمل شروع ہوگیا۔":"انسٹالیشن منسوخ ہوگئی۔",choice?.outcome==="accepted"?"success":"info");
+  return;
+ }
+ showAppToast("Android: Chrome مینو ⋮ سے Install app یا Add to Home screen منتخب کریں۔ iPhone: Safari میں Share سے Add to Home Screen منتخب کریں۔","info");
+}
 // PWA service worker is available only on HTTPS or localhost (not file://).
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
  window.addEventListener("load", () => {
