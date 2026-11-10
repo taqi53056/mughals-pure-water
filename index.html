@@ -379,7 +379,66 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
  .exec-today-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.exec-stock-grid{grid-template-columns:1fr}
 }
 
-</style></head>
+</style><style id="mpw-enterprise-workspace">
+/* MPW enterprise workspace — adaptive, task-first navigation */
+#app>.session-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 18px;padding:14px 18px;border:1px solid #dce5dc;border-inline-start:4px solid var(--gold);border-radius:16px;background:linear-gradient(110deg,#fff,#f5f7f2);box-shadow:0 5px 18px #173d2b09}
+#app>.session-bar #welcome{font-size:16px;font-weight:850;color:#173f31}
+#app>.session-bar #role{font-size:12px;font-weight:750;color:#8a7040}
+#app>.session-bar button{width:auto;min-width:92px;min-height:40px;margin:0;margin-inline-start:auto;padding:8px 14px;font-size:13px}
+#adminPanel{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-width:0}
+#adminPanel #homeTiles{min-width:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-content:start}
+#adminPanel #homeTiles .admin-module-filter{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:0 0 3px;padding:9px;border:1px solid #e5e9e1;border-radius:15px;background:#f1f5ef}
+#adminPanel #homeTiles .admin-module-filter button{width:100%;min-width:0;min-height:42px;margin:0;padding:8px 10px;border-radius:11px;font-size:13px;box-shadow:none}
+#adminPanel #homeTiles .admin-module-filter button:last-child{grid-column:1/-1}
+#adminPanel #homeTiles .tile{min-width:0;min-height:90px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;padding:12px;border-radius:16px;text-align:center;font-size:14px;line-height:1.45}
+#adminPanel #homeTiles .tile small{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#adminPanel #homeTiles .tile:focus-visible{outline:3px solid #c8a65a;outline-offset:3px}
+#adminPanel #dashboard,#adminPanel #module{min-width:0;width:100%;margin:0}
+#adminPanel #dashboard{padding:clamp(14px,2vw,26px)}
+#adminPanel #module{padding:clamp(14px,2vw,28px)}
+#adminPanel .executive-heading{align-items:center}
+#adminPanel .executive-heading h2{font-size:clamp(19px,2vw,25px)}
+#adminPanel .executive-heading p{font-size:12px}
+#adminPanel .tablewrap{max-width:100%;overscroll-behavior-inline:contain}
+@media(min-width:700px) and (max-width:1099px){
+ #adminPanel #homeTiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #adminPanel #homeTiles .admin-module-filter{grid-template-columns:repeat(5,minmax(0,1fr))}
+ #adminPanel #homeTiles .admin-module-filter button:last-child{grid-column:auto}
+ #adminPanel #dashboard,#adminPanel #module{grid-column:1/-1}
+}
+@media(min-width:1100px){
+ #app>.session-bar{padding:13px 20px}
+ #adminPanel{grid-template-columns:270px minmax(0,1fr);gap:20px;align-items:start}
+ #adminPanel #homeTiles{grid-column:1;grid-row:1/span 2;grid-template-columns:1fr;gap:9px;position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto;align-content:start;padding:13px;background:linear-gradient(180deg,#102d25,#174b3a);border:1px solid #c9aa6650;border-radius:20px}
+ #adminPanel #homeTiles:before{content:"MUGHAL'S PURE WATER  /  WORKSPACE";display:block;color:#e4d4a9;font-size:10px;font-weight:850;letter-spacing:.1em;text-align:center;padding:8px 5px 13px;border-bottom:1px solid #ffffff25;margin-bottom:3px}
+ #adminPanel #homeTiles .admin-module-filter{grid-column:auto;grid-template-columns:1fr;gap:5px;margin:0;padding:0;background:transparent;border:0}
+ #adminPanel #homeTiles .admin-module-filter button{min-height:39px;justify-content:flex-start;text-align:right;padding:8px 11px;background:#ffffff10;color:#f4f0e4;border:1px solid #ffffff20;font-size:13px}
+ #adminPanel #homeTiles .admin-module-filter button.active{background:linear-gradient(110deg,#c7a45c,#98763b);color:#17150e;border-color:#e5d09a}
+ #adminPanel #homeTiles .tile{min-height:54px;flex-direction:row;justify-content:flex-start;align-items:center;gap:10px;padding:9px 12px;text-align:right;font-size:14px;border:1px solid #ffffff18;box-shadow:none}
+ #adminPanel #homeTiles .tile:before{margin:0;width:25px;height:25px;flex:0 0 25px;font-size:17px}
+ #adminPanel #homeTiles .tile:hover{transform:translateX(-2px);background-image:linear-gradient(110deg,#ffffff18,#ffffff08)}
+ #adminPanel #dashboard,#adminPanel #module{grid-column:2;grid-row:1;margin:0}
+ #adminPanel #dashboard{padding:24px}
+ #adminPanel #module{padding:26px 28px}
+ #adminPanel.module-open #homeTiles{grid-row:1}
+}
+@media(max-width:699px){
+ #app>.session-bar{gap:5px;padding:11px 13px;margin-bottom:12px}
+ #app>.session-bar #welcome{font-size:14px}
+ #app>.session-bar #role{font-size:11px}
+ #app>.session-bar button{min-height:38px;padding:7px 11px}
+ #adminPanel #homeTiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #adminPanel #homeTiles .admin-module-filter{gap:6px;padding:8px}
+ #adminPanel #homeTiles .admin-module-filter button{font-size:12px;min-height:40px}
+ #adminPanel #homeTiles .tile{min-height:84px;padding:10px;font-size:13px}
+ #adminPanel #dashboard{padding:13px}
+ #adminPanel #module{padding:13px}
+ #adminPanel.module-open #homeTiles{display:none}
+ #adminPanel .exec-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #adminPanel .exec-two-col{grid-template-columns:1fr}
+}
+</style>
+</head>
 <body>
 <header class="brand-header"><div class="wrap brand-wrap" style="padding:0">
 <img class="brand-logo" src="./logo.svg" alt="MPW — MUGHAL'S PURE WATER">
@@ -413,7 +472,7 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 </section>
 
 <section id="app" class="hidden">
-<div class="card">
+<div class="card session-bar">
 <strong id="welcome">خوش آمدید</strong>
 <span id="role" class="muted"></span>
 <button class="secondary" onclick="logout()">لاگ آؤٹ</button>
@@ -421,38 +480,39 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 
 <div id="adminPanel" class="hidden">
 <div id="homeTiles" class="grid">
-<div class="tile green" onclick="openModule('finance')" data-category="finance"><span class="tile-title">📊 کاروبار کا منافع / نقصان</span><small>ماہانہ نفع یا نقصان دیکھیں</small></div>
-<div class="tile blue" onclick="openModule('customers')" data-category="operations"><span class="tile-title">گاہک</span><small>نیا گاہک اور اس کا ریکارڈ</small></div>
-<div class="tile orange" onclick="openModule('delivery')" data-category="operations"><span class="tile-title">19L ڈلیوری</span><small>روزانہ 19 لیٹر کی ڈلیوری</small></div>
-<div class="tile yellow" onclick="openModule('raw')" data-category="inventory"><span class="tile-title">خام مال کی خریداری</span><small>بوتل، ڈھکن، کارٹن اور اسٹیکر</small></div>
-<div class="tile purple" onclick="openModule('finished')" data-category="inventory"><span class="tile-title">تیار مال</span><small>کتنا تیار مال باقی ہے</small></div>
-<div class="tile teal" onclick="openModule('sales')" data-category="inventory"><span class="tile-title">سیل / مال کا اخراج</span><small>فروخت درج کریں، اسٹاک خود گھٹے</small></div>
-<div class="tile red" onclick="openModule('expenses')" data-category="finance"><span class="tile-title">اخراجات</span><small>بجلی، کرایہ اور دوسرے خرچ</small></div>
-<div class="tile green" onclick="openModule('income')" data-category="finance"><span class="tile-title">آمدن</span><small>فروخت کے علاوہ دوسری آمدن</small></div>
-<div class="tile gray" onclick="openModule('billing')" data-category="operations"><span class="tile-title">ماہانہ بل</span><small>گاہکوں کے ماہانہ بل</small></div>
-<div class="tile blue" onclick="openModule('reports')" data-category="management"><span class="tile-title">تفصیلی رپورٹس</span><small>تفصیلی کاروباری رپورٹ</small></div>
-<div class="tile gray" onclick="openModule('workers')" data-category="management"><span class="tile-title">ورکر لیجر</span><small>ورکر، اجرت اور ادائیگی</small></div>
-<div class="tile yellow" onclick="openModule('labor')" data-category="inventory"><span class="tile-title">صفائی / پروڈکشن / دھلائی</span><small>پروڈکشن اور صفائی کی مزدوری</small></div>
-<div class="tile red" onclick="openModule('complaints')" data-category="operations"><span class="tile-title">کسٹمر شکایات</span><small>گاہکوں کے مسائل</small></div>
-<div class="tile gray" onclick="openModule('audit')" data-category="management"><span class="tile-title">سکیورٹی / آڈٹ لاگ</span><small>تبدیلیوں کا ریکارڈ</small></div>
-<div class="tile blue" onclick="openModule('tanker')" data-category="inventory"><span class="tile-title">پانی کی خریداری / ابتدائی اسٹاک</span><small>پانی کی خریداری اور اسٹاک</small></div>
-<div class="tile teal" onclick="openModule('counterWater')" data-category="inventory"><span class="tile-title">19L کاؤنٹر فروخت</span><small>کاؤنٹر سے پانی کی فروخت</small></div>
-<div class="tile red" onclick="openModule('returns')" data-category="inventory"><span class="tile-title">خراب تیار مال کی واپسی</span><small>واپس یا خراب مال</small></div>
-<div class="tile teal" onclick="openModule('settings')" data-category="management"><span class="tile-title">ترتیبات / کنٹرول سینٹر</span><small>قیمتیں اور بنیادی سیٹنگز</small></div>
-<div class="tile gold" onclick="openModule('ownerWithdrawals')" data-category="finance"><span class="tile-title">مالک کی ذاتی نکاسی</span><small>مالک نے کتنی رقم لی؟</small></div>
-<div class="tile green" onclick="openModule('monthClose')" data-category="management"><span class="tile-title">ماہانہ کلوزنگ</span><small>حساب کی جانچ، رپورٹ اور مہینہ بند کریں</small></div>
+<nav class="admin-module-filter" role="group" aria-label="انتظامی ماڈیولز کی اقسام">
+<button type="button" class="secondary active" data-filter="operations" onclick="filterAdminModules(this.dataset.filter)">روزمرہ کام</button>
+<button type="button" class="secondary" data-filter="inventory" onclick="filterAdminModules(this.dataset.filter)">اسٹاک</button>
+<button type="button" class="secondary" data-filter="finance" onclick="filterAdminModules(this.dataset.filter)">مالیات</button>
+<button type="button" class="secondary" data-filter="management" onclick="filterAdminModules(this.dataset.filter)">انتظام</button>
+<button type="button" class="secondary" data-filter="all" onclick="filterAdminModules(this.dataset.filter)">تمام</button>
+</nav>
+<div class="tile green" role="button" tabindex="0" aria-label="finance" title="finance" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('finance')" data-category="finance"><span class="tile-title">📊 کاروبار کا منافع / نقصان</span><small>ماہانہ نفع یا نقصان دیکھیں</small></div>
+<div class="tile blue" role="button" tabindex="0" aria-label="customers" title="customers" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('customers')" data-category="operations"><span class="tile-title">گاہک</span><small>نیا گاہک اور اس کا ریکارڈ</small></div>
+<div class="tile orange" role="button" tabindex="0" aria-label="delivery" title="delivery" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('delivery')" data-category="operations"><span class="tile-title">19L ڈلیوری</span><small>روزانہ 19 لیٹر کی ڈلیوری</small></div>
+<div class="tile yellow" role="button" tabindex="0" aria-label="raw" title="raw" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('raw')" data-category="inventory"><span class="tile-title">خام مال کی خریداری</span><small>بوتل، ڈھکن، کارٹن اور اسٹیکر</small></div>
+<div class="tile purple" role="button" tabindex="0" aria-label="finished" title="finished" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('finished')" data-category="inventory"><span class="tile-title">تیار مال</span><small>کتنا تیار مال باقی ہے</small></div>
+<div class="tile teal" role="button" tabindex="0" aria-label="sales" title="sales" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('sales')" data-category="inventory"><span class="tile-title">سیل / مال کا اخراج</span><small>فروخت درج کریں، اسٹاک خود گھٹے</small></div>
+<div class="tile red" role="button" tabindex="0" aria-label="expenses" title="expenses" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('expenses')" data-category="finance"><span class="tile-title">اخراجات</span><small>بجلی، کرایہ اور دوسرے خرچ</small></div>
+<div class="tile green" role="button" tabindex="0" aria-label="income" title="income" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('income')" data-category="finance"><span class="tile-title">آمدن</span><small>فروخت کے علاوہ دوسری آمدن</small></div>
+<div class="tile gray" role="button" tabindex="0" aria-label="billing" title="billing" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('billing')" data-category="operations"><span class="tile-title">ماہانہ بل</span><small>گاہکوں کے ماہانہ بل</small></div>
+<div class="tile blue" role="button" tabindex="0" aria-label="reports" title="reports" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('reports')" data-category="management"><span class="tile-title">تفصیلی رپورٹس</span><small>تفصیلی کاروباری رپورٹ</small></div>
+<div class="tile gray" role="button" tabindex="0" aria-label="workers" title="workers" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('workers')" data-category="management"><span class="tile-title">ورکر لیجر</span><small>ورکر، اجرت اور ادائیگی</small></div>
+<div class="tile yellow" role="button" tabindex="0" aria-label="labor" title="labor" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('labor')" data-category="inventory"><span class="tile-title">صفائی / پروڈکشن / دھلائی</span><small>پروڈکشن اور صفائی کی مزدوری</small></div>
+<div class="tile red" role="button" tabindex="0" aria-label="complaints" title="complaints" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('complaints')" data-category="operations"><span class="tile-title">کسٹمر شکایات</span><small>گاہکوں کے مسائل</small></div>
+<div class="tile gray" role="button" tabindex="0" aria-label="audit" title="audit" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('audit')" data-category="management"><span class="tile-title">سکیورٹی / آڈٹ لاگ</span><small>تبدیلیوں کا ریکارڈ</small></div>
+<div class="tile blue" role="button" tabindex="0" aria-label="tanker" title="tanker" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('tanker')" data-category="inventory"><span class="tile-title">پانی کی خریداری / ابتدائی اسٹاک</span><small>پانی کی خریداری اور اسٹاک</small></div>
+<div class="tile teal" role="button" tabindex="0" aria-label="counterWater" title="counterWater" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('counterWater')" data-category="inventory"><span class="tile-title">19L کاؤنٹر فروخت</span><small>کاؤنٹر سے پانی کی فروخت</small></div>
+<div class="tile red" role="button" tabindex="0" aria-label="returns" title="returns" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('returns')" data-category="inventory"><span class="tile-title">خراب تیار مال کی واپسی</span><small>واپس یا خراب مال</small></div>
+<div class="tile teal" role="button" tabindex="0" aria-label="settings" title="settings" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('settings')" data-category="management"><span class="tile-title">ترتیبات / کنٹرول سینٹر</span><small>قیمتیں اور بنیادی سیٹنگز</small></div>
+<div class="tile gold" role="button" tabindex="0" aria-label="ownerWithdrawals" title="ownerWithdrawals" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('ownerWithdrawals')" data-category="finance"><span class="tile-title">مالک کی ذاتی نکاسی</span><small>مالک نے کتنی رقم لی؟</small></div>
+<div class="tile green" role="button" tabindex="0" aria-label="monthClose" title="monthClose" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('monthClose')" data-category="management"><span class="tile-title">ماہانہ کلوزنگ</span><small>حساب کی جانچ، رپورٹ اور مہینہ بند کریں</small></div>
 </div>
 
 <div id="dashboard" class="card executive-dashboard">
- <div class="admin-module-filter" role="group" aria-label="انتظامی ماڈیولز کی اقسام">
-<button type="button" class="secondary active" data-filter="operations" onclick="filterAdminModules(this.dataset.filter)">روزمرہ کام</button>
-<button type="button" class="secondary" data-filter="inventory" onclick="filterAdminModules(this.dataset.filter)">اسٹاک و پیداوار</button>
-<button type="button" class="secondary" data-filter="finance" onclick="filterAdminModules(this.dataset.filter)">مالیات</button>
-<button type="button" class="secondary" data-filter="management" onclick="filterAdminModules(this.dataset.filter)">انتظام و رپورٹس</button>
-<button type="button" class="secondary" data-filter="all" onclick="filterAdminModules(this.dataset.filter)">تمام ماڈیولز</button>
-</div>
+ 
 <div class="executive-heading">
-  <div><h2>مالکین کا کاروباری کنٹرول سینٹر</h2><p class="muted">ماہانہ کارکردگی، منافع، وصولیاں، بقایا اور اسٹاک — ایک ہی مستند حساب سے</p></div>
+  <div><h2>کاروباری کنٹرول سینٹر</h2><p class="muted">آج اور منتخب مہینے کی کارکردگی</p></div>
   <div class="executive-filter"><input id="execMonth" type="month"><button class="secondary" onclick="loadExecutiveDashboard()">رپورٹ تازہ کریں</button></div>
  </div>
  <div id="execDashboard"><p class="muted">کاروباری ڈیش بورڈ لوڈ ہو رہا ہے...</p></div>
