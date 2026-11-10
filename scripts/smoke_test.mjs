@@ -472,6 +472,8 @@ try {
         shellOnly: source.includes("APP_SHELL_PATHS.has(url.pathname)"),
         queryExcluded: source.includes("isShellAsset && !url.search"),
         cacheCleanupScoped: source.includes('key.startsWith("mughals-pure-water-")'),
+        notificationUsesAppBase: source.includes('new URL("./", self.location.href)'),
+        notificationScopeChecked: source.includes("clientUrl.pathname.startsWith(appBase.pathname)"),
         oldBroadCacheRemoved: !source.includes("cache.put(request,copy)")
       };
     });
@@ -479,6 +481,8 @@ try {
         !serviceWorkerCacheResult.shellOnly ||
         !serviceWorkerCacheResult.queryExcluded ||
         !serviceWorkerCacheResult.cacheCleanupScoped ||
+        !serviceWorkerCacheResult.notificationUsesAppBase ||
+        !serviceWorkerCacheResult.notificationScopeChecked ||
         !serviceWorkerCacheResult.oldBroadCacheRemoved) {
       failures.push("Service worker cache is not restricted to static shell assets and this app's own cache namespace");
     }
