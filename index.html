@@ -724,7 +724,8 @@ const MODULE_HELP={
  complaints:"گاہکوں کی شکایات دیکھیں اور ان کا حل درج کریں۔",
  audit:"یہاں دیکھیں کہ منتظمین نے کب اور کون سی تبدیلی کی۔",
  settings:"قیمتیں اور کاروبار کی بنیادی ترتیب یہاں سے تبدیل کریں۔",
- ownerWithdrawals:"مالک اپنی ذاتی ضرورت کے لیے رقم لے تو یہاں درج کریں۔ یہ کاروباری خرچ یا نقصان نہیں ہوگا۔"
+ ownerWithdrawals:"مالک اپنی ذاتی ضرورت کے لیے رقم لے تو یہاں درج کریں۔ یہ کاروباری خرچ یا نقصان نہیں ہوگا۔",
+ monthClose:"مہینہ بند کرنے سے پہلے تمام بل، لاگتیں اور اسٹاک کی جانچ کریں۔ بند شدہ مہینے کے ریکارڈ میں عام تبدیلی نہیں ہو سکے گی۔"
 };
 function setTitle(t){$("moduleTitle").textContent=t;const intro=$("moduleIntro");if(intro)intro.textContent=MODULE_HELP[currentModule]||"ضروری معلومات درج کریں، محفوظ کریں، اور نیچے اپنا ریکارڈ دیکھیں۔";$("moduleMsg").textContent="";$("moduleTable").innerHTML=""}
 
@@ -1574,9 +1575,14 @@ async function saveRawMaterialPurchase(){
   if(record_type==="opening_stock"){
    const {data:existing,error:lookupError}=await db.from("raw_material_purchases").select("id").eq("record_type","opening_stock").eq("material_type",type).maybeSingle();
    if(lookupError)throw lookupError;
-   const result=existing
+   let result=existing
     ?await db.from("raw_material_purchases").update(payload).eq("id",existing.id)
     :await db.from("raw_material_purchases").insert(payload);
+   if(result.error?.code==="23505"){
+    const retryLookup=await db.from("raw_material_purchases").select("id").eq("record_type","opening_stock").eq("material_type",type).maybeSingle();
+    if(retryLookup.error||!retryLookup.data)throw result.error;
+    result=await db.from("raw_material_purchases").update(payload).eq("id",retryLookup.data.id);
+   }
    if(result.error)throw result.error;
   }else{
    const signature=[date,record_type,type,quantity,total_amount,payload.supplier||"",payload.payment_method,payload.details||""].join("|");
