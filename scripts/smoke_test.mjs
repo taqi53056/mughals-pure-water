@@ -289,6 +289,33 @@ try {
       failures.push("6L minimum and editable sale price rules are incorrect");
     }
 
+    const labelResult = await page.evaluate(() => {
+      const body = document.querySelector("#moduleBody");
+      body.innerHTML = '<div><input id="rawPurchaseQty" type="number" placeholder="مقدار"></div>' +
+        '<div><select id="tankEntryKind"><option>خریداری</option></select></div>' +
+        '<div><input id="psDefault_3" type="number"></div>' +
+        '<label><input id="labelTestCheckbox" type="checkbox"> چیک باکس</label>';
+      if (typeof window.enhanceModuleControls !== "function") return { helper: false };
+      window.enhanceModuleControls(body);
+      window.enhanceModuleControls(body);
+      const getLabel = id => body.querySelector('label[for="' + id + '"]')?.textContent?.trim() || "";
+      return {
+        helper: true,
+        raw: getLabel("rawPurchaseQty"),
+        tank: getLabel("tankEntryKind"),
+        price: getLabel("psDefault_3"),
+        rawLabelCount: body.querySelectorAll('label[for="rawPurchaseQty"]').length,
+        tankLabelCount: body.querySelectorAll('label[for="tankEntryKind"]').length,
+        checkboxWrapped: Boolean(body.querySelector("#labelTestCheckbox")?.closest("label"))
+      };
+    });
+    if (!labelResult.helper) failures.push("Admin field-label helper is unavailable");
+    if (!labelResult.raw.includes("مقدار")) failures.push("Raw-material quantity field label is missing");
+    if (!labelResult.tank.includes("اندراج کی قسم")) failures.push("Tanker entry type label is missing");
+    if (!labelResult.price.includes("معمول کی فی یونٹ قیمت")) failures.push("Dynamic product price label is missing");
+    if (labelResult.rawLabelCount !== 1 || labelResult.tankLabelCount !== 1) failures.push("Admin field labels are duplicated");
+    if (!labelResult.checkboxWrapped) failures.push("Existing checkbox label was changed unexpectedly");
+
     await page.close();
   }
 } finally {
