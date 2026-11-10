@@ -1258,19 +1258,25 @@ async function saveRawMaterialPurchase(){
   msg("تاریخ، مکمل مقدار اور کل ادا شدہ رقم درست درج کریں۔");return;
  }
  if(!confirmLargeEntry("خام مال کی مقدار",quantity,1000)||!confirmLargeEntry("خریداری کی رقم",total_amount,100000))return;
- const record_type=$("rawPurchaseKind").value;
- const payload={
-  purchase_date:date,record_type,material_type:type,quantity,unit:rawMaterialUnits[type],
-  total_amount,supplier:$("rawPurchaseSupplier").value.trim()||null,
-  payment_method:record_type==="opening_stock"?"opening":$("rawPurchaseMethod").value,
-  details:$("rawPurchaseDetails").value.trim()||null,entered_by:user?.id||null
- };
- const {error}=await db.from("raw_material_purchases").insert(payload);
- if(error){msg("خریداری محفوظ نہیں ہوئی: "+error.message);return;}
- msg(record_type==="opening_stock"?"ابتدائی خام مال اسٹاک محفوظ ہوگیا۔":"خام مال کی خریداری محفوظ ہوگئی۔",true);
- $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
- $("rawPurchaseSupplier").value="";$("rawPurchaseDetails").value="";
- await loadRawMaterialPurchases();await loadTodaySummary();
+ const button=$("rawPurchaseSaveButton");
+ if(button?.disabled)return;
+ if(button)button.disabled=true;
+ try{
+  const record_type=$("rawPurchaseKind").value;
+  const payload={
+   purchase_date:date,record_type,material_type:type,quantity,unit:rawMaterialUnits[type],
+   total_amount,supplier:$("rawPurchaseSupplier").value.trim()||null,
+   payment_method:record_type==="opening_stock"?"opening":$("rawPurchaseMethod").value,
+   details:$("rawPurchaseDetails").value.trim()||null,entered_by:user?.id||null
+  };
+  const {error}=await db.from("raw_material_purchases").insert(payload);
+  if(error)throw error;
+  msg(record_type==="opening_stock"?"ابتدائی خام مال اسٹاک محفوظ ہوگیا۔":"خام مال کی خریداری محفوظ ہوگئی۔",true);
+  $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
+  $("rawPurchaseSupplier").value="";$("rawPurchaseDetails").value="";
+  await Promise.all([loadRawMaterialPurchases(),loadTodaySummary()]);
+ }catch(e){msg("خام مال محفوظ نہیں ہوا: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
 async function loadRawMaterialPurchases(){
  let rows=[],prod=[],capDeliveries=[];
@@ -1312,7 +1318,7 @@ async function tankerPurchaseModule(){
  '<label>ادائیگی کا طریقہ</label><select id="tankPaymentMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select></div>'+
  '<div id="tankerOpeningFields" class="hidden"><input id="tankOpeningLitres" type="number" min="0.01" step="0.01" placeholder="ابتدائی پانی کے لیٹر">'+
  '<input id="tankOpeningValue" type="number" min="0.01" step="0.01" placeholder="ابتدائی پانی کی کل مالیت (روپے)"></div>'+
- '<button onclick="saveTankerPurchase()">اندراج محفوظ کریں</button></div>';
+ '<button id="tankSaveButton" onclick="saveTankerPurchase()">اندراج محفوظ کریں</button></div>';
  $("tankCount").addEventListener("input",updateTankerTotal);$("tankRate").addEventListener("input",updateTankerTotal);
  await loadTankerPurchases();
 }
@@ -1334,25 +1340,32 @@ function toggleTankerEntryKind(){
 }
 async function saveTankerPurchase(){
  const date=$("tankDate").value;
- if($("tankEntryKind").value==="opening_stock"){
+ let opening=$("tankEntryKind").value==="opening_stock";
+ let payload=null;
+ if(opening){
   const litres=Number($("tankOpeningLitres").value),total_value=Number($("tankOpeningValue").value);
   if(!date||!Number.isFinite(litres)||litres<=0||!Number.isFinite(total_value)||total_value<=0){msg("ابتدائی پانی کے لیٹر اور اس کی کل مالیت درست درج کریں۔");return;}
   if(!confirmLargeEntry("ابتدائی پانی کے لیٹر",litres,5000)||!confirmLargeEntry("ابتدائی پانی کی مالیت",total_value,100000))return;
-  const {error}=await db.from("water_opening_stock").upsert({as_of_date:date,water_use:$("waterUse").value,litres,total_value,details:"ابتدائی موجود پانی",entered_by:user?.id||null},{onConflict:"as_of_date,water_use"});
-  if(error){msg("ابتدائی پانی کا اسٹاک محفوظ نہیں ہوا: "+error.message);return;}
-  msg("ابتدائی پانی کا اسٹاک محفوظ ہوگیا۔",true);$("tankOpeningLitres").value="";$("tankOpeningValue").value="";
+  payload={as_of_date:date,water_use:$("waterUse").value,litres,total_value,details:"ابتدائی موجود پانی",entered_by:user?.id||null};
  }else{
   const count=Number($("tankCount").value),rate=Number($("tankRate").value);
   if(!date||!Number.isInteger(count)||count<=0||!Number.isFinite(rate)||rate<=0){msg("تاریخ، ٹینکروں کی تعداد اور فی ٹینکر قیمت درست درج کریں۔");return;}
   if(!confirmLargeEntry("ٹینکروں کی تعداد",count,5)||!confirmLargeEntry("ٹینکر کی کل رقم",count*rate,100000))return;
-  const {error}=await db.from("water_tanker_purchases").insert({
-   purchase_date:date,water_use:$("waterUse").value,tanker_count:count,rate_per_tanker:rate,total_amount:count*rate,payment_method:$("tankPaymentMethod").value,
-   supplier:$("tankSupplier").value.trim()||null,entered_by:user?.id||null
-  });
-  if(error){msg("ٹینکر خریداری محفوظ نہیں ہوئی: "+error.message);return;}
-  msg("ٹینکر خریداری محفوظ ہوگئی۔",true);$("tankSupplier").value="";
+  payload={purchase_date:date,water_use:$("waterUse").value,tanker_count:count,rate_per_tanker:rate,total_amount:count*rate,payment_method:$("tankPaymentMethod").value,supplier:$("tankSupplier").value.trim()||null,entered_by:user?.id||null};
  }
- await loadTankerPurchases();await loadTodaySummary();
+ const button=$("tankSaveButton");
+ if(button?.disabled)return;
+ if(button)button.disabled=true;
+ try{
+  const result=opening
+   ?await db.from("water_opening_stock").upsert(payload,{onConflict:"as_of_date,water_use"})
+   :await db.from("water_tanker_purchases").insert(payload);
+  if(result.error)throw result.error;
+  if(opening){msg("ابتدائی پانی کا اسٹاک محفوظ ہوگیا۔",true);$("tankOpeningLitres").value="";$("tankOpeningValue").value="";}
+  else{msg("ٹینکر خریداری محفوظ ہوگئی۔",true);$("tankSupplier").value="";}
+  await Promise.all([loadTankerPurchases(),loadTodaySummary()]);
+ }catch(e){msg((opening?"ابتدائی پانی کا اسٹاک":"ٹینکر خریداری")+" محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
 async function loadTankerPurchases(){
  const [{data,error},{data:opening,error:openingError}]=await Promise.all([
