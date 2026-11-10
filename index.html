@@ -36,7 +36,7 @@ button:hover{filter:brightness(1.06)}button:disabled{opacity:.55;cursor:not-allo
 table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10px;border-bottom:1px solid var(--line);text-align:right}th{color:#315448;background:#f5f7f2;font-weight:700}
 .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}.stat{background:linear-gradient(110deg,#f1f6f0,#f8f7ef);border:1px solid #e7ebdf;border-radius:12px;padding:13px;margin:8px 0}
 .total{font-size:21px;font-weight:800;color:var(--emerald)}.warning{background:#fff5db;border:1px solid #efdfb2;padding:12px;border-radius:12px;margin:9px 0}
-#login{max-width:560px;margin:28px auto}#app>.card:first-child{background:linear-gradient(110deg,#fff,#f5f7ef);border-top:2px solid var(--gold)}
+#login{max-width:560px;margin:28px auto}#login .auth-form{display:grid;gap:10px}#login .auth-form>label{font-size:14px;font-weight:750;color:#244c3c;margin-top:4px}#login .auth-form input{width:100%;min-height:52px}#login .auth-form .password-field{margin:0}#login .auth-form button{min-height:48px}#login #loginMsg{margin-top:12px;line-height:1.8}#app>.card:first-child{background:linear-gradient(110deg,#fff,#f5f7ef);border-top:2px solid var(--gold)}
 @media(min-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{min-height:112px;padding:24px;font-size:18px}#adminPanel{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(0,1.7fr);gap:16px;align-items:start}#homeTiles{grid-column:1;grid-row:1 / span 2}#dashboard,#module{grid-column:2;margin-top:0}#adminPanel #module{grid-column:1 / -1}}
 @media(max-width:520px){.wrap{padding:11px}.card{padding:15px;border-radius:15px}.grid{gap:9px}.tile{min-height:82px;padding:14px;font-size:14px}header{padding:18px 14px}input,select,button,textarea{font-size:16px}}
 
@@ -716,25 +716,43 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 
 <main class="wrap">
 <section id="login" class="card">
-<div id="loginForm">
+<form id="loginForm" class="auth-form" onsubmit="event.preventDefault();handleLoginClick()">
 <h2>لاگ اِن</h2>
-<input id="email" type="email" autocomplete="email" placeholder="ای میل">
-<div class="password-field"><input id="password" type="password" autocomplete="current-password" placeholder="پاس ورڈ"><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('password',this)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
-<button id="loginButton" type="button" onclick="handleLoginClick()">لاگ اِن</button>
+<label for="email">ای میل</label>
+<input id="email" type="email" autocomplete="email" placeholder="مثلاً name@example.com" required maxlength="254">
+<label for="password">پاس ورڈ</label>
+<div class="password-field"><input id="password" type="password" autocomplete="current-password" placeholder="اپنا پاس ورڈ درج کریں" required><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('password',this)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+<button id="loginButton" type="submit">لاگ اِن</button>
+<button class="secondary" type="button" onclick="showPasswordReset()">پاس ورڈ بھول گئے؟</button>
 <button class="secondary" type="button" onclick="showSignup()">نیا کسٹمر اکاؤنٹ بنائیں</button>
-</div>
-<div id="signupForm" class="hidden">
+</form>
+<form id="signupForm" class="auth-form hidden" onsubmit="event.preventDefault();signupCustomer()">
 <h2>نیا کسٹمر اکاؤنٹ</h2>
 <p class="muted">اپنی درست معلومات درج کریں۔ Customer ID خودکار بنے گی۔</p>
-<input id="signupName" type="text" autocomplete="name" maxlength="120" placeholder="پورا نام">
-<label for="signupMobile">موبائل نمبر</label><input id="signupMobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="03XXXXXXXXX یا +923XXXXXXXXX" aria-describedby="signupMobileHelp"><small id="signupMobileHelp" class="muted">پاکستانی موبائل نمبر درج کریں؛ مثال: 03XXXXXXXXX</small>
-<input id="signupAddress" type="text" autocomplete="street-address" maxlength="300" placeholder="مکمل پتہ">
-<input id="signupEmail" type="email" autocomplete="email" maxlength="254" placeholder="ای میل">
-<div class="password-field"><input id="signupPassword" type="password" autocomplete="new-password" minlength="8" placeholder="پاس ورڈ (کم از کم 8 حروف)"><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('signupPassword',this)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
-<button id="signupButton" type="button" onclick="signupCustomer()">اکاؤنٹ بنائیں</button>
+<label for="signupName">پورا نام</label><input id="signupName" type="text" autocomplete="name" maxlength="120" placeholder="اپنا مکمل نام درج کریں" required>
+<label for="signupMobile">موبائل نمبر</label><input id="signupMobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="03XXXXXXXXX یا +923XXXXXXXXX" aria-describedby="signupMobileHelp" required><small id="signupMobileHelp" class="muted">پاکستانی موبائل نمبر درج کریں؛ مثال: 03XXXXXXXXX</small>
+<label for="signupAddress">مکمل پتہ</label><input id="signupAddress" type="text" autocomplete="street-address" maxlength="300" placeholder="گھر، گلی اور علاقے کا پتہ" required>
+<label for="signupEmail">ای میل</label><input id="signupEmail" type="email" autocomplete="email" maxlength="254" placeholder="مثلاً name@example.com" required>
+<label for="signupPassword">پاس ورڈ</label><div class="password-field"><input id="signupPassword" type="password" autocomplete="new-password" minlength="8" placeholder="کم از کم 8 حروف" required><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('signupPassword',this)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+<button id="signupButton" type="submit">اکاؤنٹ بنائیں</button>
 <button class="secondary" type="button" onclick="showLogin()">واپس لاگ اِن</button>
-</div>
-<p id="loginMsg" class="error"></p>
+</form>
+<form id="passwordResetForm" class="auth-form hidden" onsubmit="event.preventDefault();sendPasswordResetLink()">
+<h2>پاس ورڈ بھول گئے؟</h2>
+<p class="muted">اپنا رجسٹرڈ ای میل درج کریں۔ اگر اس ای میل سے اکاؤنٹ موجود ہے تو پاس ورڈ تبدیل کرنے کا لنک بھیج دیا جائے گا۔</p>
+<label for="resetEmail">ای میل</label><input id="resetEmail" type="email" autocomplete="email" maxlength="254" placeholder="رجسٹرڈ ای میل" required>
+<button id="resetLinkButton" type="submit">پاس ورڈ تبدیل کرنے کا لنک بھیجیں</button>
+<button class="secondary" type="button" onclick="showLogin()">واپس لاگ اِن</button>
+</form>
+<form id="passwordResetCompleteForm" class="auth-form hidden" onsubmit="event.preventDefault();completePasswordReset()">
+<h2>نیا پاس ورڈ بنائیں</h2>
+<p class="muted">اپنے اکاؤنٹ کے لیے کم از کم 8 حروف کا نیا پاس ورڈ درج کریں۔</p>
+<label for="newPassword">نیا پاس ورڈ</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="کم از کم 8 حروف" required>
+<label for="confirmNewPassword">نئے پاس ورڈ کی دوبارہ تصدیق</label><input id="confirmNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="وہی پاس ورڈ دوبارہ درج کریں" required>
+<button id="saveNewPasswordButton" type="submit">نیا پاس ورڈ محفوظ کریں</button>
+<button class="secondary" type="button" onclick="showLogin()">واپس لاگ اِن</button>
+</form>
+<p id="loginMsg" class="error" role="status" aria-live="polite" aria-atomic="true"></p>
 </section>
 
 <section id="app" class="hidden">
@@ -1036,15 +1054,38 @@ const MODULE_HELP={
 };
 function setTitle(t){$("moduleTitle").textContent=t;const intro=$("moduleIntro");if(intro)intro.textContent=MODULE_HELP[currentModule]||"ضروری معلومات درج کریں، محفوظ کریں، اور نیچے اپنا ریکارڈ دیکھیں۔";$("moduleMsg").textContent="";$("moduleTable").innerHTML=""}
 
+function clearAuthMessage(){
+ $("loginMsg").className="error";
+ $("loginMsg").textContent="";
+}
 function showSignup(){
  $("loginForm").classList.add("hidden");
+ $("passwordResetForm").classList.add("hidden");
+ $("passwordResetCompleteForm").classList.add("hidden");
  $("signupForm").classList.remove("hidden");
- $("loginMsg").textContent="";
+ clearAuthMessage();
+}
+function showPasswordReset(){
+ $("loginForm").classList.add("hidden");
+ $("signupForm").classList.add("hidden");
+ $("passwordResetCompleteForm").classList.add("hidden");
+ $("passwordResetForm").classList.remove("hidden");
+ $("resetEmail").value=$("email").value.trim();
+ clearAuthMessage();
+}
+function showPasswordResetComplete(){
+ $("loginForm").classList.add("hidden");
+ $("signupForm").classList.add("hidden");
+ $("passwordResetForm").classList.add("hidden");
+ $("passwordResetCompleteForm").classList.remove("hidden");
+ clearAuthMessage();
 }
 function showLogin(){
  $("signupForm").classList.add("hidden");
+ $("passwordResetForm").classList.add("hidden");
+ $("passwordResetCompleteForm").classList.add("hidden");
  $("loginForm").classList.remove("hidden");
- $("loginMsg").textContent="";
+ clearAuthMessage();
 }
 function handleLoginClick(){
  const m=document.getElementById("loginMsg");
@@ -1065,30 +1106,52 @@ function togglePasswordVisibility(fieldId,button){
   : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
 }
 
-async function resendConfirmationEmail(){
- const email=$("email").value.trim();
- if(!email){$("loginMsg").className="error";$("loginMsg").textContent="پہلے اوپر لاگ اِن والے خانے میں اپنا ای میل درج کریں۔";return;}
- const button=document.querySelector('#loginForm button[onclick="resendConfirmationEmail()"]');
- if(button){button.disabled=true;button.textContent="ای میل بھیجی جا رہی ہے...";}
- $("loginMsg").className="error";$("loginMsg").textContent="";
+
+async function sendPasswordResetLink(){
+ const email=$("resetEmail").value.trim();
+ const button=$("resetLinkButton");
+ if(!email){$("resetEmail").reportValidity();return;}
+ button.disabled=true;button.textContent="لنک بھیجا جا رہا ہے...";
+ clearAuthMessage();
  try{
   await ensureSupabase();
-  const {error}=await db.auth.resend({
-   type:"signup",
-   email,
-   options:{emailRedirectTo:"https://taqi53056.github.io/mughals-pure-water/"}
-  });
+  const redirectTo=new URL("./",window.location.href).href;
+  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});
   if(error)throw error;
   $("loginMsg").className="success";
-  $("loginMsg").textContent="اگر اس ای میل کے لیے تصدیق درکار ہے تو نیا تصدیقی لنک بھیج دیا گیا ہے۔ اپنا Inbox اور Spam فولڈر چیک کریں۔";
+  $("loginMsg").textContent="اگر اس ای میل سے اکاؤنٹ موجود ہے تو پاس ورڈ تبدیل کرنے کا لنک بھیج دیا گیا ہے۔ اپنا Inbox اور Spam فولڈر دیکھیں۔";
  }catch(e){
   $("loginMsg").className="error";
-  $("loginMsg").textContent="تصدیقی ای میل دوبارہ نہیں بھیجی جا سکی: "+(e?.message||String(e));
+  $("loginMsg").textContent="پاس ورڈ تبدیل کرنے کا لنک نہیں بھیجا جا سکا: "+(e?.message||String(e));
  }finally{
-  if(button){button.disabled=false;button.textContent="تصدیقی ای میل دوبارہ بھیجیں";}
+  button.disabled=false;button.textContent="پاس ورڈ تبدیل کرنے کا لنک بھیجیں";
  }
 }
-
+async function completePasswordReset(){
+ const password=$("newPassword").value;
+ const confirmation=$("confirmNewPassword").value;
+ const button=$("saveNewPasswordButton");
+ if(password.length<8){$("newPassword").reportValidity();return;}
+ if(password!==confirmation){$("loginMsg").className="error";$("loginMsg").textContent="دونوں پاس ورڈ ایک جیسے درج کریں۔";$("confirmNewPassword").focus();return;}
+ button.disabled=true;button.textContent="پاس ورڈ محفوظ ہو رہا ہے...";
+ clearAuthMessage();
+ try{
+  await ensureSupabase();
+  const {error}=await db.auth.updateUser({password});
+  if(error)throw error;
+  await db.auth.signOut();
+  history.replaceState(null,document.title,window.location.pathname);
+  $("newPassword").value="";$("confirmNewPassword").value="";
+  showLogin();
+  $("loginMsg").className="success";
+  $("loginMsg").textContent="پاس ورڈ تبدیل ہوگیا ہے۔ اب نئے پاس ورڈ سے لاگ اِن کریں۔";
+ }catch(e){
+  $("loginMsg").className="error";
+  $("loginMsg").textContent="پاس ورڈ تبدیل نہیں ہوسکا: "+(e?.message||String(e));
+ }finally{
+  button.disabled=false;button.textContent="نیا پاس ورڈ محفوظ کریں";
+ }
+}
 function normalizePkMobile(value){
  let digits=String(value||"").replace(/[^0-9]/g,"");
  if(digits.startsWith("0092"))digits=digits.slice(4);
@@ -1203,6 +1266,11 @@ async function loadApp(){
 // محفوظ Supabase سیشن کی بحالی: ایپ دوبارہ کھولنے پر لاگ اِن اسکرین پر نہ رکے۔
 async function restoreSavedSession(){
  try{
+  const recoveryLink=new URLSearchParams(window.location.hash.slice(1)).get("type")==="recovery";
+  if(recoveryLink){
+   showPasswordResetComplete();
+   return;
+  }
   await ensureSupabase();
   const {data,error}=await db.auth.getSession();
   if(error)throw error;
