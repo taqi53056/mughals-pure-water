@@ -318,6 +318,14 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 .brand-copy{flex:1;min-width:190px}.brand-copy h1{color:#f0cf78;letter-spacing:.055em;font-family:Georgia,serif}.brand-copy>div{color:#d7bd7a}
 .brand-header #installAppButton{background:linear-gradient(135deg,#f1d58d,#a97822);color:#171108;border:1px solid #f7e5ae}
 @media(max-width:520px){.brand-logo{width:62px;height:62px}.brand-wrap{gap:11px}.brand-copy h1{font-size:18px}}
+
+/* Role-based module grouping */
+.admin-module-filter{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 16px;padding:10px;background:#f2f6f1;border:1px solid #e1e9df;border-radius:14px}
+.admin-module-filter button{width:auto;min-width:0;min-height:40px;margin:0;padding:8px 13px;font-size:13px;border-radius:10px}
+.admin-module-filter button.active{background:linear-gradient(135deg,#07533f,#0b7655);color:#fff;border-color:#0b6b50;box-shadow:0 3px 10px #07533f20}
+#homeTiles .tile[hidden]{display:none!important}
+@media(max-width:699px){.admin-module-filter{gap:6px}.admin-module-filter button{flex:1 1 calc(50% - 6px);font-size:12px;padding:8px 9px}}
+
 </style>
 
 <style id="owner-withdrawal-premium">
@@ -413,30 +421,37 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 
 <div id="adminPanel" class="hidden">
 <div id="homeTiles" class="grid">
-<div class="tile green" onclick="openModule('finance')"><span class="tile-title">📊 کاروبار کا منافع / نقصان</span><small>ماہانہ نفع یا نقصان دیکھیں</small></div>
-<div class="tile blue" onclick="openModule('customers')"><span class="tile-title">گاہک</span><small>نیا گاہک اور اس کا ریکارڈ</small></div>
-<div class="tile orange" onclick="openModule('delivery')"><span class="tile-title">19L ڈلیوری</span><small>روزانہ 19 لیٹر کی ڈلیوری</small></div>
-<div class="tile yellow" onclick="openModule('raw')"><span class="tile-title">خام مال کی خریداری</span><small>بوتل، ڈھکن، کارٹن اور اسٹیکر</small></div>
-<div class="tile purple" onclick="openModule('finished')"><span class="tile-title">تیار مال</span><small>کتنا تیار مال باقی ہے</small></div>
-<div class="tile teal" onclick="openModule('sales')"><span class="tile-title">سیل / مال کا اخراج</span><small>فروخت درج کریں، اسٹاک خود گھٹے</small></div>
-<div class="tile red" onclick="openModule('expenses')"><span class="tile-title">اخراجات</span><small>بجلی، کرایہ اور دوسرے خرچ</small></div>
-<div class="tile green" onclick="openModule('income')"><span class="tile-title">آمدن</span><small>فروخت کے علاوہ دوسری آمدن</small></div>
-<div class="tile gray" onclick="openModule('billing')"><span class="tile-title">ماہانہ بل</span><small>گاہکوں کے ماہانہ بل</small></div>
-<div class="tile blue" onclick="openModule('reports')"><span class="tile-title">تفصیلی رپورٹس</span><small>تفصیلی کاروباری رپورٹ</small></div>
-<div class="tile gray" onclick="openModule('workers')"><span class="tile-title">ورکر لیجر</span><small>ورکر، اجرت اور ادائیگی</small></div>
-<div class="tile yellow" onclick="openModule('labor')"><span class="tile-title">صفائی / پروڈکشن / دھلائی</span><small>پروڈکشن اور صفائی کی مزدوری</small></div>
-<div class="tile red" onclick="openModule('complaints')"><span class="tile-title">کسٹمر شکایات</span><small>گاہکوں کے مسائل</small></div>
-<div class="tile gray" onclick="openModule('audit')"><span class="tile-title">سکیورٹی / آڈٹ لاگ</span><small>تبدیلیوں کا ریکارڈ</small></div>
-<div class="tile blue" onclick="openModule('tanker')"><span class="tile-title">پانی کی خریداری / ابتدائی اسٹاک</span><small>پانی کی خریداری اور اسٹاک</small></div>
-<div class="tile teal" onclick="openModule('counterWater')"><span class="tile-title">19L کاؤنٹر فروخت</span><small>کاؤنٹر سے پانی کی فروخت</small></div>
-<div class="tile red" onclick="openModule('returns')"><span class="tile-title">خراب تیار مال کی واپسی</span><small>واپس یا خراب مال</small></div>
-<div class="tile teal" onclick="openModule('settings')"><span class="tile-title">ترتیبات / کنٹرول سینٹر</span><small>قیمتیں اور بنیادی سیٹنگز</small></div>
-<div class="tile gold" onclick="openModule('ownerWithdrawals')"><span class="tile-title">مالک کی ذاتی نکاسی</span><small>مالک نے کتنی رقم لی؟</small></div>
-<div class="tile green" onclick="openModule('monthClose')"><span class="tile-title">ماہانہ کلوزنگ</span><small>حساب کی جانچ، رپورٹ اور مہینہ بند کریں</small></div>
+<div class="tile green" onclick="openModule('finance')" data-category="finance"><span class="tile-title">📊 کاروبار کا منافع / نقصان</span><small>ماہانہ نفع یا نقصان دیکھیں</small></div>
+<div class="tile blue" onclick="openModule('customers')" data-category="operations"><span class="tile-title">گاہک</span><small>نیا گاہک اور اس کا ریکارڈ</small></div>
+<div class="tile orange" onclick="openModule('delivery')" data-category="operations"><span class="tile-title">19L ڈلیوری</span><small>روزانہ 19 لیٹر کی ڈلیوری</small></div>
+<div class="tile yellow" onclick="openModule('raw')" data-category="inventory"><span class="tile-title">خام مال کی خریداری</span><small>بوتل، ڈھکن، کارٹن اور اسٹیکر</small></div>
+<div class="tile purple" onclick="openModule('finished')" data-category="inventory"><span class="tile-title">تیار مال</span><small>کتنا تیار مال باقی ہے</small></div>
+<div class="tile teal" onclick="openModule('sales')" data-category="inventory"><span class="tile-title">سیل / مال کا اخراج</span><small>فروخت درج کریں، اسٹاک خود گھٹے</small></div>
+<div class="tile red" onclick="openModule('expenses')" data-category="finance"><span class="tile-title">اخراجات</span><small>بجلی، کرایہ اور دوسرے خرچ</small></div>
+<div class="tile green" onclick="openModule('income')" data-category="finance"><span class="tile-title">آمدن</span><small>فروخت کے علاوہ دوسری آمدن</small></div>
+<div class="tile gray" onclick="openModule('billing')" data-category="operations"><span class="tile-title">ماہانہ بل</span><small>گاہکوں کے ماہانہ بل</small></div>
+<div class="tile blue" onclick="openModule('reports')" data-category="management"><span class="tile-title">تفصیلی رپورٹس</span><small>تفصیلی کاروباری رپورٹ</small></div>
+<div class="tile gray" onclick="openModule('workers')" data-category="management"><span class="tile-title">ورکر لیجر</span><small>ورکر، اجرت اور ادائیگی</small></div>
+<div class="tile yellow" onclick="openModule('labor')" data-category="inventory"><span class="tile-title">صفائی / پروڈکشن / دھلائی</span><small>پروڈکشن اور صفائی کی مزدوری</small></div>
+<div class="tile red" onclick="openModule('complaints')" data-category="operations"><span class="tile-title">کسٹمر شکایات</span><small>گاہکوں کے مسائل</small></div>
+<div class="tile gray" onclick="openModule('audit')" data-category="management"><span class="tile-title">سکیورٹی / آڈٹ لاگ</span><small>تبدیلیوں کا ریکارڈ</small></div>
+<div class="tile blue" onclick="openModule('tanker')" data-category="inventory"><span class="tile-title">پانی کی خریداری / ابتدائی اسٹاک</span><small>پانی کی خریداری اور اسٹاک</small></div>
+<div class="tile teal" onclick="openModule('counterWater')" data-category="inventory"><span class="tile-title">19L کاؤنٹر فروخت</span><small>کاؤنٹر سے پانی کی فروخت</small></div>
+<div class="tile red" onclick="openModule('returns')" data-category="inventory"><span class="tile-title">خراب تیار مال کی واپسی</span><small>واپس یا خراب مال</small></div>
+<div class="tile teal" onclick="openModule('settings')" data-category="management"><span class="tile-title">ترتیبات / کنٹرول سینٹر</span><small>قیمتیں اور بنیادی سیٹنگز</small></div>
+<div class="tile gold" onclick="openModule('ownerWithdrawals')" data-category="finance"><span class="tile-title">مالک کی ذاتی نکاسی</span><small>مالک نے کتنی رقم لی؟</small></div>
+<div class="tile green" onclick="openModule('monthClose')" data-category="management"><span class="tile-title">ماہانہ کلوزنگ</span><small>حساب کی جانچ، رپورٹ اور مہینہ بند کریں</small></div>
 </div>
 
 <div id="dashboard" class="card executive-dashboard">
- <div class="executive-heading">
+ <div class="admin-module-filter" role="group" aria-label="انتظامی ماڈیولز کی اقسام">
+<button type="button" class="secondary active" data-filter="operations" onclick="filterAdminModules(this.dataset.filter)">روزمرہ کام</button>
+<button type="button" class="secondary" data-filter="inventory" onclick="filterAdminModules(this.dataset.filter)">اسٹاک و پیداوار</button>
+<button type="button" class="secondary" data-filter="finance" onclick="filterAdminModules(this.dataset.filter)">مالیات</button>
+<button type="button" class="secondary" data-filter="management" onclick="filterAdminModules(this.dataset.filter)">انتظام و رپورٹس</button>
+<button type="button" class="secondary" data-filter="all" onclick="filterAdminModules(this.dataset.filter)">تمام ماڈیولز</button>
+</div>
+<div class="executive-heading">
   <div><h2>مالکین کا کاروباری کنٹرول سینٹر</h2><p class="muted">ماہانہ کارکردگی، منافع، وصولیاں، بقایا اور اسٹاک — ایک ہی مستند حساب سے</p></div>
   <div class="executive-filter"><input id="execMonth" type="month"><button class="secondary" onclick="loadExecutiveDashboard()">رپورٹ تازہ کریں</button></div>
  </div>
@@ -787,6 +802,7 @@ async function loadApp(){
   $("welcome").textContent="السلام علیکم، "+(p.data?.full_name||"ایڈمن")+" صاحب";
   $("role").textContent=" | منتظم";
   $("customerPanel").classList.add("hidden");$("adminPanel").classList.remove("hidden");
+   filterAdminModules("operations");
   await Promise.all([loadTodaySummary(),loadExecutiveDashboard()]);
  }
 }
@@ -805,6 +821,18 @@ async function restoreSavedSession(){
 window.addEventListener("load",restoreSavedSession,{once:true});
 
 async function logout(){if(!db)return;await db.auth.signOut();location.reload()}
+
+
+function filterAdminModules(category){
+ const allowed=["operations","inventory","finance","management","all"];
+ const selected=allowed.includes(category)?category:"operations";
+ document.querySelectorAll("#homeTiles .tile").forEach(tile=>{
+  tile.hidden=selected!=="all"&&tile.dataset.category!==selected;
+ });
+ document.querySelectorAll(".admin-module-filter [data-filter]").forEach(el=>{
+  el.classList.toggle("active",el.dataset.filter===selected);
+ });
+}
 
 function backHome(){
  $("adminPanel").classList.remove("module-open");$("module").classList.add("hidden");$("homeTiles").classList.remove("hidden");$("dashboard").classList.remove("hidden");editingId=null;
