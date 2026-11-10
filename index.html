@@ -1188,7 +1188,7 @@ async function stockModule(type){
  <select id="adjDirection"><option value="increase">اسٹاک میں اضافہ</option><option value="decrease">اسٹاک میں کمی</option></select>
  <input id="adjQty" type="number" min="1" step="1" placeholder="درستگی کی مقدار">
  <input id="adjReason" maxlength="250" placeholder="وجہ لازمی درج کریں">
- <button onclick="saveFinishedAdjustment()">درستگی محفوظ کریں</button></div>`}
+ <button id="adjustmentSaveButton" onclick="saveFinishedAdjustment()">درستگی محفوظ کریں</button></div>`}
  <button class="secondary" onclick="loadStock('${type}')">ریکارڈ تازہ کریں</button>`;
  await loadStock(type);
 }
@@ -1438,7 +1438,7 @@ async function productReturnsModule(){
  '<select id="returnType"><option value="500ml">500ml کارٹن کے اندر بوتل</option><option value="1.5L">1.5L کارٹن کے اندر بوتل</option><option value="6L">6L بوتل</option></select>'+
  '<input id="returnQty" type="number" min="1" step="1" placeholder="خراب بوتلوں کی تعداد">'+
  '<input id="returnReason" maxlength="200" placeholder="وجہ: لیک / ٹوٹی / خراب">'+
- '<button onclick="saveProductReturn()">واپسی اور متبادل محفوظ کریں</button></div>';
+ '<button id="returnSaveButton" onclick="saveProductReturn()">واپسی اور متبادل محفوظ کریں</button></div>';
  await loadProductReturns();
 }
 async function saveProductReturn(){
