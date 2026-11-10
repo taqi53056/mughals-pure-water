@@ -84,4 +84,11 @@ for path in (HTML, MANIFEST, SW):
     if "kiswa" in path.read_text(encoding="utf-8").lower():
         fail("legacy Kiswa branding remains in " + path.name)
 
+if "ایک ہی دن میں ایک گاہک کی متعدد ڈلیوریاں" in source:
+    fail("delivery UI still permits multiple daily entries for one customer")
+if "async function loadSelectedDelivery()" not in source or "window.currentDeliveryRecordId" not in source:
+    fail("delivery edit-in-place guard is missing")
+if "async function readBillSummary(" not in source:
+    fail("read-only bill summary helper is missing")
+
 print("PASS: app shell files, unique IDs, local assets, onclick handlers, manifest JSON, inline JavaScript, Service Worker syntax, and legacy branding.")
