@@ -1294,6 +1294,7 @@ async function saveRawMaterialPurchase(){
  const button=$("rawPurchaseSaveButton");
  if(button?.disabled)return;
  if(button)button.disabled=true;
+ let saved=false;
  try{
   const record_type=$("rawPurchaseKind").value;
   const payload={
@@ -1304,11 +1305,12 @@ async function saveRawMaterialPurchase(){
   };
   const {error}=await db.from("raw_material_purchases").insert(payload);
   if(error)throw error;
+  saved=true;
   msg(record_type==="opening_stock"?"ابتدائی خام مال اسٹاک محفوظ ہوگیا۔":"خام مال کی خریداری محفوظ ہوگئی۔",true);
   $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
   $("rawPurchaseSupplier").value="";$("rawPurchaseDetails").value="";
   await Promise.all([loadRawMaterialPurchases(),loadTodaySummary()]);
- }catch(e){msg("خام مال محفوظ نہیں ہوا: "+(e?.message||String(e)));}
+ }catch(e){msg(saved?"خام مال محفوظ ہوگیا، مگر فہرست تازہ نہیں ہوسکی: "+(e?.message||String(e)):"خام مال محفوظ نہیں ہوا: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
 }
 async function loadRawMaterialPurchases(){
@@ -1389,15 +1391,17 @@ async function saveTankerPurchase(){
  const button=$("tankSaveButton");
  if(button?.disabled)return;
  if(button)button.disabled=true;
+ let saved=false;
  try{
   const result=opening
    ?await db.from("water_opening_stock").upsert(payload,{onConflict:"as_of_date,water_use"})
    :await db.from("water_tanker_purchases").insert(payload);
   if(result.error)throw result.error;
+  saved=true;
   if(opening){msg("ابتدائی پانی کا اسٹاک محفوظ ہوگیا۔",true);$("tankOpeningLitres").value="";$("tankOpeningValue").value="";}
   else{msg("ٹینکر خریداری محفوظ ہوگئی۔",true);$("tankSupplier").value="";}
   await Promise.all([loadTankerPurchases(),loadTodaySummary()]);
- }catch(e){msg((opening?"ابتدائی پانی کا اسٹاک":"ٹینکر خریداری")+" محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
+ }catch(e){msg(saved?"پانی کا اندراج محفوظ ہوگیا، مگر فہرست تازہ نہیں ہوسکی: "+(e?.message||String(e)):(opening?"ابتدائی پانی کا اسٹاک":"ٹینکر خریداری")+" محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
 }
 async function loadTankerPurchases(){
