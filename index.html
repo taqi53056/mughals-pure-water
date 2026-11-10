@@ -1152,11 +1152,17 @@ async function logout(){if(!db)return;await db.auth.signOut();location.reload()}
 function filterAdminModules(category){
  const allowed=["operations","inventory","finance","management","all"];
  const selected=allowed.includes(category)?category:"operations";
- document.querySelectorAll("#homeTiles .tile").forEach(tile=>{
-  tile.hidden=selected!=="all"&&tile.dataset.category!==selected;
+ const tiles=document.querySelectorAll("#homeTiles .tile");
+ tiles.forEach(tile=>{
+  const visible=selected==="all"||tile.dataset.category===selected;
+  tile.hidden=!visible;
+  tile.style.display=visible?"":"none";
+  tile.setAttribute("aria-hidden",String(!visible));
  });
- document.querySelectorAll(".admin-module-filter [data-filter]").forEach(el=>{
-  el.classList.toggle("active",el.dataset.filter===selected);
+ document.querySelectorAll("#homeTiles .admin-module-filter [data-filter]").forEach(button=>{
+  const active=button.dataset.filter===selected;
+  button.classList.toggle("active",active);
+  button.setAttribute("aria-pressed",String(active));
  });
 }
 
