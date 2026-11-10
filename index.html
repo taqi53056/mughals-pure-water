@@ -1016,12 +1016,12 @@ async function billingModule(){
  <div class="stat">اس ماہ کی خالص ادائیگیاں: <b id="bPaid">Rs. 0</b></div></div>
  <div class="total">موجودہ قابل ادائیگی: <span id="bDue">Rs. 0</span></div><button id="billWhatsAppButton" class="secondary" disabled onclick="shareCurrentBillWhatsApp()">بل WhatsApp پر بھیجیں</button><button id="billSMSButton" class="secondary" disabled onclick="shareCurrentBillSMS()">بل SMS کے ذریعے بھیجیں</button>
  <p class="muted">بل محفوظ اور اطلاع درج ہونے کے بعد ہی پیغام تیار ہوگا؛ Send آپ کریں گے۔</p>
- <button onclick="saveBill()">بل دوبارہ حساب کرکے محفوظ کریں</button>
+ <button id="saveBillButton" onclick="saveBill()">بل دوبارہ حساب کرکے محفوظ کریں</button>
  <div class="card"><h3>نئی ادائیگی درج کریں</h3>
  <input id="paymentDate" type="date" value="${today()}">
  <input id="paymentAmount" type="number" min="0.01" step="0.01" placeholder="رقم (روپے)">
  <select id="paymentType"><option value="bill_payment">بل کی ادائیگی</option><option value="advance">ایڈوانس</option><option value="refund">واپسی / ریفنڈ</option></select>
- <button onclick="recordCustomerPayment()">ادائیگی محفوظ کریں</button></div>
+ <button id="paymentSaveButton" onclick="recordCustomerPayment()">ادائیگی محفوظ کریں</button></div>
  <h3>اس مہینے کی تاریخ وار ڈلیوری ہسٹری</h3><div id="billDeliveryHistory" class="tablewrap">گاہک منتخب کریں۔</div>
  <h3>اس مہینے کی ادائیگیاں</h3><div id="billPaymentHistory" class="tablewrap"></div>`;
 }
@@ -1097,25 +1097,41 @@ async function loadSelectedBill(){
 }
 
 async function saveBill(){
- const id=$("bCustomer").value,monthInput=$("bMonth").value;if(!id||!monthInput){msg("گاہک اور مہینہ منتخب کریں۔");return}
+ const id=$("bCustomer").value,monthInput=$("bMonth").value;
+ if(!id||!monthInput){msg("گاہک اور مہینہ منتخب کریں۔");return}
+ const button=$("saveBillButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
   const month=selectedBillMonth();
   const result=await syncBillBottles(Number(id),month);
   await loadSelectedBill();
-  const {data:existing,error:lookupError}=await db.from("customer_notifications").select("id").eq("customer_id",Number(id)).eq("reference_key",`bill:${month.slice(0,7)}`).limit(1);
-  if(lookupError)throw lookupError;
   const customerName=customerList.find(x=>Number(x.id)===Number(id))?.name||"محترم گاہک";
   const notice={
    customer_id:Number(id),title:"ماہانہ بل تیار ہے",
    message:`السلام علیکم ${customerName} صاحب! MUGHAL'S PURE WATER کا ${month.slice(0,7)} کا ماہانہ بل تیار ہے۔\nبلنگ مدت: ${month.slice(0,7)}\nکامیاب 19L بوتلیں: ${result.bottles}\nبوتلوں کے چارجز: ${money(result.bottleAmount)}\nخراب ڈھکن: ${result.caps} عدد × Rs.10 = ${money(result.capAmount)}\nاس ماہ کے کل چارجز: ${money(result.charges)}\nپچھلا بقایا: ${money(result.previousDue)}\nپچھلا دستیاب ایڈوانس: ${money(result.previousAdvance)}\nاس ماہ استعمال شدہ ایڈوانس: ${money(result.advanceUsed)}\nاس ماہ کی خالص ادائیگیاں: ${money(result.netPayments)}\nاب قابل ادائیگی بقایا: ${money(result.payable)}\nاختتامی ایڈوانس: ${money(result.closingAdvance)}\nآپ کے تعاون کا شکریہ۔`,
    notification_type:"bill",reference_key:`bill:${month.slice(0,7)}`
   };
-  const nr=existing?.length
-   ?await db.from("customer_notifications").update({title:notice.title,message:notice.message,is_read:false,created_at:new Date().toISOString()}).eq("id",existing[0].id)
-   :await db.from("customer_notifications").insert(notice);
-  if(nr.error)msg("بل دوبارہ حساب ہوگیا، مگر کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+nr.error.message);
-  else {await notifyCustomerPush(Number(id),notice.title,notice.message);setBillSavedState(true);msg("بل دوبارہ حساب ہوگیا اور مکمل تفصیل کے ساتھ کسٹمر کی اطلاع محفوظ ہوگئی۔",true);}
- }catch(e){msg("بل یا اطلاع مکمل نہیں ہوسکی: "+e.message)}
+  const {data:existing,error:lookupError}=await db.from("customer_notifications").select("id,message").eq("customer_id",Number(id)).eq("reference_key",notice.reference_key).limit(1);
+  if(lookupError)throw lookupError;
+  let shouldPush=false;
+  if(existing?.length){
+   shouldPush=existing[0].message!==notice.message;
+   if(shouldPush){
+    const {error}=await db.from("customer_notifications").update({title:notice.title,message:notice.message,is_read:false,created_at:new Date().toISOString()}).eq("id",existing[0].id);
+    if(error)throw error;
+   }
+  }else{
+   const {error}=await db.from("customer_notifications").insert(notice);
+   if(error)throw error;
+   shouldPush=true;
+  }
+  setBillSavedState(true);
+  if(shouldPush){
+   const push=await notifyCustomerPush(Number(id),notice.title,notice.message);
+   if(push?.error||Number(push?.sent||0)<1)msg("بل محفوظ اور ایپ اطلاع درج ہوگئی، مگر موبائل Push نہیں پہنچی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔"));
+   else msg("بل محفوظ ہوگیا، ایپ اطلاع درج ہوئی اور موبائل Push بھی بھیج دی گئی۔",true);
+  }else msg("بل کا حساب تازہ ہے؛ پہلے سے موجود اطلاع دوبارہ نہیں بھیجی گئی۔",true);
+ }catch(e){msg("بل یا اطلاع مکمل نہیں ہوسکی: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
 
 async function recordCustomerPayment(){
@@ -1123,10 +1139,12 @@ async function recordCustomerPayment(){
  const customerId=Number($("bCustomer").value),amount=Number($("paymentAmount").value),paymentDate=$("paymentDate").value,paymentType=$("paymentType").value;
  if(!customerId||!paymentDate||!Number.isFinite(amount)||amount<=0){msg("گاہک، تاریخ اور صفر سے زیادہ رقم درج کریں۔");return}
  if(!confirmLargeEntry("ادائیگی کی رقم (روپے)",amount,1000))return;
- const {data:payment,error}=await db.from("customer_payments").insert({customer_id:customerId,amount,payment_date:paymentDate,payment_type:paymentType,entered_by:user?.id||null}).select("id").single();
- if(error){msg("ادائیگی محفوظ نہیں ہوئی: "+error.message);return}
- $("paymentAmount").value="";
+ const button=$("paymentSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ let paymentSaved=false;
  try{
+  const {data:payment,error}=await db.from("customer_payments").insert({customer_id:customerId,amount,payment_date:paymentDate,payment_type:paymentType,entered_by:user?.id||null}).select("id").single();
+  if(error)throw error;
+  paymentSaved=true;$("paymentAmount").value="";
   const month=paymentDate.slice(0,7)+"-01";
   const bill=await syncBillBottles(customerId,month);
   await loadSelectedBill();
@@ -1140,10 +1158,14 @@ async function recordCustomerPayment(){
    reference_key:"payment:"+payment.id
   };
   const {error:noticeError}=await db.from("customer_notifications").insert(notice);
-  if(noticeError){msg("ادائیگی محفوظ ہوگئی، مگر کسٹمر کی اطلاع محفوظ نہیں ہوئی: "+noticeError.message);return}
-  await notifyCustomerPush(customerId,notice.title,notice.message);
-  msg("ادائیگی محفوظ ہوگئی، بل دوبارہ حساب ہوگیا اور کسٹمر کو اطلاع بھی درج ہوگئی۔",true);
- }catch(e){msg("ادائیگی محفوظ ہوگئی، مگر بل یا کسٹمر اطلاع مکمل نہیں ہوسکی: "+e.message)}
+  if(noticeError)throw noticeError;
+  const push=await notifyCustomerPush(customerId,notice.title,notice.message);
+  setBillSavedState(true);
+  if(push?.error||Number(push?.sent||0)<1)msg("ادائیگی محفوظ، بل دوبارہ حساب اور ایپ اطلاع درج ہوگئی؛ موبائل Push نہیں پہنچی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔"));
+  else msg("ادائیگی محفوظ ہوگئی، بل دوبارہ حساب ہوگیا اور موبائل Push بھی بھیج دی گئی۔",true);
+ }catch(e){
+  msg(paymentSaved?"ادائیگی محفوظ ہوگئی، مگر بل یا اطلاع مکمل نہیں ہوسکی: "+(e?.message||String(e)):"ادائیگی محفوظ نہیں ہوئی: "+(e?.message||String(e)));
+ }finally{if(button)button.disabled=false;}
 }
 
 /* خام مال اور تیار مال */
