@@ -533,6 +533,109 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 @media(prefers-reduced-motion:reduce){#adminPanel #homeTiles .tile{transition:none}}
 </style>
 
+
+<style id="mpw-final-executive-design">
+/* Final executive visual system — presentation only; no business logic changes */
+:root{
+ --mpw-deep:#092c25;--mpw-emerald:#0c5b45;--mpw-green:#147653;
+ --mpw-gold:#c7a45d;--mpw-ink:#172a23;--mpw-muted:#66766d;
+ --mpw-canvas:#edf2ed;--mpw-surface:#fff;--mpw-line:#dce5dd;
+}
+html{scroll-behavior:smooth}
+body{background:linear-gradient(145deg,#e9efea 0%,#f5f6f1 42%,#e9eee9 100%);color:var(--mpw-ink);font-size:15px}
+header.brand-header{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(112deg,#071f1b 0%,#0b3d30 48%,#12664b 100%);border-bottom:4px solid var(--mpw-gold);box-shadow:0 12px 34px #071f1b25}
+header.brand-header:after{content:"";position:absolute;z-index:-1;inset:0;background:radial-gradient(ellipse at 82% 15%,#ffffff18,transparent 36%),linear-gradient(90deg,transparent 65%,#c7a45d0b)}
+header.brand-header .brand-wrap{max-width:1840px!important;min-height:104px;display:flex;align-items:center;gap:20px;padding:17px 28px!important}
+header.brand-header .brand-logo{width:66px;height:66px;object-fit:contain;filter:drop-shadow(0 5px 9px #0004)}
+header.brand-header .brand-copy{flex:1;min-width:0}
+header.brand-header h1{font-size:clamp(23px,2vw,34px);font-weight:900;letter-spacing:.025em;line-height:1.3;color:#fff;margin:0 0 5px}
+header.brand-header .brand-copy>div{font-size:14px;color:#e4d7b5;letter-spacing:.02em}
+header.brand-header #installAppButton{min-width:180px;min-height:48px;margin:0!important;border:1px solid #d6bd7b;background:#ffffff12;color:#fff;border-radius:12px}
+main.wrap{max-width:1840px;padding:24px 28px 44px}
+#app>.session-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:13px 19px;margin:0 0 20px;background:linear-gradient(105deg,#fff,#f5f8f3);border:1px solid #dce6dc;border-inline-start:5px solid var(--mpw-gold);border-radius:15px;box-shadow:0 5px 18px #163d2b0c}
+#app>.session-bar #welcome{font-size:16px;font-weight:850;color:#173d2e}
+#app>.session-bar #role{margin-inline-start:auto;font-weight:700;color:#6b796f}
+#app>.session-bar button{width:auto;min-width:112px;margin:0;min-height:43px}
+#login{max-width:600px;margin:44px auto;padding:30px;background:linear-gradient(145deg,#fff,#f5f8f3);border:1px solid #dce6dc;border-top:4px solid var(--mpw-gold);border-radius:22px;box-shadow:0 18px 50px #173d2b14}
+#login h2{font-size:25px;margin-bottom:18px}
+#login input{min-height:54px}
+#login button{min-height:52px}
+#adminPanel{gap:22px!important}
+#adminPanel #homeTiles{background:linear-gradient(165deg,#092b24 0%,#104333 58%,#15533e 100%)!important;border:1px solid #c5a35b70!important;border-radius:22px!important;padding:16px!important;box-shadow:0 16px 34px #0a30251c!important}
+#adminPanel #homeTiles:before{font-size:12px!important;letter-spacing:.11em!important;color:#e8d9b3!important;padding:12px 8px 17px!important}
+#adminPanel #homeTiles .admin-module-filter{background:#ffffff0c!important;border:1px solid #ffffff24!important;box-shadow:none!important;border-radius:15px!important;padding:12px!important}
+#adminPanel #homeTiles .admin-module-filter:before{color:#f0e4c5!important;border-color:#ffffff25!important;font-size:14px!important}
+#adminPanel #homeTiles .admin-module-filter button{min-height:48px!important;background:#ffffff10!important;border:1px solid #ffffff26!important;color:#f6f8f3!important;border-radius:11px!important;font-size:13px!important}
+#adminPanel #homeTiles .admin-module-filter button:before{background:#ffffff18!important;color:#f0dfb5!important}
+#adminPanel #homeTiles .admin-module-filter button.active{background:linear-gradient(110deg,#c6a15a,#e0c783)!important;border-color:#e4ce96!important;color:#1b3329!important;box-shadow:0 5px 14px #0003!important}
+#adminPanel #homeTiles .admin-module-filter button.active:before{background:#ffffff70!important;color:#173d2e!important}
+#adminPanel #homeTiles .tile{position:relative!important;isolation:isolate;overflow:hidden;min-height:74px!important;padding:11px 13px!important;border:1px solid #ffffff25!important;border-radius:13px!important;box-shadow:0 4px 12px #061c1630!important;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease!important}
+#adminPanel #homeTiles .tile:after{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(110deg,#ffffff12,transparent 58%);pointer-events:none}
+#adminPanel #homeTiles .tile:hover{transform:translateY(-2px)!important;box-shadow:0 8px 18px #061c1645!important;filter:brightness(1.08)}
+#adminPanel #homeTiles .tile .tile-title{font-size:14px!important;font-weight:900!important;line-height:1.55!important}
+#adminPanel #homeTiles .tile small{font-size:11px!important;line-height:1.55!important;color:#ffffffdf!important}
+#adminPanel #dashboard,#adminPanel #module{border:1px solid #dce5dd!important;border-radius:22px!important;background:#fff!important;box-shadow:0 12px 34px #183d2c0c!important}
+#adminPanel #dashboard{padding:28px!important;min-width:0}
+#adminPanel #dashboard h2{font-size:25px!important;font-weight:900!important;color:#123d2d!important;margin-bottom:18px!important}
+#adminPanel #dashboard h2:before{height:30px!important;width:6px!important;background:linear-gradient(#d9bd7d,#ad8740)!important}
+#adminPanel #module{padding:28px 32px!important;min-width:0}
+#moduleTitle{font-size:25px!important;font-weight:900!important;color:#143d2e!important;background:linear-gradient(100deg,#f0f5ef,#fff)!important;border-color:#dce6dc!important;border-inline-start:5px solid var(--mpw-gold)!important;padding:15px 18px!important;margin:0 0 20px!important}
+#todaySummary .stat{background:linear-gradient(145deg,#f4f8f3,#edf3eb)!important;border:1px solid #dce7dc!important;box-shadow:0 5px 15px #183d2c08!important;border-radius:16px!important}
+#todaySummary .stat b{font-size:clamp(21px,1.7vw,28px)!important;color:#0c5b45!important;font-weight:900!important}
+#adminPanel .card{border-color:#e0e8e0!important;box-shadow:0 5px 18px #183d2c08!important}
+#moduleBody h3,#moduleTable h3{font-size:18px!important;font-weight:900!important;color:#174b37!important;border-right:4px solid var(--mpw-gold)!important;padding:7px 12px!important;background:linear-gradient(90deg,#f5f8f4,transparent)!important;border-radius:0 10px 10px 0!important}
+#moduleBody input:not([type=checkbox]),#moduleBody select,#moduleBody textarea{min-height:50px!important;border:1px solid #cfdcd1!important;background:#fff!important;border-radius:11px!important;font-size:15px!important}
+#moduleBody input:focus,#moduleBody select:focus,#moduleBody textarea:focus{border-color:#147653!important;box-shadow:0 0 0 4px #14765318!important}
+#moduleBody label{font-size:14px;font-weight:700;color:#334b3d}
+#moduleBody button,#module button{min-height:47px!important;padding:10px 17px!important;border-radius:11px!important;font-size:14px!important;font-weight:850!important;letter-spacing:0!important}
+#moduleBody button:not(.secondary),#module button:not(.secondary){background:linear-gradient(120deg,#0b5b43,#147653)!important;border-color:#0b5b43!important;box-shadow:0 5px 13px #0b5b4325!important}
+#moduleBody button.secondary,#module button.secondary{background:#edf3ed!important;color:#174b37!important;border:1px solid #cfddcf!important}
+#moduleBody button:focus-visible,#module button:focus-visible,#adminPanel button:focus-visible,#login button:focus-visible{outline:3px solid #c7a45d!important;outline-offset:3px!important}
+#moduleBody .card,#moduleTable .card{border:1px solid #dfe8df!important;border-radius:16px!important}
+#moduleBody .total{background:linear-gradient(110deg,#e9f4eb,#f7f5e9)!important;border:1px solid #d5e5d7!important;border-radius:14px!important;font-size:17px!important}
+#moduleBody .warning{background:#fff7e6!important;border:1px solid #ead6a7!important;color:#604c22!important}
+#moduleTable .tablewrap{border:1px solid #dce5dd!important;border-radius:14px!important;box-shadow:0 4px 14px #173d2b08}
+#moduleTable table{font-size:14px!important}
+#moduleTable th{background:#eaf1e9!important;color:#214c39!important;font-weight:900!important;padding:14px 12px!important}
+#moduleTable td{padding:12px!important}
+#moduleTable tr:nth-child(even) td{background:#f8faf7!important}
+#moduleMsg{font-size:14px!important;line-height:1.8}
+@media(min-width:1100px){
+ main.wrap{padding:28px 34px 52px}
+ #adminPanel{grid-template-columns:292px minmax(0,1fr)!important;gap:24px!important}
+ #adminPanel #homeTiles{top:18px!important;max-height:calc(100vh - 36px)!important;padding:17px!important}
+ #adminPanel #homeTiles .admin-module-filter{grid-template-columns:1fr!important}
+ #adminPanel #homeTiles .admin-module-filter button{justify-content:flex-start!important;min-height:50px!important;font-size:14px!important}
+ #adminPanel #homeTiles .tile{min-height:78px!important;padding:12px 14px!important}
+ #adminPanel #homeTiles .tile .tile-title{font-size:15px!important}
+ #adminPanel #homeTiles .tile small{font-size:11px!important}
+ #adminPanel #dashboard,#adminPanel #module{min-height:260px}
+}
+@media(min-width:700px) and (max-width:1099px){
+ header.brand-header .brand-wrap{padding:15px 20px!important}
+ main.wrap{padding:20px}
+ #adminPanel #homeTiles{padding:15px!important}
+ #adminPanel #dashboard,#adminPanel #module{padding:22px!important}
+}
+@media(max-width:699px){
+ header.brand-header .brand-wrap{min-height:80px;padding:12px 14px!important;gap:11px}
+ header.brand-header .brand-logo{width:48px;height:48px}
+ header.brand-header h1{font-size:19px}
+ header.brand-header .brand-copy>div{font-size:11px}
+ header.brand-header #installAppButton{min-width:0;width:auto!important;min-height:40px;font-size:12px;padding:8px 10px}
+ main.wrap{padding:13px 11px 30px}
+ #app>.session-bar{padding:11px 13px;gap:8px}
+ #app>.session-bar #role{margin-inline-start:0}
+ #adminPanel #homeTiles{border-radius:17px!important}
+ #adminPanel #dashboard,#adminPanel #module{border-radius:17px!important}
+ #adminPanel #dashboard,#adminPanel #module{padding:16px!important}
+ #moduleTitle{font-size:21px!important}
+ #moduleBody button,#module button{min-height:45px!important;padding:9px 12px!important}
+ #moduleTable table{min-width:680px!important}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}#adminPanel #homeTiles .tile{transition:none!important}}
+</style>
+
 </head>
 <body>
 <header class="brand-header"><div class="wrap brand-wrap" style="padding:0">
