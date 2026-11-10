@@ -340,6 +340,43 @@ try {
     if (!feedbackResult.toast.includes("Chrome مینو") && !feedbackResult.toast.includes("انسٹال")) failures.push("PWA install guidance toast is missing");
     if (!feedbackResult.toastAccessible) failures.push("PWA install toast is not announced accessibly");
 
+    const customerStatusResult = await page.evaluate(() => {
+      const body = document.querySelector("#moduleBody");
+      body.innerHTML = '<input id="customerSearch"><div id="moduleTable"></div><div id="pendingCustomers"></div>';
+      const previousCustomers = customerList;
+      customerList = [
+        { id: 901, name: "Pending Example", customer_code: "C901", mobile: "03000000001", is_active: false, approved_at: null },
+        { id: 902, name: "Disabled Example", customer_code: "C902", mobile: "03000000002", is_active: false, approved_at: "2026-11-01T10:00:00Z" },
+        { id: 903, name: "Active Example", customer_code: "C903", mobile: "03000000003", is_active: true, approved_at: "2026-11-02T10:00:00Z" }
+      ];
+      renderPendingCustomers();
+      renderCustomers();
+      const pendingRows = document.querySelectorAll("#pendingCustomers tr").length;
+      const tableText = document.querySelector("#moduleTable")?.textContent || "";
+      const pendingText = document.querySelector("#pendingCustomers")?.textContent || "";
+      const result = {
+        pendingRows,
+        pendingOnly: pendingText.includes("Pending Example") && !pendingText.includes("Disabled Example"),
+        pendingLabel: customerStatusLabel(customerList[0]),
+        disabledLabel: customerStatusLabel(customerList[1]),
+        activeLabel: customerStatusLabel(customerList[2]),
+        approvalAction: tableText.includes("منظوری دیں"),
+        reactivateAction: tableText.includes("دوبارہ فعال کریں"),
+        deactivateAction: tableText.includes("غیر فعال کریں")
+      };
+      customerList = previousCustomers;
+      return result;
+    });
+    if (customerStatusResult.pendingRows !== 2 || !customerStatusResult.pendingOnly) failures.push("Deactivated customers are incorrectly shown in the pending-approval list");
+    if (customerStatusResult.pendingLabel !== "منظوری کے منتظر" ||
+        customerStatusResult.disabledLabel !== "غیر فعال" ||
+        customerStatusResult.activeLabel !== "فعال") {
+      failures.push("Customer account status labels do not distinguish pending, disabled and active states");
+    }
+    if (!customerStatusResult.approvalAction || !customerStatusResult.reactivateAction || !customerStatusResult.deactivateAction) {
+      failures.push("Customer access actions do not match the account approval state");
+    }
+
     await page.close();
   }
 } finally {
