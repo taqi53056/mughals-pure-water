@@ -438,6 +438,16 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
  #adminPanel .exec-two-col{grid-template-columns:1fr}
 }
 </style>
+<style id="mpw-contextual-help">
+/* Contextual help stays available without crowding the task screen */
+.module-help{margin:0 0 14px;padding:0 13px;border:1px solid #e5eae2;border-radius:13px;background:#f8faf7}
+.module-help>summary{padding:9px 0;cursor:pointer;font-size:12px;font-weight:800;color:#6e603f;list-style:none}
+.module-help>summary::-webkit-details-marker{display:none}
+.module-help>summary:after{content:"＋";float:left;font-size:16px}
+.module-help[open]>summary:after{content:"−"}
+.module-help[open]>summary{border-bottom:1px solid #e5eae2}
+.module-help .module-intro{margin:8px 0 11px;font-size:13px;line-height:1.9;color:#53645a}
+</style>
 </head>
 <body>
 <header class="brand-header"><div class="wrap brand-wrap" style="padding:0">
@@ -525,7 +535,7 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 <div id="module" class="card hidden">
 <button class="secondary" onclick="backHome()">← واپس</button>
 <h2 id="moduleTitle"></h2>
-<p id="moduleIntro" class="module-intro"></p>
+<details id="moduleHelp" class="module-help"><summary>اس حصے کی رہنمائی</summary><p id="moduleIntro" class="module-intro"></p></details>
 <div id="moduleBody"></div>
 <p id="moduleMsg" class="error"></p>
 <div id="moduleTable" class="tablewrap"></div>
