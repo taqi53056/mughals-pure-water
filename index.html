@@ -1331,9 +1331,12 @@ async function loadRawMaterialPurchases(){
    financeFetchAll("customer_19l_deliveries","successful_bottles,damaged_caps","delivery_date",null,null)
   ]);
  }catch(e){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
- const capsUsed=capDeliveries.reduce((n,r)=>n+Number(r.successful_bottles||0)+Number(r.damaged_caps||0),0);
- const purchased=key=>rows.filter(x=>x.material_type===key).reduce((n,x)=>n+Number(x.quantity||0),0);
- const made=(key)=>prod.filter(x=>x.product_type===key).reduce((n,x)=>n+Number(x.quantity||0),0);
+ const rawOpeningDate=key=>rows.find(x=>x.record_type==="opening_stock"&&x.material_type===key)?.purchase_date||null;
+ const relevantRawRows=key=>rows.filter(x=>x.material_type===key&&(!rawOpeningDate(key)||x.record_type==="opening_stock"||x.purchase_date>=rawOpeningDate(key)));
+ const purchased=key=>relevantRawRows(key).reduce((n,x)=>n+Number(x.quantity||0),0);
+ const made=(key,materialKey=key)=>prod.filter(x=>x.product_type===key&&(!rawOpeningDate(materialKey)||x.production_date>=rawOpeningDate(materialKey))).reduce((n,x)=>n+Number(x.quantity||0),0);
+ const capBase=rawOpeningDate("cap_19l");
+ const capsUsed=capDeliveries.filter(r=>!capBase||r.delivery_date>=capBase).reduce((n,r)=>n+Number(r.successful_bottles||0)+Number(r.damaged_caps||0),0);
  const used={
   bottle_500ml:made("500ml")*24,bottle_1_5l:made("1.5L")*12,bottle_6l:made("6L"),
   carton_500ml:made("500ml"),carton_1_5l:made("1.5L"),
@@ -1798,15 +1801,17 @@ async function runReport(){
   const sum=(rows,key)=>(rows||[]).reduce((n,r)=>n+(Number(r[key])||0),0);
   const total=(rows,type)=>(rows||[]).filter(x=>x.entry_type===type).reduce((n,r)=>n+(Number(r.amount)||0),0);
   const moneyVal=n=>money(Math.round((Number(n)||0)*100)/100);
+  const rawOpeningDate=type=>rawPurchases.find(x=>x.material_type===type&&x.record_type==="opening_stock")?.purchase_date||null;
+  const rawRowsFor=type=>rawPurchases.filter(x=>x.material_type===type&&(!rawOpeningDate(type)||x.record_type==="opening_stock"||x.purchase_date>=rawOpeningDate(type)));
   const weightedRate=(type)=>{
-   const list=rawPurchases.filter(x=>x.material_type===type);
-   const q=sum(list,"quantity");return q>0?sum(list,"total_amount")/q:null;
+   const list=rawRowsFor(type),q=sum(list,"quantity");return q>0?sum(list,"total_amount")/q:null;
   };
   const waterPool=(use)=>{
-   const tp=tankers.filter(x=>x.water_use===use),op=waterOpening.filter(x=>x.water_use===use);
+   const op=waterOpening.filter(x=>x.water_use===use),baseDate=op[0]?.as_of_date||null;
+   const tp=tankers.filter(x=>x.water_use===use&&(!baseDate||x.purchase_date>=baseDate));
    const litres=sum(tp,"tanker_count")*1000+sum(op,"litres");
    const value=sum(tp,"total_amount")+sum(op,"total_value");
-   return {litres,value,rate:litres>0?value/litres:null};
+   return {litres,value,rate:litres>0?value/litres:null,baseDate};
   };
   const waterShop=waterPool("shop_counter"),waterFill=waterPool("product_filling");
   const waterPerLitre=waterShop.rate;
@@ -1889,27 +1894,29 @@ async function runReport(){
   // خام مال کی مقدار اور روپے میں قدر: ابتدائی اسٹاک + خریداری - پیداوار میں استعمال
   const producedQty=type=>production.filter(x=>x.product_type===type).reduce((n,x)=>n+(Number(x.quantity)||0),0);
   const allSuccessful19=sum(allDeliveries,"successful_bottles"),allDamagedCaps=sum(allDeliveries,"damaged_caps");
+  const rawProductionQty=(product,material)=>production.filter(x=>x.product_type===product&&(!rawOpeningDate(material)||x.production_date>=rawOpeningDate(material))).reduce((n,x)=>n+(Number(x.quantity)||0),0);
+  const rawDeliveries=allDeliveries.filter(x=>!rawOpeningDate("cap_19l")||x.delivery_date>=rawOpeningDate("cap_19l"));
   const rawUse={
-   bottle_500ml:producedQty("500ml")*24,
-   bottle_1_5l:producedQty("1.5L")*12,
-   bottle_6l:producedQty("6L"),
-   carton_500ml:producedQty("500ml"),
-   carton_1_5l:producedQty("1.5L"),
-   tape_bundle:(producedQty("500ml")+producedQty("1.5L"))/200,
-   sticker:producedQty("500ml")*24+producedQty("1.5L")*12+producedQty("6L"),
-   cap_19l:allSuccessful19+allDamagedCaps
+   bottle_500ml:rawProductionQty("500ml","bottle_500ml")*24,
+   bottle_1_5l:rawProductionQty("1.5L","bottle_1_5l")*12,
+   bottle_6l:rawProductionQty("6L","bottle_6l"),
+   carton_500ml:rawProductionQty("500ml","carton_500ml"),
+   carton_1_5l:rawProductionQty("1.5L","carton_1_5l"),
+   tape_bundle:(rawProductionQty("500ml","tape_bundle")+rawProductionQty("1.5L","tape_bundle"))/200,
+   sticker:rawProductionQty("500ml","sticker")*24+rawProductionQty("1.5L","sticker")*12+rawProductionQty("6L","sticker"),
+   cap_19l:rawDeliveries.reduce((n,x)=>n+Number(x.successful_bottles||0)+Number(x.damaged_caps||0),0)
   };
   const rawUnits={bottle_500ml:"بوتل",bottle_1_5l:"بوتل",bottle_6l:"بوتل",carton_500ml:"کارٹن",carton_1_5l:"کارٹن",tape_bundle:"بنڈل",sticker:"عدد",cap_19l:"عدد"};
   const rawLabels={bottle_500ml:"500ml خالی بوتلیں",bottle_1_5l:"1.5L خالی بوتلیں",bottle_6l:"6L خالی بوتلیں",carton_500ml:"500ml کارٹن",carton_1_5l:"1.5L کارٹن",tape_bundle:"ٹیپ بنڈل",sticker:"اسٹیکر",cap_19l:"19L ڈھکن"};
   const rawValuation=Object.keys(rawUse).map(type=>{
-   const rows=rawPurchases.filter(x=>x.material_type===type),qty=sum(rows,"quantity"),value=sum(rows,"total_amount"),rate=qty>0?value/qty:null,onHand=qty-rawUse[type];
+   const rows=rawRowsFor(type),qty=sum(rows,"quantity"),value=sum(rows,"total_amount"),rate=qty>0?value/qty:null,onHand=qty-rawUse[type];
    return {type,qty,onHand,rate,value:rate===null?null:Math.max(0,onHand)*rate,negative:onHand<-.0001};
   });
   const rawStockValue=rawValuation.reduce((n,x)=>n+(x.value||0),0);
   const rawStockComplete=rawValuation.every(x=>x.rate!==null&&!x.negative);
   const rawStockText=rawValuation.map(x=>rawLabels[x.type]+": "+x.onHand.toFixed(2)+" "+rawUnits[x.type]+" — "+(x.rate===null?"لاگت نامعلوم":moneyVal(x.value))+(x.negative?" — اسٹاک منفی، ریکارڈ درست کریں":"")).join("؛ ");
-  const fillWaterRemaining=waterFill.litres-(producedQty("500ml")*12+producedQty("1.5L")*18);
-  const shopWaterRemaining=waterShop.litres-(allSuccessful19*19+sum(allCounterSales,"total_litres")+producedQty("6L")*6);
+  const fillWaterRemaining=waterFill.litres-production.filter(x=>x.product_type==="500ml"&&(!waterFill.baseDate||x.production_date>=waterFill.baseDate)).reduce((n,x)=>n+Number(x.quantity||0)*12,0)-production.filter(x=>x.product_type==="1.5L"&&(!waterFill.baseDate||x.production_date>=waterFill.baseDate)).reduce((n,x)=>n+Number(x.quantity||0)*18,0);
+  const shopWaterRemaining=waterShop.litres-allDeliveries.filter(x=>!waterShop.baseDate||x.delivery_date>=waterShop.baseDate).reduce((n,x)=>n+Number(x.successful_bottles||0)*19,0)-0+allCounterSales.filter(x=>!waterShop.baseDate||x.sale_date>=waterShop.baseDate).reduce((n,x)=>n+Number(x.total_litres||0),0)-0+production.filter(x=>x.product_type==="6L"&&(!waterShop.baseDate||x.production_date>=waterShop.baseDate)).reduce((n,x)=>n+Number(x.quantity||0)*6,0);
   const finishedStockValuation=stockRows.map(x=>{
    const type=x.product_type,qty=Number(x.available_quantity)||0,waterRate=type==="500ml"||type==="1.5L"?waterFill.rate:waterShop.rate;
    const litres=type==="500ml"?12:type==="1.5L"?18:6;
