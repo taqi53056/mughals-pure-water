@@ -2163,12 +2163,6 @@ async function loadExecutiveDashboard(){
    const sectionChartRows=[{name:"19L سیکشن",value:Number(water.profit_before_shared)||0},{name:"تیار مال سیکشن",value:Number(finished.profit_before_shared)||0},{name:"عمومی اخراجات",value:-Math.abs(Number(shared.general_expenses)||0)},{name:"خالص نتیجہ",value:net}];
    const sectionChartMax=Math.max(1,...sectionChartRows.map(x=>Math.abs(x.value)));
    const sectionChart=sectionChartRows.map(x=>`<div class="exec-bar-row ${x.value<0?"negative":""}"><div class="exec-bar-label"><span>${x.name}</span><b>${fmt(x.value)}</b></div><div class="exec-bar-track"><i style="width:${Math.max(2,Math.abs(x.value)/sectionChartMax*100)}%"></i></div></div>`).join("");
-   const productChartRows=Object.entries(products).map(([name,r])=>({name,revenue:Number(r.revenue)||0})).filter(x=>x.revenue>0);
-   const productChartMax=Math.max(1,...productChartRows.map(x=>x.revenue));
-   const productChart=productChartRows.map(x=>`<div class="exec-bar-row"><div class="exec-bar-label"><span>${esc(x.name)}</span><b>${fmt(x.revenue)}</b></div><div class="exec-bar-track"><i style="width:${Math.max(2,x.revenue/productChartMax*100)}%"></i></div></div>`).join("");
-   const sectionChartRows=[{name:"19L سیکشن",value:Number(water.profit_before_shared)||0},{name:"تیار مال سیکشن",value:Number(finished.profit_before_shared)||0},{name:"عمومی اخراجات",value:-Math.abs(Number(shared.general_expenses)||0)},{name:"خالص نتیجہ",value:net}];
-   const sectionChartMax=Math.max(1,...sectionChartRows.map(x=>Math.abs(x.value)));
-   const sectionChart=sectionChartRows.map(x=>`<div class="exec-bar-row ${x.value<0?"negative":""}"><div class="exec-bar-label"><span>${x.name}</span><b>${fmt(x.value)}</b></div><div class="exec-bar-track"><i style="width:${Math.max(2,Math.abs(x.value)/sectionChartMax*100)}%"></i></div></div>`).join("");
    const quality=Array.isArray(data.quality_flags)?data.quality_flags:[];
   box.innerHTML=`
    <div class="owner-desktop-banner"><div><small>OWNER'S BOARDROOM / MANAGEMENT VIEW</small><strong>MUGHAL'S PURE WATER — کاروباری جائزہ</strong><p>مالی حالت، فروخت، اسٹاک اور روزمرہ کارکردگی ایک ہی جگہ</p></div><div class="owner-desktop-mark" aria-hidden="true">MPW</div></div>
