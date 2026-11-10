@@ -1207,13 +1207,17 @@ async function saveFinishedAdjustment(){
 }
 
 async function saveStock(type){
- const raw=type==="raw",table=raw?"raw_material_stock":"finished_goods",product=$("sType").value,qty=Number($("sQty").value);
- if(!Number.isInteger(qty)||qty<=0){msg("کارٹن یا بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
+ const raw=type==="raw",table=raw?"raw_material_stock":"finished_goods",product=$("sType").value,qty=Number($("sQty").value),date=$("sDate").value;
+ if(!date||!Number.isInteger(qty)||qty<=0){msg("تاریخ اور کارٹن یا بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
  if(!confirmLargeEntry(raw?"خام مال کے کارٹن":"تیار مال کی مقدار",qty,100))return;
- const payload=raw?{entry_date:$("sDate").value,product_type:product,cartons:qty,notes:$("sNote").value.trim()||null}:{entry_date:$("sDate").value,product_type:product,quantity:qty,unit:product==="6L"?"bottle":"carton",notes:$("sNote").value.trim()||null};
- const r=await db.from(table).insert(payload);
- if(r.error){msg("محفوظ نہیں ہوا: "+r.error.message);return}
- msg("ریکارڈ محفوظ ہوگیا۔",true);$("sQty").value="";await loadStock(type);await loadTodaySummary();
+ const button=$("stockSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const payload=raw?{entry_date:date,product_type:product,cartons:qty,notes:$("sNote").value.trim()||null}:{entry_date:date,product_type:product,quantity:qty,unit:product==="6L"?"bottle":"carton",notes:$("sNote").value.trim()||null};
+  const r=await db.from(table).insert(payload);
+  if(r.error)throw r.error;
+  msg("ریکارڈ محفوظ ہوگیا۔",true);$("sQty").value="";await loadStock(type);await loadTodaySummary();
+ }catch(e){msg("محفوظ نہیں ہوا: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
 
 async function loadStock(type){
