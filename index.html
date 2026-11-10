@@ -903,9 +903,10 @@ async function deliveryModule(){
 
 async function loadWorkerOptions(selected=""){
  const sel=$("dWorker");if(!sel)return;
- const {data,error}=await db.from("workers").select("id,full_name,is_owner").eq("is_active",true).contains("work_categories",["19L delivery"]).order("full_name");
+ const {data,error}=await db.from("workers").select("id,full_name,is_owner,work_categories").eq("is_active",true).order("full_name");
  if(error){sel.innerHTML=`<option value="">ورکر فہرست دستیاب نہیں</option>`;return;}
- sel.innerHTML=`<option value="">مالک نے خود ڈلیوری کی</option>`+(data||[]).filter(w=>!w.is_owner).map(w=>`<option value="${w.id}" data-owner="false">${esc(w.full_name)}</option>`).join("");sel.value=selected||"";
+ const eligible=(data||[]).filter(w=>w.is_owner||(w.work_categories||[]).includes("19L delivery"));
+ sel.innerHTML=`<option value="">مالک نے خود ڈلیوری کی</option>`+eligible.map(w=>`<option value="${w.id}" data-owner="${w.is_owner===true}">${esc(w.is_owner?"مالک (Owner)":w.full_name)}</option>`).join("");sel.value=selected||"";
 }
 
 function calcDelivery(){
@@ -914,11 +915,14 @@ function calcDelivery(){
  const success=Math.min(out,back),diff=Math.max(0,out-back);
  $("dSuccess").textContent=success;$("dDiff").textContent=back>out?"غلط اندراج":diff;
  const workerSelected=!!$("dWorker")?.value;
- $("dLabor").textContent=money(workerSelected?success*20:0);
- if($("dOwnerSaving"))$("dOwnerSaving").textContent=money(workerSelected?0:success*20);
+ const selectedIsOwner=$("dWorker")?.selectedOptions?.[0]?.dataset.owner==="true";
+ const isOwner=!workerSelected||selectedIsOwner;
+ $("dLabor").textContent=money(!isOwner?success*20:0);
+ if($("dOwnerSaving"))$("dOwnerSaving").textContent=money(isOwner?success*20:0);
  if($("dCapAmount"))$("dCapAmount").textContent=money(caps*10);
  $("dWarn").classList.toggle("hidden",diff===0);
- const isOwner=!$("dWorker")?.value;
+ const selectedIsOwner=$("dWorker")?.selectedOptions?.[0]?.dataset.owner==="true";
+ const isOwner=!$("dWorker")?.value||selectedIsOwner;
  const labor=isOwner?0:success*20;
  return {out,back,caps,capAmount:caps*10,success,diff,labor,isOwner,ownerSaving:isOwner?success*20:0,invalid:back>out};
 }
@@ -943,7 +947,7 @@ async function saveDelivery(){
  if(c.diff>0&&!confirm("بوتلوں میں "+c.diff+" کا فرق ہے۔ کیا محفوظ کرنا ہے؟"))return;
  if(c.caps>0&&!confirm(c.caps+" خراب ڈھکن × Rs.10 = "+money(c.capAmount)+". کیا محفوظ کرنا ہے؟"))return;
  if(!confirmLargeEntry("19L بوتلوں کی تعداد",c.out,100)||!confirmLargeEntry("خراب ڈھکنوں کی تعداد",c.caps,50))return;
- const workerId=$("dWorker")?.value||null;
+ const workerId=c.isOwner?null:($("dWorker")?.value||null);
  const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
  // ہر محفوظ کرنے پر نئی ڈلیوری بنے گی؛ اسی دن کا پرانا ریکارڈ overwrite نہیں ہوگا۔
  const {data:saved,error:saveError}=await db.from("customer_19l_deliveries").insert(payload).select("id").single();
