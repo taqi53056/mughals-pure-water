@@ -968,7 +968,7 @@ async function approveCustomer(id){
  const c=customerList.find(x=>Number(x.id)===Number(id));if(!c||c.is_active===true)return;
  if(!confirm("کیا "+(c.name||"اس گاہک")+" کو اکاؤنٹ استعمال کرنے کی منظوری دینی ہے؟"))return;
  const {error}=await db.from("customers").update({is_active:true}).eq("id",id);
- if(!error && c.auth_user_id){const approvalTitle="آپ کا اکاؤنٹ منظور ہوگیا",approvalMessage="السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔";const approvalNotice=await db.from("customer_notifications").insert({customer_id:id,title:approvalTitle,message:approvalMessage,notification_type:"account"});if(!approvalNotice.error)await notifyCustomerPush(id,approvalTitle,approvalMessage);}
+ if(!error && c.auth_user_id){const approvalTitle="آپ کا اکاؤنٹ منظور ہوگیا",approvalMessage="السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔";const approvalNotice=await db.from("customer_notifications").insert({customer_id:id,title:approvalTitle,message:approvalMessage,notification_type:"account",reference_key:"account-approved"});if(!approvalNotice.error)await notifyCustomerPush(id,approvalTitle,approvalMessage);}
  if(error){msg("منظوری محفوظ نہیں ہوئی: "+error.message);return;}
  msg("گاہک کی منظوری ہوگئی۔",true);await loadCustomers();
 }
@@ -2370,16 +2370,27 @@ async function loadWorkers(){
  $("moduleTable").innerHTML='<h3>'+esc(month)+' کا ورکر حساب</h3><p class="muted">ہر ورکر کا حساب الگ اور آسان انداز میں دکھایا گیا ہے۔</p><div class="worker-summary-list">'+(rows||'<p class="muted">ابھی کوئی ورکر ریکارڈ موجود نہیں۔</p>')+'</div><h3>اس ماہ کی انٹریاں</h3><div class="worker-entry-list">'+(details||'<p class="muted">اس ماہ کوئی انٹری نہیں۔</p>')+'</div>';
 }
 async function saveWorker(){
- const name=$("wName").value.trim();if(!name){msg("ورکر کا نام درج کریں۔");return;}
- const cats=[];if($("wc19").checked)cats.push("19L delivery");if($("wcCarton").checked)cats.push("carton loading/unloading");if($("wcClean").checked)cats.push("cleaning");if($("wcProd").checked)cats.push("production");if($("wcWash").checked)cats.push("bottle washing");if(!cats.length){msg("کم از کم ایک کام منتخب کریں۔");return;}
+ const name=$("wName").value.trim(),mobile=$("wMobile").value.trim()||null;
+ if(!name){msg("ورکر کا نام درج کریں۔");return;}
+ const cats=[];if($("wc19").checked)cats.push("19L delivery");if($("wcCarton").checked)cats.push("carton loading/unloading");if($("wcClean").checked)cats.push("cleaning");if($("wcProd").checked)cats.push("production");if($("wcWash").checked)cats.push("bottle washing");
+ if(!cats.length){msg("کم از کم ایک کام منتخب کریں۔");return;}
  const button=$("workerSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
-  const {data:existing,error:lookupError}=await db.from("workers").select("id,is_active").ilike("full_name",name).limit(1);
-  if(lookupError)throw lookupError;
-  if(existing?.length){msg("اس نام کا ورکر پہلے سے موجود ہے۔ نیا ڈپلیکیٹ بنانے کے بجائے موجودہ ورکر استعمال کریں۔");return;}
-  const {error}=await db.from("workers").insert({full_name:name,mobile:$("wMobile").value.trim()||null,work_categories:cats});
-  if(error)throw error;
-  msg("ورکر محفوظ ہوگیا۔",true);$("wName").value="";$("wMobile").value="";await loadWorkers();
+  const signature=[name.toLocaleLowerCase(),mobile||"",[...cats].sort().join(",")].join("|");
+  const requestId=mpwPendingRequestId("worker-create",signature);
+  const {data:saved,error}=await db.from("workers").upsert({full_name:name,mobile,work_categories:cats,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
+  if(error){
+   if(error.code==="23505")throw new Error("اسی نام اور موبائل کا ورکر پہلے سے موجود ہے۔ موجودہ ریکارڈ استعمال کریں۔");
+   throw error;
+  }
+  if(!saved){
+   const existing=await db.from("workers").select("id").eq("request_id",requestId).maybeSingle();
+   if(existing.error||!existing.data)throw existing.error||new Error("ورکر محفوظ ہونے کی تصدیق نہیں ہوئی۔");
+  }
+  mpwClearPendingRequestId("worker-create");
+  msg("ورکر محفوظ ہوگیا۔",true);$("wName").value="";$("wMobile").value="";
+  ["wc19","wcCarton","wcClean","wcProd","wcWash"].forEach(id=>$(id).checked=false);
+  await loadWorkers();
  }catch(e){msg("ورکر محفوظ نہیں ہوا: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
 }
@@ -2621,7 +2632,24 @@ async function updateComplaint(id){
  finally{if(button)button.disabled=false;}
 }
 
-async function submitComplaint(){const category=$("complaintCategory").value,details=$("complaintDetails").value.trim();if(!details){$("myComplaints").textContent="براہ کرم مسئلے کی تفصیل لکھیں۔";return;}const {error}=await db.from("customer_complaints").insert({customer_id:myCustomer.id,category,details});if(error){$("myComplaints").textContent="شکایت محفوظ نہیں ہوئی: "+error.message;return;}$("complaintDetails").value="";await loadCustomerComplaints();}
+async function submitComplaint(){
+ const category=$("complaintCategory").value,details=$("complaintDetails").value.trim();
+ if(!details){$("myComplaints").textContent="براہ کرم مسئلے کی تفصیل لکھیں۔";return;}
+ const button=$("complaintSubmitButton");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const signature=[myCustomer.id,category,details].join("|");
+  const requestId=mpwPendingRequestId("customer-complaint",signature);
+  const {data:saved,error}=await db.from("customer_complaints").upsert({customer_id:myCustomer.id,category,details,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
+  if(error)throw error;
+  if(!saved){
+   const existing=await db.from("customer_complaints").select("id").eq("request_id",requestId).maybeSingle();
+   if(existing.error||!existing.data)throw existing.error||new Error("شکایت محفوظ ہونے کی تصدیق نہیں ہوئی۔");
+  }
+  mpwClearPendingRequestId("customer-complaint");
+  $("complaintDetails").value="";await loadCustomerComplaints();
+ }catch(e){$("myComplaints").textContent="شکایت محفوظ نہیں ہوئی: "+(e?.message||String(e));}
+ finally{if(button)button.disabled=false;}
+}
 async function loadCustomerComplaints(){const {data,error}=await db.from("customer_complaints").select("category,details,status,created_at,admin_note").eq("customer_id",myCustomer.id).order("created_at",{ascending:false});if(error){$("myComplaints").textContent="شکایات لوڈ نہیں ہوئیں";return;}const labels={new:"موصول",in_progress:"زیرِ کارروائی",resolved:"حل ہوگئی"};$("myComplaints").innerHTML=(data||[]).map(c=>`<div class="stat"><b>${esc(c.category)}</b> — ${labels[c.status]||c.status}<p>${esc(c.details)}</p><small>${esc(c.admin_note||"")}</small></div>`).join("")||"ابھی کوئی شکایت درج نہیں۔";}
 async function loadCustomerNotifications(){const {data,error}=await db.from("customer_notifications").select("id,title,message,is_read,created_at").eq("customer_id",myCustomer.id).order("created_at",{ascending:false}).limit(30);if(error){$("myNotifications").textContent="اطلاعات لوڈ نہیں ہوئیں";return;}$("myNotifications").innerHTML=(data||[]).map(n=>`<div class="stat"><b>${esc(n.title)}</b><p>${esc(n.message)}</p><small>${esc(n.created_at)}</small>${!n.is_read?`<button class="secondary" onclick="markNotificationRead(${n.id})">پڑھ لیا</button>`:""}</div>`).join("")||"ابھی کوئی نئی اطلاع نہیں۔";}
 async function markNotificationRead(id){const {error}=await db.rpc("mark_customer_notification_read",{p_notification_id:id});if(!error)await loadCustomerNotifications();}
@@ -2761,7 +2789,7 @@ async function loadCustomerPanel(){
  $("myPayments").innerHTML=paymentError?'<div class="customer-empty">ادائیگیوں کا ریکارڈ لوڈ نہیں ہوا۔</div>':payments.map(r=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(r.payment_date)+'</b><span class="customer-record-number">'+money(r.amount)+'</span></div><small class="muted">'+esc(r.payment_type||"ادائیگی")+'</small></div>').join("")||'<div class="customer-empty">ابھی کوئی ادائیگی درج نہیں۔</div>';
  $("myDeliveries").innerHTML=deliveryError?'<div class="customer-empty">ڈلیوری کا ریکارڈ لوڈ نہیں ہوا۔</div>':deliveries.map(r=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(r.delivery_date)+'</b><span class="customer-record-number">'+Number(r.successful_bottles||0)+' بوتلیں</span></div><div class="customer-info-grid"><div class="customer-info-item"><small>دی گئی بھری بوتلیں</small><b>'+Number(r.bottles_delivered||0)+'</b></div><div class="customer-info-item"><small>واپس موصول خالی بوتلیں</small><b>'+Number(r.empty_bottles_returned||0)+'</b></div><div class="customer-info-item"><small>بل میں شامل بوتلیں</small><b>'+Number(r.successful_bottles||0)+'</b></div></div><p>بوتلوں کی رقم: <b>'+money((Number(r.successful_bottles)||0)*100)+'</b></p></div>').join("")||'<div class="customer-empty">ابھی کوئی ڈلیوری درج نہیں۔</div>';
  await Promise.all([loadCustomerNotifications(),loadCustomerComplaints()]);
- $("complaintForm").innerHTML='<select id="complaintCategory"><option>پانی کے معیار کا مسئلہ</option><option>بوتل کا مسئلہ</option><option>ڈیلیوری میں تاخیر</option><option>بل میں غلطی</option><option>دیگر</option></select><textarea id="complaintDetails" rows="3" placeholder="اپنا مسئلہ تفصیل سے لکھیں"></textarea><button onclick="submitComplaint()">شکایت جمع کریں</button>';
+ $("complaintForm").innerHTML='<select id="complaintCategory"><option>پانی کے معیار کا مسئلہ</option><option>بوتل کا مسئلہ</option><option>ڈیلیوری میں تاخیر</option><option>بل میں غلطی</option><option>دیگر</option></select><textarea id="complaintDetails" rows="3" placeholder="اپنا مسئلہ تفصیل سے لکھیں"></textarea><button id="complaintSubmitButton" onclick="submitComplaint()">شکایت جمع کریں</button>';
 }
 </script>
 <script>
