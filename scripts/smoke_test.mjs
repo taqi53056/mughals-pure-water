@@ -86,7 +86,7 @@ try {
     for (const id of ["email", "password"]) {
       const field = page.locator("#" + id);
       if (!(await field.isVisible())) failures.push("Missing login field: " + id);
-      if (!(await field.getAttribute("required"))) failures.push("Login field is not required: " + id);
+      if ((await field.getAttribute("required")) === null) failures.push("Login field is not required: " + id);
       if (!(await page.locator('label[for="' + id + '"]').count())) failures.push("Login field has no visible label: " + id);
     }
     await page.locator("#email").fill("customer@example.com");
@@ -95,7 +95,7 @@ try {
     if ((await page.locator("#resetEmail").inputValue()) !== "customer@example.com") {
       failures.push("Password reset did not reuse the entered login email");
     }
-    if (!(await page.locator("#resetEmail").getAttribute("required"))) failures.push("Password reset email is not required");
+    if ((await page.locator("#resetEmail").getAttribute("required")) === null) failures.push("Password reset email is not required");
     await page.locator('#passwordResetForm button[onclick="showLogin()"]').click();
     await page.locator("#loginForm").waitFor({ state: "visible" });
 
@@ -104,7 +104,7 @@ try {
     for (const id of ["signupName", "signupMobile", "signupAddress", "signupEmail", "signupPassword"]) {
       const field = page.locator("#" + id);
       if (!(await field.isVisible())) failures.push("Missing signup field: " + id);
-      if (!(await field.getAttribute("required"))) failures.push("Signup field is not required: " + id);
+      if ((await field.getAttribute("required")) === null) failures.push("Signup field is not required: " + id);
       if (!(await page.locator('label[for="' + id + '"]').count())) failures.push("Signup field has no visible label: " + id);
     }
     await page.evaluate(async () => {
@@ -112,8 +112,8 @@ try {
       await window.restoreSavedSession();
     });
     await page.locator("#passwordResetCompleteForm").waitFor({ state: "visible" });
-    if (!(await page.locator("#newPassword").getAttribute("required")) ||
-        !(await page.locator("#confirmNewPassword").getAttribute("required"))) {
+    if ((await page.locator("#newPassword").getAttribute("required")) === null ||
+        (await page.locator("#confirmNewPassword").getAttribute("required")) === null) {
       failures.push("Password recovery completion fields are not required");
     }
     await page.locator('#passwordResetCompleteForm button[onclick="showLogin()"]').click();
