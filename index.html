@@ -695,6 +695,14 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 <style id="mpw-mobile-short-admin-labels">
 @media(max-width:699px){#adminPanel #homeTiles .tile small{display:none!important}#adminPanel #homeTiles .tile .tile-title{display:block;max-width:100%;font-size:clamp(13px,3.7vw,15px);line-height:1.45;overflow-wrap:anywhere;word-break:normal;text-wrap:balance}#adminPanel #homeTiles .tile{min-width:0;overflow:hidden}}
 </style>
+<style id="mpw-mobile-admin-tile-icon-alignment">
+/* Mobile admin tiles: keep decorative glyphs centered and separate from flex text flow. */
+@media(max-width:699px){
+ #adminPanel #homeTiles .tile{position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;padding:39px 9px 10px!important;text-align:center!important}
+ #adminPanel #homeTiles .tile:before{position:absolute!important;top:9px!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;display:flex!important;align-items:center!important;justify-content:center!important;width:26px!important;height:26px!important;margin:0!important;padding:0!important;line-height:1!important;text-align:center!important;pointer-events:none!important}
+ #adminPanel #homeTiles .tile .tile-title,#adminPanel #homeTiles .tile small{position:relative!important;z-index:1!important;width:100%!important;flex:0 0 auto!important;text-align:center!important}
+}
+</style>
 </head>
 <body>
 <header class="brand-header"><div class="wrap brand-wrap" style="padding:0">
