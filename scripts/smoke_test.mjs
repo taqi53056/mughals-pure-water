@@ -428,6 +428,25 @@ try {
       failures.push("Finished-goods opening stock can be duplicated across different dates");
     }
 
+    const workerStatusResult = await page.evaluate(() => {
+      const active = { is_active: true };
+      const inactive = { is_active: false };
+      return {
+        activeLabel: workerStatusLabel(active),
+        inactiveLabel: workerStatusLabel(inactive),
+        deactivateAction: workerStatusActionLabel(active),
+        reactivateAction: workerStatusActionLabel(inactive),
+        statusToggleAvailable: typeof toggleWorkerStatus === "function"
+      };
+    });
+    if (workerStatusResult.activeLabel !== "فعال" ||
+        workerStatusResult.inactiveLabel !== "غیر فعال" ||
+        workerStatusResult.deactivateAction !== "غیر فعال کریں" ||
+        workerStatusResult.reactivateAction !== "دوبارہ فعال کریں" ||
+        !workerStatusResult.statusToggleAvailable) {
+      failures.push("Worker active/inactive status controls are not wired correctly");
+    }
+
     await page.close();
   }
 } finally {
