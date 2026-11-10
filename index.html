@@ -2631,7 +2631,7 @@ async function loadExecutiveDashboard(){
      <p class="muted">گزشتہ مہینہ: فروخت ${fmt(previousRevenue)} · خالص نتیجہ ${fmt(previousNet)} · فرق ${fmt(net-previousNet)}</p>
     </section>
     <section class="exec-panel"><h3>نقدی کی حرکت اور کاروباری پوزیشن</h3>
-     <div class="exec-line"><span>درج شدہ وصولیاں</span><b>${fmt(data.recorded_collections)}</b></div>
+     <div class="exec-line"><span>درج شدہ نقد آمدن</span><b>${fmt(data.recorded_collections)}</b></div>
      <div class="exec-line"><span>درج شدہ نقد اخراجات</span><b>${fmt(data.recorded_cash_outflows)}</b></div>
      <div class="exec-line exec-net"><span>درج شدہ خالص نقد حرکت</span><b>${fmt(data.recorded_net_cash_movement)}</b></div>
      <div class="exec-line"><span>فعال گاہک</span><b>${Number(data.active_customers)||0}</b></div>
@@ -2723,11 +2723,11 @@ async function reportsModule(){
  $("moduleBody").innerHTML=
  '<div class="card"><h3>آپ کے کاروبار کا حساب</h3><p class="muted">مدت منتخب کریں، باقی حساب خود ہوگا۔</p><div class="grid"><button class="secondary" onclick="setReportPeriod(&quot;day&quot;)">آج</button><button class="secondary" onclick="setReportPeriod(&quot;month&quot;)">اس ماہ</button><button class="secondary" onclick="setReportPeriod(&quot;year&quot;)">اس سال</button></div><div class="grid"><input id="rStart" type="date" value="'+monthStart+'"><input id="rEnd" type="date" value="'+today()+'"></div><button onclick="runReport()">حساب دکھائیں</button></div>'+
  '<div id="reportResult"><div class="card muted">حساب تیار ہو رہا ہے...</div></div>'+
- '<details class="card"><summary><b>مزید مالی اختیارات</b></summary><p class="muted">یہ اندراجات صرف سرمایہ، قرض، مالک کی نکاسی یا اثاثوں کے لیے ہیں۔ خریداری، فروخت اور روزمرہ خرچ اپنے متعلقہ بٹن سے درج کریں۔</p>'+
+ '<details class="card"><summary><b>مزید مالی اختیارات</b></summary><p class="muted">یہ اندراجات صرف حقیقی سرمایہ، قرض، مالک کی نکاسی، اثاثوں اور مالی لاگت/آمدن کے لیے ہیں۔ خام مال اور پانی کی خرید اپنے مخصوص اسٹاک ماڈیول میں درج کریں، یہاں دوبارہ نہیں۔ نقد حرکت کے لیے اصل نقد/بینک طریقہ منتخب کریں؛ ادھار یہاں نقد وصولی یا ادائیگی نہیں سمجھا جائے گا۔ فرسودگی اور اسٹاک نقصان غیر نقد ایڈجسٹمنٹ ہیں۔</p>'+
  '<h3>سرمایہ، قرض یا مالک کی رقم</h3><input id="finDate" type="date" value="'+today()+'"><select id="finType" onchange="toggleOwnerWithdrawalField()"><option value="capital_in">مالک نے سرمایہ لگایا</option><option value="loan_received">کاروبار نے قرض لیا</option><option value="loan_repaid">قرض کی اصل رقم واپس کی</option><option value="loan_given">کسی کو قرض / ادھار دیا</option><option value="loan_collected">دوسروں سے قرض / ادھار وصول کیا</option><option value="inventory_loss">اسٹاک ضائع / خراب ہوا</option><option value="fixed_asset_purchase">مشینری / گاڑی / سامان خریدا</option><option value="fixed_asset_sale">مشینری / اثاثہ فروخت کیا</option><option value="depreciation_expense">مشینری / سامان کی فرسودگی</option><option value="interest_expense">قرض کی مالی لاگت</option><option value="interest_income">مالی آمدن</option></select>'+
  '<select id="finOwner" class="hidden"><option value="">مالک منتخب کریں</option>'+OWNER_WITHDRAWAL_RECIPIENTS.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("")+'</select>'+
  '<input id="finAmount" type="number" min="0.01" step="0.01" placeholder="رقم روپے میں"><input id="finCategory" maxlength="100" placeholder="مختصر تفصیل"><input id="finItem" maxlength="120" placeholder="سامان کا نام (اختیاری)"><div class="grid"><input id="finQty" type="number" min="0" step="0.001" placeholder="مقدار (اختیاری)"><input id="finUnit" maxlength="30" placeholder="یونٹ"></div>'+
- '<input id="finParty" maxlength="120" placeholder="کس سے / کس کو"><select id="finMethod"><option value="">ادائیگی کا طریقہ</option><option>نقد</option><option>بینک</option><option>جاز کیش</option><option>ایزی پیسہ</option><option>ادھار</option><option>دیگر</option></select><textarea id="finDetails" maxlength="500" placeholder="اضافی تفصیل (اختیاری)"></textarea><button id="finSaveButton" onclick="saveFinanceEntry()">محفوظ کریں</button></details>'+
+ '<input id="finParty" maxlength="120" placeholder="کس سے / کس کو"><select id="finMethod"><option value="">ادائیگی کا طریقہ</option><option>نقد</option><option>بینک</option><option>جاز کیش</option><option>ایزی پیسہ</option><option>دیگر</option></select><textarea id="finDetails" maxlength="500" placeholder="اضافی تفصیل (اختیاری)"></textarea><button id="finSaveButton" onclick="saveFinanceEntry()">محفوظ کریں</button></details>'+
  '<details class="card"><summary><b>محفوظ ماہانہ رپورٹس</b></summary><div id="monthlySnapshots" class="muted">رپورٹس لوڈ ہو رہی ہیں...</div><button class="secondary" onclick="loadMonthlySnapshots()">تازہ کریں</button></details>'+
  '<details class="card"><summary><b>حالیہ مالی اندراجات</b></summary><div id="financeLedgerTable" class="muted">ریکارڈ لوڈ ہو رہا ہے...</div></details>';
  await Promise.all([runReport(),loadFinanceLedger(),loadMonthlySnapshots()]);
@@ -2772,9 +2772,17 @@ async function deleteFinanceEntry(id){
  msg("اندراج حذف ہوگیا۔",true);await loadFinanceLedger();await runReport();
 }
 function toggleOwnerWithdrawalField(){const el=$("finOwner");if(!el)return;el.classList.toggle("hidden",$("finType").value!=="owner_withdrawal");}
+const FINANCE_CASHFLOW_TYPES=new Set(["capital_in","owner_withdrawal","loan_received","loan_repaid","loan_given","loan_collected","inventory_purchase","fixed_asset_purchase","fixed_asset_sale","interest_expense","interest_income"]);
+const FINANCE_PAYMENT_METHODS=new Set(["نقد","بینک","جاز کیش","ایزی پیسہ","دیگر"]);
+function isValidFinanceEntryPaymentMethod(entryType,paymentMethod){
+ if(["ادھار","credit","udhar"].includes(String(paymentMethod||"").trim().toLowerCase()))return false;
+ if(FINANCE_CASHFLOW_TYPES.has(entryType))return FINANCE_PAYMENT_METHODS.has(paymentMethod);
+ return !paymentMethod||FINANCE_PAYMENT_METHODS.has(paymentMethod);
+}
 async function saveFinanceEntry(){
  const entry_date=$("finDate").value,entry_type=$("finType").value,amount=Number($("finAmount").value),category=$("finCategory").value.trim(),item_name=$("finItem").value.trim(),quantity=$("finQty").value===""?null:Number($("finQty").value),unit=$("finUnit").value.trim(),counterparty=$("finParty").value.trim(),payment_method=$("finMethod").value,details=$("finDetails").value.trim();
  if(entry_type==="owner_withdrawal"&&!counterparty){msg("ذاتی نکاسی کے لیے مالک منتخب کریں۔");return;}
+ if(!isValidFinanceEntryPaymentMethod(entry_type,payment_method)){msg("اس مالی اندراج کے لیے درست نقد/بینک طریقہ منتخب کریں۔ ادھار کو نقد حرکت کے طور پر درج نہیں کیا جا سکتا۔");return;}
  if(!entry_date||!Number.isFinite(amount)||amount<=0){msg("تاریخ اور درست رقم لازمی درج کریں۔");return}
  if(quantity!==null&&(!Number.isFinite(quantity)||quantity<=0)){msg("مقدار درست درج کریں یا خالی چھوڑ دیں۔");return}
  if(!confirmLargeEntry("مالی اندراج",amount,100000))return;
