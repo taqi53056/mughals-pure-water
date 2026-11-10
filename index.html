@@ -2773,7 +2773,7 @@ async function deleteFinanceEntry(id){
 }
 function toggleOwnerWithdrawalField(){const el=$("finOwner");if(!el)return;el.classList.toggle("hidden",$("finType").value!=="owner_withdrawal");}
 const FINANCE_CASHFLOW_TYPES=new Set(["capital_in","owner_withdrawal","loan_received","loan_repaid","loan_given","loan_collected","inventory_purchase","fixed_asset_purchase","fixed_asset_sale","interest_expense","interest_income"]);
-const FINANCE_PAYMENT_METHODS=new Set(["نقد","بینک","جاز کیش","ایزی پیسہ","دیگر"]);
+const FINANCE_PAYMENT_METHODS=new Set(["نقد","بینک","جاز کیش","ایزی پیسہ","دیگر","cash","bank","jazzcash","easypaisa","other"]);
 function isValidFinanceEntryPaymentMethod(entryType,paymentMethod){
  if(["ادھار","credit","udhar"].includes(String(paymentMethod||"").trim().toLowerCase()))return false;
  if(FINANCE_CASHFLOW_TYPES.has(entryType))return FINANCE_PAYMENT_METHODS.has(paymentMethod);
@@ -2916,6 +2916,7 @@ async function ownerWithdrawalsModule(){
 async function saveOwnerWithdrawal(){
  const date=$("owDate").value,owner=$("owOwner").value,amount=Number($("owAmount").value),reason=$("owReason").value.trim(),details=$("owDetails").value.trim(),method=$("owMethod").value;
  if(!date||!owner||!Number.isFinite(amount)||amount<=0||!reason){msg("تاریخ، مالک، درست رقم اور وجہ درج کریں۔");return;}
+ if(!isValidFinanceEntryPaymentMethod("owner_withdrawal",method)){msg("مالک کی نکالی گئی رقم کے لیے درست نقد/بینک طریقہ منتخب کریں۔");return;}
  if(!confirmLargeEntry("مالک کی نکالی گئی رقم",amount,100000))return;
  const button=$("owSave");button.disabled=true;
  try{
