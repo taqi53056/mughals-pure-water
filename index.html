@@ -1340,8 +1340,8 @@ async function loadRawMaterialPurchases(){
  const used={
   bottle_500ml:made("500ml")*24,bottle_1_5l:made("1.5L")*12,bottle_6l:made("6L"),
   carton_500ml:made("500ml"),carton_1_5l:made("1.5L"),
-  tape_bundle:(made("500ml")+made("1.5L"))/200,
-  sticker:made("500ml")*24+made("1.5L")*12+made("6L")
+  tape_bundle:(made("500ml","tape_bundle")+made("1.5L","tape_bundle"))/200,
+  sticker:made("500ml","sticker")*24+made("1.5L","sticker")*12+made("6L","sticker")
  };
  const balanceKeys=["bottle_500ml","bottle_1_5l","bottle_6l","carton_500ml","carton_1_5l","tape_bundle","sticker"];
  $("rawStockBalance").innerHTML='<div class="grid">'+balanceKeys.map(k=>{
@@ -1916,7 +1916,11 @@ async function runReport(){
   const rawStockComplete=rawValuation.every(x=>x.rate!==null&&!x.negative);
   const rawStockText=rawValuation.map(x=>rawLabels[x.type]+": "+x.onHand.toFixed(2)+" "+rawUnits[x.type]+" — "+(x.rate===null?"لاگت نامعلوم":moneyVal(x.value))+(x.negative?" — اسٹاک منفی، ریکارڈ درست کریں":"")).join("؛ ");
   const fillWaterRemaining=waterFill.litres-production.filter(x=>x.product_type==="500ml"&&(!waterFill.baseDate||x.production_date>=waterFill.baseDate)).reduce((n,x)=>n+Number(x.quantity||0)*12,0)-production.filter(x=>x.product_type==="1.5L"&&(!waterFill.baseDate||x.production_date>=waterFill.baseDate)).reduce((n,x)=>n+Number(x.quantity||0)*18,0);
-  const shopWaterRemaining=waterShop.litres-allDeliveries.filter(x=>!waterShop.baseDate||x.delivery_date>=waterShop.baseDate).reduce((n,x)=>n+Number(x.successful_bottles||0)*19,0)-0+allCounterSales.filter(x=>!waterShop.baseDate||x.sale_date>=waterShop.baseDate).reduce((n,x)=>n+Number(x.total_litres||0),0)-0+production.filter(x=>x.product_type==="6L"&&(!waterShop.baseDate||x.production_date>=waterShop.baseDate)).reduce((n,x)=>n+Number(x.quantity||0)*6,0);
+  const shopWaterRemaining=waterShop.litres-(
+   allDeliveries.filter(x=>!waterShop.baseDate||x.delivery_date>=waterShop.baseDate).reduce((n,x)=>n+Number(x.successful_bottles||0)*19,0)+
+   allCounterSales.filter(x=>!waterShop.baseDate||x.sale_date>=waterShop.baseDate).reduce((n,x)=>n+Number(x.total_litres||0),0)+
+   production.filter(x=>x.product_type==="6L"&&(!waterShop.baseDate||x.production_date>=waterShop.baseDate)).reduce((n,x)=>n+Number(x.quantity||0)*6,0)
+  );
   const finishedStockValuation=stockRows.map(x=>{
    const type=x.product_type,qty=Number(x.available_quantity)||0,waterRate=type==="500ml"||type==="1.5L"?waterFill.rate:waterShop.rate;
    const litres=type==="500ml"?12:type==="1.5L"?18:6;
