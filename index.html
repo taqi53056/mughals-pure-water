@@ -1117,16 +1117,16 @@ async function saveDelivery(){
    reference_key:`delivery:${date}:${deliveryRecord.id}`
   };
   const {error:noticeError}=await db.from("customer_notifications").insert(deliveryNotice);
-  if(noticeError){
+  if(noticeError&&noticeError.code!=="23505"){
    console.error("Notification could not be saved",noticeError);
    notificationWarning=" کسٹمر کی ایپ اطلاع محفوظ نہیں ہوئی: "+noticeError.message;
-  }else{
+  }else if(!noticeError){
    const pushResult=await notifyCustomerPush(Number(id),deliveryNotice.title,deliveryNotice.message);
    if(pushResult?.error||Number(pushResult?.sent||0)<1){
     notificationWarning=" ایپ میں اطلاع محفوظ ہے، مگر موبائل Push ابھی تصدیق نہیں ہوئی: "+(pushResult?.error||pushResult?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔");
    }
   }
-  mpwClearPendingRequestId("delivery");
+  if(!billSyncWarning&&!notificationWarning)mpwClearPendingRequestId("delivery");
   msg("نئی ڈلیوری محفوظ ہوگئی۔ مزدوری "+money(c.labor)+billSyncWarning+notificationWarning,!billSyncWarning&&!notificationWarning);
   await Promise.all([loadDailyDeliveries(),loadTodaySummary()]);
  }catch(e){
@@ -1315,8 +1315,8 @@ async function recordCustomerPayment(){
    reference_key:"payment:"+paymentRecord.id
   };
   const {error:noticeError}=await db.from("customer_notifications").insert(notice);
-  if(noticeError)throw noticeError;
-  const push=await notifyCustomerPush(customerId,notice.title,notice.message);
+  if(noticeError&&noticeError.code!=="23505")throw noticeError;
+  const push=noticeError?null:await notifyCustomerPush(customerId,notice.title,notice.message);
   mpwClearPendingRequestId("customer-payment");
   setBillSavedState(true);
   if(push?.error||Number(push?.sent||0)<1)msg("ادائیگی محفوظ، بل دوبارہ حساب اور ایپ اطلاع درج ہوگئی؛ موبائل Push نہیں پہنچی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔"));
