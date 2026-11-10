@@ -951,11 +951,13 @@ async function saveDelivery(){
  const button=$("deliverySaveButton");
  if(button?.disabled)return;
  if(button)button.disabled=true;
+ let deliverySaved=false;
  try{
   const workerId=c.isOwner?null:($("dWorker")?.value||null);
   const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
   const {data:saved,error:saveError}=await db.from("customer_19l_deliveries").insert(payload).select("id").single();
   if(saveError)throw saveError;
+  deliverySaved=true;
   setDeliverySavedState(true);
   let billSyncWarning="";
   try{await syncBillBottles(Number(id),date.slice(0,7)+"-01")}
@@ -983,7 +985,7 @@ async function saveDelivery(){
   await Promise.all([loadDailyDeliveries(),loadTodaySummary()]);
  }catch(e){
   console.error("Delivery save failed",e);
-  msg("ڈلیوری محفوظ نہیں ہوئی: "+(e?.message||String(e)));
+  msg(deliverySaved?"ڈلیوری محفوظ ہوگئی، مگر بعد کی تازہ کاری مکمل نہیں ہوئی: "+(e?.message||String(e)):"ڈلیوری محفوظ نہیں ہوئی: "+(e?.message||String(e)));
  }finally{
   if(button)button.disabled=false;
  }
@@ -994,6 +996,7 @@ async function loadDailyDeliveries(){
  let data;
  try{
   data=await financeFetchAll("customer_19l_deliveries","*","delivery_date",null,null);
+  data.reverse();
  }catch(error){$("moduleTable").textContent="ڈلیوریاں لوڈ نہیں ہوئیں: "+(error?.message||String(error));return;}
  const names=await getActiveCustomers().catch(()=>customerList);
  const {data:workers}=await db.from("workers").select("id,full_name,is_owner");
