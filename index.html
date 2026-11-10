@@ -319,7 +319,17 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 .brand-header #installAppButton{background:linear-gradient(135deg,#f1d58d,#a97822);color:#171108;border:1px solid #f7e5ae}
 @media(max-width:520px){.brand-logo{width:62px;height:62px}.brand-wrap{gap:11px}.brand-copy h1{font-size:18px}}
 </style>
-</head>
+
+<style id="owner-withdrawal-premium">
+.owner-withdrawal-hero{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 24px;margin:8px 0 16px;border-radius:20px;background:linear-gradient(120deg,#102d25,#1b5741 72%,#967b43);color:#fff;box-shadow:0 12px 28px #102d251f}
+.owner-withdrawal-hero h3{color:#fff;font-size:22px;margin:5px 0}.owner-withdrawal-hero p{color:#e1e9e2;margin:0;font-size:13px;line-height:1.8}.owner-eyebrow{font-size:10px;letter-spacing:.13em;color:#e5d3a5;font-weight:800}.owner-hero-mark{width:58px;height:58px;flex:0 0 58px;border:1px solid #ffffff55;border-radius:18px;display:grid;place-items:center;font-size:31px;color:#f2dfad;background:#ffffff12}
+.owner-entry-card{border-top:3px solid #b89a5b!important}.owner-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.owner-month-tag{padding:6px 12px;border-radius:30px;background:#f4f0e4;color:#705a2e;font-weight:800;font-size:12px}
+.owner-total-panel{padding:17px 19px;border-radius:16px;background:linear-gradient(110deg,#edf5ef,#f8f4e8);border:1px solid #e1e9dc;margin:12px 0}.owner-total-panel small,.owner-total-panel span{display:block;color:#64756a;font-size:12px}.owner-total-panel strong{display:block;font-size:29px;color:#123e30;line-height:1.5;font-variant-numeric:tabular-nums}.owner-total-panel span{margin-top:2px}
+.owner-recipient-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.owner-recipient-card{min-width:0;padding:14px;border:1px solid #e4e9e2;border-radius:15px;background:#fff;box-shadow:0 4px 14px #173d2b08}.owner-recipient-top{display:flex;align-items:center;gap:8px;min-height:35px}.owner-recipient-top b{font-size:13px;overflow-wrap:anywhere}.owner-recipient-icon{width:29px;height:29px;display:grid;place-items:center;border-radius:10px;background:#edf3ed;color:#20533e;font-weight:850;flex:0 0 29px}.owner-recipient-card>strong{display:block;font-size:20px;color:#173f30;margin:10px 0 7px;font-variant-numeric:tabular-nums}.owner-recipient-card>small{font-size:11px;color:#748078}
+.owner-bar{height:7px;background:#edf0eb;border-radius:99px;overflow:hidden;margin-bottom:6px}.owner-bar i{height:100%;display:block;border-radius:99px;background:linear-gradient(90deg,#176047,#c3a15c)}
+.owner-history-list{display:grid;gap:8px;margin-top:13px}.owner-history-row{display:grid;grid-template-columns:minmax(75px,.6fr) minmax(0,1.5fr) auto auto;align-items:center;gap:10px;padding:12px;border:1px solid #e6ebe4;border-radius:13px;background:#fff}.owner-history-date b,.owner-history-date small,.owner-history-main b,.owner-history-main small{display:block}.owner-history-date b,.owner-history-main b{font-size:13px;color:#213b2f}.owner-history-date small,.owner-history-main small{font-size:11px;color:#78847c;overflow-wrap:anywhere}.owner-history-row>strong{white-space:nowrap;color:#174b39;font-size:14px}.owner-history-row button{min-width:54px!important;margin:0!important;padding:7px 9px!important;font-size:12px!important}.owner-empty{padding:18px;text-align:center;border:1px dashed #cbd7ca;border-radius:14px;color:#65736b;background:#f8faf7}
+@media(max-width:520px){.owner-withdrawal-hero{padding:17px;border-radius:17px}.owner-withdrawal-hero h3{font-size:19px}.owner-hero-mark{width:48px;height:48px;flex-basis:48px}.owner-recipient-grid{gap:8px}.owner-recipient-card{padding:11px}.owner-recipient-top b{font-size:12px}.owner-recipient-card>strong{font-size:17px}.owner-history-row{grid-template-columns:1fr auto;gap:7px}.owner-history-main{grid-column:1}.owner-history-row>strong{grid-column:2;grid-row:1}.owner-history-row button{grid-column:2;grid-row:2}}
+</style></head>
 <body>
 <header class="brand-header"><div class="wrap brand-wrap" style="padding:0">
 <img class="brand-logo" src="./logo.svg" alt="MPW — MUGHAL'S PURE WATER">
@@ -1977,19 +1987,20 @@ async function runReport(){
 /* مالک کی ذاتی نکاسی — کاروباری خرچ سے الگ */
 const OWNER_WITHDRAWAL_RECIPIENTS=Object.freeze(["M. Muzamil Mughal","M.Taqi Mughal","M.Usama Mughal","M. Rafi Mughal"]);
 async function ownerWithdrawalsModule(){
- setTitle("مالک کی ذاتی نکاسی");
+ setTitle("مالکان کی ذاتی نکاسی");
  const opts=OWNER_WITHDRAWAL_RECIPIENTS.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("");
  $("moduleBody").innerHTML=
- '<div class="card"><h3>نکالی گئی رقم درج کریں</h3><p class="muted">یہ مالک کی ذاتی رقم ہے، کاروبار کا خرچ نہیں۔ اس لیے منافع یا نقصان کم نہیں ہوگا۔</p>'+
+ '<div class="owner-withdrawal-hero"><div><span class="owner-eyebrow">OWNER WITHDRAWALS</span><h3>مالکان کی ذاتی نکاسی</h3><p>یہ کاروباری خرچ نہیں۔ نکالی گئی رقم منافع و نقصان سے الگ رہے گی۔</p></div><div class="owner-hero-mark">↗</div></div>'+
+ '<div class="card owner-entry-card"><h3>نکاسی کا نیا اندراج</h3><p class="muted">ہر نکاسی الگ درج کریں۔ پہلے تاریخ، وصول کنندہ، رقم اور وجہ چیک کریں۔</p>'+
  '<label for="owDate">تاریخ</label><input id="owDate" type="date" value="'+today()+'">'+
- '<label for="owOwner">کس مالک نے رقم لی؟</label><select id="owOwner">'+opts+'</select>'+
- '<label for="owAmount">کتنی رقم؟ (روپے)</label><input id="owAmount" type="number" min="1" step="1" placeholder="مثلاً 5000">'+
- '<label for="owReason">کس کام کے لیے؟</label><input id="owReason" maxlength="120" placeholder="مثلاً گھر کا خرچ">'+
- '<label for="owDetails">مزید تفصیل (اختیاری)</label><textarea id="owDetails" maxlength="500" placeholder="رقم کہاں خرچ ہوئی؟"></textarea>'+
- '<label for="owMethod">رقم کس طرح لی؟</label><select id="owMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>'+
- '<button id="owSave" onclick="saveOwnerWithdrawal()">نکالی گئی رقم محفوظ کریں</button></div>'+
- '<div class="card"><h3>اس مہینے کا ریکارڈ</h3><div id="ownerWithdrawalSummary">ریکارڈ لوڈ ہو رہا ہے...</div></div>'+
- '<div class="card"><h3>پرانا ریکارڈ</h3><label for="owMonth">مہینہ</label><input id="owMonth" type="month" value="'+today().slice(0,7)+'"><button class="secondary" onclick="loadOwnerWithdrawals()">ریکارڈ دیکھیں</button><div id="ownerWithdrawalHistory">ریکارڈ لوڈ ہو رہا ہے...</div></div>';
+ '<label for="owOwner">رقم کس نے لی؟</label><select id="owOwner">'+opts+'</select>'+
+ '<label for="owAmount">رقم (روپے)</label><input id="owAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="مثلاً 5000">'+
+ '<label for="owReason">نکاسی کی وجہ</label><input id="owReason" maxlength="120" placeholder="مثلاً ذاتی ضرورت">'+
+ '<label for="owDetails">اضافی وضاحت (اختیاری)</label><textarea id="owDetails" maxlength="500" placeholder="ضرورت ہو تو تفصیل لکھیں"></textarea>'+
+ '<label for="owMethod">ادائیگی کا طریقہ</label><select id="owMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>'+
+ '<button id="owSave" onclick="saveOwnerWithdrawal()">نکاسی محفوظ کریں</button></div>'+
+ '<div class="card"><div class="owner-section-head"><div><h3>ماہانہ خلاصہ</h3><p class="muted">چاروں مقررہ وصول کنندگان کا الگ حساب</p></div><span class="owner-month-tag" id="ownerMonthTag">'+today().slice(0,7)+'</span></div><div id="ownerWithdrawalSummary">ریکارڈ لوڈ ہو رہا ہے...</div></div>'+
+ '<div class="card"><h3>نکاسی کی مکمل ہسٹری</h3><label for="owMonth">مطلوبہ مہینہ</label><input id="owMonth" type="month" value="'+today().slice(0,7)+'"><button class="secondary" onclick="loadOwnerWithdrawals()">مہینے کا حساب دکھائیں</button><div id="ownerWithdrawalHistory">ریکارڈ لوڈ ہو رہا ہے...</div></div>';
  await loadOwnerWithdrawals();
 }
 async function saveOwnerWithdrawal(){
@@ -2013,10 +2024,14 @@ async function loadOwnerWithdrawals(){
  const end=new Date(next.getTime()-86400000).toISOString().slice(0,10);
  const {data,error}=await db.from("business_finance_ledger").select("id,entry_date,counterparty,amount,category,details,payment_method").eq("entry_type","owner_withdrawal").gte("entry_date",start).lte("entry_date",end).order("entry_date",{ascending:false}).order("id",{ascending:false});
  if(error){if($("ownerWithdrawalHistory"))$("ownerWithdrawalHistory").textContent="ریکارڈ لوڈ نہیں ہوا: "+error.message;return;}
- const rows=data||[],groups={};
- rows.forEach(r=>{const n=r.counterparty||"نام درج نہیں";groups[n]=(groups[n]||0)+Number(r.amount||0);});
- if($("ownerWithdrawalSummary"))$("ownerWithdrawalSummary").innerHTML=Object.keys(groups).length?Object.entries(groups).map(([n,v])=>'<div class="stat">'+esc(n)+' — <b>'+money(v)+'</b></div>').join("")+'<div class="total">اس مہینے کی کل نکاسی: <b>'+money(rows.reduce((n,r)=>n+Number(r.amount||0),0))+'</b></div>':"اس مہینے کوئی رقم نہیں نکالی گئی۔";
- if($("ownerWithdrawalHistory"))$("ownerWithdrawalHistory").innerHTML=rows.length?'<div class="tablewrap"><table><tr><th>تاریخ</th><th>مالک</th><th>وجہ</th><th>تفصیل</th><th>رقم</th><th>عمل</th></tr>'+rows.map(r=>'<tr><td>'+esc(r.entry_date)+'</td><td>'+esc(r.counterparty)+'</td><td>'+esc(r.category)+'</td><td>'+esc(r.details||"—")+'</td><td>'+money(r.amount)+'</td><td><button class="secondary" onclick="deleteOwnerWithdrawal('+Number(r.id)+')">حذف</button></td></tr>').join("")+'</table></div>':"اس مہینے کوئی اندراج نہیں۔";
+ const rows=data||[],totals=Object.fromEntries(OWNER_WITHDRAWAL_RECIPIENTS.map(n=>[n,0]));
+ rows.forEach(r=>{if(Object.prototype.hasOwnProperty.call(totals,r.counterparty))totals[r.counterparty]+=Number(r.amount||0);});
+ const max=Math.max(1,...Object.values(totals)),grand=rows.reduce((n,r)=>n+Number(r.amount||0),0);
+ if($("ownerMonthTag"))$("ownerMonthTag").textContent=month;
+ if($("ownerWithdrawalSummary"))$("ownerWithdrawalSummary").innerHTML=
+ '<div class="owner-total-panel"><small>اس مہینے کی مجموعی نکاسی</small><strong>'+money(grand)+'</strong><span>'+rows.length+' اندراجات</span></div>'+
+ '<div class="owner-recipient-grid">'+OWNER_WITHDRAWAL_RECIPIENTS.map((name,i)=>'<div class="owner-recipient-card"><div class="owner-recipient-top"><span class="owner-recipient-icon">'+(i+1)+'</span><b>'+esc(name)+'</b></div><strong>'+money(totals[name])+'</strong><div class="owner-bar"><i style="width:'+Math.round(totals[name]/max*100)+'%"></i></div><small>ماہانہ نکاسی</small></div>').join("")+'</div>';
+ if($("ownerWithdrawalHistory"))$("ownerWithdrawalHistory").innerHTML=rows.length?'<div class="owner-history-list">'+rows.map(r=>'<article class="owner-history-row"><div class="owner-history-date"><b>'+esc(r.entry_date)+'</b><small>'+esc(r.payment_method||"")+'</small></div><div class="owner-history-main"><b>'+esc(r.counterparty||"نام درج نہیں")+'</b><small>'+esc(r.category||"وجہ درج نہیں")+(r.details?' · '+esc(r.details):"")+'</small></div><strong>'+money(r.amount)+'</strong><button class="secondary" onclick="deleteOwnerWithdrawal('+Number(r.id)+')">حذف</button></article>').join("")+'</div>':'<div class="owner-empty">اس مہینے کوئی نکاسی درج نہیں ہوئی۔</div>';
 }
 async function deleteOwnerWithdrawal(id){
  if(!confirm("کیا یہ نکاسی کا ریکارڈ حذف کرنا ہے؟ ماہانہ حساب بھی دوبارہ بنے گا۔"))return;
