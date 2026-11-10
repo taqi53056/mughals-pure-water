@@ -1122,6 +1122,9 @@ async function signupCustomer(){
    }
   });
   if(error)throw error;
+  if(Array.isArray(data?.user?.identities)&&data.user.identities.length===0){
+   throw new Error("یہ ای میل پہلے سے رجسٹرڈ ہے۔ لاگ اِن کریں یا دوسری ای میل استعمال کریں۔");
+  }
   if(!data?.user)throw new Error("اکاؤنٹ کی درخواست کی تصدیق نہیں ہوسکی۔ دوبارہ کوشش کریں۔");
   if(data.session){
    await db.auth.signOut();
