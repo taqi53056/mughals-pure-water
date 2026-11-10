@@ -1181,7 +1181,7 @@ async function stockModule(type){
  </select>
  <input id="sQty" type="number" min="1" step="1" placeholder="${raw?'خام مال کی مقدار کارٹن میں':'تیار مقدار؛ کارٹن یا 6L بوتلیں'}">
  <input id="sNote" placeholder="تفصیل (اختیاری)">
- <button onclick="saveStock('${type}')">ریکارڈ محفوظ کریں</button>
+ <button id="stockSaveButton" onclick="saveStock('${type}')">ریکارڈ محفوظ کریں</button>
  ${raw?"":`<div class="card"><h3>اسٹاک میں درستگی</h3>
  <input id="adjDate" type="date" value="${today()}">
  <select id="adjType"><option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
