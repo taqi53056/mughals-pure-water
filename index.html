@@ -500,6 +500,39 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 @media(min-width:700px) and (max-width:1199px){.owner-desktop-banner,.exec-visual-grid{display:none!important}}
 </style>
 
+
+<style id="mpw-navigation-visibility-refresh">
+/* Clear, always-visible navigation and restrained section color system */
+#adminPanel #homeTiles .admin-module-filter{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0 0 8px;padding:13px;border:1px solid #d9e4d9;border-radius:17px;background:linear-gradient(145deg,#f4f8f2,#e9f1e9);box-shadow:0 5px 16px #173d2b0c}
+#adminPanel #homeTiles .admin-module-filter:before{content:"کام کا شعبہ منتخب کریں";grid-column:1/-1;display:block;padding:0 3px 7px;color:#244d3b;font-size:14px;font-weight:900;border-bottom:1px solid #d7e2d6}
+#adminPanel #homeTiles .admin-module-filter button{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;min-width:0;min-height:49px;margin:0;padding:10px 12px;border:1px solid #cbd9ce;border-radius:12px;background:#fff;color:#214b39;font-size:14px;font-weight:850;line-height:1.45;text-align:right;box-shadow:0 2px 7px #173d2b0c;white-space:normal}
+#adminPanel #homeTiles .admin-module-filter button:before{display:inline-grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border-radius:8px;background:#e8f1e8;font-size:16px}
+#adminPanel #homeTiles .admin-module-filter button:nth-of-type(1):before{content:"☑"}
+#adminPanel #homeTiles .admin-module-filter button:nth-of-type(2):before{content:"▦"}
+#adminPanel #homeTiles .admin-module-filter button:nth-of-type(3):before{content:"₨"}
+#adminPanel #homeTiles .admin-module-filter button:nth-of-type(4):before{content:"⚙"}
+#adminPanel #homeTiles .admin-module-filter button:nth-of-type(5):before{content:"☷"}
+#adminPanel #homeTiles .admin-module-filter button.active{color:#fff;background:linear-gradient(115deg,#07533f,#0b7655);border-color:#07533f;box-shadow:0 4px 12px #07533f30}
+#adminPanel #homeTiles .admin-module-filter button.active:before{background:#ffffff24;color:#fff}
+#adminPanel #homeTiles .admin-module-filter button:focus-visible,#adminPanel #homeTiles .tile:focus-visible{outline:3px solid #c49a43;outline-offset:3px}
+#adminPanel #homeTiles .tile{min-width:0;min-height:92px;display:flex;flex-wrap:wrap;align-content:center;justify-content:flex-start;align-items:center;gap:3px 8px;padding:13px 15px;border:1px solid #ffffff65;box-shadow:0 5px 15px #183b2b18;text-align:right;line-height:1.5}
+#adminPanel #homeTiles .tile .tile-title{display:block;flex:1 1 100%;font-size:15px;font-weight:900;line-height:1.55}
+#adminPanel #homeTiles .tile small{position:static!important;display:block!important;flex:1 1 100%!important;width:auto!important;height:auto!important;padding:0!important;margin:0!important;overflow:visible!important;clip:auto!important;white-space:normal!important;border:0!important;color:inherit;font-size:11px;font-weight:600;line-height:1.55;opacity:.92}
+#adminPanel #dashboard,#adminPanel #module{border:1px solid #e0e8df;box-shadow:0 8px 26px #173d2b0b}
+#adminPanel #moduleTitle{padding:12px 15px;border:1px solid #e3eadf;border-inline-start:4px solid #c8a65a;border-radius:13px;background:linear-gradient(100deg,#f5f8f2,#fff)}
+#moduleBody .card,#moduleTable .card{border-color:#e1e9df;background:linear-gradient(145deg,#fff,#f6faf5);box-shadow:0 4px 15px #173d2b0a}
+#moduleBody .stat,#moduleTable .stat{border:1px solid #dce8dc;background:linear-gradient(120deg,#edf6ef,#f7f8ed)}
+#moduleBody .warning,.warning{border-radius:12px}
+#moduleBody button:not(.secondary),#module button:not(.secondary){box-shadow:0 4px 10px #07533f20}
+#moduleBody button.secondary,#module button.secondary{background:#edf3ed;color:#14533f;border-color:#d3e1d5}
+#moduleBody button:focus-visible,#module button:focus-visible,#adminPanel button:focus-visible{outline:3px solid #c49a43;outline-offset:2px}
+#moduleTable th{background:linear-gradient(110deg,#e5f0e7,#f3f0e3)}
+@media(min-width:1100px){#adminPanel #homeTiles .admin-module-filter{grid-template-columns:1fr;gap:7px;padding:14px}#adminPanel #homeTiles .admin-module-filter:before{font-size:15px}#adminPanel #homeTiles .admin-module-filter button{min-height:52px;font-size:14px;padding:11px 13px}#adminPanel #homeTiles .tile{min-height:76px;padding:10px 13px}#adminPanel #homeTiles .tile .tile-title{font-size:14px}#adminPanel #homeTiles .tile small{font-size:10.5px}}
+@media(min-width:700px) and (max-width:1099px){#adminPanel #homeTiles .admin-module-filter{grid-template-columns:repeat(5,minmax(0,1fr))}#adminPanel #homeTiles .admin-module-filter:before{grid-column:1/-1}#adminPanel #homeTiles .admin-module-filter button{justify-content:center;min-height:50px;padding:8px 6px;font-size:12px}}
+@media(max-width:699px){#adminPanel #homeTiles .admin-module-filter{gap:7px;padding:10px}#adminPanel #homeTiles .admin-module-filter button{min-height:47px;padding:8px 9px;font-size:12px}#adminPanel #homeTiles .tile{min-height:94px;padding:10px}#adminPanel #homeTiles .tile .tile-title{font-size:13px}#adminPanel #homeTiles .tile small{font-size:10.5px}}
+@media(prefers-reduced-motion:reduce){#adminPanel #homeTiles .tile{transition:none}}
+</style>
+
 </head>
 <body>
 <header class="brand-header"><div class="wrap brand-wrap" style="padding:0">
