@@ -1785,7 +1785,7 @@ async function runReport(){
   };
   const productionLabor=["500ml","1.5L","6L"].reduce((n,type)=>n+productLaborCost(type),0);
   const ownerCleaningSaving=sum(dailyCleaningRows.filter(r=>r.worker_id===null&&r.worker_name==="مالک"),"amount");
-  const supportLabor=workerRows.filter(r=>r.entry_type==="earning"&&["carton loading/unloading","cleaning","bottle washing","manual adjustment"].includes(r.work_category)).reduce((n,r)=>n+(Number(r.amount)||0),0)+sum(dailyCleaningRows.filter(r=>r.worker_id!==null),"amount");
+  const supportLabor=workerRows.filter(r=>r.entry_type==="earning"&&["carton loading/unloading","cleaning","bottle washing","manual adjustment"].includes(r.work_category)).reduce((n,r)=>n+(Number(r.amount)||0),0);
   const exp19=expenses.filter(x=>x.business_segment==="19L").reduce((n,r)=>n+(Number(r.amount)||0),0);
   const expProducts=expenses.filter(x=>x.business_segment==="finished_goods").reduce((n,r)=>n+(Number(r.amount)||0),0);
   const expGeneral=expenses.filter(x=>!x.business_segment||x.business_segment==="general").reduce((n,r)=>n+(Number(r.amount)||0),0);
