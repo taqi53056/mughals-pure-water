@@ -96,7 +96,7 @@ try {
       failures.push("Password reset did not reuse the entered login email");
     }
     if (!(await page.locator("#resetEmail").getAttribute("required"))) failures.push("Password reset email is not required");
-    await page.locator('button[onclick="showLogin()"]').click();
+    await page.locator('#passwordResetForm button[onclick="showLogin()"]').click();
     await page.locator("#loginForm").waitFor({ state: "visible" });
 
     await page.locator('button[onclick="showSignup()"]').click();
@@ -113,7 +113,7 @@ try {
         !(await page.locator("#confirmNewPassword").getAttribute("required"))) {
       failures.push("Password recovery completion fields are not required");
     }
-    await page.locator('button[onclick="showLogin()"]').click();
+    await page.locator('#passwordResetCompleteForm button[onclick="showLogin()"]').click();
     await page.locator("#loginForm").waitFor({ state: "visible" });
 
     const adminNavigation = await page.evaluate(async () => {
