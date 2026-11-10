@@ -487,6 +487,43 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 }
 @media(min-width:700px) and (max-width:1199px){.owner-desktop-banner,.exec-visual-grid{display:none!important}}
 </style>
+<style id="mpw-owner-boardroom">
+.owner-desktop-banner,.exec-visual-grid{display:none}
+@media(min-width:1200px){
+ body{background:radial-gradient(ellipse at 82% 0%,#e2ece4 0,#f3f5ef 46%,#edf1eb 100%)}
+ #app{max-width:1760px;margin:0 auto;padding:0 28px 36px}
+ #app>.session-bar{padding:15px 22px;border-radius:18px;background:linear-gradient(105deg,#fff 0%,#f2f6ef 65%,#f3ecda 100%)}
+ #adminPanel{grid-template-columns:258px minmax(0,1fr);gap:22px}
+ #adminPanel #homeTiles{box-shadow:0 18px 40px #102d251c;max-height:calc(100vh - 30px);top:15px}
+ #adminPanel #dashboard{padding:30px 32px;border:1px solid #dce6dc;border-radius:26px;background:linear-gradient(145deg,#fff 0%,#f9fbf7 70%,#f3f6ee 100%);box-shadow:0 18px 48px #183c2b12}
+ #adminPanel #module{padding:30px 32px;border-radius:25px;box-shadow:0 18px 48px #183c2b12}
+ .executive-heading{padding-bottom:22px;margin-bottom:22px;border-bottom:1px solid #e1e9df}
+ .executive-heading h2{font-size:29px!important;letter-spacing:-.02em}.executive-heading p{font-size:14px!important}
+ .executive-filter input{min-width:170px;min-height:46px}.executive-filter button{min-height:46px;padding-inline:20px}
+ .owner-desktop-banner{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:24px 28px;margin:0 0 22px;border-radius:22px;background:linear-gradient(115deg,#092f26 0%,#14523e 66%,#8b7544 100%);color:#fff;box-shadow:0 14px 30px #0a382b25;overflow:hidden;position:relative}
+ .owner-desktop-banner:after{content:"";position:absolute;width:230px;height:230px;border:1px solid #ffffff22;border-radius:50%;inset-inline-end:-48px;top:-105px;box-shadow:0 0 0 22px #ffffff08,0 0 0 48px #ffffff06}
+ .owner-desktop-banner small{display:block;color:#e5d5a9;font-size:10px;font-weight:850;letter-spacing:.16em}
+ .owner-desktop-banner strong{display:block;font-size:24px;line-height:1.5;margin:5px 0}.owner-desktop-banner p{margin:0;color:#e1e9e2;font-size:13px}
+ .owner-desktop-mark{width:64px;height:64px;flex:0 0 64px;border:1px solid #ffffff55;border-radius:19px;display:grid;place-items:center;background:#ffffff12;color:#f0dfb1;font-size:25px;font-weight:900;z-index:1}
+ .exec-kpi-grid{gap:14px;margin:18px 0 22px}.exec-kpi{padding:20px 21px;border-radius:19px;background:linear-gradient(145deg,#fff,#f5f8f3);box-shadow:0 7px 20px #183b2b08;min-height:132px}
+ .exec-kpi strong{font-size:29px;margin:9px 0}.exec-kpi span{font-size:13px}.exec-kpi small{font-size:12px}
+ .exec-visual-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px;margin:18px 0}
+ .exec-visual-panel{min-width:0;padding:20px 21px;border:1px solid #e1e9df;border-radius:19px;background:#fff;box-shadow:0 7px 22px #183b2b08}
+ .exec-visual-panel h3{font-size:17px;margin:0 0 16px}.exec-bar-row{margin:13px 0}
+ .exec-bar-label{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:#4d6155;margin-bottom:7px}
+ .exec-bar-label b{color:#173f31;white-space:nowrap}.exec-bar-track{height:12px;border-radius:99px;background:#edf1eb;overflow:hidden}
+ .exec-bar-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#0d5b43,#c5a35b)}
+ .exec-bar-row.negative .exec-bar-track i{background:linear-gradient(90deg,#a74c45,#d58a68)}
+ .exec-chart-empty{padding:18px;border-radius:13px;background:#f6f8f4;color:#718078;text-align:center;font-size:13px}
+ .exec-two-col{gap:16px;margin:17px 0}.exec-panel{padding:20px;border-radius:19px;box-shadow:0 6px 18px #183b2b07}
+ .exec-panel h3{font-size:17px}.exec-line{padding:12px 0;font-size:14px}
+ .exec-stock-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.exec-stock-item{padding:12px;border-radius:12px;font-size:13px}
+ .exec-today-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+ .exec-today-grid .stat{padding:15px;border-radius:14px;background:linear-gradient(145deg,#f5f8f3,#fff);border:1px solid #e5ebe2}
+ .executive-today{margin-top:25px;padding-top:22px}.executive-section-title h3{font-size:19px}
+}
+@media(min-width:700px) and (max-width:1199px){.owner-desktop-banner,.exec-visual-grid{display:none!important}}
+</style>
 </head>
 <body>
 <header class="brand-header"><div class="wrap brand-wrap" style="padding:0">
@@ -2126,8 +2163,19 @@ async function loadExecutiveDashboard(){
    const sectionChartRows=[{name:"19L سیکشن",value:Number(water.profit_before_shared)||0},{name:"تیار مال سیکشن",value:Number(finished.profit_before_shared)||0},{name:"عمومی اخراجات",value:-Math.abs(Number(shared.general_expenses)||0)},{name:"خالص نتیجہ",value:net}];
    const sectionChartMax=Math.max(1,...sectionChartRows.map(x=>Math.abs(x.value)));
    const sectionChart=sectionChartRows.map(x=>`<div class="exec-bar-row ${x.value<0?"negative":""}"><div class="exec-bar-label"><span>${x.name}</span><b>${fmt(x.value)}</b></div><div class="exec-bar-track"><i style="width:${Math.max(2,Math.abs(x.value)/sectionChartMax*100)}%"></i></div></div>`).join("");
+   const productChartRows=Object.entries(products).map(([name,r])=>({name,revenue:Number(r.revenue)||0})).filter(x=>x.revenue>0);
+   const productChartMax=Math.max(1,...productChartRows.map(x=>x.revenue));
+   const productChart=productChartRows.map(x=>`<div class="exec-bar-row"><div class="exec-bar-label"><span>${esc(x.name)}</span><b>${fmt(x.revenue)}</b></div><div class="exec-bar-track"><i style="width:${Math.max(2,x.revenue/productChartMax*100)}%"></i></div></div>`).join("");
+   const sectionChartRows=[{name:"19L سیکشن",value:Number(water.profit_before_shared)||0},{name:"تیار مال سیکشن",value:Number(finished.profit_before_shared)||0},{name:"عمومی اخراجات",value:-Math.abs(Number(shared.general_expenses)||0)},{name:"خالص نتیجہ",value:net}];
+   const sectionChartMax=Math.max(1,...sectionChartRows.map(x=>Math.abs(x.value)));
+   const sectionChart=sectionChartRows.map(x=>`<div class="exec-bar-row ${x.value<0?"negative":""}"><div class="exec-bar-label"><span>${x.name}</span><b>${fmt(x.value)}</b></div><div class="exec-bar-track"><i style="width:${Math.max(2,Math.abs(x.value)/sectionChartMax*100)}%"></i></div></div>`).join("");
    const quality=Array.isArray(data.quality_flags)?data.quality_flags:[];
   box.innerHTML=`
+   <div class="owner-desktop-banner"><div><small>OWNER'S BOARDROOM / MANAGEMENT VIEW</small><strong>MUGHAL'S PURE WATER — کاروباری جائزہ</strong><p>مالی حالت، فروخت، اسٹاک اور روزمرہ کارکردگی ایک ہی جگہ</p></div><div class="owner-desktop-mark" aria-hidden="true">MPW</div></div>
+   <div class="exec-visual-grid">
+    <section class="exec-visual-panel"><h3>پروڈکٹ کے حساب سے فروخت</h3>${productChart||'<div class="exec-chart-empty">فروخت درج ہونے کے بعد یہاں گراف ظاہر ہوگا۔</div>'}</section>
+    <section class="exec-visual-panel"><h3>سیکشن وار مالی کارکردگی</h3>${sectionChart}</section>
+   </div>
    <div class="owner-desktop-banner"><div><small>OWNER'S BOARDROOM / MANAGEMENT VIEW</small><strong>MUGHAL'S PURE WATER — کاروباری جائزہ</strong><p>مالی حالت، فروخت، اسٹاک اور روزمرہ کارکردگی ایک ہی جگہ</p></div><div class="owner-desktop-mark" aria-hidden="true">MPW</div></div>
    <div class="exec-visual-grid">
     <section class="exec-visual-panel"><h3>پروڈکٹ کے حساب سے فروخت</h3>${productChart||'<div class="exec-chart-empty">فروخت درج ہونے کے بعد یہاں گراف ظاہر ہوگا۔</div>'}</section>
