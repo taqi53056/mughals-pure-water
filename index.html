@@ -1516,7 +1516,7 @@ async function stockModule(type){
  const raw=type==="raw";
  setTitle(raw?"خام مال":"تیار مال — ابتدائی اسٹاک");
  $("moduleBody").innerHTML=`
- <p class="muted">${raw?"یہ پرانا خام مال اندراج ہے۔":"یہاں صرف پہلے سے موجود ابتدائی تیار مال درج کریں۔ روزانہ پیداوار الگ پروڈکشن اندراج سے خود اسٹاک میں شامل ہوتی ہے؛ اسے یہاں دوبارہ درج نہ کریں۔"}</p>
+ <p class="muted">${raw?"یہاں موجودہ خام مال کا ابتدائی اسٹاک یا نئی خریداری درج کریں۔ ہر خام شے الگ درج کریں۔":"یہاں صرف پہلے سے موجود ابتدائی تیار مال درج کریں۔ روزانہ پیداوار الگ پروڈکشن اندراج سے خود اسٹاک میں شامل ہوتی ہے؛ اسے یہاں دوبارہ درج نہ کریں۔ ایک تاریخ پر ہر پروڈکٹ کی ایک ہی ابتدائی انٹری ہوگی؛ دوبارہ محفوظ کرنے سے پچھلی مقدار اپڈیٹ ہوگی، جمع نہیں ہوگی۔"}</p>
  <h3>${raw?"نئی خام مال انٹری":"ابتدائی تیار مال کی انٹری"}</h3>
  <input id="sDate" type="date" value="${today()}">
  <select id="sType">
@@ -1565,7 +1565,8 @@ async function saveStock(type){
   const payload=raw?{entry_date:date,product_type:product,cartons:qty,notes:$("sNote").value.trim()||null}:{entry_date:date,product_type:product,quantity:qty,unit:product==="6L"?"bottle":"carton",notes:$("sNote").value.trim()||null};
   const signature=[type,date,product,qty,payload.unit||"carton",payload.notes||""].join("|");
   const requestId=mpwPendingRequestId("opening-stock-"+type,signature);
-  const r=await db.from(table).upsert({...payload,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
+  const conflictTarget=raw?"request_id":"entry_date,product_type";
+  const r=await db.from(table).upsert({...payload,request_id:requestId},{onConflict:conflictTarget,ignoreDuplicates:false}).select("id").maybeSingle();
   if(r.error)throw r.error;
   if(!r.data){
    const existing=await db.from(table).select("id").eq("request_id",requestId).maybeSingle();
