@@ -1116,23 +1116,20 @@ async function signupCustomer(){
   await ensureSupabase();
   const {data,error}=await db.auth.signUp({
    email,password,
-   options:{data:{full_name:name,mobile,address}}
+   options:{
+    data:{full_name:name,mobile,address},
+    emailRedirectTo:"https://taqi53056.github.io/mughals-pure-water/"
+   }
   });
   if(error)throw error;
-  if(Array.isArray(data?.user?.identities)&&data.user.identities.length===0){
-   throw new Error("یہ ای میل پہلے سے رجسٹرڈ ہے۔ لاگ اِن کریں یا دوسری ای میل استعمال کریں۔");
-  }
   if(!data?.user)throw new Error("اکاؤنٹ کی درخواست کی تصدیق نہیں ہوسکی۔ دوبارہ کوشش کریں۔");
-  const needsEmailConfirmation=!data.session;
   if(data.session){
-   const {error:signOutError}=await db.auth.signOut();
-   if(signOutError)throw new Error("درخواست بن گئی ہے، مگر سیشن بند نہیں ہوسکا۔ لاگ اِن اسکرین پر واپس آکر دوبارہ کوشش کریں۔");
+   await db.auth.signOut();
+   throw new Error("اکاؤنٹ کی حفاظت کے لیے ای میل کی تصدیق لازمی ہے۔ منتظم سے رابطہ کریں۔");
   }
   showLogin();
-  $("loginMsg").className=needsEmailConfirmation?"error":"success";
-  $("loginMsg").textContent=needsEmailConfirmation
-   ?"درخواست بن گئی ہے، لیکن ای میل تصدیق ابھی فعال ہے۔ منتظم سے کہیں کہ Auth Providers میں Confirm email بند کریں؛ اس کے بعد گاہک کو ای میل لنک کھولنے کی ضرورت نہیں ہوگی۔"
-   :"آپ کی رجسٹریشن موصول ہوگئی ہے۔ اکاؤنٹ منظوری کے انتظار میں ہے۔ منتظم کی منظوری کے بعد اسی ای میل اور پاس ورڈ سے لاگ اِن کریں۔ کوئی تصدیقی ای میل درکار نہیں۔";
+  $("loginMsg").className="success";
+  $("loginMsg").textContent="آپ کی رجسٹریشن موصول ہوگئی ہے۔ ای میل پر بھیجا گیا تصدیقی لنک کھولیں۔ آپ کی منظوری کی درخواست منتظم کو بھی پہنچ گئی ہے؛ منظوری اور ای میل تصدیق کے بعد لاگ اِن کریں۔";
  }catch(e){
   $("loginMsg").className="error";
   $("loginMsg").textContent="رجسٹریشن ناکام: "+(e?.message||String(e));
