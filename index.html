@@ -1303,8 +1303,17 @@ async function saveRawMaterialPurchase(){
    payment_method:record_type==="opening_stock"?"opening":$("rawPurchaseMethod").value,
    details:$("rawPurchaseDetails").value.trim()||null,entered_by:user?.id||null
   };
-  const {error}=await db.from("raw_material_purchases").insert(payload);
-  if(error)throw error;
+  if(record_type==="opening_stock"){
+   const {data:existing,error:lookupError}=await db.from("raw_material_purchases").select("id").eq("record_type","opening_stock").eq("material_type",type).maybeSingle();
+   if(lookupError)throw lookupError;
+   const result=existing
+    ?await db.from("raw_material_purchases").update(payload).eq("id",existing.id)
+    :await db.from("raw_material_purchases").insert(payload);
+   if(result.error)throw result.error;
+  }else{
+   const {error}=await db.from("raw_material_purchases").insert(payload);
+   if(error)throw error;
+  }
   saved=true;
   msg(record_type==="opening_stock"?"ابتدائی خام مال اسٹاک محفوظ ہوگیا۔":"خام مال کی خریداری محفوظ ہوگئی۔",true);
   $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
@@ -1394,7 +1403,7 @@ async function saveTankerPurchase(){
  let saved=false;
  try{
   const result=opening
-   ?await db.from("water_opening_stock").upsert(payload,{onConflict:"as_of_date,water_use"})
+   ?await db.from("water_opening_stock").upsert(payload,{onConflict:"water_use"})
    :await db.from("water_tanker_purchases").insert(payload);
   if(result.error)throw result.error;
   saved=true;
