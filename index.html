@@ -1389,7 +1389,7 @@ async function recordCustomerPayment(){
    if(lookupError||!existing)throw lookupError||new Error("ادائیگی کا سابقہ محفوظ ریکارڈ نہیں مل سکا۔");
    paymentRecord=existing;
   }
-  paymentSaved=true;$("paymentAmount").value="";
+  paymentSaved=true;
   const month=paymentDate.slice(0,7)+"-01";
   const bill=await syncBillBottles(customerId,month);
   await loadSelectedBill();
@@ -2126,7 +2126,7 @@ async function reportsModule(){
  setTitle("منافع اور نقصان");
  $("moduleBody").innerHTML=
  '<div class="card"><h3>آپ کے کاروبار کا حساب</h3><p class="muted">مدت منتخب کریں، باقی حساب خود ہوگا۔</p><div class="grid"><button class="secondary" onclick="setReportPeriod(&quot;day&quot;)">آج</button><button class="secondary" onclick="setReportPeriod(&quot;month&quot;)">اس ماہ</button><button class="secondary" onclick="setReportPeriod(&quot;year&quot;)">اس سال</button></div><div class="grid"><input id="rStart" type="date" value="'+monthStart+'"><input id="rEnd" type="date" value="'+today()+'"></div><button onclick="runReport()">حساب دکھائیں</button></div>'+
- '<div id="moduleTable"><div class="card muted">حساب تیار ہو رہا ہے...</div></div>'+
+ '<div id="reportResult"><div class="card muted">حساب تیار ہو رہا ہے...</div></div>'+
  '<details class="card"><summary><b>مزید مالی اختیارات</b></summary><p class="muted">یہ اندراجات صرف سرمایہ، قرض، مالک کی نکاسی یا اثاثوں کے لیے ہیں۔ خریداری، فروخت اور روزمرہ خرچ اپنے متعلقہ بٹن سے درج کریں۔</p>'+
  '<h3>سرمایہ، قرض یا مالک کی رقم</h3><input id="finDate" type="date" value="'+today()+'"><select id="finType" onchange="toggleOwnerWithdrawalField()"><option value="capital_in">مالک نے سرمایہ لگایا</option><option value="loan_received">کاروبار نے قرض لیا</option><option value="loan_repaid">قرض کی اصل رقم واپس کی</option><option value="loan_given">کسی کو قرض / ادھار دیا</option><option value="loan_collected">دوسروں سے قرض / ادھار وصول کیا</option><option value="inventory_loss">اسٹاک ضائع / خراب ہوا</option><option value="fixed_asset_purchase">مشینری / گاڑی / سامان خریدا</option><option value="fixed_asset_sale">مشینری / اثاثہ فروخت کیا</option><option value="depreciation_expense">مشینری / سامان کی فرسودگی</option><option value="interest_expense">قرض کی مالی لاگت</option><option value="interest_income">مالی آمدن</option></select>'+
  '<select id="finOwner" class="hidden"><option value="">مالک منتخب کریں</option>'+OWNER_WITHDRAWAL_RECIPIENTS.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("")+'</select>'+
@@ -2230,204 +2230,65 @@ function setReportPeriod(period){
  $("rStart").value=start;$("rEnd").value=end;runReport();
 }
 async function runReport(){
- const start=$("rStart").value,end=$("rEnd").value;
- if(!start||!end||start>end){msg("تاریخ کی حد درست منتخب کریں۔");return;}
+ const start=$("rStart")?.value,end=$("rEnd")?.value,box=$("reportResult");
+ if(!box)return;
+ if(!start||!end||start>end){box.innerHTML="<div class='warning'>تاریخ کی حد درست منتخب کریں۔</div>";return;}
+ box.innerHTML="<div class='stat'>مستند کاروباری حساب لوڈ ہو رہا ہے...</div>";
  try{
-  const [deliveries,allDeliveries,counterSales,allCounterSales,tankers,waterOpening,sales,returns,rawPurchases,production,expenses,income,allFin,periodFin,workerRows,dailyCleaningRows,stockResult,productSettingsResult]=await Promise.all([
-   financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor,owner_labor_saving","delivery_date",start,end),
-   financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor,owner_labor_saving","delivery_date",null,end),
-   financeFetchAll("counter_water_sales","sale_date,total_litres,total_amount","sale_date",start,end),
-   financeFetchAll("counter_water_sales","sale_date,total_litres,total_amount","sale_date",null,end),
-   financeFetchAll("water_tanker_purchases","purchase_date,water_use,tanker_count,rate_per_tanker,total_amount","purchase_date",null,end),
-   financeFetchAll("water_opening_stock","as_of_date,water_use,litres,total_value","as_of_date",null,end),
-   financeFetchAll("product_sales","sale_date,product_type,quantity,total_amount,unit,payment_method","sale_date",start,end),
-   financeFetchAll("product_returns","return_date,product_type,quantity,replacement_quantity","return_date",start,end),
-   financeFetchAll("raw_material_purchases","purchase_date,record_type,material_type,quantity,total_amount","purchase_date",null,end),
-   financeFetchAll("production","production_date,product_type,quantity,labor_amount","production_date",null,end),
-   financeFetchAll("business_expenses","amount,category,business_segment,payment_method","expense_date",start,end),
-   financeFetchAll("business_income","amount,category","income_date",start,end),
-   financeFetchAll("business_finance_ledger","entry_type,amount,counterparty,category","entry_date",null,end),
-   financeFetchAll("business_finance_ledger","entry_type,amount,counterparty,category","entry_date",start,end),
-   financeFetchAll("worker_ledger","entry_type,work_category,amount,entry_date","entry_date",start,end),
-   financeFetchAll("daily_cleaning_labor","amount,labor_date,worker_id,worker_name,work_category","labor_date",start,end),
-   db.rpc("get_finished_stock_summary"),
-   db.from("product_settings").select("product_type,labor_per_unit")
-  ]);
-  const sum=(rows,key)=>(rows||[]).reduce((n,r)=>n+(Number(r[key])||0),0);
-  const total=(rows,type)=>(rows||[]).filter(x=>x.entry_type===type).reduce((n,r)=>n+(Number(r.amount)||0),0);
-  const moneyVal=n=>money(Math.round((Number(n)||0)*100)/100);
-  const rawOpeningDate=type=>rawPurchases.find(x=>x.material_type===type&&x.record_type==="opening_stock")?.purchase_date||null;
-  const rawRowsFor=type=>rawPurchases.filter(x=>x.material_type===type&&(!rawOpeningDate(type)||x.record_type==="opening_stock"||x.purchase_date>=rawOpeningDate(type)));
-  const weightedRate=(type)=>{
-   const list=rawRowsFor(type),q=sum(list,"quantity");return q>0?sum(list,"total_amount")/q:null;
-  };
-  const waterPool=(use)=>{
-   const op=waterOpening.filter(x=>x.water_use===use),baseDate=op[0]?.as_of_date||null;
-   const tp=tankers.filter(x=>x.water_use===use&&(!baseDate||x.purchase_date>=baseDate));
-   const litres=sum(tp,"tanker_count")*1000+sum(op,"litres");
-   const value=sum(tp,"total_amount")+sum(op,"total_value");
-   return {litres,value,rate:litres>0?value/litres:null,baseDate};
-  };
-  const waterShop=waterPool("shop_counter"),waterFill=waterPool("product_filling");
-  const waterPerLitre=waterShop.rate;
-  const capCost=weightedRate("cap_19l");
-  const stickerCost=weightedRate("sticker")??1;
-  const tapeCost=weightedRate("tape_bundle");
-  const unitCosts={
-   "500ml":weightedRate("bottle_500ml")===null||weightedRate("carton_500ml")===null||tapeCost===null?null:
-    weightedRate("bottle_500ml")*24+weightedRate("carton_500ml")+tapeCost/200+24*stickerCost,
-   "1.5L":weightedRate("bottle_1_5l")===null||weightedRate("carton_1_5l")===null||tapeCost===null?null:
-    weightedRate("bottle_1_5l")*12+weightedRate("carton_1_5l")+tapeCost/200+12*stickerCost,
-   "6L":weightedRate("bottle_6l")===null?null:weightedRate("bottle_6l")+stickerCost
-  };
-  let productCogs=0,missingProductCosts=[];
-  for(const r of sales){
-   const q=Number(r.quantity)||0,cost=unitCosts[r.product_type];
-   if(q&&cost===null)missingProductCosts.push(r.product_type);
-   else productCogs+=q*(cost||0);
-  }
-  let returnLoss=0;
-  for(const r of returns){
-   const divisor=r.product_type==="500ml"?24:r.product_type==="1.5L"?12:1;
-   const cost=unitCosts[r.product_type]===null?null:unitCosts[r.product_type]/divisor,q=Number(r.replacement_quantity)||0;
-   if(q&&cost===null)missingProductCosts.push(r.product_type);
-   else returnLoss+=q*(cost||0);
-  }
-  const successful19=sum(deliveries,"successful_bottles");
-  const damagedCaps=sum(deliveries,"damaged_caps");
-  const counterLitres=sum(counterSales,"total_litres");
-  const deliveredLitres=successful19*19;
-  const fillWaterLitres=sales.reduce((n,r)=>n+Number(r.quantity||0)*(r.product_type==="500ml"?12:r.product_type==="1.5L"?18:0),0)+returns.reduce((n,r)=>n+Number(r.replacement_quantity||0)*(r.product_type==="500ml"?0.5:r.product_type==="1.5L"?1.5:0),0);
-  const shopWaterFor6L=sales.filter(r=>r.product_type==="6L").reduce((n,r)=>n+Number(r.quantity||0)*6,0)+returns.filter(r=>r.product_type==="6L").reduce((n,r)=>n+Number(r.replacement_quantity||0)*6,0);
-  const usedWaterLitres=deliveredLitres+counterLitres;
-  const waterCogs=waterPerLitre===null?0:usedWaterLitres*waterPerLitre;
-  const counterWaterCogs=0;
-  const fillWaterCogs=waterFill.rate===null?0:fillWaterLitres*waterFill.rate;
-  const shopWater6LCogs=waterShop.rate===null?0:shopWaterFor6L*waterShop.rate;
-  const capCogs=capCost===null?0:(successful19+damagedCaps)*capCost;
-  const revenue19=successful19*100+damagedCaps*10+sum(counterSales,"total_amount");
-  const productRevenue=sum(sales,"total_amount");
-  const otherIncome=sum(income,"amount")+total(periodFin,"interest_income");
-  const deliveryLabor=sum(deliveries,"delivery_labor");
-   const ownerDeliverySaving=sum(deliveries,"owner_labor_saving");
-  const productLaborRate=(type)=>{
-   const rows=production.filter(r=>r.product_type===type);
-   const qty=sum(rows,"quantity");
-   if(qty>0)return sum(rows,"labor_amount")/qty;
-   const setting=(productSettingsResult.data||[]).find(x=>x.product_type===type);
-   return Number(setting?.labor_per_unit)||0;
-  };
-  const productLaborCost=(type)=>{
-   const divisor=type==="500ml"?24:type==="1.5L"?12:1;
-   const sold=sum(sales.filter(x=>x.product_type===type),"quantity");
-   const replacements=sum(returns.filter(x=>x.product_type===type),"replacement_quantity");
-   return productLaborRate(type)*(sold+replacements/divisor);
-  };
-  const productionLabor=["500ml","1.5L","6L"].reduce((n,type)=>n+productLaborCost(type),0);
-  const ownerCleaningSaving=sum(dailyCleaningRows.filter(r=>r.worker_id===null&&r.worker_name==="مالک"&&r.work_category==="cleaning"),"amount");
-  const ownerWashingSaving=sum(dailyCleaningRows.filter(r=>r.worker_id===null&&r.worker_name==="مالک"&&r.work_category==="bottle washing"),"amount");
-  const supportLabor=workerRows.filter(r=>r.entry_type==="earning"&&["carton loading/unloading","cleaning","bottle washing","manual adjustment"].includes(r.work_category)).reduce((n,r)=>n+(Number(r.amount)||0),0);
-  const exp19=expenses.filter(x=>x.business_segment==="19L").reduce((n,r)=>n+(Number(r.amount)||0),0);
-  const expProducts=expenses.filter(x=>x.business_segment==="finished_goods").reduce((n,r)=>n+(Number(r.amount)||0),0);
-  const expGeneral=expenses.filter(x=>!x.business_segment||x.business_segment==="general").reduce((n,r)=>n+(Number(r.amount)||0),0);
-  const interestExpense=total(periodFin,"interest_expense");
-  const depreciation=total(periodFin,"depreciation_expense");
-  const inventoryLoss=total(periodFin,"inventory_loss");
-  const profit19=revenue19-waterCogs-counterWaterCogs-capCogs-deliveryLabor-exp19;
-  const profitProducts=productRevenue-productCogs-returnLoss-productionLabor-supportLabor-expProducts-fillWaterCogs-shopWater6LCogs;
-  const net=profit19+profitProducts+otherIncome-expGeneral-interestExpense-depreciation-inventoryLoss;
-  const missing=[];
-  if(usedWaterLitres>0&&waterShop.rate===null)missing.push("دکان والی ٹنکی (19L / 6L) کی خریداری / ابتدائی اسٹاک");
-  if(fillWaterLitres>0&&waterFill.rate===null)missing.push("500ml / 1.5L فلنگ پانی کی خریداری / ابتدائی اسٹاک");
-  if(shopWaterFor6L>0&&waterShop.rate===null)missing.push("6L دکان کے پانی کی خریداری / ابتدائی اسٹاک");
-  if(successful19+damagedCaps>0&&capCost===null)missing.push("19L ڈھکن کی خریداری");
-  if(missingProductCosts.length)missing.push("خام مال: "+[...new Set(missingProductCosts)].join("، "));
-  const complete=missing.length===0;
-  const hasActivity=deliveries.length||counterSales.length||sales.length||returns.length||expenses.length||income.length||rawPurchases.length||tankers.length||waterOpening.length||production.some(x=>x.production_date>=start&&x.production_date<=end)||workerRows.length||dailyCleaningRows.length||periodFin.length||total(periodFin,"depreciation_expense")>0||total(periodFin,"inventory_loss")>0||total(periodFin,"interest_expense")>0||total(periodFin,"interest_income")>0;
-  const stockRows=stockResult?.data||[];
-  const stockText=stockResult?.error?"تیار مال کا اسٹاک ابھی لوڈ نہیں ہوا":stockRows.map(x=>x.product_type+": "+Number(x.available_quantity||0)+" "+(x.unit==="bottle"?"بوتل":"کارٹن")).join(" — ");
-  // خام مال کی مقدار اور روپے میں قدر: ابتدائی اسٹاک + خریداری - پیداوار میں استعمال
-  const producedQty=type=>production.filter(x=>x.product_type===type).reduce((n,x)=>n+(Number(x.quantity)||0),0);
-  const allSuccessful19=sum(allDeliveries,"successful_bottles"),allDamagedCaps=sum(allDeliveries,"damaged_caps");
-  const rawProductionQty=(product,material)=>production.filter(x=>x.product_type===product&&(!rawOpeningDate(material)||x.production_date>=rawOpeningDate(material))).reduce((n,x)=>n+(Number(x.quantity)||0),0);
-  const rawDeliveries=allDeliveries.filter(x=>!rawOpeningDate("cap_19l")||x.delivery_date>=rawOpeningDate("cap_19l"));
-  const rawUse={
-   bottle_500ml:rawProductionQty("500ml","bottle_500ml")*24,
-   bottle_1_5l:rawProductionQty("1.5L","bottle_1_5l")*12,
-   bottle_6l:rawProductionQty("6L","bottle_6l"),
-   carton_500ml:rawProductionQty("500ml","carton_500ml"),
-   carton_1_5l:rawProductionQty("1.5L","carton_1_5l"),
-   tape_bundle:(rawProductionQty("500ml","tape_bundle")+rawProductionQty("1.5L","tape_bundle"))/200,
-   sticker:rawProductionQty("500ml","sticker")*24+rawProductionQty("1.5L","sticker")*12+rawProductionQty("6L","sticker"),
-   cap_19l:rawDeliveries.reduce((n,x)=>n+Number(x.successful_bottles||0)+Number(x.damaged_caps||0),0)
-  };
-  const rawUnits={bottle_500ml:"بوتل",bottle_1_5l:"بوتل",bottle_6l:"بوتل",carton_500ml:"کارٹن",carton_1_5l:"کارٹن",tape_bundle:"بنڈل",sticker:"عدد",cap_19l:"عدد"};
-  const rawLabels={bottle_500ml:"500ml خالی بوتلیں",bottle_1_5l:"1.5L خالی بوتلیں",bottle_6l:"6L خالی بوتلیں",carton_500ml:"500ml کارٹن",carton_1_5l:"1.5L کارٹن",tape_bundle:"ٹیپ بنڈل",sticker:"اسٹیکر",cap_19l:"19L ڈھکن"};
-  const rawValuation=Object.keys(rawUse).map(type=>{
-   const rows=rawRowsFor(type),qty=sum(rows,"quantity"),value=sum(rows,"total_amount"),rate=qty>0?value/qty:null,onHand=qty-rawUse[type];
-   return {type,qty,onHand,rate,value:rate===null?null:Math.max(0,onHand)*rate,negative:onHand<-.0001};
-  });
-  const rawStockValue=rawValuation.reduce((n,x)=>n+(x.value||0),0);
-  const rawStockComplete=rawValuation.every(x=>x.rate!==null&&!x.negative);
-  const rawStockText=rawValuation.map(x=>rawLabels[x.type]+": "+x.onHand.toFixed(2)+" "+rawUnits[x.type]+" — "+(x.rate===null?"لاگت نامعلوم":moneyVal(x.value))+(x.negative?" — اسٹاک منفی، ریکارڈ درست کریں":"")).join("؛ ");
-  const fillWaterRemaining=waterFill.litres-production.filter(x=>x.product_type==="500ml"&&(!waterFill.baseDate||x.production_date>=waterFill.baseDate)).reduce((n,x)=>n+Number(x.quantity||0)*12,0)-production.filter(x=>x.product_type==="1.5L"&&(!waterFill.baseDate||x.production_date>=waterFill.baseDate)).reduce((n,x)=>n+Number(x.quantity||0)*18,0);
-  const shopWaterRemaining=waterShop.litres-(
-   allDeliveries.filter(x=>!waterShop.baseDate||x.delivery_date>=waterShop.baseDate).reduce((n,x)=>n+Number(x.successful_bottles||0)*19,0)+
-   allCounterSales.filter(x=>!waterShop.baseDate||x.sale_date>=waterShop.baseDate).reduce((n,x)=>n+Number(x.total_litres||0),0)+
-   production.filter(x=>x.product_type==="6L"&&(!waterShop.baseDate||x.production_date>=waterShop.baseDate)).reduce((n,x)=>n+Number(x.quantity||0)*6,0)
-  );
-  const finishedStockValuation=stockRows.map(x=>{
-   const type=x.product_type,qty=Number(x.available_quantity)||0,waterRate=type==="500ml"||type==="1.5L"?waterFill.rate:waterShop.rate;
-   const litres=type==="500ml"?12:type==="1.5L"?18:6;
-   const material=unitCosts[type],labor=productLaborRate(type);
-   const complete=end===today()&&material!==null&&waterRate!==null;
-   const unitCost=complete?material+waterRate*litres+labor:null;
-   return {type,qty,unit:x.unit,unitCost,value:unitCost===null?null:qty*unitCost};
-  });
-  const finishedStockValue=finishedStockValuation.reduce((n,x)=>n+(x.value||0),0);
-  const finishedStockText=end===today()?finishedStockValuation.map(x=>x.type+": "+x.qty+" "+(x.unit==="bottle"?"بوتل":"کارٹن")+" — "+(x.value===null?"لاگت نامکمل":moneyVal(x.value))).join("؛ "):"پچھلی تاریخ کی رپورٹ میں موجودہ تیار مال کی مالیت شامل نہیں کی گئی؛ آج کی تاریخ منتخب کریں۔";
-  const ownerNames=[...new Set(periodFin.filter(x=>x.entry_type==="owner_withdrawal").map(x=>x.counterparty).filter(Boolean))];
-  const ownerWithdrawals=ownerNames.map(name=>({name,amount:periodFin.filter(x=>x.entry_type==="owner_withdrawal"&&x.counterparty===name).reduce((n,r)=>n+(Number(r.amount)||0),0)}));
-  const totalWithdraw=total(periodFin,"owner_withdrawal");
-  const capital=total(allFin,"capital_in");
-  const loanIn=total(allFin,"loan_received"),loanRepay=total(allFin,"loan_repaid");
-  const loanGiven=total(allFin,"loan_given"),loanCollected=total(allFin,"loan_collected");
-  const rawSpend=rawPurchases.filter(x=>x.purchase_date>=start&&x.record_type!=="opening_stock").reduce((n,r)=>n+(Number(r.total_amount)||0),0);
-  const tankerSpend=tankers.filter(x=>x.purchase_date>=start).reduce((n,r)=>n+(Number(r.total_amount)||0),0);
-  const assetPurchases=total(periodFin,"fixed_asset_purchase"),assetSales=total(periodFin,"fixed_asset_sale");
-  const fmt=(n)=>moneyVal(n);
-  const productBreakdown=["500ml","1.5L","6L"].map(type=>{
-   const rev=sum(sales.filter(x=>x.product_type===type),"total_amount");
-   const soldQty=sum(sales.filter(x=>x.product_type===type),"quantity");
-   const cost=unitCosts[type]===null?null:soldQty*unitCosts[type];
-   const returned=sum(returns.filter(x=>x.product_type===type),"replacement_quantity");
-   const divisor=type==="500ml"?24:type==="1.5L"?12:1;
-   const loss=unitCosts[type]===null?null:returned*(unitCosts[type]/divisor);
-   const labor=productLaborCost(type);
-   const known=cost===null||loss===null?null:rev-cost-loss-labor;
-   return {type,rev,cost,returned,loss,labor,known};
-  });
-  const detailedMarkup=
-   "<h3>"+start+" سے "+end+" تک — تفصیلی حساب</h3>"+
-   "<div class='card'><h3>19L پانی کا شعبہ</h3><div class='stat'>گھریلو ڈلیوری اور ڈھکن آمدن: <b>"+fmt(successful19*100+damagedCaps*10)+"</b></div><div class='stat'>کاؤنٹر فروخت: <b>"+fmt(sum(counterSales,"total_amount"))+"</b> — "+counterLitres+" لیٹر</div><div class='stat'>19L کی کل آمدن: <b>"+fmt(revenue19)+"</b></div><div class='stat'>19L ڈلیوری پانی کی لاگت: <b>"+fmt(waterCogs)+"</b></div><div class='stat'>19L کاؤنٹر پانی کی لاگت: <b>"+fmt(counterWaterCogs)+"</b></div><div class='stat'>تمام استعمال شدہ ڈھکنوں کی لاگت (کامیاب بوتلیں + خراب ڈھکن): <b>"+fmt(capCogs)+"</b></div><div class='stat'>ملازمین کی حقیقی ڈلیوری مزدوری: <b>"+fmt(deliveryLabor)+"</b></div><div class='stat'>مالک کی اپنی ڈلیوری سے مزدوری کی بچت: <b>"+fmt(ownerDeliverySaving)+"</b></div><div class='stat'>مالک کی صفائی سے ممکنہ بچت: <b>"+fmt(ownerCleaningSaving)+"</b></div><div class='stat'>مالک کی بوتل دھلائی سے ممکنہ بچت: <b>"+fmt(ownerWashingSaving)+"</b></div><div class='stat'>19L شعبے کے اخراجات: <b>"+fmt(exp19)+"</b></div><div class='total'>19L شعبے کا نتیجہ: "+fmt(profit19)+"</div></div>"+
-   "<div class='card'><h3>500ml، 1.5L اور 6L مصنوعات</h3>"+
-   productBreakdown.map(x=>"<div class='stat'><b>"+x.type+"</b><br>فروخت: "+fmt(x.rev)+"<br>خام مال / پیکنگ: "+(x.cost===null?"لاگت نامکمل":fmt(x.cost))+"<br>متبادل بوتلوں کا نقصان: "+(x.loss===null?"لاگت نامکمل":fmt(x.loss))+"<br>پروڈکشن مزدوری: "+fmt(x.labor)+"<br><b>مشترکہ خرچ سے پہلے حصہ: "+(x.known===null?"لاگت نامکمل":fmt(x.known))+"</b></div>").join("")+
-   "<div class='stat'>تینوں مصنوعات کی مجموعی فروخت: <b>"+fmt(productRevenue)+"</b></div><div class='stat'>خام مال اور پیکنگ کی مجموعی لاگت: <b>"+fmt(productCogs)+"</b></div><div class='stat'>خراب مال کی تبدیلی کا نقصان: <b>"+fmt(returnLoss)+"</b></div><div class='stat'>فلنگ پانی: "+fillWaterLitres+" لیٹر — "+fmt(fillWaterCogs)+"</div><div class='stat'>6L پانی: "+shopWaterFor6L+" لیٹر — "+fmt(shopWater6LCogs)+"</div><div class='stat'>پروڈکشن مزدوری: <b>"+fmt(productionLabor)+"</b></div><div class='stat'>مشترکہ لوڈنگ، صفائی اور دھلائی مزدوری: <b>"+fmt(supportLabor)+"</b></div><div class='stat'>مصنوعات کی ترسیل اور دیگر اخراجات: <b>"+fmt(expProducts)+"</b></div><div class='total'>مصنوعات کے شعبے کا نتیجہ: "+fmt(profitProducts)+"</div><p class='muted'>ہر پروڈکٹ کا حصہ مشترکہ لوڈنگ، صفائی اور ترسیل کے اخراجات سے پہلے ہے؛ یہ اخراجات نیچے شعبے کے مجموعی حساب میں شامل ہیں۔</p></div>"+
-   "<div class='card'><h3>مشترکہ خرچ اور مجموعی نتیجہ</h3><div class='stat'>دکان کا کرایہ، بجلی اور مشترکہ اخراجات: <b>"+fmt(expGeneral)+"</b></div><div class='stat'>قرض کی مالی لاگت: <b>"+fmt(interestExpense)+"</b></div><div class='stat'>اثاثوں کی فرسودگی: <b>"+fmt(depreciation)+"</b></div><div class='stat'>دیگر آمدن / مالی آمدن: <b>"+fmt(otherIncome)+"</b></div><div class='total'>"+(!hasActivity?"ابھی کاروباری نتیجہ دستیاب نہیں":complete?"مجموعی خالص منافع / نقصان":"عارضی مجموعی نتیجہ") +": "+(hasActivity?fmt(Math.abs(net))+(net>=0?" منافع":" نقصان"):"ابھی اندراجات موجود نہیں")+"</div>"+
-   (complete?"":"<p class='warning'>حتمی منافع کے لیے یہ خریداری لاگتیں درج ہونا ضروری ہیں: "+missing.join("، ")+"۔</p>")+
-   "<p class='muted'>ہر شعبے کا الگ نتیجہ مشترکہ اخراجات سے پہلے دکھایا گیا ہے۔ مجموعی نتیجے میں مشترکہ اخراجات منہا ہیں۔ خام مال اور ٹینکر کی خریداری کو فوراً خرچ نہیں گنا؛ استعمال شدہ مال کی لاگت شامل ہے۔</p></div>"+
-   "<div class='card'><h3>اسٹاک کی صورتِ حال اور روپے میں مالیت</h3><div class='stat'>موجودہ تیار مال (آج): <b>"+esc(stockText)+"</b></div><div class='stat'>تیار مال کی تخمینی مالیت (خام مال + پانی + پروڈکشن مزدوری): <b>"+(end!==today()?"صرف آج کی رپورٹ میں دستیاب":finishedStockValuation.some(x=>x.value===null)?"کچھ لاگت نامکمل":fmt(finishedStockValue))+"</b><p class='muted'>"+esc(finishedStockText)+"</p></div><div class='stat'>خام مال کی تخمینی موجودہ مالیت: <b>"+(rawStockComplete?fmt(rawStockValue):"نامکمل — خریداری/ابتدائی مقدار یا استعمال کی جانچ کریں")+"</b><p class='muted'>"+esc(rawStockText)+"</p></div><div class='stat'>پانی کا باقی اسٹاک الگ الگ: <b>مشترکہ دکان والی ٹنکی (19L ڈلیوری + کاؤنٹر + 6L) "+fmt(shopWaterRemaining)+" لیٹر؛ پروڈکشن والی ٹنکی (500ml + 1.5L) "+fmt(fillWaterRemaining)+" لیٹر</b></div><div class='stat'>اس مدت میں خام مال کی خریداری: <b>"+fmt(rawSpend)+"</b></div><div class='stat'>اس مدت میں ٹینکر خریداری: <b>"+fmt(tankerSpend)+"</b></div><div class='stat'>پانی کی اوسط لاگت: <b>"+(waterPerLitre===null?"19L ڈلیوری کا ریکارڈ موجود نہیں":fmt(waterPerLitre*19)+" فی 19 لیٹر؛ فلنگ "+(waterFill.rate===null?"—":fmt(waterFill.rate)+" فی لیٹر")+"؛ دکان "+(waterShop.rate===null?"—":fmt(waterShop.rate)+" فی لیٹر"))+"</b></div><p class='muted'>یہ تخمینہ ابتدائی اسٹاک اور خریداری میں درج مقداروں سے پیداوار/استعمال منہا کرکے بنتا ہے۔ کلیم کے بدلے مفت بوتلوں، بغیر اندراج کے ضیاع، یا غیر درج شدہ ابتدائی مقدار سے فرق آسکتا ہے۔ منفی خام مال مقدار ہو تو پہلے اسٹاک/استعمال کا ریکارڈ درست کریں۔</p></div>"+
-   "<div class='card'><h3>مالکان کی ذاتی نکاسی</h3>"+(ownerWithdrawals.length?ownerWithdrawals.map(x=>"<div class='stat'>"+esc(x.name)+": <b>"+fmt(x.amount)+"</b></div>").join(""):"اس مدت میں کوئی ذاتی نکاسی درج نہیں ہوئی۔")+"<div class='total'>کل ذاتی نکاسی: "+fmt(totalWithdraw)+"</div><p class='muted'>یہ رقم کاروباری خرچ نہیں، اس لیے منافع یا نقصان سے منہا نہیں ہوتی۔ مکمل ریکارڈ کے لیے الگ بٹن کھولیں۔</p></div>"+
-   "<div class='card'><h3>سرمایہ، قرض اور اثاثے</h3><div class='stat'>درج شدہ سرمایہ: <b>"+fmt(capital)+"</b></div><div class='stat'>کاروبار کا قرض: وصول "+fmt(loanIn)+" — اصل رقم واپس "+fmt(loanRepay)+" — باقی "+fmt(loanIn-loanRepay)+"</div><div class='stat'>دوسروں کو دیا قرض: "+fmt(loanGiven)+" — واپس وصول "+fmt(loanCollected)+" — باقی "+fmt(loanGiven-loanCollected)+"</div><div class='stat'>اثاثے خریدے: "+fmt(assetPurchases)+" — اثاثے فروخت: "+fmt(assetSales)+"</div><div class='stat'>اسٹاک اور ٹینکر کی خریداری کی نقد ادائیگی الگ ہے؛ یہ فوری منافع کا خرچ نہیں۔</div></div>";
-  const headline=!hasActivity?"ابھی کوئی اندراج نہیں":!complete?"حساب نامکمل":net>=0?"منافع":"نقصان";
-  const amountText=hasActivity?fmt(Math.abs(net)):"—";
-  const statusText=!hasActivity?"خریداری، پیداوار یا فروخت درج ہونے پر حساب نظر آئے گا":complete?"تمام ضروری لاگتیں موجود ہیں":"کچھ خریداری لاگت درج کرنا باقی ہے";
-  $("moduleTable").innerHTML=
-   "<div class='card' style='border-top:4px solid var(--gold)'><p class='muted'>"+start+" تا "+end+"</p><h2>"+headline+"</h2><div class='total' style='font-size:30px;margin:8px 0'>"+amountText+" روپے</div><p>"+statusText+"</p><div class='grid'><div class='stat'>کل فروخت <b>"+fmt(revenue19+productRevenue)+"</b></div><div class='stat'>کاروباری آمدن <b>"+fmt(revenue19+productRevenue+otherIncome)+"</b></div></div>"+(complete||!hasActivity?"":"<div class='warning'>حتمی حساب کے لیے: "+missing.map(esc).join("، ")+"</div>")+"</div>"+
-   "<div class='card'><h3>اسٹاک کی مختصر صورتِ حال</h3><p>"+esc(stockText)+"</p></div>"+
-   "<details class='card'><summary><b>تفصیلی حساب دیکھیں</b></summary>"+detailedMarkup+"</details>";
-
- }catch(e){msg("مالی رپورٹ نہیں بنی: "+e.message);}
+  // ایک ہی server-side رپورٹ تمام ڈیش بورڈ، ماہانہ کلوزنگ اور تفصیلی رپورٹ کے لیے استعمال ہوتی ہے۔
+  const {data,error}=await db.rpc("get_management_dashboard",{p_month_start:start,p_month_end:end});
+  if(error)throw error;
+  const r=data?.profit_and_loss;
+  if(!r)throw new Error("سرور سے مکمل رپورٹ موصول نہیں ہوئی۔");
+  const seg=r.segments||{},water=seg["19L"]||{},products=seg.finished_goods||{},shared=seg.shared||{};
+  const product=r.products||{},owners=r.owner_withdrawals||{},loans=r.capital_and_loans||{},stock=r.stock_estimate||{};
+  const fmt=v=>money(Number(v)||0),net=Number(seg.net_profit)||0;
+  const revenue=(Number(water.revenue)||0)+(Number(products.revenue)||0);
+  const status=!r.has_pnl_activity?"منافع و نقصان کی سرگرمی ابھی درج نہیں":!r.complete?"لاگت نامکمل — نتیجہ عارضی":net>=0?"منافع":"نقصان";
+  const missing=(r.missing_costs||[]).map(x=>"<li>"+esc(x)+"</li>").join("");
+  const kpi=(label,value,note="")=>"<div class='exec-kpi'><span>"+label+"</span><strong>"+value+"</strong>"+(note?"<small>"+note+"</small>":"")+"</div>";
+  const line=(label,value)=>"<div class='exec-line'><span>"+label+"</span><b>"+value+"</b></div>";
+  const productRows=["500ml","1.5L","6L"].map(type=>{
+   const p=product[type]||{};
+   return "<tr><td>"+type+"</td><td>"+fmt(p.quantity)+"</td><td>"+fmt(p.revenue)+"</td><td>"+(p.unit_cost==null?"لاگت نامعلوم":fmt(p.unit_cost))+"</td><td>"+fmt(p.production_labor)+"</td></tr>";
+  }).join("");
+  const ownerRows=Object.entries(owners).filter(([key])=>key!=="total").map(([name,value])=>line(esc(name),fmt(value))).join("");
+  const stockRows=[
+   ["19L ڈھکن",stock.raw_19l_caps,"عدد"],["500ml بوتلیں",stock.raw_500ml_bottles,"عدد"],["1.5L بوتلیں",stock.raw_1_5l_bottles,"عدد"],
+   ["6L بوتلیں",stock.raw_6l_bottles,"عدد"],["500ml کارٹن",stock.cartons_500ml,"کارٹن"],["1.5L کارٹن",stock.cartons_1_5l,"کارٹن"],
+   ["ٹیپ بنڈل",stock.tape_bundles,"بنڈل"],["اسٹیکر",stock.stickers,"عدد"],["تیار 500ml",stock.finished_500ml_cartons,"کارٹن"],
+   ["تیار 1.5L",stock.finished_1_5l_cartons,"کارٹن"],["تیار 6L",stock.finished_6l_bottles,"بوتل"]
+  ].map(([label,value,unit])=>"<div class='exec-stock-item'><span>"+label+"</span><b>"+(value==null?"—":Number(value).toLocaleString("ur-PK")+" "+unit)+"</b></div>").join("");
+  const previous=Number(data.previous_period?.segments?.net_profit)||0;
+  box.innerHTML=
+   "<div class='exec-kpi-grid'>"+
+    kpi("کاروباری نتیجہ",r.has_pnl_activity?fmt(Math.abs(net))+" روپے":"—",status)+
+    kpi("کل فروخت",fmt(revenue)+" روپے","19L اور تیار مصنوعات")+
+    kpi("دیگر آمدن",fmt((Number(shared.other_income)||0))+" روپے")+
+    kpi("19L شعبہ",fmt(water.profit_before_shared)+" روپے")+
+    kpi("مصنوعات کا شعبہ",fmt(products.profit_before_shared)+" روپے")+
+    kpi("مالکان کی نکاسی",fmt(owners.total)+" روپے")+
+   "</div>"+
+   "<div class='exec-panel'><h3>حساب کی حیثیت</h3><p>"+esc(status)+"</p>"+
+    (missing?"<div class='warning'>حتمی حساب سے پہلے یہ لاگتیں درج کریں:<ul>"+missing+"</ul></div>":"<p class='success'>اس رپورٹ میں مطلوبہ لاگتیں موجود ہیں۔</p>")+
+    "<p class='muted'>یہ کاروباری انتظامی رپورٹ ہے؛ مکمل ڈبل انٹری جنرل لیجر یا قانونی مالیاتی اسٹیٹمنٹ نہیں۔</p></div>"+
+   "<details class='card'><summary><b>تفصیلی آمدن اور اخراجات</b></summary>"+
+    "<div class='exec-two-col'><section class='exec-panel'><h3>19L شعبہ</h3>"+
+     line("آمدن",fmt(water.revenue))+line("پانی کی لاگت",fmt(water.water_cost))+line("ڈھکن کی لاگت",fmt(water.cap_cost))+line("ڈلیوری مزدوری",fmt(water.delivery_labor))+line("شعبہ جاتی خرچ",fmt(water.segment_expenses))+line("شعبے کا نتیجہ",fmt(water.profit_before_shared))+
+    "</section><section class='exec-panel'><h3>تیار مصنوعات</h3>"+
+     line("فروخت",fmt(products.revenue))+line("خام مال و پیکنگ",fmt(products.material_packaging_cost))+line("متبادل مال کا نقصان",fmt(products.replacement_loss))+line("پروڈکشن مزدوری",fmt(products.production_labor))+line("معاون مزدوری",fmt(products.support_labor))+line("فلنگ پانی",fmt(products.filling_water_cost))+line("6L پانی",fmt(products.shop_water_cost_for_6l))+line("شعبہ جاتی خرچ",fmt(products.segment_expenses))+line("شعبے کا نتیجہ",fmt(products.profit_before_shared))+
+    "</section></div><section class='exec-panel'><h3>مشترکہ حساب</h3>"+
+     line("عمومی اخراجات",fmt(shared.general_expenses))+line("مالی لاگت",fmt(shared.interest_expense))+line("فرسودگی",fmt(shared.depreciation))+line("اسٹاک نقصان",fmt(shared.inventory_loss))+line("دیگر آمدن",fmt(shared.other_income))+line("مجموعی نتیجہ",fmt(net))+
+    "</section></details>"+
+   "<details class='card'><summary><b>پروڈکٹ وار فروخت اور لاگت</b></summary><div class='tablewrap'><table><tr><th>پروڈکٹ</th><th>مقدار</th><th>فروخت</th><th>فی یونٹ لاگت</th><th>مزدوری</th></tr>"+productRows+"</table></div></details>"+
+   "<details class='card'><summary><b>مالکان کی ذاتی نکاسی</b></summary>"+(ownerRows||"کوئی نکاسی درج نہیں") +line("کل نکاسی",fmt(owners.total))+"</details>"+
+   "<details class='card'><summary><b>سرمایہ اور قرض</b></summary>"+
+    line("درج شدہ سرمایہ",fmt(loans.capital))+line("قرض وصول",fmt(loans.loan_received))+line("قرض واپس",fmt(loans.loan_repaid))+line("باقی قرض",fmt(loans.loan_balance))+line("دوسروں کو دیا قرض",fmt(loans.loan_given))+line("واپس وصول",fmt(loans.loan_collected))+line("قابل وصول باقی",fmt(loans.receivable_balance))+
+   "</details>"+
+   "<details class='card'><summary><b>اسٹاک کی موجودہ مقدار</b></summary><div class='exec-stock-grid'>"+stockRows+"</div><p class='muted'>"+esc(r.notes||"")+"</p></details>";
+ }catch(e){
+  box.innerHTML="<div class='warning'>رپورٹ تیار نہیں ہوئی: "+esc(e?.message||String(e))+"</div>";
+ }
 }
 /* مالک کی ذاتی نکاسی — کاروباری خرچ سے الگ */
 const OWNER_WITHDRAWAL_RECIPIENTS=Object.freeze(["M. Muzamil Mughal","M.Taqi Mughal","M.Usama Mughal","M. Rafi Mughal"]);
