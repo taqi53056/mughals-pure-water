@@ -1619,16 +1619,23 @@ async function saveSale(){
  if(!confirmLargeEntry("فروخت کی مقدار",c.qty,100)||!confirmLargeEntry("فروخت کی کل رقم (روپے)",c.total,1000))return;
  if(button)button.disabled=true;
  try{
+  const saleDate=$("saleDate").value;
+  const saleWorkerId=c.type==="6L"?null:(Number($("saleWorker").value)||null);
+  const salePaymentMethod=$("salePaymentMethod").value;
+  const requestSignature=[saleDate,c.type,c.qty,c.price,saleWorkerId||"",salePaymentMethod].join("|");
+  const requestId=mpwPendingRequestId("product-sale",requestSignature);
   const {data,error}=await db.rpc("record_product_sale",{
-   p_sale_date:$('saleDate').value,
+   p_sale_date:saleDate,
    p_product_type:c.type,
    p_quantity:c.qty,
-   p_worker_id:c.type==="6L"?null:(Number($("saleWorker").value)||null),
+   p_worker_id:saleWorkerId,
    p_unit_price:c.price,
-   p_payment_method:$("salePaymentMethod").value
+   p_payment_method:salePaymentMethod,
+   p_request_id:requestId
   });
   if(error)throw error;
   if(!data||!data.sale_id)throw new Error("ڈیٹابیس سے سیل کی تصدیق موصول نہیں ہوئی۔");
+  mpwClearPendingRequestId("product-sale");
   const ownerSelected=$("saleWorker")?.selectedOptions?.[0]?.dataset.owner==="true";
   msg("سیل محفوظ ہوگئی: "+money(data.total_amount)+(ownerSelected?"۔ مالک کی ممکنہ بچت: "+money(data.owner_saved_labor||0):(data.labor_amount?"۔ ورکر کی واجب الادا مزدوری: "+money(data.labor_amount):"۔ ورکر منتخب نہیں، اس لیے مزدوری درج نہیں ہوئی۔")),true);
   $("saleQty").value="";salePricePreview();
