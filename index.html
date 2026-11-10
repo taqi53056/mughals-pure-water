@@ -982,8 +982,8 @@ async function loadDailyDeliveries(){
  if(error){$("moduleTable").textContent=error.message;return}
  const names=await getActiveCustomers().catch(()=>customerList);
  const {data:workers}=await db.from("workers").select("id,full_name,is_owner");
- $("moduleTable").innerHTML="<h3>تمام ڈلیوریاں (نئی تاریخ پہلے)</h3><table><tr><th>تاریخ</th><th>گاہک</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th><th>ورکر</th><th>مزدوری</th></tr>"+
- (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));let w=(workers||[]).find(x=>Number(x.id)===Number(d.worker_id));return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${d.empty_bottles_returned}</td><td>${d.successful_bottles}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${esc(w?.is_owner?"Owner (مالک)":w?.full_name||"مالک / غیر منسلک")}</td><td>${money(d.delivery_labor)}</td></tr>`}).join("")+"</table>";
+ $("moduleTable").innerHTML="<h3>تمام ڈلیوریاں (نئی تاریخ پہلے)</h3><table><tr><th>تاریخ</th><th>گاہک</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th><th>ورکر</th><th>حقیقی مزدوری خرچ</th><th>مالک کی مزدوری بچت</th></tr>"+
+ (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));let w=(workers||[]).find(x=>Number(x.id)===Number(d.worker_id));return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${d.empty_bottles_returned}</td><td>${d.successful_bottles}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${esc(w?.full_name||"مالک")}</td><td>${money(d.delivery_labor)}</td><td>${money(d.owner_labor_saving)}</td></tr>`}).join("")+"</table>";
 }
 
 /* ماہانہ بل */
