@@ -2974,8 +2974,9 @@ async function toggleWorkerStatus(workerId){
  if(worker.is_owner){msg("مالک کا ریکارڈ غیر فعال نہیں کیا جا سکتا۔");return;}
  const next=!worker.is_active;
  if(!confirm("کیا "+worker.full_name+" کو "+(next?"دوبارہ فعال":"غیر فعال")+" کرنا ہے؟ پرانا لیجر اور بقایا محفوظ رہے گا۔ "+(next?"دوبارہ کام کے لیے منتخب ہو سکے گا۔":"نئے کام کے لیے منتخب نہیں ہوگا، مگر ادائیگی اور پرانا حساب جاری رہے گا۔")))return;
- const {error}=await db.from("workers").update({is_active:next}).eq("id",workerId).eq("is_owner",false);
+ const {data:updated,error}=await db.from("workers").update({is_active:next}).eq("id",workerId).eq("is_owner",false).select("id,is_active").maybeSingle();
  if(error){msg("ورکر کی حیثیت تبدیل نہیں ہوئی: "+error.message);return;}
+ if(!updated){msg("ورکر کی حیثیت تبدیل نہیں ہوئی؛ ریکارڈ میں کوئی تبدیلی نہیں ہوئی۔");return;}
  msg("ورکر "+(next?"دوبارہ فعال":"غیر فعال")+" ہوگیا؛ سابقہ لیجر محفوظ ہے۔",true);
  await loadWorkers();
 }
