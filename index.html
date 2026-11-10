@@ -905,7 +905,7 @@ async function loadWorkerOptions(selected=""){
  const sel=$("dWorker");if(!sel)return;
  const {data,error}=await db.from("workers").select("id,full_name,is_owner").eq("is_active",true).contains("work_categories",["19L delivery"]).order("full_name");
  if(error){sel.innerHTML=`<option value="">ورکر فہرست دستیاب نہیں</option>`;return;}
- sel.innerHTML=`<option value="">کوئی ورکر مقرر نہیں — مالک / غیر منسوب</option>`+(data||[]).map(w=>`<option value="${w.id}" data-owner="${w.is_owner===true}">${esc(w.is_owner?"مالک (Owner)":w.full_name)}</option>`).join("");sel.value=selected||"";
+ sel.innerHTML=`<option value="">مالک نے خود ڈلیوری کی</option>`+(data||[]).filter(w=>!w.is_owner).map(w=>`<option value="${w.id}" data-owner="false">${esc(w.full_name)}</option>`).join("");sel.value=selected||"";
 }
 
 function calcDelivery(){
@@ -913,13 +913,13 @@ function calcDelivery(){
  const caps=Number($("dCaps")?.value)||0;
  const success=Math.min(out,back),diff=Math.max(0,out-back);
  $("dSuccess").textContent=success;$("dDiff").textContent=back>out?"غلط اندراج":diff;
- const owner=$("dWorker")?.selectedOptions?.[0]?.dataset.owner==="true";
- $("dLabor").textContent=money($("dWorker")?.value&&!owner?success*20:0);
- if($("dOwnerSaving"))$("dOwnerSaving").textContent=money(owner?success*20:0);
+ const workerSelected=!!$("dWorker")?.value;
+ $("dLabor").textContent=money(workerSelected?success*20:0);
+ if($("dOwnerSaving"))$("dOwnerSaving").textContent=money(workerSelected?0:success*20);
  if($("dCapAmount"))$("dCapAmount").textContent=money(caps*10);
  $("dWarn").classList.toggle("hidden",diff===0);
- const isOwner=$("dWorker")?.selectedOptions?.[0]?.dataset.owner==="true";
- const labor=$("dWorker")?.value&&!isOwner?success*20:0;
+ const isOwner=!$("dWorker")?.value;
+ const labor=isOwner?0:success*20;
  return {out,back,caps,capAmount:caps*10,success,diff,labor,isOwner,ownerSaving:isOwner?success*20:0,invalid:back>out};
 }
 
@@ -944,7 +944,7 @@ async function saveDelivery(){
  if(c.caps>0&&!confirm(c.caps+" خراب ڈھکن × Rs.10 = "+money(c.capAmount)+". کیا محفوظ کرنا ہے؟"))return;
  if(!confirmLargeEntry("19L بوتلوں کی تعداد",c.out,100)||!confirmLargeEntry("خراب ڈھکنوں کی تعداد",c.caps,50))return;
  const workerId=$("dWorker")?.value||null;
- const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
+ const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
  // ہر محفوظ کرنے پر نئی ڈلیوری بنے گی؛ اسی دن کا پرانا ریکارڈ overwrite نہیں ہوگا۔
  const {data:saved,error:saveError}=await db.from("customer_19l_deliveries").insert(payload).select("id").single();
  if(saveError){msg("ڈلیوری محفوظ نہیں ہوئی: "+saveError.message);return}
@@ -1687,8 +1687,8 @@ async function runReport(){
  if(!start||!end||start>end){msg("تاریخ کی حد درست منتخب کریں۔");return;}
  try{
   const [deliveries,allDeliveries,counterSales,allCounterSales,tankers,waterOpening,sales,returns,rawPurchases,production,expenses,income,allFin,periodFin,workerRows,dailyCleaningRows,stockResult,productSettingsResult]=await Promise.all([
-   financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor","delivery_date",start,end),
-   financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor","delivery_date",null,end),
+   financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor,owner_labor_saving","delivery_date",start,end),
+   financeFetchAll("customer_19l_deliveries","delivery_date,successful_bottles,damaged_caps,delivery_labor,owner_labor_saving","delivery_date",null,end),
    financeFetchAll("counter_water_sales","sale_date,total_litres,total_amount","sale_date",start,end),
    financeFetchAll("counter_water_sales","sale_date,total_litres,total_amount","sale_date",null,end),
    financeFetchAll("water_tanker_purchases","purchase_date,water_use,tanker_count,rate_per_tanker,total_amount","purchase_date",null,end),
@@ -1760,6 +1760,7 @@ async function runReport(){
   const productRevenue=sum(sales,"total_amount");
   const otherIncome=sum(income,"amount")+total(periodFin,"interest_income");
   const deliveryLabor=sum(deliveries,"delivery_labor");
+   const ownerDeliverySaving=sum(deliveries,"owner_labor_saving");
   const productLaborRate=(type)=>{
    const rows=production.filter(r=>r.product_type===type);
    const qty=sum(rows,"quantity");
@@ -1851,7 +1852,7 @@ async function runReport(){
   });
   const detailedMarkup=
    "<h3>"+start+" سے "+end+" تک — تفصیلی حساب</h3>"+
-   "<div class='card'><h3>19L پانی کا شعبہ</h3><div class='stat'>گھریلو ڈلیوری اور ڈھکن آمدن: <b>"+fmt(successful19*100+damagedCaps*10)+"</b></div><div class='stat'>کاؤنٹر فروخت: <b>"+fmt(sum(counterSales,"total_amount"))+"</b> — "+counterLitres+" لیٹر</div><div class='stat'>19L کی کل آمدن: <b>"+fmt(revenue19)+"</b></div><div class='stat'>19L ڈلیوری پانی کی لاگت: <b>"+fmt(waterCogs)+"</b></div><div class='stat'>19L کاؤنٹر پانی کی لاگت: <b>"+fmt(counterWaterCogs)+"</b></div><div class='stat'>تمام استعمال شدہ ڈھکنوں کی لاگت (کامیاب بوتلیں + خراب ڈھکن): <b>"+fmt(capCogs)+"</b></div><div class='stat'>گھریلو ڈلیوری مزدوری: <b>"+fmt(deliveryLabor)+"</b></div><div class='stat'>19L شعبے کے اخراجات: <b>"+fmt(exp19)+"</b></div><div class='total'>19L شعبے کا نتیجہ: "+fmt(profit19)+"</div></div>"+
+   "<div class='card'><h3>19L پانی کا شعبہ</h3><div class='stat'>گھریلو ڈلیوری اور ڈھکن آمدن: <b>"+fmt(successful19*100+damagedCaps*10)+"</b></div><div class='stat'>کاؤنٹر فروخت: <b>"+fmt(sum(counterSales,"total_amount"))+"</b> — "+counterLitres+" لیٹر</div><div class='stat'>19L کی کل آمدن: <b>"+fmt(revenue19)+"</b></div><div class='stat'>19L ڈلیوری پانی کی لاگت: <b>"+fmt(waterCogs)+"</b></div><div class='stat'>19L کاؤنٹر پانی کی لاگت: <b>"+fmt(counterWaterCogs)+"</b></div><div class='stat'>تمام استعمال شدہ ڈھکنوں کی لاگت (کامیاب بوتلیں + خراب ڈھکن): <b>"+fmt(capCogs)+"</b></div><div class='stat'>ملازمین کی حقیقی ڈلیوری مزدوری: <b>"+fmt(deliveryLabor)+"</b></div><div class='stat'>مالک کی اپنی ڈلیوری سے مزدوری کی بچت: <b>"+fmt(ownerDeliverySaving)+"</b></div><div class='stat'>19L شعبے کے اخراجات: <b>"+fmt(exp19)+"</b></div><div class='total'>19L شعبے کا نتیجہ: "+fmt(profit19)+"</div></div>"+
    "<div class='card'><h3>500ml، 1.5L اور 6L مصنوعات</h3>"+
    productBreakdown.map(x=>"<div class='stat'><b>"+x.type+"</b><br>فروخت: "+fmt(x.rev)+"<br>خام مال / پیکنگ: "+(x.cost===null?"لاگت نامکمل":fmt(x.cost))+"<br>متبادل بوتلوں کا نقصان: "+(x.loss===null?"لاگت نامکمل":fmt(x.loss))+"<br>پروڈکشن مزدوری: "+fmt(x.labor)+"<br><b>مشترکہ خرچ سے پہلے حصہ: "+(x.known===null?"لاگت نامکمل":fmt(x.known))+"</b></div>").join("")+
    "<div class='stat'>تینوں مصنوعات کی مجموعی فروخت: <b>"+fmt(productRevenue)+"</b></div><div class='stat'>خام مال اور پیکنگ کی مجموعی لاگت: <b>"+fmt(productCogs)+"</b></div><div class='stat'>خراب مال کی تبدیلی کا نقصان: <b>"+fmt(returnLoss)+"</b></div><div class='stat'>فلنگ پانی: "+fillWaterLitres+" لیٹر — "+fmt(fillWaterCogs)+"</div><div class='stat'>6L پانی: "+shopWaterFor6L+" لیٹر — "+fmt(shopWater6LCogs)+"</div><div class='stat'>پروڈکشن مزدوری: <b>"+fmt(productionLabor)+"</b></div><div class='stat'>مشترکہ لوڈنگ، صفائی اور دھلائی مزدوری: <b>"+fmt(supportLabor)+"</b></div><div class='stat'>مصنوعات کی ترسیل اور دیگر اخراجات: <b>"+fmt(expProducts)+"</b></div><div class='total'>مصنوعات کے شعبے کا نتیجہ: "+fmt(profitProducts)+"</div><p class='muted'>ہر پروڈکٹ کا حصہ مشترکہ لوڈنگ، صفائی اور ترسیل کے اخراجات سے پہلے ہے؛ یہ اخراجات نیچے شعبے کے مجموعی حساب میں شامل ہیں۔</p></div>"+
