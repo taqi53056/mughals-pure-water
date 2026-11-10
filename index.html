@@ -2201,9 +2201,44 @@ async function loadComplaints(){
  const {data,error}=await db.from("customer_complaints").select("id,customer_id,category,details,status,admin_note,created_at,customers(name,customer_code)").order("created_at",{ascending:false}).limit(100);
  if(error){$("moduleTable").textContent="شکایات لوڈ نہیں ہوئیں: "+error.message;return;}
  const labels={new:"نئی",in_progress:"جاری",resolved:"حل ہوگئی"};
- $("moduleTable").innerHTML='<table><tr><th>کسٹمر</th><th>قسم / تفصیل</th><th>حیثیت اور جواب</th><th>محفوظ</th></tr>'+(data||[]).map(c=>`<tr><td>${esc(c.customers?.name||c.customer_id)}</td><td>${esc(c.category)}<p>${esc(c.details)}</p></td><td><select id="cs${c.id}"><option value="new" ${c.status==='new'?'selected':''}>نئی</option><option value="in_progress" ${c.status==='in_progress'?'selected':''}>جاری</option><option value="resolved" ${c.status==='resolved'?'selected':''}>حل ہوگئی</option></select><textarea id="cn${c.id}" rows="2" placeholder="کسٹمر کے لیے جواب / نوٹ">${esc(c.admin_note||"")}</textarea></td><td><button onclick="updateComplaint(${c.id})">محفوظ</button></td></tr>`).join("")+'</table>';
+ $("moduleTable").innerHTML='<table><tr><th>کسٹمر</th><th>قسم / تفصیل</th><th>حیثیت اور جواب</th><th>محفوظ</th></tr>'+(data||[]).map(c=>`<tr><td>${esc(c.customers?.name||c.customer_id)}</td><td>${esc(c.category)}<p>${esc(c.details)}</p></td><td><select id="cs${c.id}"><option value="new" ${c.status==='new'?'selected':''}>نئی</option><option value="in_progress" ${c.status==='in_progress'?'selected':''}>جاری</option><option value="resolved" ${c.status==='resolved'?'selected':''}>حل ہوگئی</option></select><textarea id="cn${c.id}" rows="2" placeholder="کسٹمر کے لیے جواب / نوٹ">${esc(c.admin_note||"")}</textarea></td><td><button id="complaintSave_${c.id}" onclick="updateComplaint(${c.id})">محفوظ</button></td></tr>`).join("")+'</table>';
 }
-async function updateComplaint(id){const status=$("cs"+id).value,admin_note=$("cn"+id).value.trim();const {data:complaint,error:ce}=await db.from("customer_complaints").select("customer_id,category,status,admin_note").eq("id",id).maybeSingle();if(ce||!complaint){msg("شکایت کا ریکارڈ نہیں ملا: "+(ce?.message||""));return;}const {error}=await db.from("customer_complaints").update({status,admin_note:admin_note||null,updated_at:new Date().toISOString()}).eq("id",id);if(error){msg("شکایت اپڈیٹ نہیں ہوئی: "+error.message);return;}if(status!==complaint.status||admin_note!==(complaint.admin_note||"")){const message=`آپ کی شکایت (${complaint.category}) اپڈیٹ ہوئی ہے۔ حیثیت: ${status==="resolved"?"حل ہوگئی":status==="in_progress"?"زیرِ کارروائی":"موصول"}۔`+(admin_note?" منتظم کا جواب: "+admin_note:"");const nr=await db.from("customer_notifications").insert({customer_id:complaint.customer_id,title:"آپ کی شکایت کی تازہ کاری",message,notification_type:"complaint"});if(nr.error){msg("شکایت محفوظ ہوئی مگر اطلاع نہ بھیجی جا سکی: "+nr.error.message);await loadComplaints();return;}await notifyCustomerPush(complaint.customer_id,"آپ کی شکایت کی تازہ کاری",message);}msg("شکایت اور منتظم کا جواب محفوظ ہوگیا۔",true);await loadComplaints();}
+async function updateComplaint(id){
+ const button=$("complaintSave_"+id);if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const status=$("cs"+id).value,admin_note=$("cn"+id).value.trim();
+  const {data:complaint,error:ce}=await db.from("customer_complaints").select("customer_id,category,status,admin_note").eq("id",id).maybeSingle();
+  if(ce||!complaint)throw ce||new Error("شکایت کا ریکارڈ نہیں ملا۔");
+  const changed=status!==complaint.status||admin_note!==(complaint.admin_note||"");
+  if(!changed){msg("اس شکایت میں کوئی نئی تبدیلی نہیں ہے۔",true);return;}
+  const {error}=await db.from("customer_complaints").update({status,admin_note:admin_note||null,updated_at:new Date().toISOString()}).eq("id",id);
+  if(error)throw error;
+  const message=`آپ کی شکایت (${complaint.category}) اپڈیٹ ہوئی ہے۔ حیثیت: ${status==="resolved"?"حل ہوگئی":status==="in_progress"?"زیرِ کارروائی":"موصول"}۔`+(admin_note?" منتظم کا جواب: "+admin_note:"");
+  const reference_key="complaint:"+id;
+  const {data:existing,error:lookupError}=await db.from("customer_notifications").select("id,message").eq("customer_id",complaint.customer_id).eq("reference_key",reference_key).limit(1);
+  if(lookupError)throw lookupError;
+  let shouldPush=false;
+  if(existing?.length){
+   shouldPush=existing[0].message!==message;
+   if(shouldPush){
+    const {error:updateError}=await db.from("customer_notifications").update({title:"آپ کی شکایت کی تازہ کاری",message,is_read:false,created_at:new Date().toISOString()}).eq("id",existing[0].id);
+    if(updateError)throw updateError;
+   }
+  }else{
+   const {error:noticeError}=await db.from("customer_notifications").insert({customer_id:complaint.customer_id,title:"آپ کی شکایت کی تازہ کاری",message,notification_type:"complaint",reference_key});
+   if(noticeError)throw noticeError;
+   shouldPush=true;
+  }
+  if(shouldPush){
+   const push=await notifyCustomerPush(complaint.customer_id,"آپ کی شکایت کی تازہ کاری",message);
+   if(push?.error||Number(push?.sent||0)<1)msg("شکایت محفوظ اور ایپ اطلاع درج ہوگئی، مگر موبائل Push نہیں پہنچی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔"));
+   else msg("شکایت اور جواب محفوظ ہوگیا، موبائل اطلاع بھی بھیج دی گئی۔",true);
+  }else msg("شکایت محفوظ ہوگئی؛ پہلے سے موجود اطلاع دوبارہ نہیں بھیجی گئی۔",true);
+  await loadComplaints();
+ }catch(e){msg("شکایت اپڈیٹ نہیں ہوئی: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
+}
+
 async function submitComplaint(){const category=$("complaintCategory").value,details=$("complaintDetails").value.trim();if(!details){$("myComplaints").textContent="براہ کرم مسئلے کی تفصیل لکھیں۔";return;}const {error}=await db.from("customer_complaints").insert({customer_id:myCustomer.id,category,details});if(error){$("myComplaints").textContent="شکایت محفوظ نہیں ہوئی: "+error.message;return;}$("complaintDetails").value="";await loadCustomerComplaints();}
 async function loadCustomerComplaints(){const {data,error}=await db.from("customer_complaints").select("category,details,status,created_at,admin_note").eq("customer_id",myCustomer.id).order("created_at",{ascending:false});if(error){$("myComplaints").textContent="شکایات لوڈ نہیں ہوئیں";return;}const labels={new:"موصول",in_progress:"زیرِ کارروائی",resolved:"حل ہوگئی"};$("myComplaints").innerHTML=(data||[]).map(c=>`<div class="stat"><b>${esc(c.category)}</b> — ${labels[c.status]||c.status}<p>${esc(c.details)}</p><small>${esc(c.admin_note||"")}</small></div>`).join("")||"ابھی کوئی شکایت درج نہیں۔";}
 async function loadCustomerNotifications(){const {data,error}=await db.from("customer_notifications").select("id,title,message,is_read,created_at").eq("customer_id",myCustomer.id).order("created_at",{ascending:false}).limit(30);if(error){$("myNotifications").textContent="اطلاعات لوڈ نہیں ہوئیں";return;}$("myNotifications").innerHTML=(data||[]).map(n=>`<div class="stat"><b>${esc(n.title)}</b><p>${esc(n.message)}</p><small>${esc(n.created_at)}</small>${!n.is_read?`<button class="secondary" onclick="markNotificationRead(${n.id})">پڑھ لیا</button>`:""}</div>`).join("")||"ابھی کوئی نئی اطلاع نہیں۔";}
