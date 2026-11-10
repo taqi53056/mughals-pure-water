@@ -447,6 +447,21 @@ try {
       failures.push("Worker active/inactive status controls are not wired correctly");
     }
 
+    const financePaymentValidation = await page.evaluate(() => ({
+      capitalRequiresMethod: !isValidFinanceEntryPaymentMethod("capital_in", ""),
+      capitalAcceptsCash: isValidFinanceEntryPaymentMethod("capital_in", "نقد"),
+      interestAcceptsBank: isValidFinanceEntryPaymentMethod("interest_income", "بینک"),
+      nonCashAdjustmentCanOmitMethod: isValidFinanceEntryPaymentMethod("depreciation_expense", ""),
+      creditIsRejected: !isValidFinanceEntryPaymentMethod("loan_given", "ادھار")
+    }));
+    if (!financePaymentValidation.capitalRequiresMethod ||
+        !financePaymentValidation.capitalAcceptsCash ||
+        !financePaymentValidation.interestAcceptsBank ||
+        !financePaymentValidation.nonCashAdjustmentCanOmitMethod ||
+        !financePaymentValidation.creditIsRejected) {
+      failures.push("Finance entries do not validate cash/bank methods consistently");
+    }
+
     await page.close();
   }
 } finally {
