@@ -1213,6 +1213,7 @@ async function saveDelivery(){
  if(!confirmLargeEntry("19L بوتلوں کی تعداد",c.out,100)||!confirmLargeEntry("خراب ڈھکنوں کی تعداد",c.caps,50))return;
  const button=$("deliverySaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  let deliverySaved=false;
+ const wasEditing=!!window.currentDeliveryRecordId;
  try{
   const workerId=c.isOwner?null:($("dWorker")?.value||null);
   const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
@@ -1276,7 +1277,7 @@ async function saveDelivery(){
    const push=await notifyCustomerPush(Number(id),deliveryNotice.title,deliveryNotice.message);
    if(push?.error||Number(push?.sent||0)<1)notificationWarning=" ایپ میں اطلاع محفوظ ہے، مگر موبائل Push کی تصدیق نہیں ہوئی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔");
   }
-  msg((window.currentDeliveryRecordId?"ڈلیوری ریکارڈ محفوظ/اپڈیٹ ہوگیا۔ ":"ڈلیوری محفوظ ہوگئی۔ ")+"مزدوری "+money(c.labor)+notificationWarning,!notificationWarning);
+  msg((wasEditing?"ڈلیوری ریکارڈ اپڈیٹ ہوگیا۔ ":"نئی ڈلیوری محفوظ ہوگئی۔ ")+"مزدوری "+money(c.labor)+notificationWarning,!notificationWarning);
   await Promise.all([loadDailyDeliveries(),loadTodaySummary()]);
  }catch(e){
   console.error("Delivery save failed",e);
