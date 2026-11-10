@@ -4,7 +4,7 @@ CREATE OR REPLACE FUNCTION public.record_production_with_workers(
   p_production_date date,
   p_product_type text,
   p_quantity integer,
-  p_allocations jsonb DEFAULT '[]'::jsonb,
+  p_allocations jsonb,
   p_request_id uuid
 )
 RETURNS jsonb
