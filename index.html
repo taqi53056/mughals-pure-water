@@ -438,7 +438,7 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 <div id="dashboard" class="card executive-dashboard">
  <div class="executive-heading">
   <div><h2>مالکین کا کاروباری کنٹرول سینٹر</h2><p class="muted">ماہانہ کارکردگی، منافع، وصولیاں، بقایا اور اسٹاک — ایک ہی مستند حساب سے</p></div>
-  <div class="executive-filter"><input id="execMonth" type="month" value="${today().slice(0,7)}"><button class="secondary" onclick="loadExecutiveDashboard()">رپورٹ تازہ کریں</button></div>
+  <div class="executive-filter"><input id="execMonth" type="month"><button class="secondary" onclick="loadExecutiveDashboard()">رپورٹ تازہ کریں</button></div>
  </div>
  <div id="execDashboard"><p class="muted">کاروباری ڈیش بورڈ لوڈ ہو رہا ہے...</p></div>
  <div class="executive-today">
@@ -1844,8 +1844,9 @@ function monthDateRange(month){
 }
 async function loadExecutiveDashboard(){
  const box=$("execDashboard");if(!box)return;
+ if($("execMonth")&&!$("execMonth").value)$("execMonth").value=today().slice(0,7);
  const month=$("execMonth")?.value||today().slice(0,7);
- if(!/^\\d{4}-\\d{2}$/.test(month)){box.textContent="درست مہینہ منتخب کریں۔";return;}
+ if(!/^\d{4}-\d{2}$/.test(month)){box.textContent="درست مہینہ منتخب کریں۔";return;}
  box.innerHTML="<p class='muted'>مالی اعداد و شمار محفوظ ڈیٹابیس سے حاصل ہو رہے ہیں...</p>";
  try{
   const range=monthDateRange(month);
@@ -1937,7 +1938,7 @@ async function previewMonthClose(){
  const box=$("monthClosePreview"),button=$("closeMonthButton");
  if(button)button.disabled=true;
  const month=$("closeMonth")?.value||"";
- if(!/^\\d{4}-\\d{2}$/.test(month)){box.textContent="درست مہینہ منتخب کریں۔";return;}
+ if(!/^\d{4}-\d{2}$/.test(month)){box.textContent="درست مہینہ منتخب کریں۔";return;}
  try{
   const range=monthDateRange(month);
   const {data,error}=await db.rpc("get_management_dashboard",{p_month_start:range.start,p_month_end:range.end});
