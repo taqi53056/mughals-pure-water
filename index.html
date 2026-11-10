@@ -1194,12 +1194,16 @@ async function stockModule(type){
 }
 
 async function saveFinishedAdjustment(){
- const product=$("adjType").value,qty=Number($("adjQty").value),direction=$("adjDirection").value,reason=$("adjReason").value.trim();
- if(!Number.isInteger(qty)||qty<=0||!reason){msg("درست مقدار اور وجہ لازمی درج کریں۔");return}
+ const product=$("adjType").value,qty=Number($("adjQty").value),direction=$("adjDirection").value,reason=$("adjReason").value.trim(),date=$("adjDate").value;
+ if(!date||!Number.isInteger(qty)||qty<=0||!reason){msg("تاریخ، درست مقدار اور وجہ لازمی درج کریں۔");return}
  if(!confirmLargeEntry("اسٹاک درستگی کی مقدار",qty,100))return;
- const r=await db.from("finished_stock_adjustments").insert({product_type:product,quantity:qty,adjustment_type:direction,adjustment_date:$("adjDate").value,reason,entered_by:user.id});
- if(r.error){msg("اسٹاک درستگی محفوظ نہیں ہوئی: "+r.error.message);return}
- msg("اسٹاک درستگی محفوظ ہوگئی۔",true);$("adjQty").value="";$("adjReason").value="";await loadStock("finished");await loadTodaySummary();
+ const button=$("adjustmentSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const r=await db.from("finished_stock_adjustments").insert({product_type:product,quantity:qty,adjustment_type:direction,adjustment_date:date,reason,entered_by:user.id});
+  if(r.error)throw r.error;
+  msg("اسٹاک درستگی محفوظ ہوگئی۔",true);$("adjQty").value="";$("adjReason").value="";await loadStock("finished");await loadTodaySummary();
+ }catch(e){msg("اسٹاک درستگی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
 
 async function saveStock(type){
