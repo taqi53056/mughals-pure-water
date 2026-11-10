@@ -636,6 +636,61 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}#adminPanel #homeTiles .tile{transition:none!important}}
 </style>
 
+
+<style id="mpw-mobile-admin-layout-fix">
+/* Mobile admin usability: readable labels, comfortable touch targets, no clipped content */
+*,*::before,*::after{box-sizing:border-box}
+@media(max-width:699px){
+ html,body{max-width:100%;overflow-x:hidden}
+ body{font-size:15px;line-height:1.6}
+ main.wrap{width:100%;max-width:100%;padding:12px 10px 28px}
+ header.brand-header .brand-wrap{width:100%;min-width:0;flex-wrap:wrap;align-items:center;gap:10px;padding:12px!important}
+ header.brand-header .brand-logo{width:52px;height:52px;flex:0 0 52px}
+ header.brand-header .brand-copy{min-width:0;flex:1 1 calc(100% - 70px)}
+ header.brand-header h1{font-size:clamp(16px,4.6vw,20px);line-height:1.35;overflow-wrap:anywhere}
+ header.brand-header .brand-copy>div{font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+ #app,#adminPanel,#adminPanel #homeTiles,#adminPanel #dashboard,#adminPanel #module,#moduleBody,#moduleTable,#todaySummary{width:100%;max-width:100%;min-width:0}
+ #adminPanel{display:flex!important;flex-direction:column!important;gap:12px!important}
+ #app>.session-bar{width:100%;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px!important}
+ #app>.session-bar #welcome{flex:1 1 100%;font-size:14px;line-height:1.55;overflow-wrap:anywhere}
+ #app>.session-bar #role{margin:0;flex:1 1 auto;font-size:12px}
+ #app>.session-bar button{flex:0 1 auto;min-width:0;min-height:44px;padding:9px 12px;font-size:13px;white-space:normal}
+ #adminPanel #homeTiles{padding:11px!important;border-radius:16px!important}
+ #adminPanel #homeTiles .admin-module-filter{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;padding:9px!important}
+ #adminPanel #homeTiles .admin-module-filter button{width:100%;min-width:0;min-height:48px!important;padding:9px 7px!important;font-size:12px!important;line-height:1.4;white-space:normal;overflow-wrap:anywhere}
+ #adminPanel #homeTiles .tile{width:100%;min-width:0;min-height:88px!important;display:flex;align-items:center;gap:8px;padding:10px!important;text-align:right;white-space:normal;overflow:visible}
+ #adminPanel #homeTiles .tile .tile-title{display:block;min-width:0;font-size:13px!important;line-height:1.45!important;overflow-wrap:anywhere}
+ #adminPanel #homeTiles .tile small{display:block;min-width:0;font-size:11px!important;line-height:1.5!important;color:#ffffffdf!important;white-space:normal;overflow-wrap:anywhere}
+ #adminPanel #dashboard,#adminPanel #module{padding:13px!important;border-radius:16px!important}
+ #moduleTitle{font-size:19px!important;line-height:1.45!important;padding:12px!important;overflow-wrap:anywhere}
+ #moduleBody{font-size:14px;line-height:1.7}
+ #moduleBody .card,#moduleBody .panel,#moduleBody fieldset{width:100%;max-width:100%;min-width:0;padding:12px!important;margin-inline:0}
+ #moduleBody h3,#moduleTable h3{font-size:16px!important;line-height:1.5!important;overflow-wrap:anywhere}
+ #moduleBody p,#moduleBody label,#moduleBody small,#moduleBody .muted{overflow-wrap:anywhere}
+ #moduleBody input:not([type=checkbox]),#moduleBody select,#moduleBody textarea,#module input:not([type=checkbox]),#module select,#module textarea{display:block;width:100%;max-width:100%;min-width:0;min-height:48px!important;font-size:16px!important}
+ #moduleBody textarea,#module textarea{min-height:92px!important}
+ #moduleBody button,#module button{width:100%;max-width:100%;min-width:0;min-height:48px!important;padding:10px 12px!important;font-size:14px!important;line-height:1.45!important;white-space:normal;overflow-wrap:anywhere}
+ #moduleBody button+button,#module button+button{margin-top:7px}
+ #moduleBody .row,#moduleBody .actions,#moduleBody .button-row{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+ #moduleBody .row>*,#moduleBody .actions>*,#moduleBody .button-row>*{flex:1 1 145px;min-width:0}
+ #todaySummary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #todaySummary .stat{min-width:0;padding:11px!important}
+ #todaySummary .stat b{font-size:clamp(18px,5vw,23px)!important;overflow-wrap:anywhere}
+ #moduleTable{overflow-x:auto!important;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch}
+ #moduleTable table{width:100%;min-width:620px!important;border-collapse:separate;border-spacing:0}
+ #moduleTable th,#moduleTable td{padding:9px 8px;font-size:12px;line-height:1.5;white-space:normal;overflow-wrap:anywhere}
+ #moduleBody .grid,#moduleBody .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ #adminPanel .exec-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #adminPanel .exec-two-col{grid-template-columns:minmax(0,1fr);gap:10px}
+}
+@media(max-width:379px){
+ #adminPanel #homeTiles .admin-module-filter{grid-template-columns:minmax(0,1fr)!important}
+ #adminPanel #homeTiles .tile{min-height:72px!important}
+ #moduleBody .grid,#moduleBody .form-grid{grid-template-columns:minmax(0,1fr)}
+ #app>.session-bar button{flex:1 1 calc(50% - 8px)}
+}
+</style>
+
 </head>
 <body>
 <header class="brand-header"><div class="wrap brand-wrap" style="padding:0">
