@@ -785,7 +785,7 @@ async function loadApp(){
   await loadCustomerPanel();
  }else{
   $("welcome").textContent="السلام علیکم، "+(p.data?.full_name||"ایڈمن")+" صاحب";
-  $("role").textContent=" | انتظامی پینل";
+  $("role").textContent=" | منتظم";
   $("customerPanel").classList.add("hidden");$("adminPanel").classList.remove("hidden");
   await Promise.all([loadTodaySummary(),loadExecutiveDashboard()]);
  }
