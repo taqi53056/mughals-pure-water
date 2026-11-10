@@ -979,6 +979,10 @@ function setDeliverySavedState(saved){currentDeliverySaved=!!saved;const a=docum
 function markDeliveryDirty(){setDeliverySavedState(false);}
 
 function msg(t,ok=false){$("moduleMsg").className=ok?"success":"error";$("moduleMsg").textContent=t}
+function customerStatusLabel(customer){
+ if(customer?.is_active===true)return "فعال";
+ return customer?.approved_at?"غیر فعال":"منظوری کے منتظر";
+}
 function renderAdminSignupNotice(rows,count,newCustomer=null){
  const box=$("adminSignupNotice"),text=$("adminSignupNoticeText");
  if(!box||!text)return;
@@ -994,8 +998,9 @@ function renderAdminSignupNotice(rows,count,newCustomer=null){
 async function refreshAdminSignupNotice(newCustomer=null){
  if(!db||!user)return;
  const {data,error,count}=await db.from("customers")
-  .select("id,name,mobile,created_at,is_active",{count:"exact"})
+  .select("id,name,mobile,created_at,is_active,approved_at",{count:"exact"})
   .eq("is_active",false)
+  .is("approved_at",null)
   .order("created_at",{ascending:false})
   .limit(5);
  if(error){console.warn("Pending customer summary failed",error);return;}
@@ -1010,7 +1015,7 @@ async function startAdminCustomerRealtime(){
  adminCustomerRealtimeChannel=db.channel("mpw-admin-customer-signups-"+user.id)
   .on("postgres_changes",{event:"INSERT",schema:"public",table:"customers"},payload=>{
    const customer=payload?.new;
-   if(!customer||customer.is_active!==false)return;
+   if(!customer||customer.is_active!==false||customer.approved_at)return;
    refreshAdminSignupNotice(customer);
    if(currentModule==="customers")loadCustomers();
   })
@@ -1413,20 +1418,20 @@ async function customersModule(){
 }
 
 async function loadCustomers(){
- const {data,error}=await db.from("customers").select("id,name,customer_code,mobile,address,is_active,auth_user_id").order("name");
+ const {data,error}=await db.from("customers").select("id,name,customer_code,mobile,address,is_active,auth_user_id,approved_at").order("name");
  if(error){msg("گاہک لوڈ نہیں ہوئے: "+error.message);return}
  customerList=data||[];renderCustomers();renderPendingCustomers();
 }
 
 async function renderPendingCustomers(){
  const box=$("pendingCustomers");if(!box)return;
- const pending=customerList.filter(c=>c.is_active!==true);
+ const pending=customerList.filter(c=>c.is_active!==true&&!c.approved_at);
  if(!pending.length){box.textContent="اس وقت کوئی نیا منتظر گاہک نہیں۔";return;}
  box.innerHTML="<div class=\"tablewrap\"><table><tr><th>نام</th><th>Customer ID</th><th>موبائل</th><th>منظوری</th></tr>"+
  pending.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code||"ابھی نہیں")}</td><td>${esc(c.mobile||"")}</td><td><button onclick=\"approveCustomer(${Number(c.id)})\">منظور کریں</button></td></tr>`).join("")+"</table></div>";
 }
 async function approveCustomer(id){
- const c=customerList.find(x=>Number(x.id)===Number(id));if(!c||c.is_active===true)return;
+ const c=customerList.find(x=>Number(x.id)===Number(id));if(!c||c.is_active===true||c.approved_at)return;
  if(!confirm("کیا "+(c.name||"اس گاہک")+" کو اکاؤنٹ استعمال کرنے کی منظوری دینی ہے؟"))return;
  const {error}=await db.from("customers").update({is_active:true}).eq("id",id);
  if(!error && c.auth_user_id){const approvalTitle="آپ کا اکاؤنٹ منظور ہوگیا",approvalMessage="السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔";const approvalNotice=await db.from("customer_notifications").insert({customer_id:id,title:approvalTitle,message:approvalMessage,notification_type:"account",reference_key:"account-approved"});if(!approvalNotice.error)await notifyCustomerPush(id,approvalTitle,approvalMessage);}
@@ -1437,9 +1442,10 @@ async function approveCustomer(id){
 
 async function toggleCustomerStatus(id){
  const c=customerList.find(x=>Number(x.id)===Number(id));if(!c)return;
+ if(c.is_active!==true&&!c.approved_at){msg("نئے گاہک کی منظوری کے لیے منظوری والا عمل استعمال کریں۔");return;}
  const next=!c.is_active;
  const action=next?"دوبارہ فعال":"غیر فعال";
- if(!confirm("کیا "+(c.name||"اس کسٹمر")+" کا اکاؤنٹ "+action+" کرنا ہے؟ "+(next?"کسٹمر دوبارہ لاگ اِن کرسکے گا۔":"کسٹمر لاگ اِن نہیں کرسکے گا؛ پرانا مالی ریکارڈ محفوظ رہے گا۔")))return;
+ if(!confirm("کیا "+(c.name||"اس کسٹمر")+" کا اکاؤنٹ "+action+" کرنا ہے؟ "+(next?"گاہک دوبارہ لاگ اِن کرسکے گا۔":"گاہک لاگ اِن نہیں کرسکے گا؛ پرانا مالی ریکارڈ محفوظ رہے گا۔")))return;
  const {error}=await db.from("customers").update({is_active:next}).eq("id",id);
  if(error){msg("اکاؤنٹ کی حیثیت تبدیل نہیں ہوئی: "+error.message);return;}
  msg("کسٹمر اکاؤنٹ "+(next?"فعال":"غیر فعال")+" ہوگیا۔",true);await Promise.all([loadCustomers(),refreshAdminSignupNotice()]);
@@ -1449,7 +1455,12 @@ function renderCustomers(){
  const q=($("customerSearch")?.value||"").toLowerCase();
  const rows=customerList.filter(c=>[c.name,c.customer_code,c.mobile].some(x=>String(x||"").toLowerCase().includes(q)));
  $("moduleTable").innerHTML="<table><tr><th>نام</th><th>ID</th><th>موبائل</th><th>حیثیت</th><th>مکمل اکاؤنٹ</th><th>ترمیم</th><th>رسائی</th><th>مستقل آرکائیو</th></tr>"+
- rows.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td>${c.is_active===true?"فعال":"غیر فعال / زیرِ منظوری"}</td><td><button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button></td><td><button onclick="editCustomer(${c.id})">ترمیم</button></td><td><button class="secondary" onclick="toggleCustomerStatus(${Number(c.id)})">${c.is_active===true?"غیر فعال کریں":"فعال کریں"}</button></td><td><button class="danger-button" onclick="archiveCustomer(${Number(c.id)})">آرکائیو + مستقل حذف</button></td></tr>`).join("")+"</table>";
+ rows.map(c=>{
+  const pending=c.is_active!==true&&!c.approved_at;
+  const accessAction=c.is_active===true?"غیر فعال کریں":pending?"منظوری دیں":"دوبارہ فعال کریں";
+  const accessHandler=pending?"approveCustomer":"toggleCustomerStatus";
+  return `<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td>${customerStatusLabel(c)}</td><td><button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button></td><td><button onclick="editCustomer(${c.id})">ترمیم</button></td><td><button class="secondary" onclick="${accessHandler}(${Number(c.id)})">${accessAction}</button></td><td><button class="danger-button" onclick="archiveCustomer(${Number(c.id)})">آرکائیو + مستقل حذف</button></td></tr>`;
+ }).join("")+"</table>";
 }
 
 async function showCustomerFullAccount(id){
@@ -1468,7 +1479,7 @@ async function showCustomerFullAccount(id){
  const bs=bills.data||[],ps=payments.data||[],ds=deliveries.data||[];
  const totalDue=bs.length?Number(bs[0].current_due)||0:0;
  const totalAdvance=bs.length?(Number(bs[0].closing_advance)||0):0;
- body.innerHTML=`<div class="stat"><b>${esc(customer.name)}</b> — ${esc(customer.customer_code||"")}<br>موبائل: ${esc(customer.mobile||"درج نہیں")}<br>پتہ: ${esc(customer.address||"درج نہیں")}<br>حیثیت: ${customer.is_active===true?"فعال":"زیرِ منظوری"}<br><div class="row" style="gap:8px;flex-wrap:wrap"><button class="secondary" onclick="shareCustomerTestWhatsApp(${Number(customer.id)})">WhatsApp رابطہ ٹیسٹ کریں</button><button class="secondary" onclick="shareCustomerTestSMS(${Number(customer.id)})">SMS رابطہ ٹیسٹ کریں</button></div><p class="muted">پیغام منتخب ایپ میں تیار ہوگا؛ بھیجنے سے پہلے نمبر اور عبارت خود دیکھیں۔ عام موبائل کے لیے SMS کا انتخاب کریں۔</p></div>
+ body.innerHTML=`<div class="stat"><b>${esc(customer.name)}</b> — ${esc(customer.customer_code||"")}<br>موبائل: ${esc(customer.mobile||"درج نہیں")}<br>پتہ: ${esc(customer.address||"درج نہیں")}<br>حیثیت: ${customerStatusLabel(customer)}<br><div class="row" style="gap:8px;flex-wrap:wrap"><button class="secondary" onclick="shareCustomerTestWhatsApp(${Number(customer.id)})">WhatsApp رابطہ ٹیسٹ کریں</button><button class="secondary" onclick="shareCustomerTestSMS(${Number(customer.id)})">SMS رابطہ ٹیسٹ کریں</button></div><p class="muted">پیغام منتخب ایپ میں تیار ہوگا؛ بھیجنے سے پہلے نمبر اور عبارت خود دیکھیں۔ عام موبائل کے لیے SMS کا انتخاب کریں۔</p></div>
  <div class="stat">تازہ ترین بقایا: <b>${money(totalDue)}</b> — تازہ ترین بل میں باقی ایڈوانس: <b>${money(totalAdvance)}</b></div>
  <h4>ماہانہ بل</h4>${bs.length?`<table><tr><th>مہینہ</th><th>بوتلیں</th><th>بوتل رقم</th><th>ڈھکن</th><th>ڈھکن رقم</th><th>پچھلا بقایا</th><th>ادائیگی</th><th>ایڈوانس استعمال</th><th>بقایا</th><th>باقی ایڈوانس</th></tr>${bs.map(r=>`<tr><td>${esc(r.bill_month)}</td><td>${Number(r.bottles_19l)||0}</td><td>${money(r.bottle_amount)}</td><td>${Number(r.damaged_caps)||0}</td><td>${money(r.cap_amount)}</td><td>${money(r.previous_balance)}</td><td>${money(r.payments)}</td><td>${money(r.advance_used)}</td><td>${money(r.current_due)}</td><td>${money(r.closing_advance)}</td></tr>`).join("")}</table>`:"ابھی بل موجود نہیں۔"}
  <h4>ادائیگیوں کی مکمل ہسٹری</h4>${ps.length?`<table><tr><th>تاریخ</th><th>قسم</th><th>رقم</th></tr>${ps.map(r=>`<tr><td>${esc(r.payment_date)}</td><td>${esc(r.payment_type)}</td><td>${money(r.amount)}</td></tr>`).join("")}</table>`:"ابھی ادائیگی موجود نہیں۔"}
