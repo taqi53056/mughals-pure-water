@@ -919,16 +919,13 @@ function calcDelivery(){
 }
 
 async function loadSelectedDelivery(){
+ // ہر نئی انٹری میں فیلڈز خالی رہیں؛ پچھلی ڈلیوری خودکار طور پر فارم میں نہ آئے۔
+ // اگر اسی گاہک/تاریخ کا ریکارڈ پہلے سے موجود ہو تو saveDelivery اسی ریکارڈ کو اپڈیٹ کرے گا۔
  setDeliverySavedState(false);
- if(!$("dCustomer").value)return;
- const date=$("dDate").value,id=$("dCustomer").value;
- const {data,error}=await db.from("customer_19l_deliveries").select("*").eq("customer_id",id).eq("delivery_date",date).maybeSingle();
- if(error){msg("ڈلیوری لوڈ نہیں ہوئی: "+error.message);return}
- $("dOut").value=data?.bottles_delivered??"";
- $("dBack").value=data?.empty_bottles_returned??"";
- $("dCaps").value=data?.damaged_caps??0;
- if($("dWorker"))$("dWorker").value=data?.worker_id?String(data.worker_id):"";
- setDeliverySavedState(!!data);
+ $("dOut").value="";
+ $("dBack").value="";
+ $("dCaps").value="";
+ if($("dWorker"))$("dWorker").value="";
  calcDelivery();
 }
 
