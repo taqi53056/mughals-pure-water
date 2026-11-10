@@ -702,6 +702,8 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
  #adminPanel #homeTiles .tile:before{position:absolute!important;top:9px!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;display:flex!important;align-items:center!important;justify-content:center!important;width:26px!important;height:26px!important;margin:0!important;padding:0!important;line-height:1!important;text-align:center!important;pointer-events:none!important}
  #adminPanel #homeTiles .tile .tile-title,#adminPanel #homeTiles .tile small{position:relative!important;z-index:1!important;width:100%!important;flex:0 0 auto!important;text-align:center!important}
 }
+/* Keep filtered admin tiles hidden even when responsive tile rules use display:flex!important. */
+#adminPanel #homeTiles .tile[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -726,7 +728,7 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 <h2>نیا کسٹمر اکاؤنٹ</h2>
 <p class="muted">اپنی درست معلومات درج کریں۔ Customer ID خودکار بنے گی۔</p>
 <input id="signupName" type="text" autocomplete="name" maxlength="120" placeholder="پورا نام">
-<input id="signupMobile" type="tel" autocomplete="tel" maxlength="30" placeholder="موبائل نمبر">
+<label for="signupMobile">موبائل نمبر</label><input id="signupMobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="03XXXXXXXXX یا +923XXXXXXXXX" aria-describedby="signupMobileHelp"><small id="signupMobileHelp" class="muted">پاکستانی موبائل نمبر درج کریں؛ مثال: 03XXXXXXXXX</small>
 <input id="signupAddress" type="text" autocomplete="street-address" maxlength="300" placeholder="مکمل پتہ">
 <input id="signupEmail" type="email" autocomplete="email" maxlength="254" placeholder="ای میل">
 <div class="password-field"><input id="signupPassword" type="password" autocomplete="new-password" minlength="8" placeholder="پاس ورڈ (کم از کم 8 حروف)"><button class="password-toggle" type="button" aria-label="پاس ورڈ دکھائیں" title="پاس ورڈ دکھائیں" onclick="togglePasswordVisibility('signupPassword',this)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
@@ -1037,14 +1039,25 @@ async function resendConfirmationEmail(){
  }
 }
 
+function normalizePkMobile(value){
+ let digits=String(value||"").replace(/[^0-9]/g,"");
+ if(digits.startsWith("0092"))digits=digits.slice(4);
+ else if(digits.startsWith("92"))digits=digits.slice(2);
+ if(digits.length===10&&digits.startsWith("3"))digits="0"+digits;
+ if(digits.length!==11||!digits.startsWith("03"))return null;
+ return digits;
+}
+
 async function signupCustomer(){
  const name=$("signupName").value.trim();
- const mobile=$("signupMobile").value.trim();
+ const mobileInput=$("signupMobile").value.trim();
+ const mobile=normalizePkMobile(mobileInput);
  const address=$("signupAddress").value.trim();
  const email=$("signupEmail").value.trim();
  const password=$("signupPassword").value;
  const button=$("signupButton");
- if(!name||!mobile||!address||!email||!password){$("loginMsg").textContent="تمام معلومات درج کریں۔";return}
+ if(!name||!mobileInput||!address||!email||!password){$("loginMsg").textContent="تمام معلومات درج کریں۔";return}
+ if(!mobile){$("loginMsg").textContent="موبائل نمبر درست درج کریں؛ مثال: 03001234567 یا +923001234567۔";$("signupMobile").focus();return}
  if(password.length<8){$("loginMsg").textContent="پاس ورڈ کم از کم 8 حروف کا ہونا چاہیے۔";return}
  button.disabled=true;button.textContent="اکاؤنٹ بنایا جا رہا ہے...";
  $("loginMsg").textContent="";
@@ -1156,8 +1169,9 @@ function filterAdminModules(category){
  tiles.forEach(tile=>{
   const visible=selected==="all"||tile.dataset.category===selected;
   tile.hidden=!visible;
-  tile.style.display=visible?"":"none";
+  tile.style.setProperty("display",visible?"flex":"none","important");
   tile.setAttribute("aria-hidden",String(!visible));
+  tile.setAttribute("tabindex",visible?"0":"-1");
  });
  document.querySelectorAll("#homeTiles .admin-module-filter [data-filter]").forEach(button=>{
   const active=button.dataset.filter===selected;
@@ -1214,7 +1228,7 @@ async function customersModule(){
   <h3>گاہک کی معلومات میں ترمیم</h3>
   <label>Customer ID</label><input id="cCode" readonly>
   <label>نام</label><input id="cName" maxlength="120" placeholder="گاہک کا نام">
-  <label>موبائل</label><input id="cMobile" maxlength="30" placeholder="موبائل نمبر">
+  <label for="cMobile">موبائل نمبر</label><input id="cMobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="03XXXXXXXXX یا +923XXXXXXXXX">
   <label>مکمل پتہ</label><input id="cAddress" maxlength="300" placeholder="پتہ">
   <button onclick="saveCustomer()">تبدیلیاں محفوظ کریں</button>
   <button class="secondary" onclick="cancelCustomerEdit()">منسوخ کریں</button>
@@ -1356,7 +1370,10 @@ async function saveCustomer(){
  if(!editingId){msg("ترمیم کے لیے پہلے فہرست سے گاہک منتخب کریں۔");return}
  const name=$("cName").value.trim();
  if(!name){msg("گاہک کا نام لازمی ہے۔");return}
- const payload={name,mobile:$("cMobile").value.trim()||null,address:$("cAddress").value.trim()||null};
+ const mobileInput=$("cMobile").value.trim();
+ const mobile=mobileInput?normalizePkMobile(mobileInput):null;
+ if(mobileInput&&!mobile){msg("موبائل نمبر درست درج کریں؛ مثال: 03001234567 یا +923001234567۔");$("cMobile").focus();return}
+ const payload={name,mobile,address:$("cAddress").value.trim()||null};
  const r=await db.from("customers").update(payload).eq("id",editingId);
  if(r.error){msg("تبدیلیاں محفوظ نہیں ہوئیں: "+r.error.message);return}
  editingId=null;msg("گاہک کی معلومات اپڈیٹ ہوگئیں۔",true);await customersModule();
