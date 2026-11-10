@@ -5,7 +5,7 @@
 - تفصیلی اردو تکنیکی/ڈپلائمنٹ نوٹس: [README_UR.txt](README_UR.txt)
 - مختصر ریلیز نوٹس: [README_URDU.txt](README_URDU.txt)
 - موجودہ release gates اور اگلے verification steps: [RELEASE_READINESS_20261109.md](RELEASE_READINESS_20261109.md)
-- 2026-11-10 adaptive enterprise workspace candidate اور اس کی QA حدود: [RELEASE_READINESS_20261110.md](RELEASE_READINESS_20261110.md)
+- 2026-11-10 برانڈ، یومیہ ڈلیوری پابندی اور ریلیز جانچ: [RELEASE_READINESS_20261110.md](RELEASE_READINESS_20261110.md)
 
 **Security note:** Supabase organization is on the Free plan. Supabase documents leaked-password protection as Pro-and-above, so it cannot be enabled on the current plan. Three authenticated SECURITY DEFINER RPCs remain: `close_business_month`, `get_management_dashboard`, and `prepare_customer_archive`. Each must retain its explicit admin authorization check; Supabase reports these as warnings for review, not as evidence that the admin checks are absent.
 
