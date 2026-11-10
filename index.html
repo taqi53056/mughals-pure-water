@@ -403,6 +403,7 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
  <h2 id="customerGreeting">السلام علیکم</h2>
  <p class="muted">آپ کا ذاتی MUGHAL'S PURE WATER اکاؤنٹ</p>
  <span class="customer-id-pill">کسٹمر آئی ڈی: <b id="customerHeroCode">—</b></span>
+ <button id="enablePushButton" type="button" class="secondary" onclick="enableCustomerPush()">موبائل پر اطلاعات فعال کریں</button><p id="pushStatus" class="customer-bottle-note">موبائل پر فوری اطلاع فعال کریں۔</p>
 </div>
 <div id="customerStats" class="customer-stats"></div>
 <div class="card"><h2 class="customer-section-title">موجودہ بل</h2><div id="myBill"></div></div>
@@ -455,6 +456,63 @@ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const today=()=>{let d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const monthNow=()=>today().slice(0,7)+"-01";
 const money=n=>"Rs. "+(Number(n)||0).toLocaleString("en-PK");
+
+const MPW_VAPID_PUBLIC_KEY="BJwzIqdEq4ixMfLo1Vyhaj9gkcxwQyioy0xUge32EUxivE9D2SW3SesdbyJ-EpwDyI_7WKYd3abAy6TBjzgceGM";
+function mpwBase64UrlToBytes(value){
+ const padding="=".repeat((4-value.length%4)%4);
+ const base64=(value+padding).replace(/-/g,"+").replace(/_/g,"/");
+ const raw=atob(base64);const bytes=new Uint8Array(raw.length);
+ for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+ return bytes;
+}
+async function enableCustomerPush(){
+ const status=$("pushStatus"),say=t=>{if(status)status.textContent=t;};
+ if(!myCustomer||!user?.id){say("کسٹمر اکاؤنٹ کی تصدیق نہیں ہوسکی۔");return;}
+ if(!("Notification" in window)||!("serviceWorker" in navigator)||!("PushManager" in window)){say("اس براؤزر میں Push Notification دستیاب نہیں۔ Android پر Chrome استعمال کریں۔");return;}
+ if(!window.isSecureContext){say("محفوظ HTTPS کنکشن ضروری ہے۔");return;}
+ if(Notification.permission==="denied"){say("موبائل کی Site Settings میں Notifications کو Allow کریں۔");return;}
+ const button=$("enablePushButton");if(button){button.disabled=true;button.textContent="فعال کیا جا رہا ہے...";}
+ try{
+  const permission=Notification.permission==="granted"?"granted":await Notification.requestPermission();
+  if(permission!=="granted"){say("آپ نے موبائل اطلاعات کی اجازت نہیں دی۔");return;}
+  const registration=await navigator.serviceWorker.ready;
+  let subscription=await registration.pushManager.getSubscription();
+  if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:mpwBase64UrlToBytes(MPW_VAPID_PUBLIC_KEY)});
+  const json=subscription.toJSON();
+  if(!json.endpoint||!json.keys?.p256dh||!json.keys?.auth)throw new Error("موبائل کی Push Subscription مکمل نہیں ہوئی۔");
+  const {error}=await db.from("customer_push_subscriptions").upsert({
+   customer_id:Number(myCustomer.id),auth_user_id:user.id,endpoint:json.endpoint,
+   p256dh:json.keys.p256dh,auth:json.keys.auth,user_agent:navigator.userAgent,
+   is_active:true,updated_at:new Date().toISOString()
+  },{onConflict:"endpoint"});
+  if(error)throw error;
+  say("موبائل اطلاعات فعال ہوگئیں۔ نئی ڈیلیوری، بل اور ادائیگی کی اطلاع موبائل پر آئے گی۔");
+  if(button){button.textContent="موبائل اطلاعات فعال ہیں";button.disabled=true;}
+ }catch(e){console.error("Push subscription failed",e);say("اطلاعات فعال نہیں ہوئیں: "+(e?.message||String(e)));}
+ finally{if(button&&Notification.permission!=="granted"){button.disabled=false;button.textContent="موبائل پر اطلاعات فعال کریں";}}
+}
+async function updateCustomerPushStatus(){
+ const status=$("pushStatus"),button=$("enablePushButton");if(!status||!button)return;
+ if(!("Notification" in window)||!("serviceWorker" in navigator)||!("PushManager" in window)){status.textContent="اس براؤزر میں Push Notification دستیاب نہیں۔";return;}
+ if(Notification.permission==="denied"){status.textContent="موبائل کی Site Settings میں Notifications کو Allow کرنا ہوگا۔";return;}
+ try{
+  const registration=await navigator.serviceWorker.ready,subscription=await registration.pushManager.getSubscription();
+  if(subscription){
+   const {data,error}=await db.from("customer_push_subscriptions").select("id,is_active").eq("endpoint",subscription.endpoint).maybeSingle();
+   if(!error&&data?.is_active){status.textContent="موبائل اطلاعات پہلے سے فعال ہیں۔";button.textContent="موبائل اطلاعات فعال ہیں";button.disabled=true;return;}
+  }
+  status.textContent="فوری موبائل اطلاع کے لیے نیچے بٹن دبائیں۔";
+ }catch(e){status.textContent="موبائل اطلاعات کی حالت چیک نہیں ہوسکی۔";}
+}
+async function notifyCustomerPush(customerId,title,message){
+ try{
+  const {data,error}=await db.functions.invoke("send-customer-push",{body:{customer_id:Number(customerId),title:String(title||""),message:String(message||"")}});
+  if(error)console.warn("Push notification was not delivered",error.message);
+  else if(data?.error)console.warn("Push notification was not delivered",data.error);
+  return data;
+ }catch(e){console.warn("Push notification request failed",e);return null;}
+}
+
 function normalizePkPhone(value){let p=String(value||"").replace(/\D/g,"");if(p.startsWith("00"))p=p.slice(2);if(p.startsWith("0"))p="92"+p.slice(1);if(p.length===10&&p.startsWith("3"))p="92"+p;return p;}
 function shareCustomerMessage(phone,message,channel){const number=normalizePkPhone(phone);if(!number){alert("اس گاہک کا درست موبائل نمبر درج نہیں۔");return}if(channel==="whatsapp")window.open("https://wa.me/"+number+"?text="+encodeURIComponent(message),"_blank","noopener");else location.href="sms:+"+number+"?body="+encodeURIComponent(message);}
 function shareCustomerTestWhatsApp(id){const c=(customerList||[]).find(x=>Number(x.id)===Number(id));if(!c){alert("گاہک کا ریکارڈ نہیں ملا۔");return}const message="السلام علیکم "+c.name+" صاحب! یہ MUGHAL’S PURE WATER کی طرف سے WhatsApp رابطے کا آزمائشی پیغام ہے۔ براہ کرم صرف اسی صورت جواب دیں جب یہ نمبر آپ کا ہو۔ شکریہ۔";shareCustomerMessage(c.mobile,message,"whatsapp");}
@@ -2145,6 +2203,7 @@ async function saveProductSettings(id,productType){
 
 /* گاہک کو صرف اس کا اپنا اکاؤنٹ دکھائیں */
 async function loadCustomerPanel(){
+ updateCustomerPushStatus();
  const monthStart=monthNow();
  const [billResult,paymentResult,deliveryResult]=await Promise.all([
   db.from("customer_monthly_bills").select("*").eq("customer_id",myCustomer.id).order("bill_month",{ascending:false}),
