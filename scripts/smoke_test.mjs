@@ -316,6 +316,30 @@ try {
     if (labelResult.rawLabelCount !== 1 || labelResult.tankLabelCount !== 1) failures.push("Admin field labels are duplicated");
     if (!labelResult.checkboxWrapped) failures.push("Existing checkbox label was changed unexpectedly");
 
+    const feedbackResult = await page.evaluate(async () => {
+      let nativeAlertCount = 0;
+      const originalAlert = window.alert;
+      window.alert = () => { nativeAlertCount++; };
+      window.shareCustomerMessage("invalid", "test", "sms");
+      window.shareCustomerTestWhatsApp(999999);
+      window.shareCustomerTestSMS(999999);
+      window.shareCurrentBill("sms");
+      window.shareCurrentDelivery("sms");
+      await window.installMughalApp();
+      const result = {
+        nativeAlertCount,
+        moduleMessage: document.querySelector("#moduleMsg")?.textContent || "",
+        toast: document.querySelector("#appToast")?.textContent || "",
+        toastAccessible: document.querySelector("#appToast")?.getAttribute("aria-live") === "polite"
+      };
+      window.alert = originalAlert;
+      return result;
+    });
+    if (feedbackResult.nativeAlertCount !== 0) failures.push("Business feedback still opens blocking native alerts");
+    if (!feedbackResult.moduleMessage.includes("پہلے ڈلیوری محفوظ کریں")) failures.push("Delivery validation feedback is not shown in the app");
+    if (!feedbackResult.toast.includes("Chrome مینو") && !feedbackResult.toast.includes("انسٹال")) failures.push("PWA install guidance toast is missing");
+    if (!feedbackResult.toastAccessible) failures.push("PWA install toast is not announced accessibly");
+
     await page.close();
   }
 } finally {
