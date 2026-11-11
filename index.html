@@ -2422,7 +2422,7 @@ async function saveUnassigned19lDelivery(){
  const date=$("u19Date").value,worker=Number($("u19Worker").value),bottles=Number($("u19Bottles").value),empties=Number($("u19Empties").value||0),details=$("u19Details").value.trim();
  if(!date||!Number.isInteger(worker)||worker<=0||!Number.isInteger(bottles)||bottles<=0||!Number.isInteger(empties)||empties<0||empties>bottles){msg("تاریخ، مزدور، بوتلوں اور خالی بوتلوں کی تعداد درست درج کریں۔");return;}
  if(date>today()){msg("مستقبل کی تاریخ پر سپلائی درج نہیں ہو سکتی۔");return;}
- if(!confirm("تصدیق کریں:\\nتاریخ: "+date+"\\nبوتلیں: "+bottles+"\\nمزدوری: "+money(bottles*20)+"\\nیہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
+ if(!confirm("تصدیق کریں:\nتاریخ: "+date+"\nبوتلیں: "+bottles+"\nمزدوری: "+money(bottles*20)+"\nیہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
  const button=$("u19SaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  const signature=[date,worker,bottles,empties,details].join("|");
  const requestId=mpwPendingRequestId("unassigned19l",signature);
