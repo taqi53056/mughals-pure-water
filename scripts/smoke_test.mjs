@@ -34,7 +34,7 @@ if (monthlyRetryMigration.includes("extract(day from v_today)>3")) {
 }
 
 const finishedStockActivityMigration = await readFile(
-  resolve(ROOT, "supabase/migrations/20261111150000_include_finished_stock_in_monthly_report_activity.sql"),
+  resolve(ROOT, "supabase/migrations/20261111141230_include_finished_stock_in_monthly_report_activity.sql"),
   "utf8"
 );
 if (!finishedStockActivityMigration.includes("public.finished_goods where entry_date between p_month_start and p_month_end") ||
@@ -45,7 +45,7 @@ if (!finishedStockActivityMigration.includes("public.finished_goods where entry_
 }
 
 const productionPackagingMigration = await readFile(
-  resolve(ROOT, "supabase/migrations/20261111161000_enforce_production_packaging_stock.sql"),
+  resolve(ROOT, "supabase/migrations/20261111141236_enforce_production_packaging_stock.sql"),
   "utf8"
 );
 for (const material of ["bottle_500ml", "carton_500ml", "bottle_1_5l", "carton_1_5l", "bottle_6l", "tape_bundle", "sticker"]) {
@@ -74,7 +74,7 @@ if (!productionPackagingMigration.includes("pg_advisory_xact_lock(hashtextextend
 }
 
 const finishedStockCutoverMigration = await readFile(
-  resolve(ROOT, "supabase/migrations/20261111180000_date_aware_finished_stock_cutover.sql"),
+  resolve(ROOT, "supabase/migrations/20261111143117_date_aware_finished_stock_cutover.sql"),
   "utf8"
 );
 for (const required of [
