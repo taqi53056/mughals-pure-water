@@ -148,6 +148,7 @@ try {
       const originalDb = window.db;
       let signupPayload = null;
       let signupCalls = 0;
+      let successMessage = "";
       try {
         window.db = {
           auth: {
@@ -168,7 +169,7 @@ try {
         document.querySelector("#signupEmail").value = "smoke-test@example.invalid";
         document.querySelector("#signupPassword").value = "SmokeTest123";
         await signupCustomer();
-        const successMessage = document.querySelector("#loginMsg").textContent;
+        successMessage = document.querySelector("#loginMsg").textContent;
         document.querySelector("#signupMobile").value = "not-a-valid-mobile";
         await signupCustomer();
       } finally {
