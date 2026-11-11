@@ -22,11 +22,6 @@ if (!monthlyRetryMigration.includes("schedule => '55 18 * * *'") ||
     !monthlyRetryMigration.includes("schedule => '5 19 * * *'")) {
   throw new Error("Monthly billing and report cron jobs must retry daily");
 }
-if (!monthlyRetryMigration.includes("existing_bill.bill_month = v_month") ||
-    !monthlyRetryMigration.includes("ON CONFLICT (customer_id, bill_month) DO NOTHING") ||
-    !monthlyRetryMigration.includes("IF NOT FOUND THEN")) {
-  throw new Error("Monthly billing retries must skip already-created bills and avoid duplicate notifications");
-}
 if (!monthlyRetryMigration.includes("business_month_closings") ||
     !monthlyRetryMigration.includes("status = 'closed'")) {
   throw new Error("Monthly report retries must preserve a formally closed snapshot");
@@ -36,6 +31,24 @@ if (!monthlyRetryMigration.includes("v_report->>'has_activity'")) {
 }
 if (monthlyRetryMigration.includes("extract(day from v_today)>3")) {
   throw new Error("Monthly report retries must not stop after the first three days");
+}
+
+const customerBillNotificationMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111133556_customer_bill_notification_retry.sql"),
+  "utf8"
+);
+const monthlyBillLock = customerBillNotificationMigration.indexOf("pg_advisory_xact_lock");
+const monthlyBillRead = customerBillNotificationMigration.indexOf("FROM public.customer_19l_deliveries");
+if (monthlyBillLock < 0 || monthlyBillRead < 0 || monthlyBillLock > monthlyBillRead) {
+  throw new Error("Monthly billing must lock the month before reading source rows");
+}
+if (!customerBillNotificationMigration.includes("customer_monthly_bills.current_due") ||
+    !customerBillNotificationMigration.includes("IS DISTINCT FROM ROW")) {
+  throw new Error("Monthly billing must reconcile existing bill rows without needless updates");
+}
+if (!customerBillNotificationMigration.includes("customer_notifications.message IS DISTINCT FROM EXCLUDED.message") ||
+    customerBillNotificationMigration.includes("is_read = false")) {
+  throw new Error("Monthly bill notifications must update content without resetting read state");
 }
 
 const server = createServer(async (req, res) => {
