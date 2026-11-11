@@ -34,7 +34,7 @@ if (monthlyRetryMigration.includes("extract(day from v_today)>3")) {
 }
 
 const customerBillNotificationMigration = await readFile(
-  resolve(ROOT, "supabase/migrations/20261111133556_customer_bill_notification_retry.sql"),
+  resolve(ROOT, "supabase/migrations/20261111133717_customer_bill_notification_retry.sql"),
   "utf8"
 );
 const monthlyBillLock = customerBillNotificationMigration.indexOf("pg_advisory_xact_lock");
