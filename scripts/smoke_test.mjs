@@ -58,7 +58,9 @@ if (!productionPackagingMigration.includes("pg_advisory_xact_lock(hashtextextend
     !productionPackagingMigration.includes("p.production_date<=NEW.production_date") ||
     !productionPackagingMigration.includes("p.id IS DISTINCT FROM NEW.id") ||
     !productionPackagingMigration.includes("NEW.quantity/200::numeric") ||
-    !productionPackagingMigration.includes("v_cutover_date IS NULL OR r.record_type='opening_stock'") ||
+    !productionPackagingMigration.includes("NEW.production_date < v_cutover_date") ||
+    !productionPackagingMigration.includes("v_event_date<v_cutover_date") ||
+    !productionPackagingMigration.includes("v_date<v_cutover_date") ||
     !productionPackagingMigration.includes("p.production_date>=v_cutover_date") ||
     !productionPackagingMigration.includes("private.mpw_guard_raw_material_opening_stock()") ||
     !productionPackagingMigration.includes("private.mpw_guard_production_cap_stock()") ||
