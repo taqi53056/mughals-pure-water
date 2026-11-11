@@ -356,6 +356,18 @@ try {
       failures.push("Unlinked or unapproved authentication is not signed out and blocked");
     }
 
+    const customerSignupRealtimeSafety = await page.evaluate(() => {
+      const source = String(startAdminCustomerRealtime);
+      return {
+        usesSafeEventTable: source.includes('table:"customer_signup_events"'),
+        avoidsSensitiveCustomerTable: !source.includes('table:"customers"')
+      };
+    });
+    if (!customerSignupRealtimeSafety.usesSafeEventTable ||
+        !customerSignupRealtimeSafety.avoidsSensitiveCustomerTable) {
+      failures.push("Customer signup Realtime must subscribe only to the admin-only minimal event table");
+    }
+
     const adminNavigation = await page.evaluate(async () => {
       const panel = document.querySelector("#adminPanel");
       const tiles = document.querySelector("#homeTiles");
