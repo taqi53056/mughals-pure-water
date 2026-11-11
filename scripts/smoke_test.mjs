@@ -14,6 +14,62 @@ const mime = {
   ".css": "text/css; charset=utf-8"
 };
 
+const monthlyRetryMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
+  "utf8"
+);
+if (!monthlyRetryMigration.includes("schedule => '55 18 * * *'") ||
+    !monthlyRetryMigration.includes("schedule => '5 19 * * *'")) {
+  throw new Error("Monthly billing and report cron jobs must retry daily");
+}
+if (!monthlyRetryMigration.includes("business_month_closings") ||
+    !monthlyRetryMigration.includes("status = 'closed'")) {
+  throw new Error("Monthly report retries must preserve a formally closed snapshot");
+}
+if (!monthlyRetryMigration.includes("v_report->>'has_activity'")) {
+  throw new Error("Monthly report retries must not create empty zero-activity snapshots");
+}
+if (monthlyRetryMigration.includes("extract(day from v_today)>3")) {
+  throw new Error("Monthly report retries must not stop after the first three days");
+}
+
+const customerBillNotificationMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111133717_customer_bill_notification_retry.sql"),
+  "utf8"
+);
+const monthlyBillLock = customerBillNotificationMigration.indexOf("pg_advisory_xact_lock");
+const monthlyBillRead = customerBillNotificationMigration.indexOf("FROM public.customer_19l_deliveries");
+if (monthlyBillLock < 0 || monthlyBillRead < 0 || monthlyBillLock > monthlyBillRead) {
+  throw new Error("Monthly billing must lock the month before reading source rows");
+}
+if (!customerBillNotificationMigration.includes("customer_monthly_bills.current_due") ||
+    !customerBillNotificationMigration.includes("IS DISTINCT FROM ROW")) {
+  throw new Error("Monthly billing must reconcile existing bill rows without needless updates");
+}
+if (!customerBillNotificationMigration.includes("customer_notifications.message IS DISTINCT FROM EXCLUDED.message") ||
+    customerBillNotificationMigration.includes("is_read = false")) {
+  throw new Error("Monthly bill notifications must update content without resetting read state");
+}
+
+const customerBillMessageMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111134004_customer_bill_message_newlines.sql"),
+  "utf8"
+);
+if (!customerBillMessageMigration.includes("E'السلام علیکم %s صاحب!") ||
+    !customerBillMessageMigration.includes("MUGHAL''S PURE WATER")) {
+  throw new Error("Monthly bill notifications must contain correctly escaped Urdu text and line breaks");
+}
+
+const notificationGuardMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111134224_allow_cron_notification_updates.sql"),
+  "utf8"
+);
+if (!notificationGuardMigration.includes("session_user = 'postgres'") ||
+    !notificationGuardMigration.includes("Customers may only mark their own notification as read") ||
+    !notificationGuardMigration.includes("SECURITY INVOKER")) {
+  throw new Error("System notification updates must be cron-safe without weakening customer read-only protection");
+}
+
 const server = createServer(async (req, res) => {
   try {
     const pathname = new URL(req.url, "http://127.0.0.1").pathname;
