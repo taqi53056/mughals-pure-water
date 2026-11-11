@@ -3325,8 +3325,42 @@ async function submitComplaint(){
  finally{if(button)button.disabled=false;}
 }
 async function loadCustomerComplaints(){const {data,error}=await db.from("customer_complaints").select("category,details,status,created_at,admin_note").eq("customer_id",myCustomer.id).order("created_at",{ascending:false});if(error){$("myComplaints").textContent="شکایات لوڈ نہیں ہوئیں";return;}const labels={new:"موصول",in_progress:"زیرِ کارروائی",resolved:"حل ہوگئی"};$("myComplaints").innerHTML=(data||[]).map(c=>`<div class="stat"><b>${esc(c.category)}</b> — ${labels[c.status]||c.status}<p>${esc(c.details)}</p><small>${esc(c.admin_note||"")}</small></div>`).join("")||"ابھی کوئی شکایت درج نہیں۔";}
-async function loadCustomerNotifications(){const {data,error}=await db.from("customer_notifications").select("id,title,message,is_read,created_at").eq("customer_id",myCustomer.id).order("created_at",{ascending:false}).limit(30);if(error){$("myNotifications").textContent="اطلاعات لوڈ نہیں ہوئیں";return;}$("myNotifications").innerHTML=(data||[]).map(n=>`<div class="stat"><b>${esc(n.title)}</b><p>${esc(n.message)}</p><small>${esc(n.created_at)}</small>${!n.is_read?`<button class="secondary" onclick="markNotificationRead(${n.id})">پڑھ لیا</button>`:""}</div>`).join("")||"ابھی کوئی نئی اطلاع نہیں۔";}
-async function markNotificationRead(id){const {error}=await db.rpc("mark_customer_notification_read",{p_notification_id:id});if(!error)await loadCustomerNotifications();}
+function customerDateLabel(value,withTime=false){
+ if(!value)return "—";
+ const isDateOnly=/^\\d{4}-\\d{2}-\\d{2}$/.test(String(value));
+ const date=isDateOnly?new Date(String(value)+"T00:00:00Z"):new Date(value);
+ if(Number.isNaN(date.getTime()))return "—";
+ return new Intl.DateTimeFormat("ur-PK",{timeZone:isDateOnly?"UTC":"Asia/Karachi",year:"numeric",month:"short",day:"numeric",...(withTime?{hour:"2-digit",minute:"2-digit",hour12:true}:{})}).format(date);
+}
+function customerPaymentLabel(type){return ({advance:"ایڈوانس",bill_payment:"بل کی ادائیگی",refund:"ریفنڈ"})[type]||"ادائیگی";}
+function renderCustomerPaymentRows(rows,append=false){
+ const box=$("myPayments");if(!box)return;
+ const html=(rows||[]).map(r=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(customerDateLabel(r.payment_date))+'</b><span class="customer-record-number">'+money(r.amount)+'</span></div><small class="muted">'+customerPaymentLabel(r.payment_type)+'</small></div>').join("");
+ if(append){const more=$("customerPaymentsMore");if(more)more.remove();box.insertAdjacentHTML("beforeend",html);}
+ else box.innerHTML=html||'<div class="customer-empty">ابھی کوئی ادائیگی درج نہیں۔</div>';
+ if(window.customerPaymentHasMore){const button=document.createElement("button");button.id="customerPaymentsMore";button.className="secondary";button.textContent="مزید ادائیگیاں دیکھیں";button.onclick=loadMoreCustomerPayments;box.appendChild(button);}
+}
+async function loadMoreCustomerPayments(){
+ const button=$("customerPaymentsMore");if(!button||button.disabled||!myCustomer)return;
+ button.disabled=true;button.textContent="لوڈ ہو رہا ہے...";
+ const from=Number(window.customerPaymentOffset)||0,to=from+49;
+ const {data,error}=await db.from("customer_payments").select("payment_date,amount,payment_type,created_at").eq("customer_id",myCustomer.id).order("payment_date",{ascending:false}).order("created_at",{ascending:false}).range(from,to);
+ if(error){button.disabled=false;button.textContent="دوبارہ کوشش کریں";showAppToast("مزید ادائیگیاں لوڈ نہیں ہوئیں: "+(error.message||"خرابی"),"error");return;}
+ const rows=data||[];window.customerPaymentOffset=from+rows.length;window.customerPaymentHasMore=rows.length===50;
+ renderCustomerPaymentRows(rows,true);
+}
+async function loadCustomerNotifications(){
+ const {data,error}=await db.from("customer_notifications").select("id,title,message,is_read,created_at").eq("customer_id",myCustomer.id).order("created_at",{ascending:false}).limit(30);
+ if(error){$("myNotifications").textContent="اطلاعات لوڈ نہیں ہوئیں: "+(error.message||"دوبارہ کوشش کریں");return;}
+ $("myNotifications").innerHTML=(data||[]).map(n=>'<div class="stat"><b>'+esc(n.title)+'</b><p>'+esc(n.message)+'</p><small>'+esc(customerDateLabel(n.created_at,true))+'</small>'+(n.is_read?'':'<button class="secondary" onclick="markNotificationRead('+Number(n.id)+')">پڑھ لیا</button>')+'</div>').join("")||"ابھی کوئی نئی اطلاع نہیں۔";
+}
+async function markNotificationRead(id){
+ const button=document.querySelector('#myNotifications button[onclick="markNotificationRead('+Number(id)+')"]');
+ if(button){button.disabled=true;button.textContent="محفوظ ہو رہا ہے...";}
+ const {error}=await db.rpc("mark_customer_notification_read",{p_notification_id:id});
+ if(error){if(button){button.disabled=false;button.textContent="پڑھ لیا";}showAppToast("اطلاع پڑھی ہوئی محفوظ نہیں ہوئی: "+(error.message||"خرابی"),"error");return;}
+ await loadCustomerNotifications();
+}
 
 async function auditModule(){
  setTitle("سکیورٹی / آڈٹ لاگ");
@@ -3429,7 +3463,7 @@ async function loadCustomerPanel(){
  const monthStart=monthNow();
  const [billResult,paymentResult,deliveryResult]=await Promise.all([
   db.from("customer_monthly_bills").select("*").eq("customer_id",myCustomer.id).order("bill_month",{ascending:false}),
-  db.from("customer_payments").select("payment_date,amount,payment_type").eq("customer_id",myCustomer.id).order("payment_date",{ascending:false}).limit(50),
+  db.from("customer_payments").select("payment_date,amount,payment_type,created_at").eq("customer_id",myCustomer.id).order("payment_date",{ascending:false}).order("created_at",{ascending:false}).range(0,49),
   db.from("customer_19l_deliveries").select("delivery_date,bottles_delivered,empty_bottles_returned,successful_bottles,bottle_difference,damaged_caps").eq("customer_id",myCustomer.id).order("delivery_date",{ascending:false})
  ]);
  const bills=billResult.data||[],payments=paymentResult.data||[],deliveries=deliveryResult.data||[];
@@ -3468,9 +3502,9 @@ async function loadCustomerPanel(){
    '<div class="customer-info-item"><small>اختتامی ایڈوانس</small><b>'+money(x.closing_advance)+'</b></div></div>';
   const latest=bills[0];
   $("myBill").innerHTML='<div class="customer-record"><div class="customer-record-head"><b>بلنگ مہینہ: '+esc(latest.bill_month)+'</b><span class="customer-record-number">'+money(latest.current_due)+'</span></div><p><b>اس وقت قابلِ ادائیگی رقم</b></p>'+billDetails(latest);
-  $("myBillHistory").innerHTML=bills.map(x=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(x.bill_month)+'</b><span class="customer-record-number">'+money(x.current_due)+'</span></div><p><b>قابلِ ادائیگی بقایا</b></p>'+billDetails(x)+'</div>').join("");
- }
- $("myPayments").innerHTML=paymentError?'<div class="customer-empty">ادائیگیوں کا ریکارڈ لوڈ نہیں ہوا۔</div>':payments.map(r=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(r.payment_date)+'</b><span class="customer-record-number">'+money(r.amount)+'</span></div><small class="muted">'+esc(r.payment_type||"ادائیگی")+'</small></div>').join("")||'<div class="customer-empty">ابھی کوئی ادائیگی درج نہیں۔</div>';
+  $("myBillHistory").innerHTML=bills.map(x=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(x.bill_month)+'</b><span class="customer-record-number">'+money(x.current_due)+'</span></div><p><b>قابلِ ادائیگی بقاwindow.customerPaymentOffset=payments.length;window.customerPaymentHasMore=payments.length===50;
+ $("myPayments").innerHTML=paymentError?'<div class="customer-empty">ادائیگیوں کا ریکارڈ لوڈ نہیں ہوا: '+esc(paymentError.message||"دوبارہ کوشش کریں")+'</div>':renderCustomerPaymentRows(payments,false);
+ stomer-empty">ابھی کوئی ادائیگی درج نہیں۔</div>';
  $("myDeliveries").innerHTML=deliveryError?'<div class="customer-empty">ڈلیوری کا ریکارڈ لوڈ نہیں ہوا۔</div>':deliveries.map(r=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(r.delivery_date)+'</b><span class="customer-record-number">'+Number(r.successful_bottles||0)+' بوتلیں</span></div><div class="customer-info-grid"><div class="customer-info-item"><small>دی گئی بھری بوتلیں</small><b>'+Number(r.bottles_delivered||0)+'</b></div><div class="customer-info-item"><small>واپس موصول خالی بوتلیں</small><b>'+Number(r.empty_bottles_returned||0)+'</b></div><div class="customer-info-item"><small>بل میں شامل بوتلیں</small><b>'+Number(r.successful_bottles||0)+'</b></div></div><p>بوتلوں کی رقم: <b>'+money((Number(r.successful_bottles)||0)*100)+'</b></p></div>').join("")||'<div class="customer-empty">ابھی کوئی ڈلیوری درج نہیں۔</div>';
  await Promise.all([loadCustomerNotifications(),loadCustomerComplaints()]);
  $("complaintForm").innerHTML='<select id="complaintCategory"><option>پانی کے معیار کا مسئلہ</option><option>بوتل کا مسئلہ</option><option>ڈیلیوری میں تاخیر</option><option>بل میں غلطی</option><option>دیگر</option></select><textarea id="complaintDetails" rows="3" placeholder="اپنا مسئلہ تفصیل سے لکھیں"></textarea><button id="complaintSubmitButton" onclick="submitComplaint()">شکایت جمع کریں</button>';
