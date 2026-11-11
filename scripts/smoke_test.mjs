@@ -33,6 +33,46 @@ if (monthlyRetryMigration.includes("extract(day from v_today)>3")) {
   throw new Error("Monthly report retries must not stop after the first three days");
 }
 
+const finishedStockActivityMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111150000_include_finished_stock_in_monthly_report_activity.sql"),
+  "utf8"
+);
+if (!finishedStockActivityMigration.includes("public.finished_goods where entry_date between p_month_start and p_month_end") ||
+    !finishedStockActivityMigration.includes("public.finished_stock_adjustments where adjustment_date between p_month_start and p_month_end") ||
+    !finishedStockActivityMigration.includes("pg_get_functiondef") ||
+    !finishedStockActivityMigration.includes("EXECUTE replace(v_definition, v_old, v_new)")) {
+  throw new Error("Finished-goods opening stock and manual adjustments must trigger monthly report snapshots");
+}
+
+const productionPackagingMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111161000_enforce_production_packaging_stock.sql"),
+  "utf8"
+);
+for (const material of ["bottle_500ml", "carton_500ml", "bottle_1_5l", "carton_1_5l", "bottle_6l", "tape_bundle", "sticker"]) {
+  if (!productionPackagingMigration.includes("'" + material + "'")) {
+    throw new Error("Production must validate stock for " + material);
+  }
+}
+if (!productionPackagingMigration.includes("pg_advisory_xact_lock(hashtextextended('production-inputs', 0))") ||
+    !productionPackagingMigration.includes("public.raw_material_purchases") ||
+    !productionPackagingMigration.includes("p.production_date<=NEW.production_date") ||
+    !productionPackagingMigration.includes("p.id IS DISTINCT FROM NEW.id") ||
+    !productionPackagingMigration.includes("NEW.quantity/200::numeric") ||
+    !productionPackagingMigration.includes("NEW.production_date < v_cutover_date") ||
+    !productionPackagingMigration.includes("v_event_date<v_cutover_date") ||
+    !productionPackagingMigration.includes("v_date<v_cutover_date") ||
+    !productionPackagingMigration.includes("p.production_date>=v_cutover_date") ||
+    !productionPackagingMigration.includes("private.mpw_guard_raw_material_opening_stock()") ||
+    !productionPackagingMigration.includes("private.mpw_guard_production_cap_stock()") ||
+    !productionPackagingMigration.includes("private.mpw_guard_operational_stock()") ||
+    !productionPackagingMigration.includes("if new.material_type='cap_19l' then") ||
+    !productionPackagingMigration.includes("raw-material-cap-19l") ||
+    !productionPackagingMigration.includes("event_date>=v_cutover_date") ||
+    !productionPackagingMigration.includes("delivery_date>=v_cutover_date") ||
+    productionPackagingMigration.includes("SECURITY DEFINER")) {
+  throw new Error("Production and delivery stock guards must enforce all inputs and share the raw opening-stock cutover safely");
+}
+
 const customerBillNotificationMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133717_customer_bill_notification_retry.sql"),
   "utf8"
