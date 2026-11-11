@@ -50,6 +50,14 @@ if (!billLockMigration.includes("SECURITY INVOKER") ||
 if (!billLockMigration.includes("Future customer bills cannot be calculated.")) {
   failures.push("Customer bill recalculation must reject future billing months");
 }
+const appSource = await readFile(resolve(ROOT, "index.html"), "utf8");
+if (!appSource.includes('id="bMonth" type="month" value="${today().slice(0,7)}" max="${today().slice(0,7)}"')) {
+  failures.push("Customer bill month picker must prevent selecting future months");
+}
+if (!appSource.includes('monthInput>today().slice(0,7)') &&
+    !appSource.includes('monthInput > today().slice(0,7)')) {
+  failures.push("Customer bill save must reject future months even if typed manually");
+}
 
 try {
   for (const viewport of [{ width: 1365, height: 900 }, { width: 390, height: 844 }]) {
