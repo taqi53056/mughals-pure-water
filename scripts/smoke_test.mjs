@@ -61,7 +61,7 @@ if (!customerBillMessageMigration.includes("E'السلام علیکم %s صاح�
 }
 
 const notificationGuardMigration = await readFile(
-  resolve(ROOT, "supabase/migrations/20261111134126_allow_cron_notification_updates.sql"),
+  resolve(ROOT, "supabase/migrations/20261111134224_allow_cron_notification_updates.sql"),
   "utf8"
 );
 if (!notificationGuardMigration.includes("session_user = 'postgres'") ||
