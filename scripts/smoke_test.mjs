@@ -73,6 +73,39 @@ if (!productionPackagingMigration.includes("pg_advisory_xact_lock(hashtextextend
   throw new Error("Production and delivery stock guards must enforce all inputs and share the raw opening-stock cutover safely");
 }
 
+const finishedStockCutoverMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111180000_date_aware_finished_stock_cutover.sql"),
+  "utf8"
+);
+for (const required of [
+  "private.get_finished_stock_balance",
+  "SECURITY INVOKER",
+  "auth.uid() IS NULL OR NOT public.is_admin()",
+  "movement_date<=p_as_of_date",
+  "sale_date<=p_as_of_date",
+  "return_date<=p_as_of_date",
+  "new.adjustment_date",
+  "p_sale_date",
+  "p_return_date",
+  "new.production_date>CURRENT_DATE",
+  "GRANT EXECUTE ON FUNCTION private.get_finished_stock_balance"
+]) {
+  if (!finishedStockCutoverMigration.includes(required)) {
+    throw new Error("Finished-stock cutover validation is missing: " + required);
+  }
+}
+for (const callSite of [
+  "private.mpw_guard_finished_goods_opening_stock()",
+  "private.mpw_guard_finished_stock_adjustment()",
+  "private.record_product_sale(date,text,integer,bigint,numeric,text,uuid)",
+  "private.record_product_return(date,text,integer,text,uuid)",
+  "public.get_finished_stock_summary()"
+]) {
+  if (!finishedStockCutoverMigration.includes(callSite)) {
+    throw new Error("Finished-stock date-aware balance is not wired into: " + callSite);
+  }
+}
+
 const customerBillNotificationMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133717_customer_bill_notification_retry.sql"),
   "utf8"
