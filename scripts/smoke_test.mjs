@@ -31,6 +31,9 @@ if (!monthlyRetryMigration.includes("business_month_closings") ||
     !monthlyRetryMigration.includes("status = 'closed'")) {
   throw new Error("Monthly report retries must preserve a formally closed snapshot");
 }
+if (!monthlyRetryMigration.includes("v_report->>'has_activity'")) {
+  throw new Error("Monthly report retries must not create empty zero-activity snapshots");
+}
 if (monthlyRetryMigration.includes("extract(day from v_today)>3")) {
   throw new Error("Monthly report retries must not stop after the first three days");
 }
