@@ -490,7 +490,7 @@ try {
     const ownerMonthDateRange = await page.evaluate(() => {
       const source = document.documentElement.innerHTML;
       const start = source.indexOf("async function loadOwnerWithdrawals()");
-      const end = source.indexOf("\\n}", start);
+      const end = source.indexOf("\n}", start);
       const body = source.slice(start, end > start ? end : start + 1800);
       return {
         usesLocalMonthRange: body.includes("monthDateRange(month).end"),
