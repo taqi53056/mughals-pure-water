@@ -35,7 +35,7 @@ await new Promise(resolveListen => server.listen(4173, "0.0.0.0", resolveListen)
 const browser = await chromium.launch({ headless: true });
 const failures = [];
 const billLockMigration = await readFile(
-  resolve(ROOT, "supabase/migrations/20261111132515_serialize_customer_bill_recalculation.sql"),
+  resolve(ROOT, "supabase/migrations/20261111132842_serialize_customer_bill_recalculation.sql"),
   "utf8"
 );
 const billLockPosition = billLockMigration.indexOf("pg_advisory_xact_lock");
