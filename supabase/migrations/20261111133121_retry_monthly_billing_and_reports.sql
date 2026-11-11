@@ -223,6 +223,10 @@ BEGIN
 
   v_report := public.build_business_monthly_report(v_month_start, v_month_end);
 
+  IF NOT COALESCE((v_report->>'has_activity')::boolean, false) THEN
+    RETURN;
+  END IF;
+
   INSERT INTO public.business_monthly_report_snapshots (
     month_start, month_end, report, generated_at
   )
