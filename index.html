@@ -1433,10 +1433,24 @@ async function renderPendingCustomers(){
 async function approveCustomer(id){
  const c=customerList.find(x=>Number(x.id)===Number(id));if(!c||c.is_active===true||c.approved_at)return;
  if(!confirm("کیا "+(c.name||"اس گاہک")+" کو اکاؤنٹ استعمال کرنے کی منظوری دینی ہے؟"))return;
- const {error}=await db.from("customers").update({is_active:true}).eq("id",id);
- if(!error && c.auth_user_id){const approvalTitle="آپ کا اکاؤنٹ منظور ہوگیا",approvalMessage="السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔";const approvalNotice=await db.from("customer_notifications").insert({customer_id:id,title:approvalTitle,message:approvalMessage,notification_type:"account",reference_key:"account-approved"});if(!approvalNotice.error)await notifyCustomerPush(id,approvalTitle,approvalMessage);}
+ const {data:approved,error}=await db.from("customers").update({is_active:true}).eq("id",id).select("id,is_active,auth_user_id").maybeSingle();
  if(error){msg("منظوری محفوظ نہیں ہوئی: "+error.message);return;}
- msg("گاہک کی منظوری ہوگئی۔",true);await Promise.all([loadCustomers(),refreshAdminSignupNotice()]);
+ if(!approved||approved.is_active!==true){msg("منظوری محفوظ نہیں ہوئی: گاہک کا ریکارڈ اپ ڈیٹ نہیں ہوا۔");return;}
+ let noticeStatus="کسٹمر کی منظوری محفوظ ہوگئی۔";
+ if(approved.auth_user_id){
+  const approvalTitle="آپ کا اکاؤنٹ منظور ہوگیا";
+  const approvalMessage="السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔";
+  const approvalNotice=await db.from("customer_notifications").insert({customer_id:id,title:approvalTitle,message:approvalMessage,notification_type:"account",reference_key:"account-approved"});
+  if(approvalNotice.error){
+   noticeStatus+=" مگر ایپ کے اندر منظوری کی اطلاع محفوظ نہیں ہوسکی: "+approvalNotice.error.message;
+  }else{
+   const pushResult=await notifyCustomerPush(id,approvalTitle,approvalMessage);
+   if(pushResult?.error)noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہے، مگر موبائل Push اطلاع نہیں پہنچی: "+pushResult.error;
+   else noticeStatus+=" ایپ کے اندر اطلاع بھی محفوظ ہوگئی۔";
+  }
+ }
+ msg(noticeStatus,!noticeStatus.includes("مگر")&&!noticeStatus.includes("نہیں پہنچی"));
+ await Promise.all([loadCustomers(),refreshAdminSignupNotice()]);
 }
 
 
