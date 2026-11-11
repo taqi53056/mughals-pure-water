@@ -147,10 +147,13 @@ try {
       const normalizedCases = cases.map(([input]) => normalizePkMobile(input));
       const originalDb = window.db;
       let signupPayload = null;
+      let signupCalls = 0;
+      let successMessage = "";
       try {
         window.db = {
           auth: {
             signUp: async payload => {
+              signupCalls++;
               signupPayload = payload;
               return {
                 data: { user: { id: "smoke-test-user", identities: [{}] }, session: { access_token: "smoke-test" } },
@@ -166,6 +169,9 @@ try {
         document.querySelector("#signupEmail").value = "smoke-test@example.invalid";
         document.querySelector("#signupPassword").value = "SmokeTest123";
         await signupCustomer();
+        successMessage = document.querySelector("#loginMsg").textContent;
+        document.querySelector("#signupMobile").value = "not-a-valid-mobile";
+        await signupCustomer();
       } finally {
         window.db = originalDb;
       }
@@ -173,7 +179,9 @@ try {
         expectedCases: cases.map(x => x[1]),
         normalizedCases,
         sentMobile: signupPayload?.options?.data?.mobile || null,
-        successMessage: document.querySelector("#loginMsg").textContent
+        successMessage,
+        invalidMobileBlocked: signupCalls === 1,
+        invalidMobileMessage: document.querySelector("#loginMsg").textContent
       };
     });
     if (JSON.stringify(signupMobileResult.normalizedCases) !== JSON.stringify(signupMobileResult.expectedCases)) {
@@ -185,6 +193,10 @@ try {
     if (!signupMobileResult.successMessage.includes("درخواست موصول ہوگئی ہے")) {
       failures.push("Mock customer signup did not complete the pending-approval confirmation path");
     }
+    if (!signupMobileResult.invalidMobileBlocked ||
+        !signupMobileResult.invalidMobileMessage.includes("موبائل نمبر درست درج کریں")) {
+      failures.push("Invalid Pakistani mobile number was not blocked before Supabase signup");
+    }
     await page.evaluate(async () => {
       history.replaceState(null, document.title, window.location.pathname + "#type=recovery");
       await window.restoreSavedSession();
@@ -194,6 +206,32 @@ try {
         (await page.locator("#confirmNewPassword").getAttribute("required")) === null) {
       failures.push("Password recovery completion fields are not required");
     }
+    const recoveryValidationResult = await page.evaluate(async () => {
+      const originalDb = window.db;
+      let updateCalls = 0;
+      try {
+        window.db = { auth: { updateUser: async () => { updateCalls++; return { error: null }; } } };
+        document.querySelector("#newPassword").value = "short";
+        document.querySelector("#confirmNewPassword").value = "short";
+        await completePasswordReset();
+        const shortPasswordBlocked = updateCalls === 0;
+        document.querySelector("#newPassword").value = "LongPassword123";
+        document.querySelector("#confirmNewPassword").value = "DifferentPassword123";
+        await completePasswordReset();
+        return {
+          shortPasswordBlocked,
+          mismatchBlocked: updateCalls === 0,
+          mismatchMessage: document.querySelector("#loginMsg").textContent
+        };
+      } finally {
+        window.db = originalDb;
+      }
+    });
+    if (!recoveryValidationResult.shortPasswordBlocked || !recoveryValidationResult.mismatchBlocked ||
+        !recoveryValidationResult.mismatchMessage.includes("دونوں پاس ورڈ ایک جیسے")) {
+      failures.push("Password recovery does not block short or mismatched passwords before updateUser");
+    }
+
     const recoveryCompletionResult = await page.evaluate(async () => {
       const originalDb = window.db;
       let updatedPassword = null;
