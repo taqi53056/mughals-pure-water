@@ -168,6 +168,7 @@ try {
         document.querySelector("#signupEmail").value = "smoke-test@example.invalid";
         document.querySelector("#signupPassword").value = "SmokeTest123";
         await signupCustomer();
+        const successMessage = document.querySelector("#loginMsg").textContent;
         document.querySelector("#signupMobile").value = "not-a-valid-mobile";
         await signupCustomer();
       } finally {
@@ -177,7 +178,7 @@ try {
         expectedCases: cases.map(x => x[1]),
         normalizedCases,
         sentMobile: signupPayload?.options?.data?.mobile || null,
-        successMessage: "آپ کی درخواست موصول ہوگئی ہے۔",
+        successMessage,
         invalidMobileBlocked: signupCalls === 1,
         invalidMobileMessage: document.querySelector("#loginMsg").textContent
       };
