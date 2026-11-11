@@ -23,12 +23,15 @@ SET search_path TO ''
 AS $function$
 DECLARE
   v_cutover_date date;
+  v_business_today date;
   v_factor numeric;
   v_manual_stock numeric := 0;
   v_production_stock numeric := 0;
   v_sold_quantity numeric := 0;
   v_adjustment_quantity numeric := 0;
 BEGIN
+  v_business_today:=(now() AT TIME ZONE 'Asia/Karachi')::date;
+
   IF auth.uid() IS NULL OR NOT public.is_admin() THEN
     RAISE EXCEPTION 'صرف ایڈمن تیار مال کا حساب دیکھ سکتا ہے۔'
       USING ERRCODE='42501';
@@ -38,7 +41,7 @@ BEGIN
     RAISE EXCEPTION 'پروڈکٹ اور اسٹاک کی تاریخ درست درج کریں۔'
       USING ERRCODE='22023';
   END IF;
-  IF p_as_of_date>CURRENT_DATE THEN
+  IF p_as_of_date>v_business_today THEN
     RAISE EXCEPTION 'مستقبل کی تاریخ پر تیار مال کا حساب یا اندراج نہیں ہو سکتا۔'
       USING ERRCODE='22023';
   END IF;
@@ -50,7 +53,7 @@ BEGIN
   END;
 
   IF p_opening_date_override IS NOT NULL THEN
-    IF p_opening_date_override>CURRENT_DATE THEN
+    IF p_opening_date_override>v_business_today THEN
       RAISE EXCEPTION 'ابتدائی تیار مال کی تاریخ مستقبل کی نہیں ہو سکتی۔'
         USING ERRCODE='22023';
     END IF;
@@ -162,7 +165,7 @@ BEGIN
   v_new := $new$  select b.available_quantity
     into v_available
   from private.get_finished_stock_balance(
-    new.product_type,current_date,new.quantity,new.entry_date,null::bigint
+    new.product_type,(now() AT TIME ZONE 'Asia/Karachi')::date,new.quantity,new.entry_date,null::bigint
   ) b;$new$;
   v_definition:=replace(v_definition,v_old,v_new);
   IF position('private.get_finished_stock_balance' IN v_definition)=0 THEN
@@ -279,7 +282,7 @@ BEGIN
         b.manual_stock,b.production_stock,b.sold_quantity,
         b.adjustment_quantity,b.available_quantity
       FROM products p
-      CROSS JOIN LATERAL private.get_finished_stock_balance(p.product_type,CURRENT_DATE) b
+      CROSS JOIN LATERAL private.get_finished_stock_balance(p.product_type,(now() AT TIME ZONE 'Asia/Karachi')::date) b
       ORDER BY p.product_type;
     END;
     $function$
@@ -292,13 +295,13 @@ BEGIN
   v_old := $old$  elsif tg_table_name = 'production' then
     v_date := new.production_date;$old$;
   v_new := $new$  elsif tg_table_name = 'production' then
-    IF new.production_date>CURRENT_DATE THEN
+    IF new.production_date>(now() AT TIME ZONE 'Asia/Karachi')::date THEN
       RAISE EXCEPTION 'مستقبل کی تاریخ پر پروڈکشن درج نہیں ہو سکتی۔'
         USING ERRCODE='22023';
     END IF;
     v_date := new.production_date;$new$;
   v_definition:=replace(v_definition,v_old,v_new);
-  IF position('new.production_date>CURRENT_DATE' IN v_definition)=0 THEN
+  IF position('new.production_date>(now() AT TIME ZONE ''Asia/Karachi'')::date' IN v_definition)=0 THEN
     RAISE EXCEPTION 'Could not safely reject future-dated production.';
   END IF;
   EXECUTE v_definition;
