@@ -3235,34 +3235,43 @@ async function updateComplaint(id){
   if(ce||!complaint)throw ce||new Error("شکایت کا ریکارڈ نہیں ملا۔");
   const changed=status!==complaint.status||admin_note!==(complaint.admin_note||"");
   if(!changed){msg("اس شکایت میں کوئی نئی تبدیلی نہیں ہے۔",true);return;}
-  const {error}=await db.from("customer_complaints").update({status,admin_note:admin_note||null,updated_at:new Date().toISOString()}).eq("id",id);
-  if(error)throw error;
+  const {error:updateError}=await db.from("customer_complaints").update({status,admin_note:admin_note||null,updated_at:new Date().toISOString()}).eq("id",id);
+  if(updateError)throw updateError;
   const message=`آپ کی شکایت (${complaint.category}) اپڈیٹ ہوئی ہے۔ حیثیت: ${status==="resolved"?"حل ہوگئی":status==="in_progress"?"زیرِ کارروائی":"موصول"}۔`+(admin_note?" منتظم کا جواب: "+admin_note:"");
   const reference_key="complaint:"+id;
-  const {data:existing,error:lookupError}=await db.from("customer_notifications").select("id,message").eq("customer_id",complaint.customer_id).eq("reference_key",reference_key).limit(1);
-  if(lookupError)throw lookupError;
   let shouldPush=false;
-  if(existing?.length){
-   shouldPush=existing[0].message!==message;
-   if(shouldPush){
-    const {error:updateError}=await db.from("customer_notifications").update({title:"آپ کی شکایت کی تازہ کاری",message,is_read:false,created_at:new Date().toISOString()}).eq("id",existing[0].id);
-    if(updateError)throw updateError;
+  try{
+   const {data:existing,error:lookupError}=await db.from("customer_notifications").select("id,message").eq("customer_id",complaint.customer_id).eq("reference_key",reference_key).limit(1);
+   if(lookupError)throw lookupError;
+   if(existing?.length){
+    shouldPush=existing[0].message!==message;
+    if(shouldPush){
+     const {error:noticeUpdateError}=await db.from("customer_notifications").update({title:"آپ کی شکایت کی تازہ کاری",message,is_read:false,created_at:new Date().toISOString()}).eq("id",existing[0].id);
+     if(noticeUpdateError)throw noticeUpdateError;
+    }
+   }else{
+    const {error:noticeError}=await db.from("customer_notifications").insert({customer_id:complaint.customer_id,title:"آپ کی شکایت کی تازہ کاری",message,notification_type:"complaint",reference_key});
+    if(noticeError)throw noticeError;
+    shouldPush=true;
    }
-  }else{
-   const {error:noticeError}=await db.from("customer_notifications").insert({customer_id:complaint.customer_id,title:"آپ کی شکایت کی تازہ کاری",message,notification_type:"complaint",reference_key});
-   if(noticeError)throw noticeError;
-   shouldPush=true;
+  }catch(notificationError){
+   msg("شکایت اور جواب محفوظ ہوگیا، مگر ایپ میں اطلاع درج یا اپڈیٹ نہیں ہوسکی: "+(notificationError?.message||String(notificationError)));
+   await loadComplaints();
+   return;
   }
   if(shouldPush){
-   const push=await notifyCustomerPush(complaint.customer_id,"آپ کی شکایت کی تازہ کاری",message);
-   if(push?.error||Number(push?.sent||0)<1)msg("شکایت محفوظ اور ایپ اطلاع درج ہوگئی، مگر موبائل Push نہیں پہنچی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔"));
-   else msg("شکایت اور جواب محفوظ ہوگیا، موبائل اطلاع بھی بھیج دی گئی۔",true);
+   try{
+    const push=await notifyCustomerPush(complaint.customer_id,"آپ کی شکایت کی تازہ کاری",message);
+    if(push?.error||Number(push?.sent||0)<1)msg("شکایت، جواب اور ایپ اطلاع محفوظ ہوگئی، مگر موبائل Push نہیں پہنچی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔"));
+    else msg("شکایت، جواب اور موبائل اطلاع محفوظ ہوگئی۔",true);
+   }catch(pushError){
+    msg("شکایت، جواب اور ایپ اطلاع محفوظ ہوگئی، مگر موبائل Push بھیجنے میں مسئلہ آیا: "+(pushError?.message||String(pushError)));
+   }
   }else msg("شکایت محفوظ ہوگئی؛ پہلے سے موجود اطلاع دوبارہ نہیں بھیجی گئی۔",true);
   await loadComplaints();
  }catch(e){msg("شکایت اپڈیٹ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
 }
-
 async function submitComplaint(){
  const category=$("complaintCategory").value,details=$("complaintDetails").value.trim();
  if(!details){$("myComplaints").textContent="براہ کرم مسئلے کی تفصیل لکھیں۔";return;}
