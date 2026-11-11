@@ -54,8 +54,8 @@ BEGIN
     FROM public.raw_material_purchases r
     WHERE r.material_type=v_requirement.material_type
       AND r.purchase_date<=NEW.production_date
-      AND (v_cutover_date IS NULL OR r.record_type='opening_stock'
-        OR r.purchase_date>=v_cutover_date);
+      AND (v_cutover_date IS NULL OR NEW.production_date < v_cutover_date
+        OR r.record_type='opening_stock' OR r.purchase_date>=v_cutover_date);
 
     SELECT coalesce(sum(
       CASE v_requirement.material_type
@@ -85,7 +85,8 @@ BEGIN
       INTO v_consumed
     FROM public.production p
     WHERE p.production_date<=NEW.production_date
-      AND (v_cutover_date IS NULL OR p.production_date>=v_cutover_date)
+      AND (v_cutover_date IS NULL OR NEW.production_date < v_cutover_date
+        OR p.production_date>=v_cutover_date)
       AND p.id IS DISTINCT FROM NEW.id;
 
     IF v_available-v_consumed < v_requirement.required_quantity THEN
@@ -153,14 +154,15 @@ BEGIN
   FROM public.raw_material_purchases
   WHERE material_type=v_material_type
     AND purchase_date<=NEW.production_date
-    AND (v_cutover_date IS NULL OR record_type='opening_stock'
-      OR purchase_date>=v_cutover_date);$new$;
+    AND (v_cutover_date IS NULL OR NEW.production_date < v_cutover_date
+      OR record_type='opening_stock' OR purchase_date>=v_cutover_date);$new$;
   v_definition := replace(v_definition,v_old,v_new);
 
   v_old := $old$    AND production_date<=NEW.production_date
     AND id IS DISTINCT FROM NEW.id;$old$;
   v_new := $new$    AND production_date<=NEW.production_date
-    AND (v_cutover_date IS NULL OR production_date>=v_cutover_date)
+    AND (v_cutover_date IS NULL OR NEW.production_date < v_cutover_date
+      OR production_date>=v_cutover_date)
     AND id IS DISTINCT FROM NEW.id;$new$;
   v_definition := replace(v_definition,v_old,v_new);
 
@@ -203,7 +205,7 @@ BEGIN
   v_old := $old$    where event_date is not null
     order by event_date$old$;
   v_new := $new$    where event_date is not null
-      and (v_cutover_date is null or event_date>=v_cutover_date)
+      and (new.record_type<>'opening_stock' or v_cutover_date is null or event_date>=v_cutover_date)
     order by event_date$new$;
   v_definition := replace(v_definition,v_old,v_new);
 
@@ -216,28 +218,34 @@ BEGIN
       and (v_old_id is null or r.id is distinct from v_old_id);$old$;
   v_new := $new$    select coalesce(sum(r.quantity),0)
       + case when new.purchase_date<=v_event_date
-          and (v_cutover_date is null or new.record_type='opening_stock'
-            or new.purchase_date>=v_cutover_date)
+          and (v_cutover_date is null
+            or (v_event_date<v_cutover_date and new.record_type<>'opening_stock')
+            or (v_event_date>=v_cutover_date
+              and (new.record_type='opening_stock' or new.purchase_date>=v_cutover_date)))
         then new.quantity else 0 end
     into v_available
     from public.raw_material_purchases r
     where r.material_type=new.material_type
       and r.purchase_date<=v_event_date
-      and (v_cutover_date is null or r.record_type='opening_stock'
-        or r.purchase_date>=v_cutover_date)
+      and (v_cutover_date is null
+        or (v_event_date<v_cutover_date and r.record_type<>'opening_stock')
+        or (v_event_date>=v_cutover_date
+          and (r.record_type='opening_stock' or r.purchase_date>=v_cutover_date)))
       and (v_old_id is null or r.id is distinct from v_old_id);$new$;
   v_definition := replace(v_definition,v_old,v_new);
 
   v_old := $old$    where p.production_date<=v_event_date
       and ($old$;
   v_new := $new$    where p.production_date<=v_event_date
-      and (v_cutover_date is null or p.production_date>=v_cutover_date)
+      and (v_cutover_date is null or v_event_date<v_cutover_date
+        or p.production_date>=v_cutover_date)
       and ($new$;
   v_definition := replace(v_definition,v_old,v_new);
 
   v_old := $old$      where d.delivery_date<=v_event_date;$old$;
   v_new := $new$      where d.delivery_date<=v_event_date
-        and (v_cutover_date is null or d.delivery_date>=v_cutover_date);$new$;
+        and (v_cutover_date is null or v_event_date<v_cutover_date
+          or d.delivery_date>=v_cutover_date);$new$;
   v_definition := replace(v_definition,v_old,v_new);
 
   IF position('v_cutover_date date;' IN v_definition)=0
@@ -271,13 +279,14 @@ begin$new$;
     select coalesce(sum(quantity),0) into v_available
     from public.raw_material_purchases
     where material_type='cap_19l' and purchase_date<=v_date
-      and (v_cutover_date is null or record_type='opening_stock'
-        or purchase_date>=v_cutover_date);$new$;
+      and (v_cutover_date is null or v_date<v_cutover_date
+        or record_type='opening_stock' or purchase_date>=v_cutover_date);$new$;
   v_definition := replace(v_definition,v_old,v_new);
 
   v_old := $old$    where delivery_date<=v_date and id is distinct from new.id;$old$;
   v_new := $new$    where delivery_date<=v_date and id is distinct from new.id
-      and (v_cutover_date is null or delivery_date>=v_cutover_date);$new$;
+      and (v_cutover_date is null or v_date<v_cutover_date
+          or delivery_date>=v_cutover_date);$new$;
   v_definition := replace(v_definition,v_old,v_new);
 
   IF position('v_cutover_date date;' IN v_definition)=0
