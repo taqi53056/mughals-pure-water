@@ -2278,7 +2278,7 @@ async function saveTankerPurchase(){
   const count=Number($("tankCount").value),rate=Number($("tankRate").value);
   if(!date||!Number.isInteger(count)||count<=0||!Number.isFinite(rate)||rate<=0){msg("تاریخ، ٹینکروں کی تعداد اور فی ٹینکر قیمت درست درج کریں۔");return;}
   if(!confirmLargeEntry("ٹینکروں کی تعداد",count,5)||!confirmLargeEntry("ٹینکر کی کل رقم",count*rate,100000))return;
-  payload={purchase_date:date,water_use:$("waterUse").value,tanker_count:count,rate_per_tanker:rate,total_amount:count*rate,payment_method:$("tankPaymentMethod").value,supplier:$("tankSupplier").value.trim()||null,entered_by:user?.id||null};
+  payload={purchase_date:date,water_use:$("waterUse").value,tanker_count:count,rate_per_tanker:rate,payment_method:$("tankPaymentMethod").value,supplier:$("tankSupplier").value.trim()||null,entered_by:user?.id||null}; // total_amount is calculated and enforced by the database trigger.
  }
  const button=$("tankSaveButton");
  if(button?.disabled)return;
