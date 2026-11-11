@@ -3456,9 +3456,19 @@ async function loadCustomerPanel(){
   $("myBill").innerHTML='<div class="customer-bill-empty"><strong>ابھی ماہانہ بل جاری نہیں ہوا</strong>بل تیار ہونے پر قابلِ ادائیگی رقم اور مکمل تفصیل یہاں دکھائی جائے گی۔</div>';
   $("myBillHistory").innerHTML='<div class="customer-empty">ابھی کوئی سابقہ بل موجود نہیں۔</div>';
  }else{
+  const billDetails=(x)=>'<div class="customer-info-grid">'+
+   '<div class="customer-info-item"><small>بل میں شامل 19L بوتلیں</small><b>'+Number(x.bottles_19l||0)+'</b></div>'+
+   '<div class="customer-info-item"><small>بوتلوں کی رقم</small><b>'+money(x.bottle_amount)+'</b></div>'+
+   '<div class="customer-info-item"><small>خراب ڈھکن</small><b>'+Number(x.damaged_caps||0)+'</b></div>'+
+   '<div class="customer-info-item"><small>ڈھکنوں کی رقم</small><b>'+money(x.cap_amount)+'</b></div>'+
+   '<div class="customer-info-item"><small>کل ماہانہ چارجز</small><b>'+money((Number(x.bottle_amount)||0)+(Number(x.cap_amount)||0))+'</b></div>'+
+   '<div class="customer-info-item"><small>سابقہ بقایا</small><b>'+money(x.previous_balance)+'</b></div>'+
+   '<div class="customer-info-item"><small>اس ماہ خالص ادائیگیاں</small><b>'+money(x.payments)+'</b></div>'+
+   '<div class="customer-info-item"><small>استعمال شدہ ایڈوانس</small><b>'+money(x.advance_used)+'</b></div>'+
+   '<div class="customer-info-item"><small>اختتامی ایڈوانس</small><b>'+money(x.closing_advance)+'</b></div></div>';
   const latest=bills[0];
-  $("myBill").innerHTML='<div class="customer-stat dark"><div class="stat-label">اس وقت قابلِ ادائیگی رقم</div><div class="stat-number">'+money(latest.current_due)+'</div><div class="stat-label">بلنگ مہینہ: '+esc(latest.bill_month)+'</div></div>';
-  $("myBillHistory").innerHTML=bills.map(x=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(x.bill_month)+'</b><span class="customer-record-number">'+money(x.current_due)+'</span></div><p>بل میں شامل بوتلیں: <b>'+Number(x.bottles_19l||0)+'</b> · خراب ڈھکن: <b>'+Number(x.damaged_caps||0)+'</b></p><p>بل: '+money((Number(x.bottle_amount)||0)+(Number(x.cap_amount)||0))+' · ادائیگیاں: '+money(x.payments)+'</p><small class="muted">باقی قابلِ ادائیگی رقم</small></div>').join("");
+  $("myBill").innerHTML='<div class="customer-record"><div class="customer-record-head"><b>بلنگ مہینہ: '+esc(latest.bill_month)+'</b><span class="customer-record-number">'+money(latest.current_due)+'</span></div><p><b>اس وقت قابلِ ادائیگی رقم</b></p>'+billDetails(latest);
+  $("myBillHistory").innerHTML=bills.map(x=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(x.bill_month)+'</b><span class="customer-record-number">'+money(x.current_due)+'</span></div><p><b>قابلِ ادائیگی بقایا</b></p>'+billDetails(x)+'</div>').join("");
  }
  $("myPayments").innerHTML=paymentError?'<div class="customer-empty">ادائیگیوں کا ریکارڈ لوڈ نہیں ہوا۔</div>':payments.map(r=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(r.payment_date)+'</b><span class="customer-record-number">'+money(r.amount)+'</span></div><small class="muted">'+esc(r.payment_type||"ادائیگی")+'</small></div>').join("")||'<div class="customer-empty">ابھی کوئی ادائیگی درج نہیں۔</div>';
  $("myDeliveries").innerHTML=deliveryError?'<div class="customer-empty">ڈلیوری کا ریکارڈ لوڈ نہیں ہوا۔</div>':deliveries.map(r=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(r.delivery_date)+'</b><span class="customer-record-number">'+Number(r.successful_bottles||0)+' بوتلیں</span></div><div class="customer-info-grid"><div class="customer-info-item"><small>دی گئی بھری بوتلیں</small><b>'+Number(r.bottles_delivered||0)+'</b></div><div class="customer-info-item"><small>واپس موصول خالی بوتلیں</small><b>'+Number(r.empty_bottles_returned||0)+'</b></div><div class="customer-info-item"><small>بل میں شامل بوتلیں</small><b>'+Number(r.successful_bottles||0)+'</b></div></div><p>بوتلوں کی رقم: <b>'+money((Number(r.successful_bottles)||0)*100)+'</b></p></div>').join("")||'<div class="customer-empty">ابھی کوئی ڈلیوری درج نہیں۔</div>';
