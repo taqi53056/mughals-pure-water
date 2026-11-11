@@ -2454,6 +2454,15 @@ async function saveSale(){
  const c=getSaleCalc(),button=document.querySelector('button[onclick="saveSale()"]');
  if(!Number.isInteger(c.qty)||c.qty<=0){msg("کارٹن یا 6L بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
  if((c.type==="6L"&&(!Number.isFinite(c.price)||c.price<55))||(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<270))){msg(c.type==="6L"?"6L کی قیمت کم از کم 55 روپے فی بوتل ہونی چاہیے۔":"500ml اور 1.5L کی قیمت کم از کم 270 روپے فی کارٹن ہونی چاہیے۔");return}
+ if(c.type!=="6L"){
+  const setting=saleSettings[c.type]||{};
+  const defaultRate=Number(setting.default_rate);
+  const specialRate=setting.special_100_rate==null?null:Number(setting.special_100_rate);
+  if(c.price<defaultRate&&(c.qty<100||specialRate===null||c.price!==specialRate)){
+   msg("خصوصی قیمت صرف 100 یا زیادہ کارٹن پر، اور صرف سیٹنگز میں مقرر کردہ خصوصی قیمت پر لاگو ہوگی۔");
+   return;
+  }
+ }
  if(!confirmLargeEntry("فروخت کی مقدار",c.qty,100)||!confirmLargeEntry("فروخت کی کل رقم (روپے)",c.total,1000))return;
  if(button)button.disabled=true;
  try{
