@@ -792,6 +792,7 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 <div class="tile gray" role="button" tabindex="0" aria-label="سکیورٹی / آڈٹ لاگ" title="تبدیلیوں کا ریکارڈ" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('audit')" data-category="management"><span class="tile-title">آڈٹ لاگ</span><small>تبدیلیوں کا ریکارڈ</small></div>
 <div class="tile blue" role="button" tabindex="0" aria-label="پانی کی خریداری / ابتدائی اسٹاک" title="پانی کی خریداری اور اسٹاک" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('tanker')" data-category="inventory"><span class="tile-title">پانی اسٹاک</span><small>پانی کی خریداری اور اسٹاک</small></div>
 <div class="tile teal" role="button" tabindex="0" aria-label="19L کاؤنٹر فروخت" title="کاؤنٹر سے پانی کی فروخت" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('counterWater')" data-category="inventory"><span class="tile-title">19L فروخت</span><small>کاؤنٹر سے پانی کی فروخت</small></div>
+<div class="tile orange" role="button" tabindex="0" aria-label="بغیر گاہک 19L سپلائی" title="عارضی سپلائی اور مزدور کی مزدوری" onclick="openModule('unassigned19l')" data-category="operations"><span class="tile-title">غیر منسلک سپلائی</span><small>بغیر گاہک 19L سپلائی</small></div>
 <div class="tile red" role="button" tabindex="0" aria-label="خراب تیار مال کی واپسی" title="واپس یا خراب مال" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('returns')" data-category="inventory"><span class="tile-title">خراب مال واپسی</span><small>واپس یا خراب مال</small></div>
 <div class="tile teal" role="button" tabindex="0" aria-label="ترتیبات / کنٹرول سینٹر" title="قیمتیں اور بنیادی سیٹنگز" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('settings')" data-category="management"><span class="tile-title">ترتیبات</span><small>قیمتیں اور بنیادی سیٹنگز</small></div>
 <div class="tile gold" role="button" tabindex="0" aria-label="مالک کی ذاتی نکاسی" title="مالک نے کتنی رقم لی؟" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('ownerWithdrawals')" data-category="finance"><span class="tile-title">مالک نکاسی</span><small>مالک نے کتنی رقم لی؟</small></div>
@@ -1377,6 +1378,7 @@ async function openModule(name){
  if(name==="raw")return rawMaterialsModule();
  if(name==="tanker")return tankerPurchaseModule();
  if(name==="counterWater")return counterWaterModule();
+ if(name==="unassigned19l")return unassigned19lModule();
  if(name==="returns")return productReturnsModule();
  if(name==="finished")return stockModule("finished");
  if(name==="sales")return salesModule();
@@ -2294,14 +2296,15 @@ async function saveTankerPurchase(){
  finally{if(button)button.disabled=false;}
 }
 async function loadTankerPurchases(){
- let rows=[],opening=[],prod=[],deliveries=[],counterSales=[];
+ let rows=[],opening=[],prod=[],deliveries=[],counterSales=[],unassigned=[];
  try{
-  [rows,opening,prod,deliveries,counterSales]=await Promise.all([
+  [rows,opening,prod,deliveries,counterSales,unassigned]=await Promise.all([
    financeFetchAll("water_tanker_purchases","*","purchase_date",null,null),
    financeFetchAll("water_opening_stock","*","as_of_date",null,null),
    financeFetchAll("production","product_type,quantity,production_date","production_date",null,null),
    financeFetchAll("customer_19l_deliveries","bottles_delivered,delivery_date","delivery_date",null,null),
-   financeFetchAll("counter_water_sales","total_litres,sale_date","sale_date",null,null)
+   financeFetchAll("counter_water_sales","total_litres,sale_date","sale_date",null,null),
+   financeFetchAll("unassigned_19l_deliveries","bottles_delivered,delivery_date","delivery_date",null,null)
   ]);
  }catch(e){$("moduleTable").textContent="پانی کا ریکارڈ / بیلنس لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
  const asOfDate=today();
@@ -2310,12 +2313,14 @@ async function loadTankerPurchases(){
  prod=prod.filter(r=>r.production_date<=asOfDate);
  deliveries=deliveries.filter(r=>r.delivery_date<=asOfDate);
  counterSales=counterSales.filter(r=>r.sale_date<=asOfDate);
+ unassigned=unassigned.filter(r=>r.delivery_date<=asOfDate);
  const sum=(list,fn)=>list.reduce((n,r)=>n+Number(fn(r)||0),0);
  const tankerLitres=use=>sum(rows.filter(r=>r.water_use===use),r=>Number(r.tanker_count)*1000);
  const openingLitres=use=>sum(opening.filter(r=>r.water_use===use),r=>r.litres);
  const shopConsumed=sum(deliveries,r=>Number(r.bottles_delivered)*19)
   +sum(counterSales,r=>r.total_litres)
-  +sum(prod.filter(r=>r.product_type==="6L"),r=>Number(r.quantity)*6);
+  +sum(prod.filter(r=>r.product_type==="6L"),r=>Number(r.quantity)*6)
+  +sum(unassigned,r=>Number(r.bottles_delivered)*19);
  const fillingConsumed=sum(prod.filter(r=>r.product_type==="500ml"),r=>Number(r.quantity)*12)
   +sum(prod.filter(r=>r.product_type==="1.5L"),r=>Number(r.quantity)*18);
  const shopAvailable=tankerLitres("shop_counter")+openingLitres("shop_counter");
@@ -2368,6 +2373,72 @@ async function saveCounterWaterSale(){
   msg("اس تاریخ کی روزانہ کاؤنٹر فروخت محفوظ/اپڈیٹ ہوگئی؛ دوسرا ریکارڈ نہیں بنایا گیا۔",true);
   await loadCounterWaterForDate();await loadTodaySummary();
  }catch(error){msg("کاؤنٹر فروخت محفوظ نہیں ہوئی: "+(error?.message||String(error)));}
+ finally{if(button)button.disabled=false;}
+}
+
+
+async function unassigned19lModule(){
+ setTitle("بغیر گاہک 19L سپلائی");
+ $("moduleBody").innerHTML=
+ '<p class="muted">یہ اندراج صرف اس سپلائی کے لیے ہے جس کا ابھی کوئی کسٹمر اکاؤنٹ موجود نہیں۔ اس سے کسٹمر، کسٹمر بل یا کسٹمر ہسٹری نہیں بنے گی۔ ہر بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔</p>'+
+ '<div class="card"><h3>نئی غیر منسلک سپلائی</h3>'+
+ '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
+ '<label for="u19Worker">سپلائی کرنے والا مزدور</label><select id="u19Worker"><option value="">ورکر لوڈ ہو رہا ہے...</option></select>'+
+ '<label for="u19Bottles">سپلائی کی گئی بھری 19L بوتلیں</label><input id="u19Bottles" type="number" min="1" step="1" inputmode="numeric" value="5">'+
+ '<label for="u19Empties">واپس آنے والی خالی بوتلیں (اگر ہوں)</label><input id="u19Empties" type="number" min="0" step="1" inputmode="numeric" value="0">'+
+ '<label for="u19Details">تفصیل (اختیاری)</label><input id="u19Details" maxlength="300" placeholder="مثلاً عارضی سپلائی">'+
+ '<div class="stat">مزدوری: <b id="u19Labor">Rs. 100</b> — فی بوتل Rs.20</div>'+
+ '<button id="u19SaveButton" onclick="saveUnassigned19lDelivery()">سپلائی اور مزدوری محفوظ کریں</button></div>'+
+ '<div id="u19History"></div>';
+ const sel=$("u19Worker");
+ try{
+  const {data,error}=await db.from("workers").select("id,full_name").eq("is_active",true).eq("is_owner",false).contains("work_categories",["19L delivery"]).order("full_name");
+  if(error)throw error;
+  sel.innerHTML=(data||[]).map(w=>'<option value="'+w.id+'">'+esc(w.full_name)+'</option>').join("");
+  if(!(data||[]).length)sel.innerHTML='<option value="">کوئی فعال 19L مزدور موجود نہیں</option>';
+ }catch(e){sel.innerHTML='<option value="">ورکر لوڈ نہیں ہوا</option>';msg("ورکر لوڈ نہیں ہوئے: "+(e.message||String(e)));return;}
+ $("u19Bottles").addEventListener("input",updateUnassigned19lLabor);
+ updateUnassigned19lLabor();
+ await loadUnassigned19lHistory();
+}
+function updateUnassigned19lLabor(){
+ const n=Number($("u19Bottles")?.value)||0;
+ if($("u19Labor"))$("u19Labor").textContent=money(n*20);
+}
+async function loadUnassigned19lHistory(){
+ const box=$("u19History");if(!box)return;
+ try{
+  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,worker_id,bottles_delivered,empty_bottles_returned,labor_amount,details").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
+  if(error)throw error;
+  const {data:workers,error:we}=await db.from("workers").select("id,full_name");
+  if(we)throw we;
+  const map=new Map((workers||[]).map(w=>[Number(w.id),w.full_name]));
+  box.innerHTML='<h3>غیر منسلک سپلائی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>مزدور</th><th>بھری بوتلیں</th><th>خالی واپس</th><th>مزدوری</th><th>تفصیل</th></tr>'+
+   (data||[]).map(r=>'<tr><td>'+esc(r.delivery_date)+'</td><td>'+esc(map.get(Number(r.worker_id))||"ورکر")+'</td><td>'+Number(r.bottles_delivered)+'</td><td>'+Number(r.empty_bottles_returned)+'</td><td>'+money(r.labor_amount)+'</td><td>'+esc(r.details||"—")+'</td></tr>').join("")+
+   '</table></div>';
+ }catch(e){box.textContent="سپلائی ہسٹری لوڈ نہیں ہوئی: "+(e.message||String(e));}
+}
+async function saveUnassigned19lDelivery(){
+ const date=$("u19Date").value,worker=Number($("u19Worker").value),bottles=Number($("u19Bottles").value),empties=Number($("u19Empties").value||0),details=$("u19Details").value.trim();
+ if(!date||!Number.isInteger(worker)||worker<=0||!Number.isInteger(bottles)||bottles<=0||!Number.isInteger(empties)||empties<0||empties>bottles){msg("تاریخ، مزدور، بوتلوں اور خالی بوتلوں کی تعداد درست درج کریں۔");return;}
+ if(date>today()){msg("مستقبل کی تاریخ پر سپلائی درج نہیں ہو سکتی۔");return;}
+ if(!confirm("تصدیق کریں:\\nتاریخ: "+date+"\\nبوتلیں: "+bottles+"\\nمزدوری: "+money(bottles*20)+"\\nیہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
+ const button=$("u19SaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ const signature=[date,worker,bottles,empties,details].join("|");
+ const requestId=mpwPendingRequestId("unassigned19l",signature);
+ try{
+  const {data,error}=await db.rpc("record_unassigned_19l_delivery",{
+   p_delivery_date:date,p_worker_id:worker,p_bottles_delivered:bottles,
+   p_empty_bottles_returned:empties,p_details:details||null,p_request_id:requestId
+  });
+  if(error)throw error;
+  if(!data?.id)throw new Error("محفوظ اندراج کی تصدیق موصول نہیں ہوئی۔");
+  mpwClearPendingRequestId("unassigned19l");
+  msg("غیر منسلک سپلائی محفوظ ہوگئی۔ مزدوری "+money(data.labor_amount)+" ورکر لیجر میں درج ہوگئی۔",true);
+  $("u19Bottles").value="";$("u19Empties").value="0";$("u19Details").value="";
+  updateUnassigned19lLabor();
+  await Promise.all([loadUnassigned19lHistory(),loadTankerPurchases(),loadTodaySummary()]);
+ }catch(e){msg("سپلائی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
 }
 
@@ -2600,6 +2671,8 @@ async function loadTodaySummary(){
   const bottles=(d||[]).reduce((s,r)=>s+(Number(r.successful_bottles)||0),0);
   const diff=(d||[]).reduce((s,r)=>s+(Number(r.bottle_difference)||0),0);
   const labor=(d||[]).reduce((s,r)=>s+(Number(r.delivery_labor)||0),0);
+  const unassignedBottles=await sumTable("unassigned_19l_deliveries","bottles_delivered","delivery_date",date);
+  const unassignedLabor=await sumTable("unassigned_19l_deliveries","labor_amount","delivery_date",date);
   const sales=await sumTable("product_sales","total_amount","sale_date",date);
   const counterAmount=await sumTable("counter_water_sales","total_amount","sale_date",date);
   const counterLitres=await sumTable("counter_water_sales","total_litres","sale_date",date);
@@ -2609,7 +2682,8 @@ async function loadTodaySummary(){
   el.innerHTML=`<div class="stat">تاریخ: ${date}</div>
   <div class="stat">19L کامیاب بوتلیں: <b>${bottles}</b></div>
   <div class="stat">بوتلوں کا فرق: <b>${diff}</b></div>
-  <div class="stat">19L ڈلیوری مزدوری: <b>${money(labor)}</b></div>
+  <div class="stat">کسٹمر 19L ڈلیوری مزدوری: <b>${money(labor)}</b></div>
+  <div class="stat">بغیر گاہک سپلائی: <b>${unassignedBottles} بوتلیں — مزدوری ${money(unassignedLabor)}</b></div>
   <div class="stat">500ml / 1.5L / 6L فروخت: <b>${money(sales)}</b></div>
   <div class="stat">19L کاؤنٹر: <b>${counterLitres} لیٹر — ${money(counterAmount)}</b></div>
   <div class="stat">آج ٹینکر خریداری: <b>${money(tankerSpend)}</b></div>
