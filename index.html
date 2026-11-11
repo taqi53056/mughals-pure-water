@@ -2165,7 +2165,7 @@ async function saveRawMaterialPurchase(){
     return;
    }
    const signature=[row.purchase_date,row.record_type,row.material_type,row.quantity,row.total_amount,row.supplier||"",row.payment_method,row.details||""].join("|");
-   const requestId=mpwPendingRequestId("raw-material-purchase",signature);
+   const requestId=mpwPendingRequestId("raw-material-purchase:"+row.material_type,signature);
    const {data:purchase,error}=await db.from("raw_material_purchases").upsert({...row,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
    if(error)throw error;
    if(!purchase){
@@ -2182,7 +2182,10 @@ async function saveRawMaterialPurchase(){
     details:"بوتل کے ساتھ شامل ڈھکن؛ رقم بوتل کی مالیت میں شامل ہے"
    });
   }
-  if(record_type!=="opening_stock")mpwClearPendingRequestId("raw-material-purchase");
+  if(record_type!=="opening_stock"){
+   mpwClearPendingRequestId("raw-material-purchase:"+type);
+   if(pairedCapType)mpwClearPendingRequestId("raw-material-purchase:"+pairedCapType);
+  }
   saved=true;
   msg(record_type==="opening_stock"?"ابتدائی خام مال اسٹاک محفوظ ہوگیا۔":"خام مال کی خریداری محفوظ ہوگئی۔",true);
   $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
