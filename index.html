@@ -1445,8 +1445,8 @@ async function approveCustomer(id){
    noticeStatus+=" مگر ایپ کے اندر منظوری کی اطلاع محفوظ نہیں ہوسکی: "+approvalNotice.error.message;
   }else{
    const pushResult=await notifyCustomerPush(id,approvalTitle,approvalMessage);
-   if(pushResult?.error)noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہے، مگر موبائل Push اطلاع نہیں پہنچی: "+pushResult.error;
-   else noticeStatus+=" ایپ کے اندر اطلاع بھی محفوظ ہوگئی۔";
+   if(pushResult?.error||Number(pushResult?.sent||0)<1)noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہے، مگر موبائل Push کی تصدیق نہیں ہوئی: "+(pushResult?.error||pushResult?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔");
+   else noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہوگئی اور موبائل Push بھی بھیج دی گئی۔";
   }
  }
  msg(noticeStatus,!noticeStatus.includes("مگر")&&!noticeStatus.includes("نہیں پہنچی"));
