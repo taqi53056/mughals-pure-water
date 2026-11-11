@@ -1201,7 +1201,10 @@ async function signupCustomer(){
   $("loginMsg").textContent="آپ کی درخواست موصول ہوگئی ہے۔ اب ای میل کھولنے کی ضرورت نہیں۔ منتظم کو درخواست مل گئی ہے؛ منظوری کے بعد اسی ای میل اور پاس ورڈ سے لاگ اِن کریں۔";
  }catch(e){
   $("loginMsg").className="error";
-  $("loginMsg").textContent="رجسٹریشن ناکام: "+(e?.message||String(e));
+  const duplicateMobile=e?.code==="23505"&&/mobile/i.test(e?.message||"");
+  $("loginMsg").textContent=duplicateMobile
+   ?"یہ موبائل نمبر پہلے سے کسی دوسرے کسٹمر اکاؤنٹ کے ساتھ منسلک ہے۔"
+   :"رجسٹریشن ناکام: "+(e?.message||String(e));
  }finally{
   button.disabled=false;button.textContent="اکاؤنٹ بنائیں";
  }
@@ -1579,7 +1582,11 @@ async function saveCustomer(){
  if(mobileInput&&!mobile){msg("موبائل نمبر درست درج کریں؛ مثال: 03001234567 یا +923001234567۔");$("cMobile").focus();return}
  const payload={name,mobile,address:$("cAddress").value.trim()||null};
  const r=await db.from("customers").update(payload).eq("id",editingId);
- if(r.error){msg("تبدیلیاں محفوظ نہیں ہوئیں: "+r.error.message);return}
+ if(r.error){
+  if(r.error.code==="23505"&&/mobile/i.test(r.error.message||""))msg("یہ موبائل نمبر پہلے سے کسی دوسرے کسٹمر کے ساتھ منسلک ہے۔");
+  else msg("تبدیلیاں محفوظ نہیں ہوئیں: "+r.error.message);
+  return;
+ }
  editingId=null;msg("گاہک کی معلومات اپڈیٹ ہوگئیں۔",true);await customersModule();
 }
 
