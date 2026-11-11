@@ -1819,7 +1819,7 @@ async function billingModule(){
  $("moduleBody").innerHTML=`
  <p class="muted">19L کامیاب بوتل Rs.100، خراب ڈھکن Rs.10۔ فعال اور پہلے سے منظور شدہ غیر فعال گاہکوں کے سابقہ بل/ادائیگیاں بھی یہاں دیکھی اور درست کی جا سکتی ہیں۔ غیر فعال اکاؤنٹ کو خودکار ایپ اطلاع نہیں بھیجی جائے گی۔</p>
  <select id="bCustomer" onchange="markBillDirty();loadSelectedBill()">${customerOptions(list)}</select>
- <input id="bMonth" type="month" value="${today().slice(0,7)}" onchange="markBillDirty();loadSelectedBill()">
+ <input id="bMonth" type="month" value="${today().slice(0,7)}" max="${today().slice(0,7)}" onchange="markBillDirty();loadSelectedBill()">
  <div class="grid"><div class="stat">کامیاب بوتلیں: <b id="bBottles">0</b></div><div class="stat">خراب ڈھکن: <b id="bCaps">0</b></div>
  <div class="stat">بوتل رقم: <b id="bBottleAmt">Rs. 0</b></div><div class="stat">ڈھکن رقم: <b id="bCapAmt">Rs. 0</b></div>
  <div class="stat">پچھلا بقایا: <b id="bPrev">Rs. 0</b></div><div class="stat">پچھلا ایڈوانس استعمال: <b id="bAdvance">Rs. 0</b></div>
@@ -1895,6 +1895,7 @@ async function loadSelectedBill(){
 async function saveBill(){
  const id=$("bCustomer").value,monthInput=$("bMonth").value;
  if(!id||!monthInput){msg("گاہک اور مہینہ منتخب کریں۔");return}
+ if(monthInput>today().slice(0,7)){msg("مستقبل کے مہینے کا بل نہیں بنایا جا سکتا۔");return;}
  const button=$("saveBillButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
   const month=selectedBillMonth();
