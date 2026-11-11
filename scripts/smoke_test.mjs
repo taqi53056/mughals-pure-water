@@ -15,7 +15,7 @@ const mime = {
 };
 
 const monthlyRetryMigration = await readFile(
-  resolve(ROOT, "supabase/migrations/20261111133121_retry_monthly_billing_and_reports.sql"),
+  resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
   "utf8"
 );
 if (!monthlyRetryMigration.includes("schedule => '55 18 * * *'") ||
