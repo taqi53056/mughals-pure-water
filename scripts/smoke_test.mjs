@@ -60,6 +60,16 @@ if (!customerBillMessageMigration.includes("E'السلام علیکم %s صاح�
   throw new Error("Monthly bill notifications must contain correctly escaped Urdu text and line breaks");
 }
 
+const notificationGuardMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111134126_allow_cron_notification_updates.sql"),
+  "utf8"
+);
+if (!notificationGuardMigration.includes("session_user = 'postgres'") ||
+    !notificationGuardMigration.includes("Customers may only mark their own notification as read") ||
+    !notificationGuardMigration.includes("SECURITY INVOKER")) {
+  throw new Error("System notification updates must be cron-safe without weakening customer read-only protection");
+}
+
 const server = createServer(async (req, res) => {
   try {
     const pathname = new URL(req.url, "http://127.0.0.1").pathname;
