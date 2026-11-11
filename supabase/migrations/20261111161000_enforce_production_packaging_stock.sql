@@ -188,7 +188,11 @@ BEGIN
   v_old := $old$  perform pg_advisory_xact_lock(hashtextextended('production-inputs',0));
 
   for v_event_date in$old$;
-  v_new := $new$  perform pg_advisory_xact_lock(hashtextextended('production-inputs',0));
+  v_new := $new$  if new.material_type='cap_19l' then
+    perform pg_advisory_xact_lock(hashtextextended('raw-material-cap-19l',0));
+  else
+    perform pg_advisory_xact_lock(hashtextextended('production-inputs',0));
+  end if;
 
   if new.record_type='opening_stock' then
     v_cutover_date:=new.purchase_date;
