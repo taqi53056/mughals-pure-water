@@ -286,12 +286,11 @@ try {
           { role: "customer", full_name: "Customer" },
           { id: 7, name: "Customer", is_active: true }
         );
-        const inactiveCustomer = await runScenario(
-          { role: "customer", full_name: "Pending" },
-          { id: 8, name: "Pending", is_active: false }
-        );
+        // RLS hides both the pending customer's profile and customer row.
+        // The real client therefore receives null for both lookups.
+        const pendingCustomer = await runScenario(null, null);
         const unlinkedUser = await runScenario(null, null);
-        return { admin, activeCustomer, inactiveCustomer, unlinkedUser, signOutCount };
+        return { admin, activeCustomer, pendingCustomer, unlinkedUser, signOutCount };
       } finally {
         window.db = originalDb;
         window.loadCustomerPanel = originals.loadCustomerPanel;
@@ -309,9 +308,10 @@ try {
         customerAuthRouting.activeCustomer.adminVisible) {
       failures.push("Approved customer authentication does not route exclusively to the customer portal");
     }
-    if (customerAuthRouting.inactiveCustomer.loginHidden || customerAuthRouting.inactiveCustomer.customerVisible ||
-        !customerAuthRouting.inactiveCustomer.message.includes("منظوری کے بعد")) {
-      failures.push("Inactive customer authentication is not blocked with an approval message");
+    if (customerAuthRouting.pendingCustomer.loginHidden || customerAuthRouting.pendingCustomer.customerVisible ||
+        customerAuthRouting.pendingCustomer.adminVisible ||
+        !customerAuthRouting.pendingCustomer.message.includes("منتظم کی منظوری کا انتظار کریں")) {
+      failures.push("RLS-hidden pending customer is not signed out and shown the approval-wait message");
     }
     if (customerAuthRouting.unlinkedUser.loginHidden || customerAuthRouting.unlinkedUser.adminVisible ||
         customerAuthRouting.unlinkedUser.customerVisible || customerAuthRouting.signOutCount < 2) {
