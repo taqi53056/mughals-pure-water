@@ -58,8 +58,8 @@ BEGIN
     ELSE NULL
   END;
 
-  IF v_unit IS NULL OR v_record_type NOT IN ('purchase','opening_stock')
-     OR v_date IS NULL OR v_quantity IS NULL OR v_quantity <= 0
+  IF v_unit IS NULL OR v_record_type IS NULL OR v_record_type NOT IN ('purchase','opening_stock')
+     OR v_payment IS NULL OR v_date IS NULL OR v_quantity IS NULL OR v_quantity <= 0
      OR v_quantity <> trunc(v_quantity)
      OR v_amount IS NULL OR v_amount <= 0
      OR length(coalesce(v_supplier,'')) > 120
@@ -89,6 +89,7 @@ BEGIN
       (v_date,v_record_type,v_type,v_quantity,v_unit,v_amount,v_supplier,v_payment,v_details,auth.uid())
     ON CONFLICT (material_type) WHERE record_type='opening_stock'
     DO UPDATE SET
+      purchase_date=EXCLUDED.purchase_date,
       quantity=EXCLUDED.quantity,
       unit=EXCLUDED.unit,
       total_amount=EXCLUDED.total_amount,
