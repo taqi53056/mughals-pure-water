@@ -65,6 +65,8 @@ if (!productionPackagingMigration.includes("pg_advisory_xact_lock(hashtextextend
     !productionPackagingMigration.includes("private.mpw_guard_raw_material_opening_stock()") ||
     !productionPackagingMigration.includes("private.mpw_guard_production_cap_stock()") ||
     !productionPackagingMigration.includes("private.mpw_guard_operational_stock()") ||
+    !productionPackagingMigration.includes("if new.material_type='cap_19l' then") ||
+    !productionPackagingMigration.includes("raw-material-cap-19l") ||
     !productionPackagingMigration.includes("event_date>=v_cutover_date") ||
     !productionPackagingMigration.includes("delivery_date>=v_cutover_date") ||
     productionPackagingMigration.includes("SECURITY DEFINER")) {
