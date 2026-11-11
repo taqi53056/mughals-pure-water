@@ -2114,12 +2114,12 @@ const rawMaterialUnits={
 async function rawMaterialsModule(){
  setTitle("خام مال کی خریداری");
  $("moduleBody").innerHTML=
- '<p class="muted">نئی خریداری یا پہلے سے موجود ابتدائی اسٹاک منتخب کریں۔ ابتدائی اسٹاک کی مقدار اور اندازاً کل مالیت درج ہوگی، اسے نئی خریداری نہیں گنا جائے گا۔ خالی بوتلیں اور ہر سائز کے ڈھکن الگ الگ درج کریں: 500ml، 1.5L، 6L اور 19L۔ کارٹن، ٹیپ بنڈل اور اسٹیکر بھی اپنی الگ اکائی میں درج ہوں گے۔ اسٹیکر کلوگرام میں نہ درج کریں؛ لاگت فی اسٹیکر کے حساب سے بنتی ہے۔ ٹیپ کا ایک بنڈل تقریباً 200 کارٹن کے لیے شمار ہوتا ہے۔ سپلائر کے کلیم سے آنے والی مفت تبدیلیاں فی الحال الگ درج نہیں ہوتیں۔</p>'+
+ '<p class="muted">نئی خریداری یا پہلے سے موجود ابتدائی اسٹاک منتخب کریں۔ 500ml، 1.5L اور 6L کی خالی بوتل کے ساتھ ڈھکن شامل شمار ہوگا؛ بوتل کی مقدار درج کرنے پر اتنے ہی ڈھکن خودکار اسٹاک میں شامل ہوں گے، ان کی الگ رقم نہیں ہوگی۔ 19L ڈھکن الگ درج کریں۔ کارٹن، ٹیپ بنڈل اور اسٹیکر بھی اپنی الگ اکائی میں درج ہوں گے۔ اسٹیکر کلوگرام میں نہ درج کریں؛ لاگت فی اسٹیکر کے حساب سے بنتی ہے۔ ٹیپ کا ایک بنڈل تقریباً 200 کارٹن کے لیے شمار ہوتا ہے۔ سپلائر کے کلیم سے آنے والی مفت تبدیلیاں فی الحال الگ درج نہیں ہوتیں۔</p>'+
  '<div class="card"><h3>نئی خریداری</h3>'+
  '<input id="rawPurchaseDate" type="date" value="'+today()+'">'+
  '<select id="rawPurchaseKind" onchange="toggleRawPurchaseKind()"><option value="purchase">نئی خریداری</option><option value="opening_stock">پہلے سے موجود ابتدائی اسٹاک</option></select>'+
  '<select id="rawPurchaseType">'+
- Object.keys(rawMaterialLabels).map(k=>'<option value="'+k+'">'+rawMaterialLabels[k]+'</option>').join("")+
+ Object.keys(rawMaterialLabels).filter(k=>!["cap_500ml","cap_1_5l","cap_6l"].includes(k)).map(k=>'<option value="'+k+'">'+rawMaterialLabels[k]+'</option>').join("")+
  '</select>'+
  '<input id="rawPurchaseQty" type="number" min="1" step="1" placeholder="مقدار: بوتل / کارٹن / بنڈل / عدد">'+
  '<input id="rawPurchaseAmount" type="number" min="0.01" step="0.01" placeholder="کل ادا شدہ رقم / ابتدائی مالیت (روپے)">'+
@@ -2149,29 +2149,40 @@ async function saveRawMaterialPurchase(){
    payment_method:record_type==="opening_stock"?"opening":$("rawPurchaseMethod").value,
    details:$("rawPurchaseDetails").value.trim()||null,entered_by:user?.id||null
   };
-  if(record_type==="opening_stock"){
-   const {data:existing,error:lookupError}=await db.from("raw_material_purchases").select("id").eq("record_type","opening_stock").eq("material_type",type).maybeSingle();
-   if(lookupError)throw lookupError;
-   let result=existing
-    ?await db.from("raw_material_purchases").update(payload).eq("id",existing.id)
-    :await db.from("raw_material_purchases").insert(payload);
-   if(result.error?.code==="23505"){
-    const retryLookup=await db.from("raw_material_purchases").select("id").eq("record_type","opening_stock").eq("material_type",type).maybeSingle();
-    if(retryLookup.error||!retryLookup.data)throw result.error;
-    result=await db.from("raw_material_purchases").update(payload).eq("id",retryLookup.data.id);
+  const saveRawRecord=async row=>{
+   if(row.record_type==="opening_stock"){
+    const {data:existing,error:lookupError}=await db.from("raw_material_purchases").select("id").eq("record_type","opening_stock").eq("material_type",row.material_type).maybeSingle();
+    if(lookupError)throw lookupError;
+    let result=existing
+     ?await db.from("raw_material_purchases").update(row).eq("id",existing.id)
+     :await db.from("raw_material_purchases").insert(row);
+    if(result.error?.code==="23505"){
+     const retryLookup=await db.from("raw_material_purchases").select("id").eq("record_type","opening_stock").eq("material_type",row.material_type).maybeSingle();
+     if(retryLookup.error||!retryLookup.data)throw result.error;
+     result=await db.from("raw_material_purchases").update(row).eq("id",retryLookup.data.id);
+    }
+    if(result.error)throw result.error;
+    return;
    }
-   if(result.error)throw result.error;
-  }else{
-   const signature=[date,record_type,type,quantity,total_amount,payload.supplier||"",payload.payment_method,payload.details||""].join("|");
+   const signature=[row.purchase_date,row.record_type,row.material_type,row.quantity,row.total_amount,row.supplier||"",row.payment_method,row.details||""].join("|");
    const requestId=mpwPendingRequestId("raw-material-purchase",signature);
-   const {data:purchase,error}=await db.from("raw_material_purchases").upsert({...payload,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
+   const {data:purchase,error}=await db.from("raw_material_purchases").upsert({...row,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
    if(error)throw error;
    if(!purchase){
     const existing=await db.from("raw_material_purchases").select("id").eq("request_id",requestId).maybeSingle();
     if(existing.error||!existing.data)throw existing.error||new Error("سابقہ خریداری کی تصدیق نہیں ہوئی۔");
    }
-   mpwClearPendingRequestId("raw-material-purchase");
+  };
+  await saveRawRecord(payload);
+  const pairedCapType=({bottle_500ml:"cap_500ml",bottle_1_5l:"cap_1_5l",bottle_6l:"cap_6l"})[type];
+  if(pairedCapType){
+   await saveRawRecord({
+    ...payload,material_type:pairedCapType,quantity,unit:"piece",total_amount:0,
+    supplier:null,payment_method:record_type==="opening_stock"?"opening":payload.payment_method,
+    details:"بوتل کے ساتھ شامل ڈھکن؛ رقم بوتل کی مالیت میں شامل ہے"
+   });
   }
+  if(record_type!=="opening_stock")mpwClearPendingRequestId("raw-material-purchase");
   saved=true;
   msg(record_type==="opening_stock"?"ابتدائی خام مال اسٹاک محفوظ ہوگیا۔":"خام مال کی خریداری محفوظ ہوگئی۔",true);
   $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
