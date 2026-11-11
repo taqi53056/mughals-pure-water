@@ -2310,14 +2310,37 @@ async function saveTankerPurchase(){
  finally{if(button)button.disabled=false;}
 }
 async function loadTankerPurchases(){
- const [{data,error},{data:opening,error:openingError}]=await Promise.all([
-  db.from("water_tanker_purchases").select("*").order("purchase_date",{ascending:false}).limit(100),
-  db.from("water_opening_stock").select("*").order("as_of_date",{ascending:false}).limit(100)
- ]);
- if(error||openingError){$("moduleTable").textContent="ٹینکر / ابتدائی اسٹاک لوڈ نہیں ہوا: "+(error||openingError).message;return;}
- $("moduleTable").innerHTML='<h3>ٹینکر خریداری اور ابتدائی پانی کی ہسٹری</h3><table><tr><th>تاریخ</th><th>اندراج</th><th>مقدار</th><th>فی ٹینکر / مالیت</th><th>کل رقم</th></tr>'+
- (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||r.water_use)+' — ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td></tr>').join("")+
- (data||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||r.water_use)+' — خریداری</td><td>'+r.tanker_count+' × 1,000 لیٹر</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+'</table>';
+ let rows=[],opening=[],prod=[],deliveries=[],counterSales=[];
+ try{
+  [rows,opening,prod,deliveries,counterSales]=await Promise.all([
+   financeFetchAll("water_tanker_purchases","*","purchase_date",null,null),
+   financeFetchAll("water_opening_stock","*","as_of_date",null,null),
+   financeFetchAll("production","product_type,quantity,production_date","production_date",null,null),
+   financeFetchAll("customer_19l_deliveries","bottles_delivered,delivery_date","delivery_date",null,null),
+   financeFetchAll("counter_water_sales","total_litres,sale_date","sale_date",null,null)
+  ]);
+ }catch(e){$("moduleTable").textContent="پانی کا ریکارڈ / بیلنس لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
+ const sum=(list,fn)=>list.reduce((n,r)=>n+Number(fn(r)||0),0);
+ const tankerLitres=use=>sum(rows.filter(r=>r.water_use===use),r=>Number(r.tanker_count)*1000);
+ const openingLitres=use=>sum(opening.filter(r=>r.water_use===use),r=>r.litres);
+ const shopConsumed=sum(deliveries,r=>Number(r.bottles_delivered)*19)
+  +sum(counterSales,r=>r.total_litres)
+  +sum(prod.filter(r=>r.product_type==="6L"),r=>Number(r.quantity)*6);
+ const fillingConsumed=sum(prod.filter(r=>r.product_type==="500ml"),r=>Number(r.quantity)*12)
+  +sum(prod.filter(r=>r.product_type==="1.5L"),r=>Number(r.quantity)*18);
+ const shopAvailable=tankerLitres("shop_counter")+openingLitres("shop_counter");
+ const fillingAvailable=tankerLitres("product_filling")+openingLitres("product_filling");
+ const shopBalance=shopAvailable-shopConsumed;
+ const fillingBalance=fillingAvailable-fillingConsumed;
+ const fmtLitres=n=>Number(n).toLocaleString("en-US",{maximumFractionDigits:2})+" لیٹر";
+ $("moduleTable").innerHTML=
+ '<div class="grid">'+
+ '<div class="stat"><b>دکان والی ٹنکی — 19L / 6L</b><br><strong>'+fmtLitres(shopBalance)+'</strong><small>کل دستیاب: '+fmtLitres(shopAvailable)+' — استعمال: '+fmtLitres(shopConsumed)+'</small></div>'+
+ '<div class="stat"><b>پروڈکشن والی ٹنکی — 500ml / 1.5L</b><br><strong>'+fmtLitres(fillingBalance)+'</strong><small>کل دستیاب: '+fmtLitres(fillingAvailable)+' — استعمال: '+fmtLitres(fillingConsumed)+'</small></div>'+
+ '</div><h3>ٹینکر خریداری اور ابتدائی پانی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>مقدار</th><th>فی ٹینکر / مالیت</th><th>کل رقم</th></tr>'+
+ (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||esc(r.water_use))+' — ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td></tr>').join("")+
+ (rows||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||esc(r.water_use))+' — خریداری</td><td>'+r.tanker_count+' × 1,000 لیٹر</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+
+ '</table></div>';
 }
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
