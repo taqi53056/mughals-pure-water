@@ -2949,8 +2949,7 @@ async function saveOwnerWithdrawal(){
 }
 async function loadOwnerWithdrawals(){
  const month=$("owMonth")?.value||today().slice(0,7),start=month+"-01";
- const next=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),1);
- const end=new Date(next.getTime()-86400000).toISOString().slice(0,10);
+ const end=monthDateRange(month).end;
  const {data,error}=await db.from("business_finance_ledger").select("id,entry_date,counterparty,amount,category,details,payment_method").eq("entry_type","owner_withdrawal").gte("entry_date",start).lte("entry_date",end).order("entry_date",{ascending:false}).order("id",{ascending:false});
  if(error){if($("ownerWithdrawalHistory"))$("ownerWithdrawalHistory").textContent="ریکارڈ لوڈ نہیں ہوا: "+error.message;return;}
  const rows=data||[],totals=Object.fromEntries(OWNER_WITHDRAWAL_RECIPIENTS.map(n=>[n,0]));

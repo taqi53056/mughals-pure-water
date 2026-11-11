@@ -487,6 +487,20 @@ try {
       failures.push("Service worker cache is not restricted to static shell assets and this app's own cache namespace");
     }
 
+    const ownerMonthDateRange = await page.evaluate(() => {
+      const source = document.documentElement.innerHTML;
+      const start = source.indexOf("async function loadOwnerWithdrawals()");
+      const end = source.indexOf("\n}", start);
+      const body = source.slice(start, end > start ? end : start + 1800);
+      return {
+        usesLocalMonthRange: body.includes("monthDateRange(month).end"),
+        avoidsUtcDayShift: !body.includes("toISOString().slice(0,10)")
+      };
+    });
+    if (!ownerMonthDateRange.usesLocalMonthRange || !ownerMonthDateRange.avoidsUtcDayShift) {
+      failures.push("Owner withdrawal monthly history must use the app's local month range, not UTC ISO date conversion");
+    }
+
     await page.close();
   }
 } finally {
