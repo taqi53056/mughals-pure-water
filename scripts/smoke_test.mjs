@@ -44,6 +44,24 @@ if (!finishedStockActivityMigration.includes("public.finished_goods where entry_
   throw new Error("Finished-goods opening stock and manual adjustments must trigger monthly report snapshots");
 }
 
+const productionPackagingMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111161000_enforce_production_packaging_stock.sql"),
+  "utf8"
+);
+for (const material of ["bottle_500ml", "carton_500ml", "bottle_1_5l", "carton_1_5l", "bottle_6l", "tape_bundle", "sticker"]) {
+  if (!productionPackagingMigration.includes("'" + material + "'")) {
+    throw new Error("Production must validate stock for " + material);
+  }
+}
+if (!productionPackagingMigration.includes("pg_advisory_xact_lock(hashtextextended('production-inputs', 0))") ||
+    !productionPackagingMigration.includes("public.raw_material_purchases") ||
+    !productionPackagingMigration.includes("p.production_date<=NEW.production_date") ||
+    !productionPackagingMigration.includes("p.id IS DISTINCT FROM NEW.id") ||
+    !productionPackagingMigration.includes("NEW.quantity/200::numeric") ||
+    productionPackagingMigration.includes("SECURITY DEFINER")) {
+  throw new Error("Production packaging guard must be date-aware, concurrency-safe, update-safe and invoker-secured");
+}
+
 const customerBillNotificationMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133717_customer_bill_notification_retry.sql"),
   "utf8"
