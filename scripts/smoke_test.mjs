@@ -58,8 +58,15 @@ if (!productionPackagingMigration.includes("pg_advisory_xact_lock(hashtextextend
     !productionPackagingMigration.includes("p.production_date<=NEW.production_date") ||
     !productionPackagingMigration.includes("p.id IS DISTINCT FROM NEW.id") ||
     !productionPackagingMigration.includes("NEW.quantity/200::numeric") ||
+    !productionPackagingMigration.includes("v_cutover_date IS NULL OR r.record_type='opening_stock'") ||
+    !productionPackagingMigration.includes("p.production_date>=v_cutover_date") ||
+    !productionPackagingMigration.includes("private.mpw_guard_raw_material_opening_stock()") ||
+    !productionPackagingMigration.includes("private.mpw_guard_production_cap_stock()") ||
+    !productionPackagingMigration.includes("private.mpw_guard_operational_stock()") ||
+    !productionPackagingMigration.includes("event_date>=v_cutover_date") ||
+    !productionPackagingMigration.includes("delivery_date>=v_cutover_date") ||
     productionPackagingMigration.includes("SECURITY DEFINER")) {
-  throw new Error("Production packaging guard must be date-aware, concurrency-safe, update-safe and invoker-secured");
+  throw new Error("Production and delivery stock guards must enforce all inputs and share the raw opening-stock cutover safely");
 }
 
 const customerBillNotificationMigration = await readFile(
