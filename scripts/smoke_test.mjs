@@ -34,6 +34,22 @@ const server = createServer(async (req, res) => {
 await new Promise(resolveListen => server.listen(4173, "0.0.0.0", resolveListen));
 const browser = await chromium.launch({ headless: true });
 const failures = [];
+const billLockMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111132515_serialize_customer_bill_recalculation.sql"),
+  "utf8"
+);
+const billLockPosition = billLockMigration.indexOf("pg_advisory_xact_lock");
+const billSourceReadPosition = billLockMigration.indexOf("FROM public.customer_19l_deliveries");
+if (billLockPosition < 0 || billSourceReadPosition < 0 || billLockPosition > billSourceReadPosition) {
+  failures.push("Customer bill recalculation must acquire the month advisory lock before reading delivery rows");
+}
+if (!billLockMigration.includes("SECURITY INVOKER") ||
+    !billLockMigration.includes("auth.uid() IS NULL OR NOT public.is_admin()")) {
+  failures.push("Customer bill recalculation must remain invoker-secured and explicitly admin-only");
+}
+if (!billLockMigration.includes("Future customer bills cannot be calculated.")) {
+  failures.push("Customer bill recalculation must reject future billing months");
+}
 
 try {
   for (const viewport of [{ width: 1365, height: 900 }, { width: 390, height: 844 }]) {
