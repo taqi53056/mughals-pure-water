@@ -96,6 +96,35 @@ try {
       failures.push("Password reset did not reuse the entered login email");
     }
     if ((await page.locator("#resetEmail").getAttribute("required")) === null) failures.push("Password reset email is not required");
+    const resetRequestResult = await page.evaluate(async () => {
+      const originalDb = window.db;
+      let request = null;
+      try {
+        window.db = {
+          auth: {
+            resetPasswordForEmail: async (email, options) => {
+              request = { email, redirectTo: options?.redirectTo || null };
+              return { error: null };
+            }
+          }
+        };
+        await sendPasswordResetLink();
+      } finally {
+        window.db = originalDb;
+      }
+      return {
+        request,
+        expectedRedirect: new URL("./", window.location.href).href,
+        message: document.querySelector("#loginMsg").textContent
+      };
+    });
+    if (resetRequestResult.request?.email !== "customer@example.com" ||
+        resetRequestResult.request?.redirectTo !== resetRequestResult.expectedRedirect) {
+      failures.push("Password reset request does not use the entered email and app-base redirect URL");
+    }
+    if (!resetRequestResult.message.includes("اگر اس ای میل سے اکاؤنٹ موجود ہے")) {
+      failures.push("Password reset does not show the non-enumerating confirmation message");
+    }
     await page.locator('#passwordResetForm button[onclick="showLogin()"]').click();
     await page.locator("#loginForm").waitFor({ state: "visible" });
 
@@ -107,6 +136,55 @@ try {
       if ((await field.getAttribute("required")) === null) failures.push("Signup field is not required: " + id);
       if (!(await page.locator('label[for="' + id + '"]').count())) failures.push("Signup field has no visible label: " + id);
     }
+    const signupMobileResult = await page.evaluate(async () => {
+      const cases = [
+        ["03001234567", "03001234567"],
+        ["+92 300-1234567", "03001234567"],
+        ["923001234567", "03001234567"],
+        ["3001234567", "03001234567"],
+        ["not-a-number", null]
+      ];
+      const normalizedCases = cases.map(([input]) => normalizePkMobile(input));
+      const originalDb = window.db;
+      let signupPayload = null;
+      try {
+        window.db = {
+          auth: {
+            signUp: async payload => {
+              signupPayload = payload;
+              return {
+                data: { user: { id: "smoke-test-user", identities: [{}] }, session: { access_token: "smoke-test" } },
+                error: null
+              };
+            },
+            signOut: async () => ({ error: null })
+          }
+        };
+        document.querySelector("#signupName").value = "Smoke Test";
+        document.querySelector("#signupMobile").value = "+92 300-1234567";
+        document.querySelector("#signupAddress").value = "Smoke Test Address";
+        document.querySelector("#signupEmail").value = "smoke-test@example.invalid";
+        document.querySelector("#signupPassword").value = "SmokeTest123";
+        await signupCustomer();
+      } finally {
+        window.db = originalDb;
+      }
+      return {
+        expectedCases: cases.map(x => x[1]),
+        normalizedCases,
+        sentMobile: signupPayload?.options?.data?.mobile || null,
+        successMessage: document.querySelector("#loginMsg").textContent
+      };
+    });
+    if (JSON.stringify(signupMobileResult.normalizedCases) !== JSON.stringify(signupMobileResult.expectedCases)) {
+      failures.push("Pakistani mobile normalization does not cover local and international formats");
+    }
+    if (signupMobileResult.sentMobile !== "03001234567") {
+      failures.push("Customer signup did not send the normalized Pakistani mobile to Supabase");
+    }
+    if (!signupMobileResult.successMessage.includes("درخواست موصول ہوگئی ہے")) {
+      failures.push("Mock customer signup did not complete the pending-approval confirmation path");
+    }
     await page.evaluate(async () => {
       history.replaceState(null, document.title, window.location.pathname + "#type=recovery");
       await window.restoreSavedSession();
@@ -116,8 +194,129 @@ try {
         (await page.locator("#confirmNewPassword").getAttribute("required")) === null) {
       failures.push("Password recovery completion fields are not required");
     }
-    await page.locator('#passwordResetCompleteForm button[onclick="showLogin()"]').click();
+    const recoveryCompletionResult = await page.evaluate(async () => {
+      const originalDb = window.db;
+      let updatedPassword = null;
+      let signedOut = false;
+      try {
+        window.db = {
+          auth: {
+            updateUser: async values => {
+              updatedPassword = values?.password || null;
+              return { error: null };
+            },
+            signOut: async () => {
+              signedOut = true;
+              return { error: null };
+            }
+          }
+        };
+        document.querySelector("#newPassword").value = "NewSmokePassword123";
+        document.querySelector("#confirmNewPassword").value = "NewSmokePassword123";
+        await completePasswordReset();
+      } finally {
+        window.db = originalDb;
+      }
+      return {
+        updatedPassword,
+        signedOut,
+        hash: window.location.hash,
+        message: document.querySelector("#loginMsg").textContent
+      };
+    });
+    if (recoveryCompletionResult.updatedPassword !== "NewSmokePassword123" ||
+        !recoveryCompletionResult.signedOut ||
+        recoveryCompletionResult.hash.includes("type=recovery")) {
+      failures.push("Password recovery does not update the password, sign out, and clear the recovery URL");
+    }
+    if (!recoveryCompletionResult.message.includes("پاس ورڈ تبدیل ہوگیا ہے")) {
+      failures.push("Password recovery completion does not show success confirmation");
+    }
     await page.locator("#loginForm").waitFor({ state: "visible" });
+
+    const customerAuthRouting = await page.evaluate(async () => {
+      const originalDb = window.db;
+      const originals = {
+        loadCustomerPanel: window.loadCustomerPanel,
+        startAdminCustomerRealtime: window.startAdminCustomerRealtime,
+        loadTodaySummary: window.loadTodaySummary,
+        loadExecutiveDashboard: window.loadExecutiveDashboard,
+        refreshAdminSignupNotice: window.refreshAdminSignupNotice
+      };
+      let signOutCount = 0;
+      const queryResult = data => {
+        const chain = {
+          select() { return chain; },
+          eq() { return chain; },
+          maybeSingle: async () => ({ data, error: null })
+        };
+        return chain;
+      };
+      const resetPanels = () => {
+        document.querySelector("#login").classList.remove("hidden");
+        document.querySelector("#app").classList.add("hidden");
+        document.querySelector("#adminPanel").classList.add("hidden");
+        document.querySelector("#customerPanel").classList.add("hidden");
+      };
+      const runScenario = async (profile, customer) => {
+        resetPanels();
+        window.db = {
+          auth: {
+            getUser: async () => ({ data: { user: { id: "smoke-auth-user" } }, error: null }),
+            signOut: async () => { signOutCount++; return { error: null }; }
+          },
+          from: table => queryResult(table === "profiles" ? profile : customer)
+        };
+        await loadApp();
+        return {
+          loginHidden: document.querySelector("#login").classList.contains("hidden"),
+          adminVisible: !document.querySelector("#adminPanel").classList.contains("hidden"),
+          customerVisible: !document.querySelector("#customerPanel").classList.contains("hidden"),
+          message: document.querySelector("#loginMsg").textContent
+        };
+      };
+      try {
+        window.loadCustomerPanel = async () => {};
+        window.startAdminCustomerRealtime = () => {};
+        window.loadTodaySummary = async () => {};
+        window.loadExecutiveDashboard = async () => {};
+        window.refreshAdminSignupNotice = async () => {};
+        const admin = await runScenario({ role: "admin", full_name: "Admin" }, null);
+        const activeCustomer = await runScenario(
+          { role: "customer", full_name: "Customer" },
+          { id: 7, name: "Customer", is_active: true }
+        );
+        const inactiveCustomer = await runScenario(
+          { role: "customer", full_name: "Pending" },
+          { id: 8, name: "Pending", is_active: false }
+        );
+        const unlinkedUser = await runScenario(null, null);
+        return { admin, activeCustomer, inactiveCustomer, unlinkedUser, signOutCount };
+      } finally {
+        window.db = originalDb;
+        window.loadCustomerPanel = originals.loadCustomerPanel;
+        window.startAdminCustomerRealtime = originals.startAdminCustomerRealtime;
+        window.loadTodaySummary = originals.loadTodaySummary;
+        window.loadExecutiveDashboard = originals.loadExecutiveDashboard;
+        window.refreshAdminSignupNotice = originals.refreshAdminSignupNotice;
+      }
+    });
+    if (!customerAuthRouting.admin.loginHidden || !customerAuthRouting.admin.adminVisible ||
+        customerAuthRouting.admin.customerVisible) {
+      failures.push("Admin authentication does not route exclusively to the admin panel");
+    }
+    if (!customerAuthRouting.activeCustomer.loginHidden || !customerAuthRouting.activeCustomer.customerVisible ||
+        customerAuthRouting.activeCustomer.adminVisible) {
+      failures.push("Approved customer authentication does not route exclusively to the customer portal");
+    }
+    if (customerAuthRouting.inactiveCustomer.loginHidden || customerAuthRouting.inactiveCustomer.customerVisible ||
+        !customerAuthRouting.inactiveCustomer.message.includes("منظوری کے بعد")) {
+      failures.push("Inactive customer authentication is not blocked with an approval message");
+    }
+    if (customerAuthRouting.unlinkedUser.loginHidden || customerAuthRouting.unlinkedUser.adminVisible ||
+        customerAuthRouting.unlinkedUser.customerVisible || customerAuthRouting.signOutCount < 2) {
+      failures.push("Unlinked or unapproved authentication is not signed out and blocked");
+    }
 
     const adminNavigation = await page.evaluate(async () => {
       const panel = document.querySelector("#adminPanel");
