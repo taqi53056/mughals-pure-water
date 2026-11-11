@@ -3327,7 +3327,7 @@ async function submitComplaint(){
 async function loadCustomerComplaints(){const {data,error}=await db.from("customer_complaints").select("category,details,status,created_at,admin_note").eq("customer_id",myCustomer.id).order("created_at",{ascending:false});if(error){$("myComplaints").textContent="شکایات لوڈ نہیں ہوئیں";return;}const labels={new:"موصول",in_progress:"زیرِ کارروائی",resolved:"حل ہوگئی"};$("myComplaints").innerHTML=(data||[]).map(c=>`<div class="stat"><b>${esc(c.category)}</b> — ${labels[c.status]||c.status}<p>${esc(c.details)}</p><small>${esc(c.admin_note||"")}</small></div>`).join("")||"ابھی کوئی شکایت درج نہیں۔";}
 function customerDateLabel(value,withTime=false){
  if(!value)return "—";
- const isDateOnly=/^\\d{4}-\\d{2}-\\d{2}$/.test(String(value));
+ const isDateOnly=/^\d{4}-\d{2}-\d{2}$/.test(String(value));
  const date=isDateOnly?new Date(String(value)+"T00:00:00Z"):new Date(value);
  if(Number.isNaN(date.getTime()))return "—";
  return new Intl.DateTimeFormat("ur-PK",{timeZone:isDateOnly?"UTC":"Asia/Karachi",year:"numeric",month:"short",day:"numeric",...(withTime?{hour:"2-digit",minute:"2-digit",hour12:true}:{})}).format(date);
