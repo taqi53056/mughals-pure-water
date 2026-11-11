@@ -1201,7 +1201,10 @@ async function signupCustomer(){
   $("loginMsg").textContent="آپ کی درخواست موصول ہوگئی ہے۔ اب ای میل کھولنے کی ضرورت نہیں۔ منتظم کو درخواست مل گئی ہے؛ منظوری کے بعد اسی ای میل اور پاس ورڈ سے لاگ اِن کریں۔";
  }catch(e){
   $("loginMsg").className="error";
-  $("loginMsg").textContent="رجسٹریشن ناکام: "+(e?.message||String(e));
+  const duplicateMobile=e?.code==="23505"&&/mobile/i.test(e?.message||"");
+  $("loginMsg").textContent=duplicateMobile
+   ?"یہ موبائل نمبر پہلے سے کسی دوسرے کسٹمر اکاؤنٹ کے ساتھ منسلک ہے۔"
+   :"رجسٹریشن ناکام: "+(e?.message||String(e));
  }finally{
   button.disabled=false;button.textContent="اکاؤنٹ بنائیں";
  }
@@ -1433,10 +1436,24 @@ async function renderPendingCustomers(){
 async function approveCustomer(id){
  const c=customerList.find(x=>Number(x.id)===Number(id));if(!c||c.is_active===true||c.approved_at)return;
  if(!confirm("کیا "+(c.name||"اس گاہک")+" کو اکاؤنٹ استعمال کرنے کی منظوری دینی ہے؟"))return;
- const {error}=await db.from("customers").update({is_active:true}).eq("id",id);
- if(!error && c.auth_user_id){const approvalTitle="آپ کا اکاؤنٹ منظور ہوگیا",approvalMessage="السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔";const approvalNotice=await db.from("customer_notifications").insert({customer_id:id,title:approvalTitle,message:approvalMessage,notification_type:"account",reference_key:"account-approved"});if(!approvalNotice.error)await notifyCustomerPush(id,approvalTitle,approvalMessage);}
+ const {data:approved,error}=await db.from("customers").update({is_active:true}).eq("id",id).select("id,is_active,auth_user_id").maybeSingle();
  if(error){msg("منظوری محفوظ نہیں ہوئی: "+error.message);return;}
- msg("گاہک کی منظوری ہوگئی۔",true);await Promise.all([loadCustomers(),refreshAdminSignupNotice()]);
+ if(!approved||approved.is_active!==true){msg("منظوری محفوظ نہیں ہوئی: گاہک کا ریکارڈ اپ ڈیٹ نہیں ہوا۔");return;}
+ let noticeStatus="کسٹمر کی منظوری محفوظ ہوگئی۔";
+ if(approved.auth_user_id){
+  const approvalTitle="آپ کا اکاؤنٹ منظور ہوگیا";
+  const approvalMessage="السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔";
+  const approvalNotice=await db.from("customer_notifications").insert({customer_id:id,title:approvalTitle,message:approvalMessage,notification_type:"account",reference_key:"account-approved"});
+  if(approvalNotice.error){
+   noticeStatus+=" مگر ایپ کے اندر منظوری کی اطلاع محفوظ نہیں ہوسکی: "+approvalNotice.error.message;
+  }else{
+   const pushResult=await notifyCustomerPush(id,approvalTitle,approvalMessage);
+   if(pushResult?.error||Number(pushResult?.sent||0)<1)noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہے، مگر موبائل Push کی تصدیق نہیں ہوئی: "+(pushResult?.error||pushResult?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔");
+   else noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہوگئی اور موبائل Push بھی بھیج دی گئی۔";
+  }
+ }
+ msg(noticeStatus,!noticeStatus.includes("مگر")&&!noticeStatus.includes("نہیں پہنچی"));
+ await Promise.all([loadCustomers(),refreshAdminSignupNotice()]);
 }
 
 
@@ -1517,7 +1534,11 @@ async function archiveCustomer(id){
   if(error)throw error;
   if(!data)throw new Error("آرکائیو سرور سے تصدیق موصول نہیں ہوئی۔");
   if(data.status==="pending_auth_deletion"){
-   msg("ذاتی ریکارڈ آرکائیو ہوگیا، مگر کسٹمر لاگ اِن حذف کرنے کا مرحلہ باقی ہے۔ Job ID: "+data.job_id);
+   if(data.auth_deleted===true){
+    msg("کسٹمر کا لاگ اِن حذف ہوگیا، مگر آرکائیو جاب کی حیثیت اپ ڈیٹ نہیں ہوئی۔ Job ID: "+data.job_id+" — ہسٹری سے دوبارہ کوشش کریں۔");
+   }else{
+    msg("ذاتی ریکارڈ آرکائیو ہوگیا، مگر کسٹمر لاگ اِن حذف کرنے کا مرحلہ باقی ہے۔ Job ID: "+data.job_id+" — ہسٹری سے دوبارہ کوشش کریں۔");
+   }
   }else{
    msg("کسٹمر کا ذاتی ریکارڈ حذف اور مالی خلاصہ محفوظ ہوگیا۔ حوالہ: "+(data.archive_ref||data.archive_id),true);
   }
@@ -1561,7 +1582,11 @@ async function saveCustomer(){
  if(mobileInput&&!mobile){msg("موبائل نمبر درست درج کریں؛ مثال: 03001234567 یا +923001234567۔");$("cMobile").focus();return}
  const payload={name,mobile,address:$("cAddress").value.trim()||null};
  const r=await db.from("customers").update(payload).eq("id",editingId);
- if(r.error){msg("تبدیلیاں محفوظ نہیں ہوئیں: "+r.error.message);return}
+ if(r.error){
+  if(r.error.code==="23505"&&/mobile/i.test(r.error.message||""))msg("یہ موبائل نمبر پہلے سے کسی دوسرے کسٹمر کے ساتھ منسلک ہے۔");
+  else msg("تبدیلیاں محفوظ نہیں ہوئیں: "+r.error.message);
+  return;
+ }
  editingId=null;msg("گاہک کی معلومات اپڈیٹ ہوگئیں۔",true);await customersModule();
 }
 
