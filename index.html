@@ -2601,10 +2601,17 @@ async function loadExecutiveDashboard(){
    ["تیار 1.5L کارٹن",stock.finished_1_5l_cartons],
    ["تیار 6L بوتلیں",stock.finished_6l_bottles],
    ["خام 19L ڈھکن",stock.raw_19l_caps],
-   ["پانی کا مجموعی تخمینہ (لیٹر)",stock.water_litres],
    ["خام 500ml بوتلیں",stock.raw_500ml_bottles],
+   ["خام 500ml ڈھکن",stock.raw_500ml_caps],
    ["خام 1.5L بوتلیں",stock.raw_1_5l_bottles],
-   ["خام 6L بوتلیں",stock.raw_6l_bottles]
+   ["خام 1.5L ڈھکن",stock.raw_1_5l_caps],
+   ["خام 6L بوتلیں",stock.raw_6l_bottles],
+   ["خام 6L ڈھکن",stock.raw_6l_caps],
+   ["500ml کارٹن",stock.cartons_500ml],
+   ["1.5L کارٹن",stock.cartons_1_5l],
+   ["ٹیپ بنڈل",stock.tape_bundles],
+   ["اسٹیکر",stock.stickers],
+   ["پانی کا مجموعی تخمینہ (لیٹر)",stock.water_litres]
   ].map(([label,value])=>`<div class="exec-stock-item"><span>${label}</span><b>${Number(value)||0}</b></div>`).join("");
   const productChartRows=Object.entries(products).map(([name,r])=>({name,revenue:Number(r.revenue)||0})).filter(x=>x.revenue>0);
    const productChartMax=Math.max(1,...productChartRows.map(x=>x.revenue));
@@ -2858,10 +2865,14 @@ async function runReport(){
   }).join("");
   const ownerRows=Object.entries(owners).filter(([key])=>key!=="total").map(([name,value])=>line(esc(name),fmt(value))).join("");
   const stockRows=[
-   ["19L ڈھکن",stock.raw_19l_caps,"عدد"],["500ml بوتلیں",stock.raw_500ml_bottles,"عدد"],["1.5L بوتلیں",stock.raw_1_5l_bottles,"عدد"],
-   ["6L بوتلیں",stock.raw_6l_bottles,"عدد"],["500ml کارٹن",stock.cartons_500ml,"کارٹن"],["1.5L کارٹن",stock.cartons_1_5l,"کارٹن"],
-   ["ٹیپ بنڈل",stock.tape_bundles,"بنڈل"],["اسٹیکر",stock.stickers,"عدد"],["تیار 500ml",stock.finished_500ml_cartons,"کارٹن"],
-   ["تیار 1.5L",stock.finished_1_5l_cartons,"کارٹن"],["تیار 6L",stock.finished_6l_bottles,"بوتل"]
+   ["19L ڈھکن",stock.raw_19l_caps,"عدد"],
+   ["500ml بوتلیں",stock.raw_500ml_bottles,"عدد"],["500ml ڈھکن",stock.raw_500ml_caps,"عدد"],
+   ["1.5L بوتلیں",stock.raw_1_5l_bottles,"عدد"],["1.5L ڈھکن",stock.raw_1_5l_caps,"عدد"],
+   ["6L بوتلیں",stock.raw_6l_bottles,"عدد"],["6L ڈھکن",stock.raw_6l_caps,"عدد"],
+   ["500ml کارٹن",stock.cartons_500ml,"کارٹن"],["1.5L کارٹن",stock.cartons_1_5l,"کارٹن"],
+   ["ٹیپ بنڈل",stock.tape_bundles,"بنڈل"],["اسٹیکر",stock.stickers,"عدد"],
+   ["تیار 500ml",stock.finished_500ml_cartons,"کارٹن"],["تیار 1.5L",stock.finished_1_5l_cartons,"کارٹن"],
+   ["تیار 6L",stock.finished_6l_bottles,"بوتل"]
   ].map(([label,value,unit])=>"<div class='exec-stock-item'><span>"+label+"</span><b>"+(value==null?"—":Number(value).toLocaleString("ur-PK")+" "+unit)+"</b></div>").join("");
   const previous=Number(data.previous_period?.segments?.net_profit)||0;
   box.innerHTML=
