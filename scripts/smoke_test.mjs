@@ -14,6 +14,27 @@ const mime = {
   ".css": "text/css; charset=utf-8"
 };
 
+const monthlyRetryMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111133121_retry_monthly_billing_and_reports.sql"),
+  "utf8"
+);
+if (!monthlyRetryMigration.includes("schedule => '55 18 * * *'") ||
+    !monthlyRetryMigration.includes("schedule => '5 19 * * *'")) {
+  throw new Error("Monthly billing and report cron jobs must retry daily");
+}
+if (!monthlyRetryMigration.includes("existing_bill.bill_month = v_month") ||
+    !monthlyRetryMigration.includes("ON CONFLICT (customer_id, bill_month) DO NOTHING") ||
+    !monthlyRetryMigration.includes("IF NOT FOUND THEN")) {
+  throw new Error("Monthly billing retries must skip already-created bills and avoid duplicate notifications");
+}
+if (!monthlyRetryMigration.includes("business_month_closings") ||
+    !monthlyRetryMigration.includes("status = 'closed'")) {
+  throw new Error("Monthly report retries must preserve a formally closed snapshot");
+}
+if (monthlyRetryMigration.includes("extract(day from v_today)>3")) {
+  throw new Error("Monthly report retries must not stop after the first three days");
+}
+
 const server = createServer(async (req, res) => {
   try {
     const pathname = new URL(req.url, "http://127.0.0.1").pathname;
