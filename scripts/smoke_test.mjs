@@ -51,6 +51,15 @@ if (!customerBillNotificationMigration.includes("customer_notifications.message 
   throw new Error("Monthly bill notifications must update content without resetting read state");
 }
 
+const customerBillMessageMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261111133913_customer_bill_message_newlines.sql"),
+  "utf8"
+);
+if (!customerBillMessageMigration.includes("E'السلام علیکم %s صاحب!") ||
+    !customerBillMessageMigration.includes("MUGHAL''S PURE WATER")) {
+  throw new Error("Monthly bill notifications must contain correctly escaped Urdu text and line breaks");
+}
+
 const server = createServer(async (req, res) => {
   try {
     const pathname = new URL(req.url, "http://127.0.0.1").pathname;
