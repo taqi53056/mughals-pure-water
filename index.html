@@ -1990,7 +1990,9 @@ async function recordCustomerPayment(){
 /* خام مال اور تیار مال */
 async function stockModule(type){
  const raw=type==="raw";
- setTitle(raw?"خام مال":"تیار مال — ابتدائی اسٹاک");
+ // Legacy raw-stock table is not part of the live inventory ledger. Always route raw stock to the unified purchases/opening-stock ledger.
+ if(raw)return rawMaterialsModule();
+ setTitle("تیار مال — ابتدائی اسٹاک");
  $("moduleBody").innerHTML=`
  <p class="muted">${raw?"یہاں موجودہ خام مال کا ابتدائی اسٹاک یا نئی خریداری درج کریں۔ ہر خام شے الگ درج کریں۔":"یہاں صرف پہلے سے موجود ابتدائی تیار مال درج کریں۔ روزانہ پیداوار الگ پروڈکشن اندراج سے خود اسٹاک میں شامل ہوتی ہے؛ اسے یہاں دوبارہ درج نہ کریں۔ ہر پروڈکٹ کی صرف ایک ابتدائی انٹری ہوگی؛ اسی تاریخ پر مقدار درست کرنے کے لیے دوبارہ محفوظ کریں، بعد کی کمی بیشی کے لیے اسٹاک درستگی استعمال کریں۔"}</p>
  <h3>${raw?"نئی خام مال انٹری":"ابتدائی تیار مال کی انٹری"}</h3>
