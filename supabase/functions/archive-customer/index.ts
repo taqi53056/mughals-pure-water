@@ -105,7 +105,7 @@ Deno.serve(async (req: Request) => {
   if (finishError) {
     return response(200, {
       status: "pending_auth_deletion",
-      auth_deleted: Boolean(authUserId),
+      auth_deleted: true,
       job_id: jobId,
       archive_id: archiveId,
       error: "Auth cleanup succeeded or was unnecessary, but archive job status needs reconciliation."
