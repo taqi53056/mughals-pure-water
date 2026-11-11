@@ -52,7 +52,7 @@ if (!customerBillNotificationMigration.includes("customer_notifications.message 
 }
 
 const customerBillMessageMigration = await readFile(
-  resolve(ROOT, "supabase/migrations/20261111133913_customer_bill_message_newlines.sql"),
+  resolve(ROOT, "supabase/migrations/20261111134004_customer_bill_message_newlines.sql"),
   "utf8"
 );
 if (!customerBillMessageMigration.includes("E'السلام علیکم %s صاحب!") ||
