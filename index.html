@@ -1531,7 +1531,11 @@ async function archiveCustomer(id){
   if(error)throw error;
   if(!data)throw new Error("آرکائیو سرور سے تصدیق موصول نہیں ہوئی۔");
   if(data.status==="pending_auth_deletion"){
-   msg("ذاتی ریکارڈ آرکائیو ہوگیا، مگر کسٹمر لاگ اِن حذف کرنے کا مرحلہ باقی ہے۔ Job ID: "+data.job_id);
+   if(data.auth_deleted===true){
+    msg("کسٹمر کا لاگ اِن حذف ہوگیا، مگر آرکائیو جاب کی حیثیت اپ ڈیٹ نہیں ہوئی۔ Job ID: "+data.job_id+" — ہسٹری سے دوبارہ کوشش کریں۔");
+   }else{
+    msg("ذاتی ریکارڈ آرکائیو ہوگیا، مگر کسٹمر لاگ اِن حذف کرنے کا مرحلہ باقی ہے۔ Job ID: "+data.job_id+" — ہسٹری سے دوبارہ کوشش کریں۔");
+   }
   }else{
    msg("کسٹمر کا ذاتی ریکارڈ حذف اور مالی خلاصہ محفوظ ہوگیا۔ حوالہ: "+(data.archive_ref||data.archive_id),true);
   }
