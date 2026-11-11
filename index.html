@@ -1009,19 +1009,18 @@ async function refreshAdminSignupNotice(newCustomer=null){
 async function startAdminCustomerRealtime(){
  if(!db||!user)return;
  if(adminCustomerRealtimeChannel){
-  try{await db.removeChannel(adminCustomerRealtimeChannel);}catch(e){console.warn("Old admin realtime channel cleanup failed",e);}
+  try{await db.removeChannel(adminCustomerRealtimeChannel);}catch(e){console.warn("Old signup realtime channel cleanup failed",e);}
   adminCustomerRealtimeChannel=null;
  }
+ // The Realtime payload contains only a minimal event row, never the customers table.
  adminCustomerRealtimeChannel=db.channel("mpw-admin-customer-signups-"+user.id)
-  .on("postgres_changes",{event:"INSERT",schema:"public",table:"customers"},payload=>{
-   const customer=payload?.new;
-   if(!customer||customer.is_active!==false||customer.approved_at)return;
-   refreshAdminSignupNotice(customer);
-   if(currentModule==="customers")loadCustomers();
+  .on("postgres_changes",{event:"INSERT",schema:"public",table:"customer_signup_events"},()=>{
+   void refreshAdminSignupNotice();
+   if(currentModule==="customers")void loadCustomers();
   })
   .subscribe((status,error)=>{
    if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")console.warn("Admin signup realtime unavailable",error||status);
-   if(status==="SUBSCRIBED")refreshAdminSignupNotice();
+   if(status==="SUBSCRIBED")void refreshAdminSignupNotice();
   });
 }
 async function stopAdminCustomerRealtime(){
