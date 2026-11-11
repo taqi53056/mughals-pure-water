@@ -107,6 +107,55 @@ try {
       if ((await field.getAttribute("required")) === null) failures.push("Signup field is not required: " + id);
       if (!(await page.locator('label[for="' + id + '"]').count())) failures.push("Signup field has no visible label: " + id);
     }
+    const signupMobileResult = await page.evaluate(async () => {
+      const cases = [
+        ["03001234567", "03001234567"],
+        ["+92 300-1234567", "03001234567"],
+        ["923001234567", "03001234567"],
+        ["3001234567", "03001234567"],
+        ["not-a-number", null]
+      ];
+      const normalizedCases = cases.map(([input]) => normalizePkMobile(input));
+      const originalDb = window.db;
+      let signupPayload = null;
+      try {
+        window.db = {
+          auth: {
+            signUp: async payload => {
+              signupPayload = payload;
+              return {
+                data: { user: { id: "smoke-test-user", identities: [{}] }, session: { access_token: "smoke-test" } },
+                error: null
+              };
+            },
+            signOut: async () => ({ error: null })
+          }
+        };
+        document.querySelector("#signupName").value = "Smoke Test";
+        document.querySelector("#signupMobile").value = "+92 300-1234567";
+        document.querySelector("#signupAddress").value = "Smoke Test Address";
+        document.querySelector("#signupEmail").value = "smoke-test@example.invalid";
+        document.querySelector("#signupPassword").value = "SmokeTest123";
+        await signupCustomer();
+      } finally {
+        window.db = originalDb;
+      }
+      return {
+        expectedCases: cases.map(x => x[1]),
+        normalizedCases,
+        sentMobile: signupPayload?.options?.data?.mobile || null,
+        successMessage: document.querySelector("#loginMsg").textContent
+      };
+    });
+    if (JSON.stringify(signupMobileResult.normalizedCases) !== JSON.stringify(signupMobileResult.expectedCases)) {
+      failures.push("Pakistani mobile normalization does not cover local and international formats");
+    }
+    if (signupMobileResult.sentMobile !== "03001234567") {
+      failures.push("Customer signup did not send the normalized Pakistani mobile to Supabase");
+    }
+    if (!signupMobileResult.successMessage.includes("درخواست موصول ہوگئی ہے")) {
+      failures.push("Mock customer signup did not complete the pending-approval confirmation path");
+    }
     await page.evaluate(async () => {
       history.replaceState(null, document.title, window.location.pathname + "#type=recovery");
       await window.restoreSavedSession();
