@@ -135,6 +135,7 @@ BEGIN
          'بوتل کے ساتھ شامل ڈھکن؛ رقم بوتل کی مالیت میں شامل ہے',auth.uid())
       ON CONFLICT (material_type) WHERE record_type='opening_stock'
       DO UPDATE SET
+        purchase_date=EXCLUDED.purchase_date,
         quantity=EXCLUDED.quantity,
         unit=EXCLUDED.unit,
         total_amount=EXCLUDED.total_amount,
