@@ -2149,47 +2149,31 @@ async function saveRawMaterialPurchase(){
    purchase_date:date,record_type,material_type:type,quantity,unit:rawMaterialUnits[type],
    total_amount,supplier:$("rawPurchaseSupplier").value.trim()||null,
    payment_method:record_type==="opening_stock"?"opening":$("rawPurchaseMethod").value,
-   details:$("rawPurchaseDetails").value.trim()||null,entered_by:user?.id||null
+   details:$("rawPurchaseDetails").value.trim()||null
   };
-  const saveRawRecord=async row=>{
-   if(row.record_type==="opening_stock"){
-    const {data:existing,error:lookupError}=await db.from("raw_material_purchases").select("id").eq("record_type","opening_stock").eq("material_type",row.material_type).maybeSingle();
-    if(lookupError)throw lookupError;
-    let result=existing
-     ?await db.from("raw_material_purchases").update(row).eq("id",existing.id)
-     :await db.from("raw_material_purchases").insert(row);
-    if(result.error?.code==="23505"){
-     const retryLookup=await db.from("raw_material_purchases").select("id").eq("record_type","opening_stock").eq("material_type",row.material_type).maybeSingle();
-     if(retryLookup.error||!retryLookup.data)throw result.error;
-     result=await db.from("raw_material_purchases").update(row).eq("id",retryLookup.data.id);
-    }
-    if(result.error)throw result.error;
-    return;
-   }
-   const signature=[row.purchase_date,row.record_type,row.material_type,row.quantity,row.total_amount,row.supplier||"",row.payment_method,row.details||""].join("|");
-   const requestId=mpwPendingRequestId("raw-material-purchase:"+row.material_type,signature);
-   const {data:purchase,error}=await db.from("raw_material_purchases").upsert({...row,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
-   if(error)throw error;
-   if(!purchase){
-    const existing=await db.from("raw_material_purchases").select("id").eq("request_id",requestId).maybeSingle();
-    if(existing.error||!existing.data)throw existing.error||new Error("سابقہ خریداری کی تصدیق نہیں ہوئی۔");
-   }
-  };
-  await saveRawRecord(payload);
   const pairedCapType=({bottle_500ml:"cap_500ml",bottle_1_5l:"cap_1_5l",bottle_6l:"cap_6l"})[type];
-  if(pairedCapType){
-   await saveRawRecord({
-    ...payload,material_type:pairedCapType,quantity,unit:"piece",total_amount:0,
-    supplier:null,payment_method:record_type==="opening_stock"?"opening":payload.payment_method,
-    details:"بوتل کے ساتھ شامل ڈھکن؛ رقم بوتل کی مالیت میں شامل ہے"
-   });
+  let requestId=null,capRequestId=null;
+  if(record_type!=="opening_stock"){
+   const signature=[payload.purchase_date,payload.record_type,payload.material_type,payload.quantity,payload.total_amount,payload.supplier||"",payload.payment_method,payload.details||""].join("|");
+   requestId=mpwPendingRequestId("raw-material-purchase:"+type,signature);
+   if(pairedCapType){
+    const capRow={...payload,material_type:pairedCapType,quantity,unit:"piece",total_amount:0,supplier:null,payment_method:payload.payment_method,details:"بوتل کے ساتھ شامل ڈھکن؛ رقم بوتل کی مالیت میں شامل ہے"};
+    const capSignature=[capRow.purchase_date,capRow.record_type,capRow.material_type,capRow.quantity,capRow.total_amount,capRow.supplier||"",capRow.payment_method,capRow.details||""].join("|");
+    capRequestId=mpwPendingRequestId("raw-material-purchase:"+pairedCapType,capSignature);
+   }
   }
+  const {data:result,error}=await db.rpc("save_raw_material_purchase_atomic",{
+   p_purchase:payload,p_request_id:requestId,p_cap_request_id:capRequestId
+  });
+  if(error)throw error;
+  if(!result?.primary_id)throw new Error("ڈیٹابیس نے محفوظ شدہ اندراج کی تصدیق نہیں کی۔");
+  if(pairedCapType&&!result?.paired_cap_id)throw new Error("بوتل کے ساتھ ڈھکن کے اندراج کی تصدیق نہیں ہوئی۔");
   if(record_type!=="opening_stock"){
    mpwClearPendingRequestId("raw-material-purchase:"+type);
    if(pairedCapType)mpwClearPendingRequestId("raw-material-purchase:"+pairedCapType);
   }
   saved=true;
-  msg(record_type==="opening_stock"?"ابتدائی خام مال اسٹاک محفوظ ہوگیا۔":"خام مال کی خریداری محفوظ ہوگئی۔",true);
+  msg(record_type==="opening_stock"?"ابتدائی خام مال اور متعلقہ ڈھکن کا اسٹاک اکٹھا محفوظ ہوگیا۔":"خام مال اور متعلقہ ڈھکن کی خریداری اکٹھی محفوظ ہوگئی۔",true);
   $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
   $("rawPurchaseSupplier").value="";$("rawPurchaseDetails").value="";
   await Promise.all([loadRawMaterialPurchases(),loadTodaySummary()]);
