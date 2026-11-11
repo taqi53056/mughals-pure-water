@@ -96,6 +96,35 @@ try {
       failures.push("Password reset did not reuse the entered login email");
     }
     if ((await page.locator("#resetEmail").getAttribute("required")) === null) failures.push("Password reset email is not required");
+    const resetRequestResult = await page.evaluate(async () => {
+      const originalDb = window.db;
+      let request = null;
+      try {
+        window.db = {
+          auth: {
+            resetPasswordForEmail: async (email, options) => {
+              request = { email, redirectTo: options?.redirectTo || null };
+              return { error: null };
+            }
+          }
+        };
+        await sendPasswordResetLink();
+      } finally {
+        window.db = originalDb;
+      }
+      return {
+        request,
+        expectedRedirect: new URL("./", window.location.href).href,
+        message: document.querySelector("#loginMsg").textContent
+      };
+    });
+    if (resetRequestResult.request?.email !== "customer@example.com" ||
+        resetRequestResult.request?.redirectTo !== resetRequestResult.expectedRedirect) {
+      failures.push("Password reset request does not use the entered email and app-base redirect URL");
+    }
+    if (!resetRequestResult.message.includes("اگر اس ای میل سے اکاؤنٹ موجود ہے")) {
+      failures.push("Password reset does not show the non-enumerating confirmation message");
+    }
     await page.locator('#passwordResetForm button[onclick="showLogin()"]').click();
     await page.locator("#loginForm").waitFor({ state: "visible" });
 
@@ -165,7 +194,44 @@ try {
         (await page.locator("#confirmNewPassword").getAttribute("required")) === null) {
       failures.push("Password recovery completion fields are not required");
     }
-    await page.locator('#passwordResetCompleteForm button[onclick="showLogin()"]').click();
+    const recoveryCompletionResult = await page.evaluate(async () => {
+      const originalDb = window.db;
+      let updatedPassword = null;
+      let signedOut = false;
+      try {
+        window.db = {
+          auth: {
+            updateUser: async values => {
+              updatedPassword = values?.password || null;
+              return { error: null };
+            },
+            signOut: async () => {
+              signedOut = true;
+              return { error: null };
+            }
+          }
+        };
+        document.querySelector("#newPassword").value = "NewSmokePassword123";
+        document.querySelector("#confirmNewPassword").value = "NewSmokePassword123";
+        await completePasswordReset();
+      } finally {
+        window.db = originalDb;
+      }
+      return {
+        updatedPassword,
+        signedOut,
+        hash: window.location.hash,
+        message: document.querySelector("#loginMsg").textContent
+      };
+    });
+    if (recoveryCompletionResult.updatedPassword !== "NewSmokePassword123" ||
+        !recoveryCompletionResult.signedOut ||
+        recoveryCompletionResult.hash.includes("type=recovery")) {
+      failures.push("Password recovery does not update the password, sign out, and clear the recovery URL");
+    }
+    if (!recoveryCompletionResult.message.includes("پاس ورڈ تبدیل ہوگیا ہے")) {
+      failures.push("Password recovery completion does not show success confirmation");
+    }
     await page.locator("#loginForm").waitFor({ state: "visible" });
 
     const adminNavigation = await page.evaluate(async () => {
