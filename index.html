@@ -3239,10 +3239,10 @@ async function updateComplaint(id){
   if(updateError)throw updateError;
   const message=`آپ کی شکایت (${complaint.category}) اپڈیٹ ہوئی ہے۔ حیثیت: ${status==="resolved"?"حل ہوگئی":status==="in_progress"?"زیرِ کارروائی":"موصول"}۔`+(admin_note?" منتظم کا جواب: "+admin_note:"");
   const reference_key="complaint:"+id;
+  let shouldPush=false;
   try{
    const {data:existing,error:lookupError}=await db.from("customer_notifications").select("id,message").eq("customer_id",complaint.customer_id).eq("reference_key",reference_key).limit(1);
    if(lookupError)throw lookupError;
-   let shouldPush=false;
    if(existing?.length){
     shouldPush=existing[0].message!==message;
     if(shouldPush){
@@ -3254,14 +3254,20 @@ async function updateComplaint(id){
     if(noticeError)throw noticeError;
     shouldPush=true;
    }
-   if(shouldPush){
-    const push=await notifyCustomerPush(complaint.customer_id,"آپ کی شکایت کی تازہ کاری",message);
-    if(push?.error||Number(push?.sent||0)<1)msg("شکایت اور جواب محفوظ ہوگیا، ایپ اطلاع درج ہوگئی، مگر موبائل Push نہیں پہنچی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔"));
-    else msg("شکایت اور جواب محفوظ ہوگیا، موبائل اطلاع بھی بھیج دی گئی۔",true);
-   }else msg("شکایت محفوظ ہوگئی؛ پہلے سے موجود اطلاع دوبارہ نہیں بھیجی گئی۔",true);
   }catch(notificationError){
-   msg("شکایت اور جواب محفوظ ہوگیا، مگر کسٹمر کی اطلاع درج یا اپڈیٹ نہیں ہوسکی: "+(notificationError?.message||String(notificationError)));
+   msg("شکایت اور جواب محفوظ ہوگیا، مگر ایپ میں اطلاع درج یا اپڈیٹ نہیں ہوسکی: "+(notificationError?.message||String(notificationError)));
+   await loadComplaints();
+   return;
   }
+  if(shouldPush){
+   try{
+    const push=await notifyCustomerPush(complaint.customer_id,"آپ کی شکایت کی تازہ کاری",message);
+    if(push?.error||Number(push?.sent||0)<1)msg("شکایت، جواب اور ایپ اطلاع محفوظ ہوگئی، مگر موبائل Push نہیں پہنچی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔"));
+    else msg("شکایت، جواب اور موبائل اطلاع محفوظ ہوگئی۔",true);
+   }catch(pushError){
+    msg("شکایت، جواب اور ایپ اطلاع محفوظ ہوگئی، مگر موبائل Push بھیجنے میں مسئلہ آیا: "+(pushError?.message||String(pushError)));
+   }
+  }else msg("شکایت محفوظ ہوگئی؛ پہلے سے موجود اطلاع دوبارہ نہیں بھیجی گئی۔",true);
   await loadComplaints();
  }catch(e){msg("شکایت اپڈیٹ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
