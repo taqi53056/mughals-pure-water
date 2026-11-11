@@ -2220,7 +2220,7 @@ async function loadRawMaterialPurchases(){
 async function tankerPurchaseModule(){
  setTitle("پانی کی خریداری اور ابتدائی اسٹاک");
  $("moduleBody").innerHTML=
- '<p class="muted">صرف دو ٹنکیاں ہیں: دکان والی ٹنکی سے 19L اور 6L؛ پروڈکشن والی ٹنکی سے 500ml اور 1.5L۔ ہر ٹینکر 1,000 لیٹر شمار ہوگا۔</p>'+
+ '<p class="muted">صرف دو ٹنکیاں ہیں: دکان والی ٹنکی سے 19L اور 6L؛ پروڈکشن والی ٹنکی سے 500ml اور 1.5L۔ ہر ٹینکر 1,000 لیٹر شمار ہوگا۔ ابتدائی اسٹاک کاروبار شروع ہونے کے وقت کا پانی ہے؛ اس کی تاریخ اس پول کی پہلی ٹینکر خریداری یا استعمال سے پہلے یا اسی دن رکھیں۔ اسے موجودہ ٹنکی کے باقی لیٹر کے طور پر درج نہ کریں۔</p>'+
  '<div class="card"><label>پانی کس کام کے لیے ہے؟</label><select id="waterUse"><option value="shop_counter">دکان والی ٹنکی — 19L + 6L</option><option value="product_filling">پروڈکشن والی ٹنکی — 500ml + 1.5L</option></select><select id="tankEntryKind" onchange="toggleTankerEntryKind()"><option value="purchase">نئی ٹینکر خریداری</option><option value="opening_stock">پہلے سے موجود پانی کا ابتدائی اسٹاک</option></select><input id="tankDate" type="date" value="'+today()+'">'+
  '<div id="tankerPurchaseFields"><input id="tankCount" type="number" min="1" step="1" value="1" placeholder="ٹینکروں کی تعداد">'+
  '<input id="tankRate" type="number" min="1" step="0.01" placeholder="فی 1,000 لیٹر ٹینکر کی قیمت">'+
@@ -2304,6 +2304,12 @@ async function loadTankerPurchases(){
    financeFetchAll("counter_water_sales","total_litres,sale_date","sale_date",null,null)
   ]);
  }catch(e){$("moduleTable").textContent="پانی کا ریکارڈ / بیلنس لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
+ const asOfDate=today();
+ rows=rows.filter(r=>r.purchase_date<=asOfDate);
+ opening=opening.filter(r=>r.as_of_date<=asOfDate);
+ prod=prod.filter(r=>r.production_date<=asOfDate);
+ deliveries=deliveries.filter(r=>r.delivery_date<=asOfDate);
+ counterSales=counterSales.filter(r=>r.sale_date<=asOfDate);
  const sum=(list,fn)=>list.reduce((n,r)=>n+Number(fn(r)||0),0);
  const tankerLitres=use=>sum(rows.filter(r=>r.water_use===use),r=>Number(r.tanker_count)*1000);
  const openingLitres=use=>sum(opening.filter(r=>r.water_use===use),r=>r.litres);
