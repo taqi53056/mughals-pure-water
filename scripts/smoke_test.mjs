@@ -87,7 +87,7 @@ for (const required of [
   "new.adjustment_date",
   "p_sale_date",
   "p_return_date",
-  "new.production_date>(now() AT TIME ZONE ''Asia/Karachi'')::date",
+  "new.production_date>(now() AT TIME ZONE 'Asia/Karachi')::date",
   "v_business_today:=(now() AT TIME ZONE 'Asia/Karachi')::date",
   "p_as_of_date>v_business_today",
   "GRANT EXECUTE ON FUNCTION private.get_finished_stock_balance"
