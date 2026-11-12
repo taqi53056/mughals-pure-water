@@ -2524,7 +2524,7 @@ async function saveUnassigned19lDelivery(){
   msg("غیر منسلک سپلائی محفوظ ہوگئی۔ "+(isOwner?"مالک کی بچائی گئی مزدوری "+money(data.owner_labor_saving)+" درج ہے۔":"ورکر مزدوری "+money(data.labor_amount)+" لیجر میں درج ہوگئی۔"),true);
   $("u19Worker").value="";$("u19WorkerPicker").classList.add("hidden");$("u19OwnerNote").classList.add("hidden");$("u19WorkerId").required=false;$("u19Bottles").value="";$("u19Empties").value="0";$("u19DamagedCaps").value="0";$("u19Details").value="";
   updateUnassigned19lLabor();
-  await Promise.all([loadUnassigned19lHistory(),loadTankerPurchases(),loadTodaySummary()]);
+  await Promise.all([loadUnassigned19lHistory(),loadUnassigned19lCollectionOptions(),loadTankerPurchases(),loadTodaySummary(),runReport()]);
  }catch(e){msg("سپلائی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
 }
