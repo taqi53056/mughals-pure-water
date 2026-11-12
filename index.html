@@ -2434,6 +2434,7 @@ async function loadCounterWaterForDate(){
  const date=$("counterDate").value;
  const {data,error}=await db.from("counter_water_sales").select("*").eq("sale_date",date).maybeSingle();
  if(error){msg("کاؤنٹر ریکارڈ لوڈ نہیں ہوا: "+error.message);return;}
+ window.currentCounterWaterRecordId=data?.id?Number(data.id):null;
  $("counterLitres").value=data?.total_litres??"";
  $("counterAmount").value=data?.total_amount??"";
  $("counterMethod").value=data?.payment_method||"cash";
@@ -2459,8 +2460,19 @@ async function saveCounterWaterSale(){
  const button=$("counterSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
   const payload={sale_date,total_litres,total_amount,payment_method:$("counterMethod").value,entered_by:user?.id||null};
-  const {error}=await db.from("counter_water_sales").upsert(payload,{onConflict:"sale_date"});
-  if(error)throw error;
+  let saved;
+  if(window.currentCounterWaterRecordId){
+   const duplicate=await db.from("counter_water_sales").select("id").eq("sale_date",sale_date).neq("id",window.currentCounterWaterRecordId).maybeSingle();
+   if(duplicate.error)throw duplicate.error;
+   if(duplicate.data)throw new Error("اس نئی تاریخ کا کاؤنٹر ریکارڈ پہلے سے موجود ہے۔ پہلے اسی تاریخ کا ریکارڈ کھولیں؛ دو دن کا حساب ایک ریکارڈ میں ضم نہیں کیا گیا۔");
+   const result=await db.from("counter_water_sales").update(payload).eq("id",window.currentCounterWaterRecordId).select("id").maybeSingle();
+   if(result.error)throw result.error;if(!result.data)throw new Error("اصل کاؤنٹر ریکارڈ اپڈیٹ نہیں ہوا؛ دوبارہ لوڈ کریں۔");saved=result.data;
+  }else{
+   const result=await db.from("counter_water_sales").upsert(payload,{onConflict:"sale_date"}).select("id").maybeSingle();
+   if(result.error)throw result.error;saved=result.data;
+  }
+  if(!saved?.id)throw new Error("کاؤنٹر ریکارڈ محفوظ ہونے کی تصدیق نہیں ہوئی۔");
+  window.currentCounterWaterRecordId=Number(saved.id);
   msg("روزانہ کاؤنٹر پانی کی فروخت محفوظ/اپڈیٹ ہوگئی۔",true);
   await loadCounterWaterForDate();await loadTodaySummary();
  }catch(error){msg("کاؤنٹر فروخت محفوظ نہیں ہوئی: "+(error?.message||String(error)));}
