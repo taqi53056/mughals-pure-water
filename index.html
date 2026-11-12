@@ -2725,7 +2725,7 @@ async function loadExecutiveDashboard(){
   const stock=report.stock_estimate||{};
   const closed=data.month_closed===true;
   const fmt=n=>money(Number(n)||0);
-  const status=report.complete===true&&missing.length===0?"حسابی لاگت کی جانچ مکمل":"حساب میں کمی کی جانچ درکار";
+  const status=report.complete===true&&missing.length===0?"درج شدہ لاگت کے اجزا دستیاب":"حساب میں لاگت کی کمی ہے";
   const kpis=[
    ["کل فروخت / آمدن",fmt(revenue),"19L + تیار مال کی فروخت"],
    ["سیکشن کنٹریبیوشن",fmt(contribution),"براہِ راست سیکشن اخراجات کے بعد"],
@@ -2803,6 +2803,7 @@ async function loadExecutiveDashboard(){
     <section class="exec-panel"><h3>پروڈکٹ کارکردگی</h3><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>مقدار</th><th>فروخت</th><th>فی یونٹ لاگت</th><th>مواد</th><th>مزدوری</th></tr>${productRows||"<tr><td colspan='6'>ابھی فروخت درج نہیں۔</td></tr>"}</table></div></section>
     <section class="exec-panel"><h3>اسٹاک کا خلاصہ</h3><div class="exec-stock-grid">${stockRows}</div><p class="muted">اسٹاک کے اعداد موجودہ ماڈل کے تخمینے ہیں؛ مفت کلیم بوتلوں کی مکمل مقدار درج نہ ہونے پر کچھ خام مال کا تخمینہ محدود ہے۔</p></section>
    </div>
+   ${report.notes?'<div class="warning"><b>حساب کی اہم حد:</b> '+esc(report.notes)+'</div>':""}
    ${missing.length?'<div class="warning"><b>لاگت کی کمی — کلوزنگ سے پہلے درست کریں</b><ul>'+missing.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':""}
    ${quality.length?'<div class="muted exec-quality">'+quality.map(x=>esc(x)).join(" · ")+'</div>':""}
    ${report.has_activity===false?'<div class="warning">اس مدت میں ابھی کوئی کاروباری سرگرمی درج نہیں؛ اعداد صفر ہیں، یہ حقیقی منافع کی تصدیق نہیں۔</div>':""}
@@ -2832,7 +2833,7 @@ async function previewMonthClose(){
   const range=monthDateRange(month);
   const {data,error}=await db.rpc("get_management_dashboard",{p_month_start:range.start,p_month_end:range.end});
   if(error)throw error;
-  const report=data.profit_and_loss||{},missing=Array.isArray(report.missing_costs)?report.missing_costs:[];
+  const report=data.profit_and_loss||{},missing=Array.isArray(report.missing_costs)?report.missing_costs:[],notes=report.notes||"";
   const stock=report.stock_estimate||{};
   const negatives=Object.entries(stock).filter(([k,v])=>Number(v)<0);
   const d=new Date(),currentMonth=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
@@ -2851,7 +2852,8 @@ async function previewMonthClose(){
    <div class="exec-line"><span>فروخت / آمدن</span><b>${money(Number(report.segments?.["19L"]?.revenue||0)+Number(report.segments?.finished_goods?.revenue||0))}</b></div>
    <div class="exec-line"><span>خالص منافع / نقصان</span><b>${money(report.segments?.net_profit||0)}</b></div>
    <div class="exec-line"><span>کسٹمر بل باقی</span><b>${Number(data.unbilled_customers)||0}</b></div>
-   ${reason.length?'<div class="warning"><b>کلوزنگ ابھی نہیں ہو سکتی:</b><ul>'+reason.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':'<p class="success">تمام بنیادی کلوزنگ چیکس پاس ہیں۔ اب مستقل کلوزنگ کی جا سکتی ہے۔</p>'}
+   ${notes?'<div class="warning"><b>کلوزنگ سے پہلے لازمی جائزہ:</b> '+esc(notes)+'</div>':""}
+   ${reason.length?'<div class="warning"><b>کلوزنگ ابھی نہیں ہو سکتی:</b><ul>'+reason.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':'<p class="success">بنیادی خودکار چیکس پاس ہیں۔ مستقل بندش سے پہلے اخراجات کی دستی تصدیق بھی کریں۔</p>'}
    ${data.month_closed?'<p class="muted">یہ مہینہ پہلے ہی محفوظ اور بند ہے۔</p>':""}
   `;
   if(button)button.disabled=!ready;
@@ -2859,7 +2861,8 @@ async function previewMonthClose(){
 }
 async function closeSelectedMonth(){
  const month=$("closeMonth")?.value||"";
- if(!month||!confirm("آخری تصدیق: اس مہینے کی رپورٹ محفوظ ہوگی اور اصل مالی اندراجات میں تبدیلی بند ہو جائے گی۔ کیا آگے بڑھیں؟"))return;
+ if(!month||!confirm("کیا آپ نے اس مہینے کے تمام حقیقی اخراجات، مثلاً پٹرول، مزدوری، مرمت، بجلی اور دیگر خرچ درج یا چیک کر لیے ہیں؟ اگر کوئی خرچ درج نہیں تو پہلے اسے درج کریں۔"))return;
+ if(!confirm("آخری تصدیق: اس مہینے کی رپورٹ محفوظ ہوگی اور اصل مالی اندراجات میں تبدیلی بند ہو جائے گی۔ کیا آگے بڑھیں؟"))return;
  const button=$("closeMonthButton");if(button)button.disabled=true;
  try{
   const {data,error}=await db.rpc("close_business_month",{p_month_start:month+"-01"});
@@ -2902,10 +2905,11 @@ async function loadMonthlySnapshots(){
   const r=row.report||{},seg=r.segments||{},owners=r.owner_withdrawals||{},stock=r.stock_estimate||{};
   const result=r.has_pnl_activity?(r.complete?money(seg.net_profit||0):"عارضی — لاگت نامکمل"):(r.has_activity?"صرف اسٹاک / مالی اندراجات؛ ابھی منافع و نقصان نہیں بنا":"کوئی کاروباری اندراج نہیں");
   const missing=(r.missing_costs||[]).length?"<p class='warning'>نامکمل لاگت: "+(r.missing_costs||[]).map(esc).join("، ")+"</p>":"";
-  return "<div class='audit-card'><div class='audit-card-top'><b>"+esc(row.month_start)+" تا "+esc(row.month_end)+"</b><span>"+(r.complete?"حساب مکمل":"حساب عارضی")+"</span></div>"+
+  const notes=r.notes?"<p class='warning'>اہم حد: "+esc(r.notes)+"</p>":"";
+  return "<div class='audit-card'><div class='audit-card-top'><b>"+esc(row.month_start)+" تا "+esc(row.month_end)+"</b><span>"+(r.complete?"لاگت کے درج شدہ اجزا دستیاب":"حساب عارضی")+"</span></div>"+
    "<div class='worker-summary-grid'><div><small>19L شعبہ</small><b>"+money(seg["19L"]?.profit_before_shared||0)+"</b></div><div><small>مصنوعات کا شعبہ</small><b>"+money(seg.finished_goods?.profit_before_shared||0)+"</b></div><div><small>مجموعی نتیجہ</small><b>"+result+"</b></div><div><small>مالکان کی ذاتی نکاسی</small><b>"+money(owners.total||0)+"</b></div></div>"+
    "<div class='stat'>500ml فروخت: "+money((r.products?.["500ml"]?.revenue)||0)+" — 1.5L فروخت: "+money((r.products?.["1.5L"]?.revenue)||0)+" — 6L فروخت: "+money((r.products?.["6L"]?.revenue)||0)+"</div>"+
-   missing+
+   missing+notes+
    "<p class='muted'>موجودہ محفوظ اسٹاک تخمینہ: 500ml "+(stock.finished_500ml_cartons||0)+" کارٹن، 1.5L "+(stock.finished_1_5l_cartons||0)+" کارٹن، 6L "+(stock.finished_6l_bottles||0)+" بوتلیں۔</p>"+
    "<p class='muted'>تیار ہونے کا وقت: "+esc(new Date(row.generated_at).toLocaleString("ur-PK"))+"</p></div>";
  }).join("");
@@ -3007,7 +3011,7 @@ async function runReport(){
   const product=r.products||{},owners=r.owner_withdrawals||{},loans=r.capital_and_loans||{},stock=r.stock_estimate||{};
   const fmt=v=>money(Number(v)||0),net=Number(seg.net_profit)||0;
   const revenue=(Number(water.revenue)||0)+(Number(products.revenue)||0);
-  const status=!r.has_pnl_activity?"منافع و نقصان کی سرگرمی ابھی درج نہیں":!r.complete?"لاگت نامکمل — نتیجہ عارضی":net>=0?"منافع":"نقصان";
+  const status=!r.has_pnl_activity?"منافع و نقصان کی سرگرمی ابھی درج نہیں":!r.complete?"لاگت نامکمل — نتیجہ عارضی":net>=0?"درج شدہ ریکارڈ کے مطابق منافع":"درج شدہ ریکارڈ کے مطابق نقصان";
   const missing=(r.missing_costs||[]).map(x=>"<li>"+esc(x)+"</li>").join("");
   const kpi=(label,value,note="")=>"<div class='exec-kpi'><span>"+label+"</span><strong>"+value+"</strong>"+(note?"<small>"+note+"</small>":"")+"</div>";
   const line=(label,value)=>"<div class='exec-line'><span>"+label+"</span><b>"+value+"</b></div>";
@@ -3037,7 +3041,7 @@ async function runReport(){
     kpi("مالکان کی نکاسی",fmt(owners.total)+" روپے")+
    "</div>"+
    "<div class='exec-panel'><h3>حساب کی حیثیت</h3><p>"+esc(status)+"</p>"+
-    (missing?"<div class='warning'>حتمی حساب سے پہلے یہ لاگتیں درج کریں:<ul>"+missing+"</ul></div>":"<p class='success'>اس رپورٹ میں مطلوبہ لاگتیں موجود ہیں۔</p>")+
+    (missing?"<div class='warning'>حتمی حساب سے پہلے یہ لاگتیں درج کریں:<ul>"+missing+"</ul></div>":"<p class='success'>حساب میں استعمال ہونے والی مخصوص لاگتیں دستیاب ہیں۔</p>")+(r.notes?"<div class='warning'><b>اہم حد:</b> "+esc(r.notes)+"</div>":"")+
     "<p class='muted'>یہ کاروباری انتظامی رپورٹ ہے؛ مکمل ڈبل انٹری جنرل لیجر یا قانونی مالیاتی اسٹیٹمنٹ نہیں۔</p></div>"+
    "<details class='card'><summary><b>تفصیلی آمدن اور اخراجات</b></summary>"+
     "<div class='exec-two-col'><section class='exec-panel'><h3>19L شعبہ</h3>"+
