@@ -2824,6 +2824,7 @@ async function loadExecutiveDashboard(){
     <section class="exec-panel"><h3>اسٹاک کا خلاصہ</h3><div class="exec-stock-grid">${stockRows}</div><p class="muted">اسٹاک کے اعداد موجودہ ماڈل کے تخمینے ہیں؛ مفت کلیم بوتلوں کی مکمل مقدار درج نہ ہونے پر کچھ خام مال کا تخمینہ محدود ہے۔</p></section>
    </div>
    ${report.notes?'<div class="warning"><b>حساب کی اہم حد:</b> '+esc(report.notes)+'</div>':""}
+   ${Number(report.expense_entry_count||0)===0?'<div class="warning"><b>اس مدت میں اخراجات کی کوئی انٹری نہیں:</b> تصدیق کریں کہ واقعی کوئی کاروباری خرچ نہیں ہوا؛ اگر پیٹرول، مرمت، بجلی یا دوسرا خرچ ہوا ہے تو درج کیے بغیر منافع حتمی نہیں ہوگا۔</div>':'<p class="muted">اس مدت میں اخراجات کی محفوظ انٹریاں: '+Number(report.expense_entry_count)+'</p>'}
    ${missing.length?'<div class="warning"><b>لاگت کی کمی — کلوزنگ سے پہلے درست کریں</b><ul>'+missing.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':""}
    ${quality.length?'<div class="muted exec-quality">'+quality.map(x=>esc(x)).join(" · ")+'</div>':""}
    ${report.has_activity===false?'<div class="warning">اس مدت میں ابھی کوئی کاروباری سرگرمی درج نہیں؛ اعداد صفر ہیں، یہ حقیقی منافع کی تصدیق نہیں۔</div>':""}
