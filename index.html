@@ -2418,7 +2418,7 @@ async function saveCounterWaterSale(){
 async function unassigned19lModule(){
  setTitle("بغیر گاہک 19L سپلائی");
  $("moduleBody").innerHTML=
- '<p class="muted">یہ اندراج صرف اس سپلائی کے لیے ہے جس کا ابھی کوئی کسٹمر اکاؤنٹ موجود نہیں۔ اس سے کسٹمر، کسٹمر بل یا کسٹمر ہسٹری نہیں بنے گی۔ ہر کامیاب بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔</p>'+
+ '<p class="muted">یہ اندراج صرف اس سپلائی کے لیے ہے جس کا ابھی کوئی کسٹمر اکاؤنٹ موجود نہیں۔ اس سے کسٹمر، کسٹمر بل یا کسٹمر ہسٹری نہیں بنے گی۔ ہر کامیاب بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔ اس اندراج سے 19L آمدن منافع میں شمار ہوگی۔ رقم وصول ہونے پر آمدن ماڈیول میں "غیر منسلک 19L سپلائی کی وصولی" کے نام سے الگ وصولی درج کریں؛ اس مد کو منافع میں دوبارہ شامل نہیں کیا جاتا۔ وصول نہ ہوئی رقم درج نہ کریں۔</p>'+
  '<div class="card"><h3>نئی غیر منسلک سپلائی</h3>'+
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
  '<label for="u19Worker">سپلائی کرنے والا مزدور</label><select id="u19Worker"><option value="">ورکر لوڈ ہو رہا ہے...</option></select>'+
@@ -2642,9 +2642,9 @@ async function moneyModule(type){
  const exp=type==="expenses";
  moneyEditingId=null;setTitle(exp?"اخراجات":"آمدن");
  $("moduleBody").innerHTML=`
- <p class="muted">${exp?"صرف روزمرہ کاروباری اخراجات درج کریں۔ ورکر کی کمائی ورکر لیجر سے خود شمار ہوتی ہے؛ وہی مزدوری یہاں دوبارہ درج نہ کریں۔ خام مال، ٹینکر، پروڈکشن اور مشینری کی خریداری اپنے مخصوص بٹن سے درج کریں۔ پیٹرول/مرمت اگر 19L ڈیلیوری موٹر سائیکل کا ہو تو سیکشن 19L منتخب کریں؛ اگر مشترکہ ہو تو عمومی خرچ، اور اگر تیار مال کی ترسیل کا ہو تو تیار مال منتخب کریں۔":"یہاں صرف دوسری آمدن درج کریں؛ 19L ڈلیوری یا پروڈکٹ سیل کی رقم یہاں دوبارہ درج نہ کریں۔"}</p>
+ <p class="muted">${exp?"صرف روزمرہ کاروباری اخراجات درج کریں۔ ورکر کی کمائی ورکر لیجر سے خود شمار ہوتی ہے؛ وہی مزدوری یہاں دوبارہ درج نہ کریں۔ خام مال، ٹینکر، پروڈکشن اور مشینری کی خریداری اپنے مخصوص بٹن سے درج کریں۔ پیٹرول/مرمت اگر 19L ڈیلیوری موٹر سائیکل کا ہو تو سیکشن 19L منتخب کریں؛ اگر مشترکہ ہو تو عمومی خرچ، اور اگر تیار مال کی ترسیل کا ہو تو تیار مال منتخب کریں۔":"یہاں دوسری آمدن درج کریں۔ غیر منسلک 19L سپلائی کی وصولی کے لیے مخصوص مد استعمال کریں؛ وہ پہلے ہی 19L منافع میں شمار ہوتی ہے، اس لیے مخصوص مد نقد وصولی درج کرے گی مگر منافع دوبارہ نہیں بڑھائے گی۔ 19L ڈلیوری یا پروڈکٹ سیل کی اصل آمدن یہاں دوبارہ درج نہ کریں۔"}</p>
  <input id="mDate" type="date" value="${today()}">
- ${exp?'<select id="mCategory"><option value="">خرچ کی مد منتخب کریں</option><option value="گھر کا سامان">گھر کا سامان</option><option value="پیٹرول / ٹرانسپورٹ">پیٹرول / ٹرانسپورٹ</option><option value="چائے / کھانا">چائے / کھانا</option><option value="بجلی کا بل">بجلی کا بل</option><option value="پانی کا بل">پانی کا بل</option><option value="کرایہ">کرایہ</option><option value="فون / انٹرنیٹ">فون / انٹرنیٹ</option><option value="مرمت / دیکھ بھال">مرمت / دیکھ بھال</option><option value="دیگر عمومی خرچ">دیگر عمومی خرچ</option></select>':'<select id="mCategory"><option value="">آمدن کی مد منتخب کریں</option><option value="دیگر غیر فروخت آمدن">دیگر غیر فروخت آمدن (پروڈکٹ سیل / ڈلیوری کے علاوہ)</option></select>'}
+ ${exp?'<select id="mCategory"><option value="">خرچ کی مد منتخب کریں</option><option value="گھر کا سامان">گھر کا سامان</option><option value="پیٹرول / ٹرانسپورٹ">پیٹرول / ٹرانسپورٹ</option><option value="چائے / کھانا">چائے / کھانا</option><option value="بجلی کا بل">بجلی کا بل</option><option value="پانی کا بل">پانی کا بل</option><option value="کرایہ">کرایہ</option><option value="فون / انٹرنیٹ">فون / انٹرنیٹ</option><option value="مرمت / دیکھ بھال">مرمت / دیکھ بھال</option><option value="دیگر عمومی خرچ">دیگر عمومی خرچ</option></select>':'<select id="mCategory"><option value="">آمدن کی مد منتخب کریں</option><option value="دیگر غیر فروخت آمدن">دیگر غیر فروخت آمدن (پروڈکٹ سیل / ڈلیوری کے علاوہ)</option><option value="غیر منسلک 19L سپلائی کی وصولی">غیر منسلک 19L سپلائی کی وصولی (منافع میں دوبارہ شامل نہیں ہوگی)</option></select>'}
  ${exp?'<select id="mSegment"><option value="general">مشترکہ خرچ — کرایہ / بجلی وغیرہ</option><option value="19L">19L گھریلو ڈیلیوری</option><option value="finished_goods">500ml / 1.5L / 6L ترسیل</option></select><select id="mMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>':''}
  <input id="mAmount" type="number" min="1" placeholder="رقم">
  <textarea id="mDetails" placeholder="تفصیل (اختیاری)"></textarea>
@@ -2657,12 +2657,13 @@ function cancelMoneyEdit(type){moneyEditingId=null;$("mDate").value=today();$("m
 async function saveMoney(type){
  const exp=type==="expenses",table=exp?"business_expenses":"business_income",amount=Number($("mAmount").value),category=$("mCategory").value.trim();
  const allowedExpenseCategories=["گھر کا سامان","پیٹرول / ٹرانسپورٹ","چائے / کھانا","بجلی کا بل","پانی کا بل","کرایہ","فون / انٹرنیٹ","مرمت / دیکھ بھال","دیگر عمومی خرچ"];
- const allowedIncomeCategories=["دیگر غیر فروخت آمدن"];
+ const allowedIncomeCategories=["دیگر غیر فروخت آمدن","غیر منسلک 19L سپلائی کی وصولی"];
  const legacyEdit=moneyEditingId!==null&&Array.from($("mCategory").options).some(o=>o.value===category);
  if(!category||amount<=0||!$("mDate").value){msg("تاریخ، مد اور درست رقم درج کریں۔");return}
  if(exp&&!allowedExpenseCategories.includes(category)&&!legacyEdit){msg("یہ خرچ اس عمومی خانے میں درج نہیں ہوسکتا۔ خام مال، ٹینکر، پروڈکشن، سیل، ڈلیوری اور ورکر مزدوری اپنے مخصوص بٹن سے درج کریں۔");return}
  if(!exp&&!allowedIncomeCategories.includes(category)&&!legacyEdit){msg("یہاں صرف دوسری غیر فروخت آمدن درج کریں۔ پروڈکٹ سیل، 19L ڈلیوری اور کاؤنٹر فروخت اپنے مخصوص بٹن سے خود حساب ہوں گی۔");return}
  if(category==="دیگر عمومی خرچ"&&!$("mDetails").value.trim()){msg("دیگر عمومی خرچ کے لیے تفصیل لازمی لکھیں۔");return}
+ if(!exp&&category==="غیر منسلک 19L سپلائی کی وصولی"&&!$("mDetails").value.trim()){msg("اس وصولی کے ساتھ سپلائی کی تاریخ یا ریکارڈ نمبر تفصیل میں درج کریں۔");return}
  if(!confirmLargeEntry("رقم (روپے)",amount,1000))return;
  const button=$("moneySaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
@@ -2727,7 +2728,7 @@ async function loadTodaySummary(){
    const dailyNet=Number(dailySegments.net_profit)||0;
    const dailyRevenue=Number(dailySegments["19L"]?.revenue||0)+Number(dailySegments.finished_goods?.revenue||0)+Number(dailySegments.shared?.other_income||0);
    const dailyBeforeEstimate=Number(dailyWater.net_profit_before_counter_water_estimate??dailyNet);
-   dailyPnlHtml="<div class=\"stat\">کل درج شدہ فروخت/آمدن: <b>"+money(dailyRevenue)+"</b></div><div class=\"stat\">روزانہ خالص نتیجہ: <b>"+money(dailyNet)+"</b> — "+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+"</div><div class=\"stat\">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>"+money(dailyBeforeEstimate)+"</b></div><div class=\"stat\">کاؤنٹر پانی کی تخمینی لاگت: <b>"+money(dailyWater.estimated_counter_water_cost||0)+"</b></div>"+(dailyReport.missing_costs?.length?"<div class=\"warning\">لاگت کی کمی: "+dailyReport.missing_costs.map(esc).join("، ")+"</div>":"")+(dailyReport.notes?"<div class=\"warning\">"+esc(dailyReport.notes)+"</div>":"")+(expenseCount===0?"<div class=\"warning\">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو اسے درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>":"");
+   dailyPnlHtml="<div class=\"stat\">کل درج شدہ فروخت/آمدن: <b>"+money(dailyRevenue)+"</b></div><div class=\"stat\">روزانہ خالص نتیجہ: <b>"+money(dailyNet)+"</b> — "+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+"</div><div class=\"stat\">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>"+money(dailyBeforeEstimate)+"</b></div><div class=\"stat\">کاؤنٹر پانی کی تخمینی لاگت: <b>"+money(dailyWater.estimated_counter_water_cost||0)+"</b></div>"+(dailyReport.missing_costs?.length?"<div class=\"warning\">لاگت کی کمی: "+dailyReport.missing_costs.map(esc).join("، ")+"</div>":"")+(dailyReport.notes?"<div class=\"warning\">"+esc(dailyReport.notes)+"</div>":"")+(Number(dailyWater.unassigned_delivery_cash_unclassified||0)>0?"<div class=\"warning\">غیر منسلک 19L سپلائی کی وصولی درج نہیں۔ اگر رقم وصول ہوچکی ہے تو آمدن ماڈیول میں مخصوص وصولی کی مد سے درج کریں؛ اس سے منافع دوبارہ نہیں بڑھے گا۔</div>":"")+(expenseCount===0?"<div class=\"warning\">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو اسے درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>":"");
   }catch(dailyPnlError){dailyPnlHtml=`<div class="warning">روزانہ منافع و نقصان کا حساب لوڈ نہیں ہوا: ${esc(dailyPnlError?.message||String(dailyPnlError))}</div>`;}
   el.innerHTML=`<div class="stat">تاریخ: ${date}</div>
   <div class="stat">19L کامیاب بوتلیں: <b>${bottles}</b></div>
@@ -2762,6 +2763,9 @@ async function loadExecutiveDashboard(){
   if(error)throw error;
   const report=data?.profit_and_loss||{},segments=report.segments||{};
   const water=segments["19L"]||{},finished=segments.finished_goods||{},shared=segments.shared||{};
+  const unassignedCashflowWarning=Number(water.unassigned_delivery_cash_unclassified||0)>0
+   ?'<div class="warning"><b>غیر منسلک سپلائی کی وصولی باقی ہے:</b> '+fmt(water.unassigned_delivery_cash_unclassified)+' کی وصولی اس مدت میں درج نہیں۔ اگر رقم وصول ہوچکی ہے تو آمدن ماڈیول میں "غیر منسلک 19L سپلائی کی وصولی" منتخب کرکے درج کریں؛ یہ منافع میں دوبارہ شامل نہیں ہوگی۔ اگر رقم وصول نہیں ہوئی تو وصولی درج نہ کریں۔</div>'
+   :"";
   const revenue=Number(water.revenue||0)+Number(finished.revenue||0);
   const net=Number(segments.net_profit||0);
   const contribution=Number(water.profit_before_shared||0)+Number(finished.profit_before_shared||0);
@@ -2865,6 +2869,7 @@ async function loadExecutiveDashboard(){
     <section class="exec-panel"><h3>اسٹاک کا خلاصہ</h3><div class="exec-stock-grid">${stockRows}</div><div class="exec-line"><span>دکان والی ٹنکی کے باقی پانی کی مالیت (تخمینی)</span><b>${fmtNullable(shopWaterRemainingValue)}</b></div><div class="exec-line"><span>پروڈکشن ٹنکی کے باقی پانی کی مالیت</span><b>${fmtNullable(fillWaterRemainingValue)}</b></div><p class="muted">ٹنکی کی باقی مالیت = باقی لیٹر × اس ٹنکی کی اوسط فی لیٹر لاگت۔ دکان والی ٹنکی کے لیٹر آپ کے تخمینے کی وجہ سے اس کی مالیت بھی تخمینی ہے۔</p><p class="muted">اسٹاک کے اعداد موجودہ ماڈل کے تخمینے ہیں؛ مفت کلیم بوتلوں کی مکمل مقدار درج نہ ہونے پر کچھ خام مال کا تخمینہ محدود ہے۔</p></section>
    </div>
    ${report.notes?'<div class="warning"><b>حساب کی اہم حد:</b> '+esc(report.notes)+'</div>':""}
+   ${unassignedCashflowWarning}
    ${Number(report.expense_entry_count||0)===0?'<div class="warning"><b>اس مدت میں اخراجات کی کوئی انٹری نہیں:</b> تصدیق کریں کہ واقعی کوئی کاروباری خرچ نہیں ہوا؛ اگر پیٹرول، مرمت، بجلی یا دوسرا خرچ ہوا ہے تو درج کیے بغیر منافع حتمی نہیں ہوگا۔</div>':'<p class="muted">اس مدت میں اخراجات کی محفوظ انٹریاں: '+Number(report.expense_entry_count)+'</p>'}
    ${missing.length?'<div class="warning"><b>لاگت کی کمی — کلوزنگ سے پہلے درست کریں</b><ul>'+missing.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':""}
    ${quality.length?'<div class="muted exec-quality">'+quality.map(x=>esc(x)).join(" · ")+'</div>':""}
