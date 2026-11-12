@@ -2134,7 +2134,7 @@ async function rawMaterialsModule(){
  '<input id="rawPurchaseSupplier" maxlength="120" placeholder="سپلائر (اختیاری)">'+
  '<textarea id="rawPurchaseDetails" maxlength="300" placeholder="بل نمبر / تفصیل (اختیاری)"></textarea>'+
  '<button id="rawPurchaseSaveButton" onclick="saveRawMaterialPurchase()">خریداری محفوظ کریں</button></div>'+
- '<div class="card"><h3>خام مال کا اندازاً باقی اسٹاک</h3><p class="muted">پیداوار کے مطابق بوتل، کارٹن، ٹیپ اور اسٹیکر کا استعمال خود منہا ہوگا۔ سپلائر کے کلیم سے آنے والی مفت تبدیلیاں درج نہ ہونے کی وجہ سے مقدار اندازاً ہوگی۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div></div>';
+ '<div class="card"><h3>خام مال کا باقی اسٹاک اور لاگت</h3><p class="muted">پیداوار کے مطابق استعمال منہا ہوگا۔ ہر خام مال کی اوسط درج شدہ فی اکائی لاگت اور باقی اسٹاک کی مالیت الگ دکھائی جائے گی۔ یہ مالیت اسٹاک کی قدر ہے، اسی دن کا خرچ نہیں۔ ابتدائی اسٹاک کی مالیت تخمینی ہو سکتی ہے؛ مفت کلیم صفر اضافی خریداری لاگت پر شمار ہوگا۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div><div id="rawStockValuation">لاگت کا حساب لوڈ ہو رہا ہے...</div></div>';
  await loadRawMaterialPurchases();
 }
 async function saveRawMaterialPurchase(){
@@ -2195,7 +2195,7 @@ async function loadRawMaterialPurchases(){
    financeFetchAll("unassigned_19l_deliveries","damaged_caps,delivery_date","delivery_date",null,null),
    ]);
  }catch(e){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
- const rawOpeningDate=key=>rows.find(x=>x.record_type==="opening_stock"&&x.material_type===key)?.purchase_date||null;
+ const rawOpeningDate=key=>rows.filter(x=>x.record_type==="opening_stock"&&x.material_type===key).map(x=>x.purchase_date).sort()[0]||null;
  const relevantRawRows=key=>rows.filter(x=>x.material_type===key&&(!rawOpeningDate(key)||x.record_type==="opening_stock"||x.purchase_date>=rawOpeningDate(key)));
  const purchased=key=>relevantRawRows(key).reduce((n,x)=>n+Number(x.quantity||0),0);
  const made=(key,materialKey=key)=>prod.filter(x=>x.product_type===key&&(!rawOpeningDate(materialKey)||x.production_date>=rawOpeningDate(materialKey))).reduce((n,x)=>n+Number(x.quantity||0),0);
@@ -2215,7 +2215,28 @@ async function loadRawMaterialPurchases(){
   sticker:made("500ml","sticker")*24+made("1.5L","sticker")*12+made("6L","sticker"),
   ...capUsed
  };
+ 
  const balanceKeys=["bottle_500ml","cap_500ml","bottle_1_5l","cap_1_5l","bottle_6l","cap_6l","carton_500ml","carton_1_5l","tape_bundle","sticker"];
+ const valuationKeys=[...balanceKeys,"cap_19l"];
+ const valuationRows=valuationKeys.map(k=>{
+  const source=relevantRawRows(k);
+  const qty=source.reduce((n,x)=>n+Number(x.quantity||0),0);
+  const amount=source.reduce((n,x)=>n+Number(x.total_amount||0),0);
+  const average=qty>0?amount/qty:null;
+  const remaining=purchased(k)-(k==="cap_19l"?capsUsed:used[k]||0);
+  const value=average===null?null:Math.max(0,remaining)*average;
+  const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"||k.startsWith("cap_")?"عدد":"بوتل";
+  return {key:k,label:rawMaterialLabels[k]||k,qty,amount,average,remaining,value,unit};
+ });
+ const totalRawStockValue=valuationRows.reduce((n,r)=>n+(r.value||0),0);
+ const shortages=valuationRows.filter(r=>r.remaining<0);
+ $("rawStockValuation").innerHTML=
+  '<div class="stat">باقی خام مال کی درج شدہ تخمینی مالیت <b>'+money(totalRawStockValue)+'</b><small>صرف موجودہ مثبت مقدار × اوسط درج شدہ فی اکائی لاگت؛ یہ رقم منافع میں دوبارہ خرچ نہیں کی گئی۔</small></div>'+
+  '<div class="tablewrap"><table><tr><th>خام مال</th><th>خریدی/ابتدائی/مفت مقدار</th><th>اوسط فی اکائی لاگت</th><th>استعمال</th><th>باقی مقدار</th><th>باقی مالیت</th></tr>'+
+  valuationRows.map(r=>'<tr><td>'+esc(r.label)+'</td><td>'+r.qty.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.average===null?"لاگت درج نہیں":money(r.average))+'</td><td>'+((r.qty-r.remaining).toLocaleString("en-US",{maximumFractionDigits:2}))+' '+r.unit+'</td><td class="'+(r.remaining<0?"warning":"")+'">'+r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.value===null?"—":money(r.value))+'</td></tr>').join("")+
+  '</table></div>'+
+  (shortages.length?'<div class="warning">خام مال کے اسٹاک میں کمی/منفی بیلنس: '+shortages.map(r=>esc(r.label)+" ("+r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+")").join("، ")+'۔ انٹری اور پیداوار دوبارہ چیک کریں۔</div>':"");
+
  $("rawStockBalance").innerHTML='<div class="grid">'+balanceKeys.map(k=>{
   const remaining=purchased(k)-used[k];
   const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"?"اسٹیکر":k.startsWith("cap_")?"عدد":"بوتل";
