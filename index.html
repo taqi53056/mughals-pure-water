@@ -3206,7 +3206,7 @@ async function laborModule(){
  <select id="cleanWorker">${options("cleaning")}</select>
  <input id="cleanAmount" type="number" min="0.01" step="0.01" placeholder="مزدوری کی رقم (روپے)">
  <input id="cleanNote" maxlength="250" placeholder="تفصیل (اختیاری)">
- <button onclick="saveCleaningLabor()">صفائی کا ریکارڈ محفوظ کریں</button></div>
+ <button id="cleanSaveButton" onclick="saveCleaningLabor()">صفائی کا ریکارڈ محفوظ کریں</button></div>
   <div class="card"><h3>پروڈکشن</h3>
   <input id="prodDate" type="date" value="${today()}">
   <select id="prodType" onchange="updateProductionRatePreview()"><option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
