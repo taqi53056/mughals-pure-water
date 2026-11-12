@@ -2230,7 +2230,7 @@ async function loadRawMaterialPurchases(){
  });
  const totalRawStockValue=valuationRows.reduce((n,r)=>n+(r.value||0),0);
  const shortages=valuationRows.filter(r=>r.remaining<0);
- $("rawStockValuation").innerHTML=
+ const rawStockValuationBox=$("rawStockValuation");\n if(rawStockValuationBox)rawStockValuationBox.innerHTML=
   '<div class="stat">باقی خام مال کی درج شدہ تخمینی مالیت <b>'+money(totalRawStockValue)+'</b><small>صرف موجودہ مثبت مقدار × اوسط درج شدہ فی اکائی لاگت؛ یہ رقم منافع میں دوبارہ خرچ نہیں کی گئی۔</small></div>'+
   '<div class="tablewrap"><table><tr><th>خام مال</th><th>خریدی/ابتدائی/مفت مقدار</th><th>اوسط فی اکائی لاگت</th><th>استعمال</th><th>باقی مقدار</th><th>باقی مالیت</th></tr>'+
   valuationRows.map(r=>'<tr><td>'+esc(r.label)+'</td><td>'+r.qty.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.average===null?"لاگت درج نہیں":money(r.average))+'</td><td>'+((r.qty-r.remaining).toLocaleString("en-US",{maximumFractionDigits:2}))+' '+r.unit+'</td><td class="'+(r.remaining<0?"warning":"")+'">'+r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.value===null?"—":money(r.value))+'</td></tr>').join("")+
