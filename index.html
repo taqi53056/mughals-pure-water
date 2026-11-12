@@ -1295,7 +1295,7 @@ async function restoreSavedSession(){
 window.addEventListener("load",restoreSavedSession,{once:true});
 
 async function clearCurrentDevicePushSubscription(){
- if(!db||!("serviceWorker" in navigator)||!("PushManager" in window))return;
+ if(!db||typeof db.auth?.getUser!=="function"||!("serviceWorker" in navigator)||!("PushManager" in window))return;
  const {data,error}=await db.auth.getUser();
  if(error)throw error;
  if(!data?.user?.id)return;
