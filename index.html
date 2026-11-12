@@ -2688,7 +2688,7 @@ async function loadTodaySummary(){
   <div class="stat">کسٹمر 19L ڈلیوری مزدوری: <b>${money(labor)}</b></div>
   <div class="stat">بغیر گاہک سپلائی: <b>${unassignedBottles} بوتلیں — مزدوری ${money(unassignedLabor)}</b></div>
   <div class="stat">500ml / 1.5L / 6L فروخت: <b>${money(sales)}</b></div>
-  <div class="stat">19L کاؤنٹر: <b>${counterLitres} لیٹر — ${money(counterAmount)}</b></div>
+  <div class="stat">19L کاؤنٹر: <b>تقریباً ${counterLitres} لیٹر — ${money(counterAmount)}</b></div>
   <div class="stat">آج ٹینکر خریداری: <b>${money(tankerSpend)}</b></div>
   <div class="stat">اخراجات: <b>${money(expenses)}</b></div>
   <div class="stat">درج شدہ آمدن: <b>${money(income)}</b></div>`;
@@ -2725,11 +2725,11 @@ async function loadExecutiveDashboard(){
   const stock=report.stock_estimate||{};
   const closed=data.month_closed===true;
   const fmt=n=>money(Number(n)||0);
-  const status=report.complete===true&&missing.length===0?"درج شدہ لاگت کے اجزا دستیاب":"حساب میں لاگت کی کمی ہے";
+  const status=report.complete===true&&missing.length===0?(report.net_profit_is_estimated?"لاگت دستیاب؛ کاؤنٹر پانی کی مقدار تخمینی":"درج شدہ لاگت کے اجزا دستیاب"):"حساب میں لاگت کی کمی ہے";
   const kpis=[
    ["کل فروخت / آمدن",fmt(revenue),"19L + تیار مال کی فروخت"],
    ["سیکشن کنٹریبیوشن",fmt(contribution),"براہِ راست سیکشن اخراجات کے بعد"],
-   ["خالص منافع / نقصان",fmt(net),margin===null?"فروخت موجود نہیں":"خالص مارجن "+margin.toFixed(1)+"%"],
+   ["تخمینی خالص منافع / نقصان",fmt(net),report.net_profit_is_estimated?"کاؤنٹر پانی کے لیٹر کے تخمینے سمیت":"درج شدہ اعداد کے مطابق"],
    ["گاہکوں سے بقایا",fmt(data.receivables),"بقایا رکھنے والے گاہک: "+(data.customers_with_due||0)],
    ["مدت کی وصولیاں",fmt(data.recorded_collections),"درج شدہ وصولیاں، نقد بیلنس نہیں"],
    ["مالکین کی نکاسی",fmt(data.owner_withdrawals),"منافع کے خرچ میں شامل نہیں"]
@@ -2751,7 +2751,7 @@ async function loadExecutiveDashboard(){
    ["1.5L کارٹن",stock.cartons_1_5l],
    ["ٹیپ بنڈل",stock.tape_bundles],
    ["اسٹیکر",stock.stickers],
-   ["دکان والی ٹنکی — 19L / 6L باقی پانی (لیٹر)",stock.water_shop_pool_remaining_litres],
+   ["دکان والی ٹنکی — باقی پانی (اندازاً لیٹر)",stock.water_shop_pool_remaining_litres],
    ["پروڈکشن والی ٹنکی — 500ml / 1.5L باقی پانی (لیٹر)",stock.water_product_filling_litres]
   ].map(([label,value])=>`<div class="exec-stock-item"><span>${label}</span><b>${Number(value)||0}</b></div>`).join("");
   const productChartRows=Object.entries(products).map(([name,r])=>({name,revenue:Number(r.revenue)||0})).filter(x=>x.revenue>0);
@@ -2776,7 +2776,8 @@ async function loadExecutiveDashboard(){
      <div class="exec-line"><span>کاؤنٹر پانی کی آمدن</span><b>${fmt(water.counter_water_revenue)}</b></div>
      <div class="exec-line"><span>کل آمدن</span><b>${fmt(water.revenue)}</b></div>
      <div class="exec-line"><span>19L ڈلیوری پانی کی لاگت</span><b>${fmt(water.water_cost)}</b></div>
-     <div class="exec-line"><span>کاؤنٹر پانی کی لاگت</span><b>${fmt(water.counter_water_cost)}</b></div>
+     <div class="exec-line"><span>کاؤنٹر پانی کی تخمینی لاگت</span><b>${fmt(water.estimated_counter_water_cost??water.counter_water_cost)}</b></div>
+     <div class="exec-line"><span>کاؤنٹر پانی کے لیٹر (آپ کا تخمینہ)</span><b>${Number(water.counter_water_litres)||0} لیٹر</b></div>
      <div class="exec-line"><span>پانی کی اوسط لاگت فی لیٹر</span><b>${fmt(water.water_rate_per_litre)}</b></div>
      <div class="exec-line"><span>خراب ڈھکنوں کی لاگت</span><b>${fmt(water.cap_cost)}</b></div>
      <div class="exec-line"><span>کسٹمر ڈلیوری مزدوری</span><b>${fmt(water.customer_delivery_labor)}</b></div>
@@ -2787,7 +2788,8 @@ async function loadExecutiveDashboard(){
      <div class="exec-line"><span>عمومی کاروباری اخراجات</span><b>${fmt(shared.general_expenses)}</b></div>
      <div class="exec-line"><span>فرسودگی</span><b>${fmt(shared.depreciation)}</b></div>
      <div class="exec-line"><span>مالی لاگت</span><b>${fmt(shared.interest_expense)}</b></div>
-     <div class="exec-line exec-net"><span>خالص نتیجہ</span><b>${fmt(net)}</b></div>
+     <div class="exec-line"><span>پانی کے لیٹر کے تخمینے سے پہلے نتیجہ</span><b>${fmt(water.net_profit_before_counter_water_estimate??net)}</b></div>
+     <div class="exec-line exec-net"><span>تخمینی خالص نتیجہ</span><b>${fmt(net)}</b></div>
      <p class="muted">گزشتہ مہینہ: فروخت ${fmt(previousRevenue)} · خالص نتیجہ ${fmt(previousNet)} · فرق ${fmt(net-previousNet)}</p>
     </section>
     <section class="exec-panel"><h3>نقدی کی حرکت اور کاروباری پوزیشن</h3>
@@ -2851,7 +2853,7 @@ async function previewMonthClose(){
   box.innerHTML=`
    <div class="exec-status-row"><b>${esc(range.start)} تا ${esc(range.end)}</b><span class="exec-status ${ready?"closed":"open"}">${ready?"کلوزنگ کے لیے تیار":data.month_closed?"پہلے سے بند":"مزید اصلاح درکار"}</span></div>
    <div class="exec-line"><span>فروخت / آمدن</span><b>${money(Number(report.segments?.["19L"]?.revenue||0)+Number(report.segments?.finished_goods?.revenue||0))}</b></div>
-   <div class="exec-line"><span>خالص منافع / نقصان</span><b>${money(report.segments?.net_profit||0)}</b></div>
+   <div class="exec-line"><span>تخمینی خالص منافع / نقصان</span><b>${money(report.segments?.net_profit||0)}</b></div>
    <div class="exec-line"><span>کسٹمر بل باقی</span><b>${Number(data.unbilled_customers)||0}</b></div>
    ${notes?'<div class="warning"><b>کلوزنگ سے پہلے لازمی جائزہ:</b> '+esc(notes)+'</div>':""}
    ${reason.length?'<div class="warning"><b>کلوزنگ ابھی نہیں ہو سکتی:</b><ul>'+reason.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':'<p class="success">بنیادی خودکار چیکس پاس ہیں۔ مستقل بندش سے پہلے اخراجات کی دستی تصدیق بھی کریں۔</p>'}
