@@ -2431,8 +2431,17 @@ async function loadCounterWaterForDate(){
  const saveButton=$("counterSaveButton");
  if(saveButton)saveButton.textContent=data?"روزانہ کا کُل اپڈیٹ کریں":"روزانہ کاؤنٹر فروخت محفوظ کریں";
  const {data:history}=await db.from("counter_water_sales").select("*").order("sale_date",{ascending:false}).limit(30);
- $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر پانی کی فروخت</h3><table><tr><th>تاریخ</th><th>لیٹر</th><th>پانی کی وصولی</th><th>فی لیٹر اوسط</th></tr>'+
- (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.total_litres))+'</td></tr>').join("")+'</table>';
+ $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر پانی کی فروخت</h3><p class="muted">کسی دن کی تاریخ، لیٹر یا وصولی میں غلطی ہو تو اسی قطار سے "غلطی درست کریں" منتخب کریں۔ تبدیلی اسی روزانہ ریکارڈ میں ہوگی، نئی ڈپلیکیٹ انٹری نہیں بنے گی۔</p><table><tr><th>تاریخ</th><th>لیٹر</th><th>پانی کی وصولی</th><th>فی لیٹر اوسط</th><th>اصلاح</th></tr>'+
+ (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.total_litres))+'</td><td><button class="secondary" onclick="editCounterWaterSale(\''+esc(r.sale_date)+'\')">غلطی درست کریں</button></td></tr>').join("")+'</table>';
+}
+async function editCounterWaterSale(date){
+ if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(date||""))){msg("ریکارڈ کی تاریخ درست نہیں۔");return;}
+ $("counterDate").value=date;
+ await loadCounterWaterForDate();
+ $("counterLitres").focus();
+ $("counterSaveButton").textContent="درست شدہ روزانہ ریکارڈ محفوظ کریں";
+ $("counterDate").scrollIntoView({behavior:"smooth",block:"center"});
+ msg("منتخب دن کا اصل ریکارڈ کھل گیا ہے۔ مطلوبہ غلطی درست کرکے محفوظ کریں؛ ریکارڈ کی تاریخ بھی تبدیل کی جا سکتی ہے۔",true);
 }
 async function saveCounterWaterSale(){
  const sale_date=$("counterDate").value,total_litres=Number($("counterLitres").value),total_amount=Number($("counterAmount").value);
