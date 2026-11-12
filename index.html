@@ -2740,12 +2740,12 @@ async function loadExecutiveDashboard(){
   if(error)throw error;
   const report=data?.profit_and_loss||{},segments=report.segments||{};
   const water=segments["19L"]||{},finished=segments.finished_goods||{},shared=segments.shared||{};
-  const revenue=Number(water.revenue||0)+Number(finished.revenue||0);
+  const revenue=Number(water.revenue||0)+Number(finished.revenue||0)+Number(shared.other_income||0);
   const net=Number(segments.net_profit||0);
   const contribution=Number(water.profit_before_shared||0)+Number(finished.profit_before_shared||0);
   const previous=data?.previous_period?.segments||{};
   const previousNet=Number(previous.net_profit||0);
-  const previousRevenue=Number(previous["19L"]?.revenue||0)+Number(previous.finished_goods?.revenue||0);
+  const previousRevenue=Number(previous["19L"]?.revenue||0)+Number(previous.finished_goods?.revenue||0)+Number(previous.shared?.other_income||0);
   const margin=revenue>0?(net/revenue*100):null;
   const missing=Array.isArray(report.missing_costs)?report.missing_costs:[];
   const stock=report.stock_estimate||{};
@@ -2753,7 +2753,7 @@ async function loadExecutiveDashboard(){
   const fmt=n=>money(Number(n)||0),fmtNullable=n=>n==null?"—":fmt(n);
   const status=report.complete===true&&missing.length===0?(report.net_profit_is_estimated?"لاگت دستیاب؛ کاؤنٹر پانی کی مقدار تخمینی":"درج شدہ لاگت کے اجزا دستیاب"):"حساب میں لاگت کی کمی ہے";
   const kpis=[
-   ["کل فروخت / آمدن",fmt(revenue),"19L + تیار مال کی فروخت"],
+   ["کل آمدن",fmt(revenue),"19L + تیار مال + دیگر درج شدہ آمدن"],
    ["سیکشن کنٹریبیوشن",fmt(contribution),"براہِ راست سیکشن اخراجات کے بعد"],
    ["تخمینی خالص منافع / نقصان",fmt(net),report.net_profit_is_estimated?"کاؤنٹر پانی کے لیٹر کے تخمینے سمیت":"درج شدہ اعداد کے مطابق"],
    ["گاہکوں سے بقایا",fmt(data.receivables),"بقایا رکھنے والے گاہک: "+(data.customers_with_due||0)],
