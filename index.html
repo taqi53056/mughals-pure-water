@@ -2418,7 +2418,7 @@ async function saveCounterWaterSale(){
 async function unassigned19lModule(){
  setTitle("بغیر گاہک 19L سپلائی");
  $("moduleBody").innerHTML=
- '<p class="muted">یہ اندراج صرف اس سپلائی کے لیے ہے جس کا ابھی کوئی کسٹمر اکاؤنٹ موجود نہیں۔ اس سے کسٹمر، کسٹمر بل یا کسٹمر ہسٹری نہیں بنے گی۔ ہر کامیاب بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔</p>'+
+ '<p class="muted">یہ اندراج صرف اس سپلائی کے لیے ہے جس کا ابھی کوئی کسٹمر اکاؤنٹ موجود نہیں۔ اس سے کسٹمر، کسٹمر بل یا کسٹمر ہسٹری نہیں بنے گی۔ ہر کامیاب بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔ اس ماڈیول میں وصول شدہ رقم/ادھار کی کیفیت درج نہیں ہوتی؛ اس لیے اس کی آمدن منافع میں شمار ہوگی مگر نقد وصولیوں میں خودکار شامل نہیں ہوگی۔</p>'+
  '<div class="card"><h3>نئی غیر منسلک سپلائی</h3>'+
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
  '<label for="u19Worker">سپلائی کرنے والا مزدور</label><select id="u19Worker"><option value="">ورکر لوڈ ہو رہا ہے...</option></select>'+
@@ -2727,7 +2727,7 @@ async function loadTodaySummary(){
    const dailyNet=Number(dailySegments.net_profit)||0;
    const dailyRevenue=Number(dailySegments["19L"]?.revenue||0)+Number(dailySegments.finished_goods?.revenue||0)+Number(dailySegments.shared?.other_income||0);
    const dailyBeforeEstimate=Number(dailyWater.net_profit_before_counter_water_estimate??dailyNet);
-   dailyPnlHtml="<div class=\"stat\">کل درج شدہ فروخت/آمدن: <b>"+money(dailyRevenue)+"</b></div><div class=\"stat\">روزانہ خالص نتیجہ: <b>"+money(dailyNet)+"</b> — "+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+"</div><div class=\"stat\">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>"+money(dailyBeforeEstimate)+"</b></div><div class=\"stat\">کاؤنٹر پانی کی تخمینی لاگت: <b>"+money(dailyWater.estimated_counter_water_cost||0)+"</b></div>"+(dailyReport.missing_costs?.length?"<div class=\"warning\">لاگت کی کمی: "+dailyReport.missing_costs.map(esc).join("، ")+"</div>":"")+(dailyReport.notes?"<div class=\"warning\">"+esc(dailyReport.notes)+"</div>":"")+(expenseCount===0?"<div class=\"warning\">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو اسے درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>":"");
+   dailyPnlHtml="<div class=\"stat\">کل درج شدہ فروخت/آمدن: <b>"+money(dailyRevenue)+"</b></div><div class=\"stat\">روزانہ خالص نتیجہ: <b>"+money(dailyNet)+"</b> — "+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+"</div><div class=\"stat\">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>"+money(dailyBeforeEstimate)+"</b></div><div class=\"stat\">کاؤنٹر پانی کی تخمینی لاگت: <b>"+money(dailyWater.estimated_counter_water_cost||0)+"</b></div>"+(dailyReport.missing_costs?.length?"<div class=\"warning\">لاگت کی کمی: "+dailyReport.missing_costs.map(esc).join("، ")+"</div>":"")+(dailyReport.notes?"<div class=\"warning\">"+esc(dailyReport.notes)+"</div>":"")+(Number(dailyWater.unassigned_delivery_revenue||0)>0?"<div class="warning">غیر منسلک 19L سپلائی کی آمدن منافع میں شامل ہے، مگر اس ریکارڈ میں وصولی/ادھار کی کیفیت درج نہیں؛ نقد وصولیوں میں شامل نہیں کی گئی۔</div>":"")+(expenseCount===0?"<div class=\"warning\">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو اسے درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>":"");
   }catch(dailyPnlError){dailyPnlHtml=`<div class="warning">روزانہ منافع و نقصان کا حساب لوڈ نہیں ہوا: ${esc(dailyPnlError?.message||String(dailyPnlError))}</div>`;}
   el.innerHTML=`<div class="stat">تاریخ: ${date}</div>
   <div class="stat">19L کامیاب بوتلیں: <b>${bottles}</b></div>
@@ -2762,6 +2762,9 @@ async function loadExecutiveDashboard(){
   if(error)throw error;
   const report=data?.profit_and_loss||{},segments=report.segments||{};
   const water=segments["19L"]||{},finished=segments.finished_goods||{},shared=segments.shared||{};
+  const unassignedCashflowWarning=Number(water.unassigned_delivery_revenue||0)>0
+   ?'<div class="warning"><b>وصولی کی درجہ بندی باقی ہے:</b> غیر منسلک 19L سپلائی کی '+fmt(water.unassigned_delivery_revenue)+' آمدن منافع میں شامل ہے، مگر اس اندراج میں نقد/ادھار وصولی کی تفصیل نہیں؛ اس لیے اسے نقد وصولیوں میں شامل نہیں کیا گیا۔ وصولی یا بقایا کی کیفیت الگ تصدیق کریں۔</div>'
+   :"";
   const revenue=Number(water.revenue||0)+Number(finished.revenue||0);
   const net=Number(segments.net_profit||0);
   const contribution=Number(water.profit_before_shared||0)+Number(finished.profit_before_shared||0);
@@ -2865,6 +2868,7 @@ async function loadExecutiveDashboard(){
     <section class="exec-panel"><h3>اسٹاک کا خلاصہ</h3><div class="exec-stock-grid">${stockRows}</div><div class="exec-line"><span>دکان والی ٹنکی کے باقی پانی کی مالیت (تخمینی)</span><b>${fmtNullable(shopWaterRemainingValue)}</b></div><div class="exec-line"><span>پروڈکشن ٹنکی کے باقی پانی کی مالیت</span><b>${fmtNullable(fillWaterRemainingValue)}</b></div><p class="muted">ٹنکی کی باقی مالیت = باقی لیٹر × اس ٹنکی کی اوسط فی لیٹر لاگت۔ دکان والی ٹنکی کے لیٹر آپ کے تخمینے کی وجہ سے اس کی مالیت بھی تخمینی ہے۔</p><p class="muted">اسٹاک کے اعداد موجودہ ماڈل کے تخمینے ہیں؛ مفت کلیم بوتلوں کی مکمل مقدار درج نہ ہونے پر کچھ خام مال کا تخمینہ محدود ہے۔</p></section>
    </div>
    ${report.notes?'<div class="warning"><b>حساب کی اہم حد:</b> '+esc(report.notes)+'</div>':""}
+   ${unassignedCashflowWarning}
    ${Number(report.expense_entry_count||0)===0?'<div class="warning"><b>اس مدت میں اخراجات کی کوئی انٹری نہیں:</b> تصدیق کریں کہ واقعی کوئی کاروباری خرچ نہیں ہوا؛ اگر پیٹرول، مرمت، بجلی یا دوسرا خرچ ہوا ہے تو درج کیے بغیر منافع حتمی نہیں ہوگا۔</div>':'<p class="muted">اس مدت میں اخراجات کی محفوظ انٹریاں: '+Number(report.expense_entry_count)+'</p>'}
    ${missing.length?'<div class="warning"><b>لاگت کی کمی — کلوزنگ سے پہلے درست کریں</b><ul>'+missing.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':""}
    ${quality.length?'<div class="muted exec-quality">'+quality.map(x=>esc(x)).join(" · ")+'</div>':""}
