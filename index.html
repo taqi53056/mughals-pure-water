@@ -2882,11 +2882,11 @@ async function previewMonthClose(){
 }
 async function closeSelectedMonth(){
  const month=$("closeMonth")?.value||"";
- if(!month||!confirm("کیا آپ نے اس مہینے کے تمام حقیقی اخراجات، مثلاً پٹرول، مزدوری، مرمت، بجلی اور دیگر خرچ درج یا چیک کر لیے ہیں؟ اگر کوئی خرچ درج نہیں تو پہلے اسے درج کریں۔"))return;
+ if(!month||!confirm("کیا آپ نے اس مہینے کے تمام حقیقی اخراجات، مثلاً پٹرول، مزدوری، مرمت، بجلی اور دیگر خرچ درج کر لیے ہیں؟ اگر واقعی کوئی خرچ نہیں ہوا تو کیا آپ صفر اخراجات کی تصدیق کرتے ہیں؟"))return;
  if(!confirm("آخری تصدیق: اس مہینے کی رپورٹ محفوظ ہوگی اور اصل مالی اندراجات میں تبدیلی بند ہو جائے گی۔ کیا آگے بڑھیں؟"))return;
  const button=$("closeMonthButton");if(button)button.disabled=true;
  try{
-  const {data,error}=await db.rpc("close_business_month",{p_month_start:month+"-01"});
+  const {data,error}=await db.rpc("close_business_month",{p_month_start:month+"-01",p_expenses_confirmed:true});
   if(error)throw error;
   msg(data?.status==="already_closed"?"یہ مہینہ پہلے ہی بند ہے۔":"ماہانہ رپورٹ محفوظ اور مہینہ مستقل بند ہوگیا۔",true);
   await Promise.all([loadMonthCloseHistory(),previewMonthClose()]);
