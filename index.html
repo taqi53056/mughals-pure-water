@@ -1827,6 +1827,15 @@ async function saveDelivery(){
  }finally{if(button)button.disabled=false;}
 }
 
+async function editCustomerDeliveryRecordById(id){
+ const {data,error}=await db.from("customer_19l_deliveries").select("id,customer_id,delivery_date").eq("id",Number(id)).maybeSingle();
+ if(error||!data){msg("ڈلیوری ریکارڈ نہیں ملا: "+(error?.message||""));return;}
+ const customer=$("dCustomer");if(!customer||![...customer.options].some(o=>Number(o.value)===Number(data.customer_id))){msg("یہ گاہک فعال ڈلیوری فہرست میں نہیں؛ اکاؤنٹ کی حیثیت چیک کریں۔");return;}
+ customer.value=String(data.customer_id);$("dDate").value=data.delivery_date;await loadSelectedDelivery();
+ if(Number(window.currentDeliveryRecordId)!==Number(id)){msg("منتخب ڈلیوری کی تصدیق نہیں ہوئی؛ کوئی تبدیلی نہیں کی گئی۔");return;}
+ $("deliverySaveButton").textContent="درست شدہ ڈلیوری محفوظ کریں";$("dDate").scrollIntoView({behavior:"smooth",block:"center"});msg("اصل ڈلیوری ریکارڈ کھل گیا ہے۔ مطلوبہ فیلڈ درست کرکے محفوظ کریں۔",true);
+}
+
 async function loadDailyDeliveries(){
  if(!$("dDate"))return;
  let data;
@@ -1836,8 +1845,8 @@ async function loadDailyDeliveries(){
  }catch(error){$("moduleTable").textContent="ڈلیوریاں لوڈ نہیں ہوئیں: "+(error?.message||String(error));return;}
  const names=await getActiveCustomers().catch(()=>customerList);
  const {data:workers}=await db.from("workers").select("id,full_name,is_owner");
- $("moduleTable").innerHTML="<h3>تمام ڈلیوریاں (نئی تاریخ پہلے)</h3><table><tr><th>تاریخ</th><th>گاہک</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th><th>ورکر</th><th>حقیقی مزدوری خرچ</th><th>مالک کی مزدوری بچت</th></tr>"+
- (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));let w=(workers||[]).find(x=>Number(x.id)===Number(d.worker_id));const who=w?.full_name||(Number(d.owner_labor_saving)>0?"مالک":"غیر منسوب");return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${d.empty_bottles_returned}</td><td>${d.successful_bottles}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${esc(who)}</td><td>${money(d.delivery_labor)}</td><td>${money(d.owner_labor_saving)}</td></tr>`}).join("")+"</table>";
+ $("moduleTable").innerHTML="<h3>تمام ڈلیوریاں (نئی تاریخ پہلے)</h3><table><tr><th>تاریخ</th><th>گاہک</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th><th>ورکر</th><th>حقیقی مزدوری خرچ</th><th>مالک کی مزدوری بچت</th><th>اصلاح</th></tr>"+
+ (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));let w=(workers||[]).find(x=>Number(x.id)===Number(d.worker_id));const who=w?.full_name||(Number(d.owner_labor_saving)>0?"مالک":"غیر منسوب");return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${d.empty_bottles_returned}</td><td>${d.successful_bottles}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${esc(who)}</td><td>${money(d.delivery_labor)}</td><td>${money(d.owner_labor_saving)}</td><td><button class="secondary" onclick="editCustomerDeliveryRecordById(${Number(d.id)})">غلطی درست کریں</button></td></tr>`}).join("")+"</table>";
 }
 
 /* ماہانہ بل */
