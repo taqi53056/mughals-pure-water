@@ -2121,10 +2121,10 @@ const rawMaterialUnits={
 async function rawMaterialsModule(){
  setTitle("خام مال کی خریداری");
  $("moduleBody").innerHTML=
- '<p class="muted">نئی خریداری یا پہلے سے موجود ابتدائی اسٹاک منتخب کریں۔ 500ml، 1.5L اور 6L کی خالی بوتل کے ساتھ ڈھکن شامل شمار ہوگا؛ بوتل کی مقدار درج کرنے پر اتنے ہی ڈھکن خودکار اسٹاک میں شامل ہوں گے، ان کی الگ رقم نہیں ہوگی۔ 19L ڈھکن الگ درج کریں۔ کارٹن، ٹیپ بنڈل اور اسٹیکر بھی اپنی الگ اکائی میں درج ہوں گے۔ اسٹیکر کلوگرام میں نہ درج کریں؛ لاگت فی اسٹیکر کے حساب سے بنتی ہے۔ ٹیپ کا ایک بنڈل تقریباً 200 کارٹن کے لیے شمار ہوتا ہے۔ سپلائر کے کلیم سے آنے والی مفت تبدیلیاں فی الحال الگ درج نہیں ہوتیں۔</p>'+
+ '<p class="muted">نئی خریداری، پہلے سے موجود ابتدائی اسٹاک یا سپلائر سے مفت کلیم منتخب کریں۔ مفت کلیم میں مقدار اسٹاک میں شامل ہوگی مگر خریداری کی رقم صفر رہے گی؛ بوتل کے ساتھ ڈھکن بھی خودکار شامل ہوگا۔ 19L ڈھکن الگ درج کریں۔ اسٹیکر عدد میں درج کریں، کلوگرام میں نہیں؛ ٹیپ کا ایک بنڈل تقریباً 200 کارٹن کے لیے شمار ہوگا۔</p>'+
  '<div class="card"><h3>نئی خریداری</h3>'+
  '<input id="rawPurchaseDate" type="date" value="'+today()+'">'+
- '<select id="rawPurchaseKind" onchange="toggleRawPurchaseKind()"><option value="purchase">نئی خریداری</option><option value="opening_stock">پہلے سے موجود ابتدائی اسٹاک</option></select>'+
+ '<select id="rawPurchaseKind" onchange="toggleRawPurchaseKind()"><option value="purchase">نئی خریداری</option><option value="free_claim">سپلائر سے مفت کلیم / تبدیلی</option><option value="opening_stock">پہلے سے موجود ابتدائی اسٹاک</option></select>'+
  '<select id="rawPurchaseType">'+
  Object.keys(rawMaterialLabels).filter(k=>!["cap_500ml","cap_1_5l","cap_6l"].includes(k)).map(k=>'<option value="'+k+'">'+rawMaterialLabels[k]+'</option>').join("")+
  '</select>'+
@@ -2138,22 +2138,22 @@ async function rawMaterialsModule(){
  await loadRawMaterialPurchases();
 }
 async function saveRawMaterialPurchase(){
- const type=$("rawPurchaseType").value,date=$("rawPurchaseDate").value;
- const quantity=Number($("rawPurchaseQty").value),total_amount=Number($("rawPurchaseAmount").value);
- if(!date||!Number.isInteger(quantity)||quantity<=0||!Number.isFinite(total_amount)||total_amount<=0){
-  msg("تاریخ، مکمل مقدار اور کل ادا شدہ رقم درست درج کریں۔");return;
+ const type=$("rawPurchaseType").value,date=$("rawPurchaseDate").value,record_type=$("rawPurchaseKind").value;
+ const freeClaim=record_type==="free_claim";
+ const quantity=Number($("rawPurchaseQty").value),total_amount=freeClaim?0:Number($("rawPurchaseAmount").value);
+ if(!date||!Number.isInteger(quantity)||quantity<=0||!Number.isFinite(total_amount)||(!freeClaim&&total_amount<=0)){
+  msg("تاریخ، مکمل مقدار اور ادا شدہ رقم درست درج کریں۔ مفت کلیم میں رقم صفر ہوگی۔");return;
  }
- if(!confirmLargeEntry("خام مال کی مقدار",quantity,1000)||!confirmLargeEntry("خریداری کی رقم",total_amount,100000))return;
+ if(!confirmLargeEntry("خام مال کی مقدار",quantity,1000)||(!freeClaim&&!confirmLargeEntry("خریداری کی رقم",total_amount,100000)))return;
  const button=$("rawPurchaseSaveButton");
  if(button?.disabled)return;
  if(button)button.disabled=true;
  let saved=false;
  try{
-  const record_type=$("rawPurchaseKind").value;
   const payload={
    purchase_date:date,record_type,material_type:type,quantity,unit:rawMaterialUnits[type],
    total_amount,supplier:$("rawPurchaseSupplier").value.trim()||null,
-   payment_method:record_type==="opening_stock"?"opening":$("rawPurchaseMethod").value,
+   payment_method:record_type==="opening_stock"?"opening":freeClaim?"free":$("rawPurchaseMethod").value,
    details:$("rawPurchaseDetails").value.trim()||null
   };
   const pairedCapType=({bottle_500ml:"cap_500ml",bottle_1_5l:"cap_1_5l",bottle_6l:"cap_6l"})[type];
@@ -2162,7 +2162,7 @@ async function saveRawMaterialPurchase(){
    const signature=[payload.purchase_date,payload.record_type,payload.material_type,payload.quantity,payload.total_amount,payload.supplier||"",payload.payment_method,payload.details||""].join("|");
    requestId=mpwPendingRequestId("raw-material-purchase:"+type,signature);
    if(pairedCapType){
-    const capRow={...payload,material_type:pairedCapType,quantity,unit:"piece",total_amount:0,supplier:null,payment_method:payload.payment_method,details:"بوتل کے ساتھ شامل ڈھکن؛ رقم بوتل کی مالیت میں شامل ہے"};
+    const capRow={...payload,material_type:pairedCapType,quantity,unit:"piece",total_amount:0,supplier:null,payment_method:payload.payment_method,details:freeClaim?"سپلائر کی مفت تبدیلی کے ساتھ شامل ڈھکن؛ اضافی رقم نہیں":"بوتل کے ساتھ شامل ڈھکن؛ رقم بوتل کی مالیت میں شامل ہے"};
     const capSignature=[capRow.purchase_date,capRow.record_type,capRow.material_type,capRow.quantity,capRow.total_amount,capRow.supplier||"",capRow.payment_method,capRow.details||""].join("|");
     capRequestId=mpwPendingRequestId("raw-material-purchase:"+pairedCapType,capSignature);
    }
@@ -2178,7 +2178,7 @@ async function saveRawMaterialPurchase(){
    if(pairedCapType)mpwClearPendingRequestId("raw-material-purchase:"+pairedCapType);
   }
   saved=true;
-  msg(record_type==="opening_stock"?"ابتدائی خام مال اور متعلقہ ڈھکن کا اسٹاک اکٹھا محفوظ ہوگیا۔":"خام مال اور متعلقہ ڈھکن کی خریداری اکٹھی محفوظ ہوگئی۔",true);
+  msg(record_type==="opening_stock"?"ابتدائی خام مال اور متعلقہ ڈھکن کا اسٹاک اکٹھا محفوظ ہوگیا。":freeClaim?"سپلائر کی مفت کلیم مقدار اور متعلقہ ڈھکن بغیر لاگت کے اسٹاک میں شامل ہوگئے۔":"خام مال اور متعلقہ ڈھکن کی خریداری اکٹھی محفوظ ہوگئی۔",true);
   $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
   $("rawPurchaseSupplier").value="";$("rawPurchaseDetails").value="";
   await Promise.all([loadRawMaterialPurchases(),loadTodaySummary()]);
@@ -2221,8 +2221,8 @@ async function loadRawMaterialPurchases(){
   const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"?"اسٹیکر":k.startsWith("cap_")?"عدد":"بوتل";
   return '<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
  }).join("")+'<div class="stat">19L ڈھکن<br><b>باقی: '+(purchased("cap_19l")-capsUsed)+' عدد</b><small>خریدے: '+purchased("cap_19l")+' — استعمال: '+capsUsed+' (صرف کسٹمر اور بغیر کسٹمر سپلائی کے خراب ڈھکن)</small></div></div>';
- $("moduleTable").innerHTML='<h3>خریداری اور ابتدائی اسٹاک کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ لاگت</th><th>سپلائر</th></tr>'+
- rows.map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(r.record_type==="opening_stock"?"ابتدائی اسٹاک":"خریداری")+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
+ $("moduleTable").innerHTML='<h3>خریداری، ابتدائی اسٹاک اور مفت کلیم کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ لاگت</th><th>سپلائر</th></tr>'+
+ rows.map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(r.record_type==="opening_stock"?"ابتدائی اسٹاک":r.record_type==="free_claim"?"مفت کلیم":"خریداری")+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
  '</table></div>';
 }
 async function tankerPurchaseModule(){
@@ -2242,11 +2242,22 @@ async function tankerPurchaseModule(){
  await loadTankerPurchases();
 }
 function toggleRawPurchaseKind(){
- const opening=$("rawPurchaseKind")?.value==="opening_stock";
- if($("rawPurchaseAmount"))$("rawPurchaseAmount").placeholder=opening?"پہلے سے موجود اسٹاک کی اندازاً کل مالیت":"کل ادا شدہ رقم (روپے)";
- if($("rawPurchaseDetails")&&opening)$("rawPurchaseDetails").placeholder="ابتدائی اسٹاک کی تاریخ / اندازاً مالیت کی بنیاد";
- if($("rawPurchaseSaveButton"))$("rawPurchaseSaveButton").textContent=opening?"ابتدائی اسٹاک محفوظ کریں":"خریداری محفوظ کریں";
- if($("rawPaymentWrap"))$("rawPaymentWrap").classList.toggle("hidden",opening);
+ const kind=$("rawPurchaseKind")?.value||"purchase";
+ const opening=kind==="opening_stock",freeClaim=kind==="free_claim";
+ const amount=$("rawPurchaseAmount");
+ if(amount){
+  amount.placeholder=opening?"پہلے سے موجود اسٹاک کی اندازاً کل مالیت":freeClaim?"مفت کلیم؛ ادا شدہ رقم صفر":"کل ادا شدہ رقم (روپے)";
+  amount.min=freeClaim?"0":"0.01";
+  amount.disabled=freeClaim;
+  if(freeClaim)amount.value="0";else if(amount.value==="0")amount.value="";
+ }
+ if($("rawPurchaseDetails")){
+  if(opening)$("rawPurchaseDetails").placeholder="ابتدائی اسٹاک کی تاریخ / اندازاً مالیت کی بنیاد";
+  else if(freeClaim)$("rawPurchaseDetails").placeholder="سپلائر کلیم / مفت تبدیلی کی تفصیل";
+  else $("rawPurchaseDetails").placeholder="بل نمبر / تفصیل (اختیاری)";
+ }
+ if($("rawPurchaseSaveButton"))$("rawPurchaseSaveButton").textContent=opening?"ابتدائی اسٹاک محفوظ کریں":freeClaim?"مفت کلیم محفوظ کریں":"خریداری محفوظ کریں";
+ if($("rawPaymentWrap"))$("rawPaymentWrap").classList.toggle("hidden",opening||freeClaim);
 }
 function updateTankerTotal(){
  const n=Number($("tankCount")?.value)||0,r=Number($("tankRate")?.value)||0;
