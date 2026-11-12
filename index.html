@@ -2769,6 +2769,12 @@ async function loadExecutiveDashboard(){
    </div>
    <div class="exec-two-col">
     <section class="exec-panel"><h3>منافع و نقصان — سیکشن وار</h3>
+     <div class="exec-line"><span>19L فروخت / آمدن</span><b>${fmt(water.revenue)}</b></div>
+     <div class="exec-line"><span>19L ڈلیوری پانی کی لاگت</span><b>${fmt(water.water_cost)}</b></div>
+     <div class="exec-line"><span>کاؤنٹر پانی کی لاگت</span><b>${fmt(water.counter_water_cost)}</b></div>
+     <div class="exec-line"><span>ڈھکن کی لاگت</span><b>${fmt(water.cap_cost)}</b></div>
+     <div class="exec-line"><span>ڈلیوری مزدوری</span><b>${fmt(water.delivery_labor)}</b></div>
+     <div class="exec-line"><span>19L شعبہ جاتی خرچ</span><b>${fmt(water.segment_expenses)}</b></div>
      <div class="exec-line"><span>19L سیکشن کنٹریبیوشن</span><b>${fmt(water.profit_before_shared)}</b></div>
      <div class="exec-line"><span>تیار مال سیکشن کنٹریبیوشن</span><b>${fmt(finished.profit_before_shared)}</b></div>
      <div class="exec-line"><span>عمومی کاروباری اخراجات</span><b>${fmt(shared.general_expenses)}</b></div>
@@ -3029,7 +3035,7 @@ async function runReport(){
     "<p class='muted'>یہ کاروباری انتظامی رپورٹ ہے؛ مکمل ڈبل انٹری جنرل لیجر یا قانونی مالیاتی اسٹیٹمنٹ نہیں۔</p></div>"+
    "<details class='card'><summary><b>تفصیلی آمدن اور اخراجات</b></summary>"+
     "<div class='exec-two-col'><section class='exec-panel'><h3>19L شعبہ</h3>"+
-     line("آمدن",fmt(water.revenue))+line("پانی کی لاگت",fmt(water.water_cost))+line("ڈھکن کی لاگت",fmt(water.cap_cost))+line("ڈلیوری مزدوری",fmt(water.delivery_labor))+line("شعبہ جاتی خرچ",fmt(water.segment_expenses))+line("شعبے کا نتیجہ",fmt(water.profit_before_shared))+
+     line("آمدن",fmt(water.revenue))+line("19L ڈلیوری پانی کی لاگت",fmt(water.water_cost))+line("کاؤنٹر پانی کی لاگت",fmt(water.counter_water_cost))+line("ڈھکن کی لاگت",fmt(water.cap_cost))+line("ڈلیوری مزدوری",fmt(water.delivery_labor))+line("شعبہ جاتی خرچ",fmt(water.segment_expenses))+line("شعبے کا نتیجہ",fmt(water.profit_before_shared))+
     "</section><section class='exec-panel'><h3>تیار مصنوعات</h3>"+
      line("فروخت",fmt(products.revenue))+line("خام مال و پیکنگ",fmt(products.material_packaging_cost))+line("متبادل مال کا نقصان",fmt(products.replacement_loss))+line("پروڈکشن مزدوری",fmt(products.production_labor))+line("معاون مزدوری",fmt(products.support_labor))+line("فلنگ پانی",fmt(products.filling_water_cost))+line("6L پانی",fmt(products.shop_water_cost_for_6l))+line("شعبہ جاتی خرچ",fmt(products.segment_expenses))+line("شعبے کا نتیجہ",fmt(products.profit_before_shared))+
     "</section></div><section class='exec-panel'><h3>مشترکہ حساب</h3>"+
