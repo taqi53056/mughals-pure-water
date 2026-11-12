@@ -2275,7 +2275,7 @@ async function loadRawMaterialPurchases(){
   return '<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
  }).join("")+'<div class="stat">19L ڈھکن<br><b>باقی: '+(purchased("cap_19l")-capsUsed)+' عدد</b><small>خریدے: '+purchased("cap_19l")+' — استعمال: '+capsUsed+' (صرف کسٹمر اور بغیر کسٹمر سپلائی کے خراب ڈھکن)</small></div></div>';
  $("moduleTable").innerHTML='<h3>خریداری، ابتدائی اسٹاک اور مفت کلیم کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ لاگت</th><th>سپلائر</th></tr>'+
- rows.map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(r.record_type==="opening_stock"?"ابتدائی اسٹاک":r.record_type==="free_claim"?"مفت کلیم":"خریداری")+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
+ rows.filter(r=>Number(r.quantity)>0||Number(r.total_amount)>0).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(r.record_type==="opening_stock"?"ابتدائی اسٹاک":r.record_type==="free_claim"?"مفت کلیم":"خریداری")+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
  '</table></div>';
 }
 async function tankerPurchaseModule(){
