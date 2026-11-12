@@ -2734,7 +2734,7 @@ async function loadExecutiveDashboard(){
   const missing=Array.isArray(report.missing_costs)?report.missing_costs:[];
   const stock=report.stock_estimate||{};
   const closed=data.month_closed===true;
-  const fmt=n=>money(Number(n)||0);
+  const fmt=n=>money(Number(n)||0),fmtNullable=n=>n==null?"—":fmt(n);
   const status=report.complete===true&&missing.length===0?(report.net_profit_is_estimated?"لاگت دستیاب؛ کاؤنٹر پانی کی مقدار تخمینی":"درج شدہ لاگت کے اجزا دستیاب"):"حساب میں لاگت کی کمی ہے";
   const kpis=[
    ["کل فروخت / آمدن",fmt(revenue),"19L + تیار مال کی فروخت"],
@@ -2745,7 +2745,7 @@ async function loadExecutiveDashboard(){
    ["مالکین کی نکاسی",fmt(data.owner_withdrawals),"منافع کے خرچ میں شامل نہیں"]
   ];
   const products=report.products||{};
-  const productRows=Object.entries(products).map(([name,r])=>`<tr><td>${esc(name)}</td><td>${Number(r.quantity)||0}</td><td>${fmt(r.revenue)}</td><td>${r.unit_cost==null?"لاگت نامکمل":fmt(r.unit_cost)}</td><td>${fmt(r.material_cost)}</td><td>${fmt(r.production_labor)}</td></tr>`).join("");
+  const productRows=Object.entries(products).map(([name,r])=>`<tr><td>${esc(name)}</td><td>${Number(r.quantity)||0}</td><td>${fmt(r.revenue)}</td><td>${fmtNullable(r.unit_cost)}</td><td>${fmtNullable(r.direct_unit_cost)}</td><td>${fmtNullable(r.average_sale_price)}</td><td>${fmtNullable(r.unit_contribution)}</td><td>${fmt(r.material_cost)}</td><td>${fmt(r.production_labor)}</td></tr>`).join("");
   const stockRows=[
    ["تیار 500ml کارٹن",stock.finished_500ml_cartons],
    ["تیار 1.5L کارٹن",stock.finished_1_5l_cartons],
@@ -2789,6 +2789,12 @@ async function loadExecutiveDashboard(){
      <div class="exec-line"><span>کاؤنٹر پانی کی تخمینی لاگت</span><b>${fmt(water.estimated_counter_water_cost??water.counter_water_cost)}</b></div>
      <div class="exec-line"><span>کاؤنٹر پانی کے لیٹر (آپ کا تخمینہ)</span><b>${Number(water.counter_water_litres)||0} لیٹر</b></div>
      <div class="exec-line"><span>پانی کی اوسط لاگت فی لیٹر</span><b>${fmt(water.water_rate_per_litre)}</b></div>
+     <div class="exec-line"><span>19L آمدن فی کامیاب بوتل</span><b>${fmtNullable(water.delivery_revenue_per_successful_bottle)}</b></div>
+     <div class="exec-line"><span>19L پانی کی لاگت فی روانہ بوتل</span><b>${fmtNullable(water.delivery_water_cost_per_bottle_delivered)}</b></div>
+     <div class="exec-line"><span>19L مزدوری فی کامیاب بوتل</span><b>${fmtNullable(water.delivery_labor_per_successful_bottle)}</b></div>
+     <div class="exec-line"><span>19L براہ راست بچت فی کامیاب بوتل — سیکشن خرچ سے پہلے</span><b>${fmtNullable(water.delivery_contribution_per_successful_bottle)}</b></div>
+     <div class="exec-line"><span>کاؤنٹر اوسط قیمت فی تخمینی لیٹر</span><b>${fmtNullable(water.counter_average_price_per_estimated_litre)}</b></div>
+     <div class="exec-line"><span>کاؤنٹر بچت فی تخمینی لیٹر — پانی کی لاگت کے بعد</span><b>${fmtNullable(water.counter_contribution_per_estimated_litre)}</b></div>
      <div class="exec-line"><span>خراب ڈھکنوں کی لاگت</span><b>${fmt(water.cap_cost)}</b></div>
      <div class="exec-line"><span>کسٹمر ڈلیوری مزدوری</span><b>${fmt(water.customer_delivery_labor)}</b></div>
      <div class="exec-line"><span>بغیر کسٹمر سپلائی مزدوری</span><b>${fmt(water.unassigned_delivery_labor)}</b></div>
@@ -2813,7 +2819,7 @@ async function loadExecutiveDashboard(){
     </section>
    </div>
    <div class="exec-two-col">
-    <section class="exec-panel"><h3>پروڈکٹ کارکردگی</h3><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>مقدار</th><th>فروخت</th><th>فی یونٹ لاگت</th><th>مواد</th><th>مزدوری</th></tr>${productRows||"<tr><td colspan='6'>ابھی فروخت درج نہیں۔</td></tr>"}</table></div></section>
+    <section class="exec-panel"><h3>پروڈکٹ کارکردگی</h3><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>مقدار</th><th>فروخت</th><th>مواد/پیکنگ فی یونٹ</th><th>مکمل براہ راست لاگت</th><th>اوسط فروخت قیمت</th><th>فی یونٹ بچت/نقصان</th><th>کل مواد</th><th>مزدوری</th></tr>${productRows||"<tr><td colspan='9'>ابھی فروخت درج نہیں۔</td></tr>"}</table></div><p class="muted">مکمل براہ راست لاگت میں خام مال/پیکنگ، مزدوری اور پانی شامل ہیں؛ مشترکہ اخراجات (مثلاً کرایہ، بجلی اور عمومی پیٹرول) شامل نہیں۔ فی یونٹ بچت/نقصان اصل اوسط فروخت قیمت منہا مکمل براہ راست لاگت ہے۔ اگر کسی لاگت کا اندراج موجود نہ ہو تو مکمل لاگت خالی رہے گی۔</p></section>
     <section class="exec-panel"><h3>اسٹاک کا خلاصہ</h3><div class="exec-stock-grid">${stockRows}</div><p class="muted">اسٹاک کے اعداد موجودہ ماڈل کے تخمینے ہیں؛ مفت کلیم بوتلوں کی مکمل مقدار درج نہ ہونے پر کچھ خام مال کا تخمینہ محدود ہے۔</p></section>
    </div>
    ${report.notes?'<div class="warning"><b>حساب کی اہم حد:</b> '+esc(report.notes)+'</div>':""}
