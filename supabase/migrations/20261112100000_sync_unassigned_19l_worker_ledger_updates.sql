@@ -24,6 +24,10 @@ BEGIN
   RETURN NEW;
 END;
 $function$;
+
+-- This trigger-only SECURITY DEFINER function must not be callable through the Data API.
+REVOKE EXECUTE ON FUNCTION public.sync_unassigned_19l_worker_ledger() FROM PUBLIC, anon, authenticated;
+
 DROP TRIGGER IF EXISTS unassigned_19l_worker_ledger_sync ON public.unassigned_19l_deliveries;
 CREATE TRIGGER unassigned_19l_worker_ledger_sync
 AFTER UPDATE OR DELETE ON public.unassigned_19l_deliveries
