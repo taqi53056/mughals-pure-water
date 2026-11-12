@@ -2740,12 +2740,12 @@ async function loadExecutiveDashboard(){
   if(error)throw error;
   const report=data?.profit_and_loss||{},segments=report.segments||{};
   const water=segments["19L"]||{},finished=segments.finished_goods||{},shared=segments.shared||{};
-  const revenue=Number(water.revenue||0)+Number(finished.revenue||0);
+  const revenue=Number(water.revenue||0)+Number(finished.revenue||0)+Number(shared.other_income||0);
   const net=Number(segments.net_profit||0);
   const contribution=Number(water.profit_before_shared||0)+Number(finished.profit_before_shared||0);
   const previous=data?.previous_period?.segments||{};
   const previousNet=Number(previous.net_profit||0);
-  const previousRevenue=Number(previous["19L"]?.revenue||0)+Number(previous.finished_goods?.revenue||0);
+  const previousRevenue=Number(previous["19L"]?.revenue||0)+Number(previous.finished_goods?.revenue||0)+Number(previous.shared?.other_income||0);
   const margin=revenue>0?(net/revenue*100):null;
   const missing=Array.isArray(report.missing_costs)?report.missing_costs:[];
   const stock=report.stock_estimate||{};
@@ -2753,7 +2753,7 @@ async function loadExecutiveDashboard(){
   const fmt=n=>money(Number(n)||0),fmtNullable=n=>n==null?"—":fmt(n);
   const status=report.complete===true&&missing.length===0?(report.net_profit_is_estimated?"لاگت دستیاب؛ کاؤنٹر پانی کی مقدار تخمینی":"درج شدہ لاگت کے اجزا دستیاب"):"حساب میں لاگت کی کمی ہے";
   const kpis=[
-   ["کل فروخت / آمدن",fmt(revenue),"19L + تیار مال کی فروخت"],
+   ["کل آمدن",fmt(revenue),"19L + تیار مال + دیگر درج شدہ آمدن"],
    ["سیکشن کنٹریبیوشن",fmt(contribution),"براہِ راست سیکشن اخراجات کے بعد"],
    ["تخمینی خالص منافع / نقصان",fmt(net),report.net_profit_is_estimated?"کاؤنٹر پانی کے لیٹر کے تخمینے سمیت":"درج شدہ اعداد کے مطابق"],
    ["گاہکوں سے بقایا",fmt(data.receivables),"بقایا رکھنے والے گاہک: "+(data.customers_with_due||0)],
@@ -2921,7 +2921,7 @@ async function reportsModule(){
  $("moduleBody").innerHTML=
  '<div class="card"><h3>آپ کے کاروبار کا حساب</h3><p class="muted">مدت منتخب کریں، باقی حساب خود ہوگا۔</p><div class="grid"><button class="secondary" onclick="setReportPeriod(&quot;day&quot;)">آج</button><button class="secondary" onclick="setReportPeriod(&quot;month&quot;)">اس ماہ</button><button class="secondary" onclick="setReportPeriod(&quot;year&quot;)">اس سال</button></div><div class="grid"><input id="rStart" type="date" value="'+monthStart+'"><input id="rEnd" type="date" value="'+today()+'"></div><button onclick="runReport()">حساب دکھائیں</button></div>'+
  '<div id="reportResult"><div class="card muted">حساب تیار ہو رہا ہے...</div></div>'+
- '<details class="card"><summary><b>مزید مالی اختیارات</b></summary><p class="muted">یہ اندراجات صرف حقیقی سرمایہ، قرض، مالک کی نکاسی، اثاثوں اور مالی لاگت/آمدن کے لیے ہیں۔ خام مال اور پانی کی خرید اپنے مخصوص اسٹاک ماڈیول میں درج کریں، یہاں دوبارہ نہیں۔ نقد حرکت کے لیے اصل نقد/بینک طریقہ منتخب کریں؛ ادھار یہاں نقد وصولی یا ادائیگی نہیں سمجھا جائے گا۔ فرسودگی اور اسٹاک نقصان غیر نقد ایڈجسٹمنٹ ہیں۔</p>'+
+ '<details class="card"><summary><b>مزید مالی اختیارات</b></summary><p class="muted">یہ اندراجات صرف حقیقی سرمایہ، قرض، مالک کی نکاسی، اثاثوں اور مالی لاگت/آمدن کے لیے ہیں۔ خام مال اور پانی کی خرید اپنے مخصوص اسٹاک ماڈیول میں درج کریں، یہاں دوبارہ نہیں۔ تیار مال کی کمی کا نقصان اسٹاک درستگی سے خودکار منافع و نقصان میں شامل ہوتا ہے؛ اسی نقصان کو یہاں دوبارہ درج نہ کریں۔ خام مال کے ضائع ہونے کا نقصان یہاں درج کریں۔ نقد حرکت کے لیے اصل نقد/بینک طریقہ منتخب کریں؛ ادھار یہاں نقد وصولی یا ادائیگی نہیں سمجھا جائے گا۔ فرسودگی اور اسٹاک نقصان غیر نقد ایڈجسٹمنٹ ہیں۔</p>'+
  '<h3>سرمایہ، قرض یا مالک کی رقم</h3><input id="finDate" type="date" value="'+today()+'"><select id="finType" onchange="toggleOwnerWithdrawalField()"><option value="capital_in">مالک نے سرمایہ لگایا</option><option value="loan_received">کاروبار نے قرض لیا</option><option value="loan_repaid">قرض کی اصل رقم واپس کی</option><option value="loan_given">کسی کو قرض / ادھار دیا</option><option value="loan_collected">دوسروں سے قرض / ادھار وصول کیا</option><option value="inventory_loss">اسٹاک ضائع / خراب ہوا</option><option value="fixed_asset_purchase">مشینری / گاڑی / سامان خریدا</option><option value="fixed_asset_sale">مشینری / اثاثہ فروخت کیا</option><option value="depreciation_expense">مشینری / سامان کی فرسودگی</option><option value="interest_expense">قرض کی مالی لاگت</option><option value="interest_income">مالی آمدن</option></select>'+
  '<select id="finOwner" class="hidden"><option value="">مالک منتخب کریں</option>'+OWNER_WITHDRAWAL_RECIPIENTS.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("")+'</select>'+
  '<input id="finAmount" type="number" min="0.01" step="0.01" placeholder="رقم روپے میں"><input id="finCategory" maxlength="100" placeholder="مختصر تفصیل"><input id="finItem" maxlength="120" placeholder="سامان کا نام (اختیاری)"><div class="grid"><input id="finQty" type="number" min="0" step="0.001" placeholder="مقدار (اختیاری)"><input id="finUnit" maxlength="30" placeholder="یونٹ"></div>'+
