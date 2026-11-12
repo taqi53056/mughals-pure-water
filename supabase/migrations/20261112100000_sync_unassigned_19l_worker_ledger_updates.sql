@@ -47,6 +47,9 @@ BEGIN
 END;
 $function$;
 
+-- Trigger-only SECURITY DEFINER function: block direct Data API/RPC execution.
+REVOKE EXECUTE ON FUNCTION public.sync_unassigned_19l_worker_ledger() FROM PUBLIC, anon, authenticated;
+
 DROP TRIGGER IF EXISTS unassigned_19l_worker_ledger_sync ON public.unassigned_19l_deliveries;
 CREATE TRIGGER unassigned_19l_worker_ledger_sync
 AFTER UPDATE OR DELETE ON public.unassigned_19l_deliveries
