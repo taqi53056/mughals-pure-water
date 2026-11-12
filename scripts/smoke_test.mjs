@@ -793,14 +793,17 @@ try {
         if (table === "customer_19l_deliveries") return [
           { delivery_date: "2026-11-10", bottles_delivered: 10, successful_bottles: 8, damaged_caps: 1 }
         ];
+        if (table === "unassigned_19l_deliveries") return [
+          { delivery_date: "2026-11-10", bottles_delivered: 5, damaged_caps: 2 }
+        ];
         return [];
       };
       await loadRawMaterialPurchases();
       const text = document.querySelector("#rawStockBalance")?.textContent || "";
       window.financeFetchAll = originalFetchAll;
-      return { text, hasZeroBalance: /19L ڈھکن[\s\S]*?باقی:\s*0 عدد/.test(text) };
+      return { text, hasEightCapsRemaining: /19L ڈھکن[\s\S]*?باقی:\s*8 عدد/.test(text) };
     });
-    if (!capBalanceResult.hasZeroBalance) failures.push("19L cap balance does not subtract all delivered bottles and damaged-cap replacements after opening date");
+    if (!capBalanceResult.hasEightCapsRemaining) failures.push("19L cap stock must deduct only damaged caps from customer and unassigned deliveries, never delivered bottle count");
 
     const inactiveBillingResult = await page.evaluate(() => {
       const active = { is_active: true, approved_at: "2026-11-01T00:00:00Z" };

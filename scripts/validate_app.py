@@ -111,6 +111,10 @@ for field_id in ("dCustomer", "dDate", "dOut", "dBack", "dCaps"):
         fail("19L delivery field is missing its visible label: " + field_id)
 if "function deliveryConfirmationSummary(c)" not in source:
     fail("19L combined confirmation summary helper is missing")
+if "counterCapsSold" in source or "caps_sold:" in source:
+    fail("Counter cap sales must not require a daily count or manual entry")
+if "const capsUsed=customerCapsUsed+unassignedCapsUsed;" not in source:
+    fail("19L raw-cap stock must use damaged caps from delivery records only")
 if 'if(c.diff>0&&!confirm(' in source or 'if(c.caps>0&&!confirm(' in source:
     fail("19L delivery still has separate repeated confirmation dialogs")
 
