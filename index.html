@@ -2725,9 +2725,9 @@ async function loadTodaySummary(){
    const {data:dailyDash,error:dailyError}=await db.rpc("get_management_dashboard",{p_month_start:date,p_month_end:date});
    if(dailyError)throw dailyError;
    const dailyReport=dailyDash?.profit_and_loss||{},dailySegments=dailyReport.segments||{},dailyWater=dailySegments["19L"]||{};
-   const dailyNet=Number(dailySegments.net_profit)||0;
-   const dailyRevenue=Number(dailySegments["19L"]?.revenue||0)+Number(dailySegments.finished_goods?.revenue||0)+Number(dailySegments.shared?.other_income||0);
-   const dailyBeforeEstimate=Number(dailyWater.net_profit_before_counter_water_estimate??dailyNet);
+   const dailyNet=Number(dailyReport.net_profit)||0;
+   const dailyRevenue=Number(dailySegments["19L"]?.revenue||0)+Number(dailyReport.finished_goods?.revenue||0)+Number(dailySegments.shared?.other_income||0);
+   const dailyBeforeEstimate=dailyNet+Number(dailyWater.estimated_counter_water_cost??dailyWater.counter_water_cost??0);
    dailyPnlHtml="<div class=\"stat\">کل درج شدہ فروخت/آمدن: <b>"+money(dailyRevenue)+"</b></div><div class=\"stat\">روزانہ خالص نتیجہ: <b>"+money(dailyNet)+"</b> — "+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+"</div><div class=\"stat\">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>"+money(dailyBeforeEstimate)+"</b></div><div class=\"stat\">کاؤنٹر پانی کی تخمینی لاگت: <b>"+money(dailyWater.estimated_counter_water_cost||0)+"</b></div>"+(dailyReport.missing_costs?.length?"<div class=\"warning\">لاگت کی کمی: "+dailyReport.missing_costs.map(esc).join("، ")+"</div>":"")+(dailyReport.notes?"<div class=\"warning\">"+esc(dailyReport.notes)+"</div>":"")+(Number(dailyWater.unassigned_delivery_cash_unclassified||0)>0?"<div class=\"warning\">غیر منسلک 19L سپلائی کی وصولی درج نہیں۔ اگر رقم وصول ہوچکی ہے تو آمدن ماڈیول میں مخصوص وصولی کی مد سے درج کریں؛ اس سے منافع دوبارہ نہیں بڑھے گا۔</div>":"")+(expenseCount===0?"<div class=\"warning\">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو اسے درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>":"");
   }catch(dailyPnlError){dailyPnlHtml=`<div class="warning">روزانہ منافع و نقصان کا حساب لوڈ نہیں ہوا: ${esc(dailyPnlError?.message||String(dailyPnlError))}</div>`;}
   el.innerHTML=`<div class="stat">تاریخ: ${date}</div>
@@ -2762,17 +2762,17 @@ async function loadExecutiveDashboard(){
   const {data,error}=await db.rpc("get_management_dashboard",{p_month_start:range.start,p_month_end:range.end});
   if(error)throw error;
   const report=data?.profit_and_loss||{},segments=report.segments||{};
-  const water=segments["19L"]||{},finished=segments.finished_goods||{},shared=segments.shared||{};
+  const water=segments["19L"]||{},finished=report.finished_goods||{},shared=segments.shared||{};
   const fmt=n=>money(Number(n)||0),fmtNullable=n=>n==null?"—":fmt(n);
   const unassignedCashflowWarning=Number(water.unassigned_delivery_cash_unclassified||0)>0
    ?'<div class="warning"><b>غیر منسلک سپلائی کی وصولی باقی ہے:</b> '+fmt(water.unassigned_delivery_cash_unclassified)+' کی وصولی اس مدت میں درج نہیں۔ اگر رقم وصول ہوچکی ہے تو آمدن ماڈیول میں "غیر منسلک 19L سپلائی کی وصولی" منتخب کرکے درج کریں؛ یہ منافع میں دوبارہ شامل نہیں ہوگی۔ اگر رقم وصول نہیں ہوئی تو وصولی درج نہ کریں۔</div>'
    :"";
   const revenue=Number(water.revenue||0)+Number(finished.revenue||0);
-  const net=Number(segments.net_profit||0);
+  const net=Number(report.net_profit||0);
   const contribution=Number(water.profit_before_shared||0)+Number(finished.profit_before_shared||0);
-  const previous=data?.previous_period?.segments||{};
+  const previous=data?.previous_period||{};
   const previousNet=Number(previous.net_profit||0);
-  const previousRevenue=Number(previous["19L"]?.revenue||0)+Number(previous.finished_goods?.revenue||0);
+  const previousRevenue=Number(previous.segments?.["19L"]?.revenue||0)+Number(previous.finished_goods?.revenue||0);
   const margin=revenue>0?(net/revenue*100):null;
   const missing=Array.isArray(report.missing_costs)?report.missing_costs:[];
   const stock=report.stock_estimate||{};
@@ -2855,7 +2855,7 @@ async function loadExecutiveDashboard(){
      <div class="exec-line"><span>عمومی کاروباری اخراجات</span><b>${fmt(shared.general_expenses)}</b></div>
      <div class="exec-line"><span>فرسودگی</span><b>${fmt(shared.depreciation)}</b></div>
      <div class="exec-line"><span>مالی لاگت</span><b>${fmt(shared.interest_expense)}</b></div>
-     <div class="exec-line"><span>پانی کے لیٹر کے تخمینے سے پہلے نتیجہ</span><b>${fmt(water.net_profit_before_counter_water_estimate??net)}</b></div>
+     <div class="exec-line"><span>کاؤنٹر پانی کے تخمینے سے پہلے مجموعی نتیجہ</span><b>${fmt(net+Number(water.estimated_counter_water_cost??water.counter_water_cost??0))}</b></div>
      <div class="exec-line exec-net"><span>تخمینی خالص نتیجہ</span><b>${fmt(net)}</b></div>
      <p class="muted">گزشتہ مہینہ: فروخت ${fmt(previousRevenue)} · خالص نتیجہ ${fmt(previousNet)} · فرق ${fmt(net-previousNet)}</p>
     </section>
