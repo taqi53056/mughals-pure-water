@@ -2455,7 +2455,7 @@ async function unassigned19lModule(){
  '<p class="muted">یہ اندراج صرف اس سپلائی کے لیے ہے جس کا ابھی کوئی کسٹمر اکاؤنٹ موجود نہیں۔ اس سے کسٹمر، کسٹمر بل یا کسٹمر ہسٹری نہیں بنے گی۔ ہر کامیاب بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔ اس اندراج سے 19L آمدن منافع میں شمار ہوگی۔ رقم وصول ہونے پر آمدن ماڈیول میں "غیر منسلک 19L سپلائی کی وصولی" کے نام سے الگ وصولی درج کریں؛ اس مد کو منافع میں دوبارہ شامل نہیں کیا جاتا۔ وصول نہ ہوئی رقم درج نہ کریں۔</p>'+
  '<div class="card"><h3>نئی غیر منسلک سپلائی</h3>'+
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
- '<label for="u19Worker">سپلائی کرنے والا مزدور</label><select id="u19Worker"><option value="">ورکر لوڈ ہو رہا ہے...</option></select>'+
+ '<label for="u19Worker">سپلائی کس نے کی؟ *</label><select id="u19Worker" required><option value="" selected disabled>سپلائی کرنے والا منتخب کریں</option><option value="owner">مالک نے خود سپلائی کی</option><option value="worker">مزدور نے سپلائی کی</option></select><div id="u19WorkerPicker" class="hidden"><label for="u19WorkerId">مزدور منتخب کریں *</label><select id="u19WorkerId" required><option value="">ورکر لوڈ ہو رہا ہے...</option></select></div><div id="u19OwnerNote" class="muted hidden">مالک کی اپنی محنت پر ورکر لیجر میں مزدوری نہیں بنے گی؛ بچائی گئی مزدوری الگ دکھائی جائے گی۔</div>'+
  '<label for="u19Bottles">سپلائی کی گئی بھری 19L بوتلیں</label><input id="u19Bottles" type="number" min="1" step="1" inputmode="numeric" value="5">'+
  '<label for="u19Empties">واپس آنے والی خالی بوتلیں (اگر ہوں)</label><input id="u19Empties" type="number" min="0" step="1" inputmode="numeric" value="0" oninput="updateUnassigned19lLabor()">'+
  '<label for="u19DamagedCaps">اس سپلائی میں خراب 19L ڈھکن</label><input id="u19DamagedCaps" type="number" min="0" step="1" inputmode="numeric" value="0">'+
@@ -2463,13 +2463,14 @@ async function unassigned19lModule(){
  '<div class="stat">مزدوری: <b id="u19Labor">Rs. 0</b> — فی کامیاب بوتل Rs.20</div>'+
  '<button id="u19SaveButton" onclick="saveUnassigned19lDelivery()">سپلائی اور مزدوری محفوظ کریں</button></div>'+
  '<div id="u19History"></div>';
- const sel=$("u19Worker");
+ const sel=$("u19WorkerId");
  try{
   const {data,error}=await db.from("workers").select("id,full_name").eq("is_active",true).eq("is_owner",false).contains("work_categories",["19L delivery"]).order("full_name");
   if(error)throw error;
   sel.innerHTML=(data||[]).map(w=>'<option value="'+w.id+'">'+esc(w.full_name)+'</option>').join("");
   if(!(data||[]).length)sel.innerHTML='<option value="">کوئی فعال 19L مزدور موجود نہیں</option>';
  }catch(e){sel.innerHTML='<option value="">ورکر لوڈ نہیں ہوا</option>';msg("ورکر لوڈ نہیں ہوئے: "+(e.message||String(e)));return;}
+ $("u19Worker").addEventListener("change",()=>{const owner=$("u19Worker").value==="owner";$("u19WorkerPicker").classList.toggle("hidden",owner);$("u19OwnerNote").classList.toggle("hidden",!owner);$("u19WorkerId").required=!owner;});
  $("u19Bottles").addEventListener("input",updateUnassigned19lLabor);
  updateUnassigned19lLabor();
  await loadUnassigned19lHistory();
@@ -2481,34 +2482,35 @@ function updateUnassigned19lLabor(){
 async function loadUnassigned19lHistory(){
  const box=$("u19History");if(!box)return;
  try{
-  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,worker_id,bottles_delivered,empty_bottles_returned,damaged_caps,labor_amount,details").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
+  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,worker_id,performed_by_owner,owner_labor_saving,bottles_delivered,empty_bottles_returned,damaged_caps,labor_amount,details").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
   if(error)throw error;
   const {data:workers,error:we}=await db.from("workers").select("id,full_name");
   if(we)throw we;
   const map=new Map((workers||[]).map(w=>[Number(w.id),w.full_name]));
-  box.innerHTML='<h3>غیر منسلک سپلائی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>مزدور</th><th>بھری بوتلیں</th><th>خالی واپس</th><th>خراب ڈھکن</th><th>مزدوری</th><th>تفصیل</th></tr>'+
-   (data||[]).map(r=>'<tr><td>'+esc(r.delivery_date)+'</td><td>'+esc(map.get(Number(r.worker_id))||"ورکر")+'</td><td>'+Number(r.bottles_delivered)+'</td><td>'+Number(r.empty_bottles_returned)+'</td><td>'+Number(r.damaged_caps||0)+'</td><td>'+money(r.labor_amount)+'</td><td>'+esc(r.details||"—")+'</td></tr>').join("")+
+  box.innerHTML='<h3>غیر منسلک سپلائی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>سپلائی کس نے کی</th><th>بھری بوتلیں</th><th>خالی واپس</th><th>خراب ڈھکن</th><th>ورکر مزدوری</th><th>مالک کی بچائی مزدوری</th><th>تفصیل</th></tr>'+
+   (data||[]).map(r=>'<tr><td>'+esc(r.delivery_date)+'</td><td>'+esc(r.performed_by_owner?"مالک":map.get(Number(r.worker_id))||"ورکر")+'</td><td>'+Number(r.bottles_delivered)+'</td><td>'+Number(r.empty_bottles_returned)+'</td><td>'+Number(r.damaged_caps||0)+'</td><td>'+money(r.labor_amount)+'</td><td>'+money(r.owner_labor_saving)+'</td><td>'+esc(r.details||"—")+'</td></tr>').join("")+
    '</table></div>';
  }catch(e){box.textContent="سپلائی ہسٹری لوڈ نہیں ہوئی: "+(e.message||String(e));}
 }
 async function saveUnassigned19lDelivery(){
- const date=$("u19Date").value,worker=Number($("u19Worker").value),bottles=Number($("u19Bottles").value),empties=Number($("u19Empties").value||0),damagedCaps=Number($("u19DamagedCaps").value||0),details=$("u19Details").value.trim();
- if(!date||!Number.isInteger(worker)||worker<=0||!Number.isInteger(bottles)||bottles<=0||!Number.isInteger(empties)||empties<0||empties>bottles||!Number.isInteger(damagedCaps)||damagedCaps<0){msg("تاریخ، مزدور، بوتلوں، خالی بوتلوں اور خراب ڈھکنوں کی تعداد درست درج کریں۔");return;}
+ const date=$("u19Date").value,actor=$("u19Worker").value,isOwner=actor==="owner",worker=isOwner?null:Number($("u19WorkerId").value),bottles=Number($("u19Bottles").value),empties=Number($("u19Empties").value||0),damagedCaps=Number($("u19DamagedCaps").value||0),details=$("u19Details").value.trim();
+ if(!date||!["owner","worker"].includes(actor)||(!isOwner&&(!Number.isInteger(worker)||worker<=0))||!Number.isInteger(bottles)||bottles<=0||!Number.isInteger(empties)||empties<0||empties>bottles||!Number.isInteger(damagedCaps)||damagedCaps<0){msg("سپلائی کرنے والا، مزدور (اگر لاگو ہو)، تاریخ اور مقدار درست منتخب/درج کریں۔");return;}
  if(date>today()){msg("مستقبل کی تاریخ پر سپلائی درج نہیں ہو سکتی۔");return;}
- if(!confirm("تصدیق کریں:\nتاریخ: "+date+"\nبوتلیں: "+bottles+"\nمزدوری: "+money(empties*20)+"\nیہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
+ const labor=isOwner?0:empties*20,ownerSaving=isOwner?empties*20:0;
+ if(!confirm("تصدیق کریں:\nتاریخ: "+date+"\nسپلائی: "+(isOwner?"مالک نے خود":"مزدور")+"\nبوتلیں: "+bottles+"\nورکر مزدوری: "+money(labor)+"\nمالک کی بچائی گئی مزدوری: "+money(ownerSaving)+"\nیہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
  const button=$("u19SaveButton");if(button?.disabled)return;if(button)button.disabled=true;
- const signature=[date,worker,bottles,empties,damagedCaps,details].join("|");
+ const signature=[date,actor,worker,bottles,empties,damagedCaps,details].join("|");
  const requestId=mpwPendingRequestId("unassigned19l",signature);
  try{
   const {data,error}=await db.rpc("record_unassigned_19l_delivery",{
    p_delivery_date:date,p_worker_id:worker,p_bottles_delivered:bottles,
-   p_empty_bottles_returned:empties,p_details:details||null,p_request_id:requestId,p_damaged_caps:damagedCaps
+   p_empty_bottles_returned:empties,p_details:details||null,p_request_id:requestId,p_damaged_caps:damagedCaps,p_performed_by_owner:isOwner
   });
   if(error)throw error;
   if(!data?.id)throw new Error("محفوظ اندراج کی تصدیق موصول نہیں ہوئی۔");
   mpwClearPendingRequestId("unassigned19l");
-  msg("غیر منسلک سپلائی محفوظ ہوگئی۔ مزدوری "+money(data.labor_amount)+" ورکر لیجر میں درج ہوگئی۔",true);
-  $("u19Bottles").value="";$("u19Empties").value="0";$("u19DamagedCaps").value="0";$("u19Details").value="";
+  msg("غیر منسلک سپلائی محفوظ ہوگئی۔ "+(isOwner?"مالک کی بچائی گئی مزدوری "+money(data.owner_labor_saving)+" درج ہے۔":"ورکر مزدوری "+money(data.labor_amount)+" لیجر میں درج ہوگئی۔"),true);
+  $("u19Worker").value="";$("u19WorkerPicker").classList.add("hidden");$("u19OwnerNote").classList.add("hidden");$("u19WorkerId").required=false;$("u19Bottles").value="";$("u19Empties").value="0";$("u19DamagedCaps").value="0";$("u19Details").value="";
   updateUnassigned19lLabor();
   await Promise.all([loadUnassigned19lHistory(),loadTankerPurchases(),loadTodaySummary()]);
  }catch(e){msg("سپلائی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
