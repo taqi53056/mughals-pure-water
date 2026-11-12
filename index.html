@@ -2781,7 +2781,13 @@ async function loadExecutiveDashboard(){
   const shopWaterRemainingValue=shopWaterRate===null?null:Number(stock.water_shop_pool_remaining_litres||0)*shopWaterRate;
   const fillWaterRemainingValue=fillWaterRate===null?null:Number(stock.water_product_filling_litres||0)*fillWaterRate;
   const closed=data.month_closed===true;
-  const status=report.complete===true&&missing.length===0?(report.net_profit_is_estimated?"لاگت دستیاب؛ کاؤنٹر پانی کی مقدار تخمینی":"درج شدہ لاگت کے اجزا دستیاب"):"حساب میں لاگت کی کمی ہے";
+  const products=report.products||{};
+  const productCostGaps=Object.entries(products).filter(([,r])=>r.direct_unit_cost==null).map(([name])=>name);
+  const status=report.complete===true&&missing.length===0
+   ?(productCostGaps.length
+     ?"مدت کی درج شدہ سرگرمی کا حساب مکمل؛ مصنوعات کی فی یونٹ لاگت نامکمل: "+productCostGaps.join("، ")+(report.net_profit_is_estimated?"؛ کاؤنٹر پانی بھی تخمینی":"")
+     :(report.net_profit_is_estimated?"درج شدہ لاگت دستیاب؛ کاؤنٹر پانی کی مقدار تخمینی":"درج شدہ لاگت کے اجزا دستیاب"))
+   :"حساب میں لاگت کی کمی ہے";
   const kpis=[
    ["کل فروخت / آمدن",fmt(revenue),"19L + تیار مال کی فروخت"],
    ["سیکشن کنٹریبیوشن",fmt(contribution),"براہِ راست سیکشن اخراجات کے بعد"],
@@ -2790,7 +2796,6 @@ async function loadExecutiveDashboard(){
    ["مدت کی وصولیاں",fmt(data.recorded_collections),"درج شدہ وصولیاں، نقد بیلنس نہیں"],
    ["مالکین کی نکاسی",fmt(data.owner_withdrawals),"منافع کے خرچ میں شامل نہیں"]
   ];
-  const products=report.products||{};
   const productRows=Object.entries(products).map(([name,r])=>`<tr><td>${esc(name)}</td><td>${Number(r.quantity)||0}</td><td>${fmt(r.revenue)}</td><td>${fmtNullable(r.unit_cost)}</td><td>${fmtNullable(r.direct_unit_cost)}</td><td>${fmtNullable(r.average_sale_price)}</td><td>${fmtNullable(r.unit_contribution)}</td><td>${fmt(r.material_cost)}</td><td>${fmt(r.production_labor)}</td></tr>`).join("");
   const stockRows=[
    ["تیار 500ml کارٹن",stock.finished_500ml_cartons],
@@ -2868,6 +2873,7 @@ async function loadExecutiveDashboard(){
     <section class="exec-panel"><h3>پروڈکٹ کارکردگی</h3><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>مقدار</th><th>فروخت</th><th>مواد/پیکنگ فی یونٹ</th><th>بنیادی براہ راست لاگت</th><th>اوسط فروخت قیمت</th><th>ابتدائی فی یونٹ بچت</th><th>کل مواد</th><th>مزدوری</th></tr>${productRows||"<tr><td colspan='9'>ابھی فروخت درج نہیں۔</td></tr>"}</table></div><p class="muted">بنیادی براہ راست لاگت میں خام مال/پیکنگ، پیداواری مزدوری اور پانی شامل ہیں۔ اس ابتدائی فی یونٹ بچت میں ریٹرن/متبادل نقصان، صفائی و لوڈنگ جیسی معاون مزدوری، سیکشن خرچ اور مشترکہ اخراجات (کرایہ، بجلی، پیٹرول) شامل نہیں؛ یہ سب مجموعی منافع و نقصان میں الگ منہا ہوتے ہیں۔ کسی بنیادی لاگت کا اندراج نہ ہو تو لاگت خالی رہے گی، صفر فرض نہیں ہوگی۔</p></section>
     <section class="exec-panel"><h3>اسٹاک کا خلاصہ</h3><div class="exec-stock-grid">${stockRows}</div><div class="exec-line"><span>دکان والی ٹنکی کے باقی پانی کی مالیت (تخمینی)</span><b>${fmtNullable(shopWaterRemainingValue)}</b></div><div class="exec-line"><span>پروڈکشن ٹنکی کے باقی پانی کی مالیت</span><b>${fmtNullable(fillWaterRemainingValue)}</b></div><p class="muted">ٹنکی کی باقی مالیت = باقی لیٹر × اس ٹنکی کی اوسط فی لیٹر لاگت۔ دکان والی ٹنکی کے لیٹر آپ کے تخمینے کی وجہ سے اس کی مالیت بھی تخمینی ہے۔</p><p class="muted">اسٹاک کے اعداد موجودہ ماڈل کے تخمینے ہیں؛ مفت کلیم بوتلوں کی مکمل مقدار درج نہ ہونے پر کچھ خام مال کا تخمینہ محدود ہے۔</p></section>
    </div>
+   ${productCostGaps.length?'<div class="warning"><b>مصنوعات کی فی یونٹ لاگت ابھی دستیاب نہیں:</b> '+esc(productCostGaps.join("، "))+'۔ متعلقہ بوتل، ڈھکن، اسٹیکر اور پروڈکشن ٹنکی کے اصل ابتدائی اسٹاک/قیمت درج ہونے تک ان مصنوعات کی پیداوار یا فروخت کا منافع حتمی نہ سمجھیں۔</div>':""}
    ${report.notes?'<div class="warning"><b>حساب کی اہم حد:</b> '+esc(report.notes)+'</div>':""}
    ${unassignedCashflowWarning}
    ${Number(report.expense_entry_count||0)===0?'<div class="warning"><b>اس مدت میں اخراجات کی کوئی انٹری نہیں:</b> تصدیق کریں کہ واقعی کوئی کاروباری خرچ نہیں ہوا؛ اگر پیٹرول، مرمت، بجلی یا دوسرا خرچ ہوا ہے تو درج کیے بغیر منافع حتمی نہیں ہوگا۔</div>':'<p class="muted">اس مدت میں اخراجات کی محفوظ انٹریاں: '+Number(report.expense_entry_count)+'</p>'}
