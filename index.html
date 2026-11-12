@@ -2681,6 +2681,7 @@ async function loadTodaySummary(){
   const counterLitres=await sumTable("counter_water_sales","total_litres","sale_date",date);
   const tankerSpend=await sumTable("water_tanker_purchases","total_amount","purchase_date",date);
   const expenses=await sumTable("business_expenses","amount","expense_date",date);
+  const expenseRows=await db.from("business_expenses").select("id").eq("expense_date",date);if(expenseRows.error)throw expenseRows.error;const expenseCount=(expenseRows.data||[]).length;
   const income=await sumTable("business_income","amount","income_date",date);
   let dailyPnlHtml="";
   try{
@@ -2689,7 +2690,7 @@ async function loadTodaySummary(){
    const dailyReport=dailyDash?.profit_and_loss||{},dailySegments=dailyReport.segments||{},dailyWater=dailySegments["19L"]||{};
    const dailyNet=Number(dailySegments.net_profit)||0;
    const dailyBeforeEstimate=Number(dailyWater.net_profit_before_counter_water_estimate??dailyNet);
-   dailyPnlHtml="<div class=\"stat\">روزانہ خالص نتیجہ: <b>"+money(dailyNet)+"</b> — "+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+"</div><div class=\"stat\">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>"+money(dailyBeforeEstimate)+"</b></div><div class=\"stat\">کاؤنٹر پانی کی تخمینی لاگت: <b>"+money(dailyWater.estimated_counter_water_cost||0)+"</b></div>"+(dailyReport.missing_costs?.length?"<div class=\"warning\">لاگت کی کمی: "+dailyReport.missing_costs.map(esc).join("، ")+"</div>":"")+(dailyReport.notes?"<div class=\"warning\">"+esc(dailyReport.notes)+"</div>":"");
+   dailyPnlHtml="<div class=\"stat\">روزانہ خالص نتیجہ: <b>"+money(dailyNet)+"</b> — "+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+"</div><div class=\"stat\">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>"+money(dailyBeforeEstimate)+"</b></div><div class=\"stat\">کاؤنٹر پانی کی تخمینی لاگت: <b>"+money(dailyWater.estimated_counter_water_cost||0)+"</b></div>"+(dailyReport.missing_costs?.length?"<div class=\"warning\">لاگت کی کمی: "+dailyReport.missing_costs.map(esc).join("، ")+"</div>":"")+(dailyReport.notes?"<div class=\"warning\">"+esc(dailyReport.notes)+"</div>":"")+(expenseCount===0?"<div class=\"warning\">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو اسے درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>":"");
   }catch(dailyPnlError){dailyPnlHtml=`<div class="warning">روزانہ منافع و نقصان کا حساب لوڈ نہیں ہوا: ${esc(dailyPnlError?.message||String(dailyPnlError))}</div>`;}
   el.innerHTML=`<div class="stat">تاریخ: ${date}</div>
   <div class="stat">19L کامیاب بوتلیں: <b>${bottles}</b></div>
@@ -2699,7 +2700,7 @@ async function loadTodaySummary(){
   <div class="stat">500ml / 1.5L / 6L فروخت: <b>${money(sales)}</b></div>
   <div class="stat">19L کاؤنٹر: <b>تقریباً ${counterLitres} لیٹر — ${money(counterAmount)}</b></div>
   <div class="stat">آج ٹینکر خریداری: <b>${money(tankerSpend)}</b></div>
-  <div class="stat">اخراجات: <b>${money(expenses)}</b></div>
+  <div class="stat">درج شدہ اخراجات: <b>${money(expenses)} (${expenseCount} انٹریاں)</b></div>
   <div class="stat">درج شدہ آمدن: <b>${money(income)}</b></div>
   ${dailyPnlHtml}`;
  }catch(e){el.textContent="خلاصہ لوڈ نہیں ہوا: "+e.message}
