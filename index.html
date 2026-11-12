@@ -2371,13 +2371,13 @@ async function loadCounterWaterForDate(){
 async function saveCounterWaterSale(){
  const sale_date=$("counterDate").value,total_litres=Number($("counterLitres").value),total_amount=Number($("counterAmount").value),caps_sold=Number($("counterCapsSold").value||0);
  if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<=0||!Number.isInteger(caps_sold)||caps_sold<0){msg("تاریخ، پانی کے لیٹر، پانی کی رقم اور ڈھکنوں کی تعداد درست درج کریں۔");return;}
- if(!confirmLargeEntry("کاؤنٹر فروخت کے لیٹر",total_litres,1000)||!confirmLargeEntry("وصول شدہ رقم",total_amount,100000))return;
+ if(!confirmLargeEntry("کاؤنٹر فروخت کے لیٹر",total_litres,1000)||!confirmLargeEntry("پانی کی وصول شدہ رقم",total_amount,100000)||!confirmLargeEntry("فروخت شدہ 19L ڈھکن",caps_sold,100))return;
  const button=$("counterSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
   const payload={sale_date,total_litres,total_amount,caps_sold,payment_method:$("counterMethod").value,entered_by:user?.id||null};
   const {error}=await db.from("counter_water_sales").upsert(payload,{onConflict:"sale_date"});
   if(error)throw error;
-  msg("اس تاریخ کی روزانہ کاؤنٹر فروخت محفوظ/اپڈیٹ ہوگئی؛ دوسرا ریکارڈ نہیں بنایا گیا۔",true);
+  msg("پانی کی فروخت اور الگ ڈھکنوں کی فروخت محفوظ/اپڈیٹ ہوگئی؛ ڈھکن آمدن "+money(caps_sold*10)+" ہے۔",true);
   await loadCounterWaterForDate();await loadTodaySummary();
  }catch(error){msg("کاؤنٹر فروخت محفوظ نہیں ہوئی: "+(error?.message||String(error)));}
  finally{if(button)button.disabled=false;}
