@@ -2134,7 +2134,7 @@ async function rawMaterialsModule(){
  '<input id="rawPurchaseSupplier" maxlength="120" placeholder="سپلائر (اختیاری)">'+
  '<textarea id="rawPurchaseDetails" maxlength="300" placeholder="بل نمبر / تفصیل (اختیاری)"></textarea>'+
  '<button id="rawPurchaseSaveButton" onclick="saveRawMaterialPurchase()">خریداری محفوظ کریں</button></div>'+
- '<div class="card"><h3>خام مال کا اندازاً باقی اسٹاک</h3><p class="muted">پیداوار کے مطابق بوتل، کارٹن، ٹیپ اور اسٹیکر کا استعمال خود منہا ہوگا۔ سپلائر کے کلیم سے آنے والی مفت تبدیلیاں درج نہ ہونے کی وجہ سے مقدار اندازاً ہوگی۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div></div>';
+ '<div class="card"><h3>خام مال کا باقی اسٹاک اور لاگت</h3><p class="muted">پیداوار کے مطابق استعمال منہا ہوگا۔ ہر خام مال کی اوسط درج شدہ فی اکائی لاگت اور باقی اسٹاک کی مالیت الگ دکھائی جائے گی۔ یہ مالیت اسٹاک کی قدر ہے، اسی دن کا خرچ نہیں۔ ابتدائی اسٹاک کی مالیت تخمینی ہو سکتی ہے؛ مفت کلیم صفر اضافی خریداری لاگت پر شمار ہوگا۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div><div id="rawStockValuation">لاگت کا حساب لوڈ ہو رہا ہے...</div></div>';
  await loadRawMaterialPurchases();
 }
 async function saveRawMaterialPurchase(){
@@ -2195,7 +2195,7 @@ async function loadRawMaterialPurchases(){
    financeFetchAll("unassigned_19l_deliveries","damaged_caps,delivery_date","delivery_date",null,null),
    ]);
  }catch(e){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
- const rawOpeningDate=key=>rows.find(x=>x.record_type==="opening_stock"&&x.material_type===key)?.purchase_date||null;
+ const rawOpeningDate=key=>rows.filter(x=>x.record_type==="opening_stock"&&x.material_type===key).map(x=>x.purchase_date).sort()[0]||null;
  const relevantRawRows=key=>rows.filter(x=>x.material_type===key&&(!rawOpeningDate(key)||x.record_type==="opening_stock"||x.purchase_date>=rawOpeningDate(key)));
  const purchased=key=>relevantRawRows(key).reduce((n,x)=>n+Number(x.quantity||0),0);
  const made=(key,materialKey=key)=>prod.filter(x=>x.product_type===key&&(!rawOpeningDate(materialKey)||x.production_date>=rawOpeningDate(materialKey))).reduce((n,x)=>n+Number(x.quantity||0),0);
@@ -2215,7 +2215,29 @@ async function loadRawMaterialPurchases(){
   sticker:made("500ml","sticker")*24+made("1.5L","sticker")*12+made("6L","sticker"),
   ...capUsed
  };
+ 
  const balanceKeys=["bottle_500ml","cap_500ml","bottle_1_5l","cap_1_5l","bottle_6l","cap_6l","carton_500ml","carton_1_5l","tape_bundle","sticker"];
+ const valuationKeys=[...balanceKeys,"cap_19l"];
+ const valuationRows=valuationKeys.map(k=>{
+  const source=relevantRawRows(k);
+  const qty=source.reduce((n,x)=>n+Number(x.quantity||0),0);
+  const amount=source.reduce((n,x)=>n+Number(x.total_amount||0),0);
+  const average=qty>0?amount/qty:null;
+  const remaining=purchased(k)-(k==="cap_19l"?capsUsed:used[k]||0);
+  const value=average===null?null:Math.max(0,remaining)*average;
+  const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"||k.startsWith("cap_")?"عدد":"بوتل";
+  return {key:k,label:rawMaterialLabels[k]||k,qty,amount,average,remaining,value,unit};
+ });
+ const totalRawStockValue=valuationRows.reduce((n,r)=>n+(r.value||0),0);
+ const shortages=valuationRows.filter(r=>r.remaining<0);
+ const rawStockValuationBox=$("rawStockValuation");
+ if(rawStockValuationBox)rawStockValuationBox.innerHTML=
+  '<div class="stat">باقی خام مال کی درج شدہ تخمینی مالیت <b>'+money(totalRawStockValue)+'</b><small>صرف موجودہ مثبت مقدار × اوسط درج شدہ فی اکائی لاگت؛ یہ رقم منافع میں دوبارہ خرچ نہیں کی گئی۔</small></div>'+
+  '<div class="tablewrap"><table><tr><th>خام مال</th><th>خریدی/ابتدائی/مفت مقدار</th><th>اوسط فی اکائی لاگت</th><th>استعمال</th><th>باقی مقدار</th><th>باقی مالیت</th></tr>'+
+  valuationRows.map(r=>'<tr><td>'+esc(r.label)+'</td><td>'+r.qty.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.average===null?"لاگت درج نہیں":money(r.average))+'</td><td>'+((r.qty-r.remaining).toLocaleString("en-US",{maximumFractionDigits:2}))+' '+r.unit+'</td><td class="'+(r.remaining<0?"warning":"")+'">'+r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.value===null?"—":money(r.value))+'</td></tr>').join("")+
+  '</table></div>'+
+  (shortages.length?'<div class="warning">خام مال کے اسٹاک میں کمی/منفی بیلنس: '+shortages.map(r=>esc(r.label)+" ("+r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+")").join("، ")+'۔ انٹری اور پیداوار دوبارہ چیک کریں۔</div>':"");
+
  $("rawStockBalance").innerHTML='<div class="grid">'+balanceKeys.map(k=>{
   const remaining=purchased(k)-used[k];
   const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"?"اسٹیکر":k.startsWith("cap_")?"عدد":"بوتل";
@@ -2749,6 +2771,10 @@ async function loadExecutiveDashboard(){
   const margin=revenue>0?(net/revenue*100):null;
   const missing=Array.isArray(report.missing_costs)?report.missing_costs:[];
   const stock=report.stock_estimate||{};
+  const shopWaterRate=water.water_rate_per_litre==null?null:Number(water.water_rate_per_litre);
+  const fillWaterRate=finished.filling_water_rate_per_litre==null?null:Number(finished.filling_water_rate_per_litre);
+  const shopWaterRemainingValue=shopWaterRate===null?null:Number(stock.water_shop_pool_remaining_litres||0)*shopWaterRate;
+  const fillWaterRemainingValue=fillWaterRate===null?null:Number(stock.water_product_filling_litres||0)*fillWaterRate;
   const closed=data.month_closed===true;
   const fmt=n=>money(Number(n)||0),fmtNullable=n=>n==null?"—":fmt(n);
   const status=report.complete===true&&missing.length===0?(report.net_profit_is_estimated?"لاگت دستیاب؛ کاؤنٹر پانی کی مقدار تخمینی":"درج شدہ لاگت کے اجزا دستیاب"):"حساب میں لاگت کی کمی ہے";
@@ -2804,7 +2830,7 @@ async function loadExecutiveDashboard(){
      <div class="exec-line"><span>19L ڈلیوری پانی کی لاگت</span><b>${fmt(water.water_cost)}</b></div>
      <div class="exec-line"><span>کاؤنٹر پانی کی تخمینی لاگت</span><b>${fmt(water.estimated_counter_water_cost??water.counter_water_cost)}</b></div>
      <div class="exec-line"><span>کاؤنٹر پانی کے لیٹر (آپ کا تخمینہ)</span><b>${Number(water.counter_water_litres)||0} لیٹر</b></div>
-     <div class="exec-line"><span>پانی کی اوسط لاگت فی لیٹر</span><b>${fmt(water.water_rate_per_litre)}</b></div>
+     <div class="exec-line"><span>پانی کی اوسط لاگت فی لیٹر</span><b>${fmt(water.water_rate_per_litre)}</b></div>\n     <div class="exec-line"><span>پروڈکشن ٹنکی کی لاگت فی لیٹر</span><b>${fmtNullable(finished.filling_water_rate_per_litre)}</b></div>
      <div class="exec-line"><span>19L آمدن فی کامیاب بوتل</span><b>${fmtNullable(water.delivery_revenue_per_successful_bottle)}</b></div>
      <div class="exec-line"><span>19L پانی کی لاگت فی روانہ بوتل</span><b>${fmtNullable(water.delivery_water_cost_per_bottle_delivered)}</b></div>
      <div class="exec-line"><span>19L مزدوری فی کامیاب بوتل</span><b>${fmtNullable(water.delivery_labor_per_successful_bottle)}</b></div>
@@ -2836,7 +2862,7 @@ async function loadExecutiveDashboard(){
    </div>
    <div class="exec-two-col">
     <section class="exec-panel"><h3>پروڈکٹ کارکردگی</h3><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>مقدار</th><th>فروخت</th><th>مواد/پیکنگ فی یونٹ</th><th>بنیادی براہ راست لاگت</th><th>اوسط فروخت قیمت</th><th>ابتدائی فی یونٹ بچت</th><th>کل مواد</th><th>مزدوری</th></tr>${productRows||"<tr><td colspan='9'>ابھی فروخت درج نہیں۔</td></tr>"}</table></div><p class="muted">بنیادی براہ راست لاگت میں خام مال/پیکنگ، پیداواری مزدوری اور پانی شامل ہیں۔ اس ابتدائی فی یونٹ بچت میں ریٹرن/متبادل نقصان، صفائی و لوڈنگ جیسی معاون مزدوری، سیکشن خرچ اور مشترکہ اخراجات (کرایہ، بجلی، پیٹرول) شامل نہیں؛ یہ سب مجموعی منافع و نقصان میں الگ منہا ہوتے ہیں۔ کسی بنیادی لاگت کا اندراج نہ ہو تو لاگت خالی رہے گی، صفر فرض نہیں ہوگی۔</p></section>
-    <section class="exec-panel"><h3>اسٹاک کا خلاصہ</h3><div class="exec-stock-grid">${stockRows}</div><p class="muted">اسٹاک کے اعداد موجودہ ماڈل کے تخمینے ہیں؛ مفت کلیم بوتلوں کی مکمل مقدار درج نہ ہونے پر کچھ خام مال کا تخمینہ محدود ہے۔</p></section>
+    <section class="exec-panel"><h3>اسٹاک کا خلاصہ</h3><div class="exec-stock-grid">${stockRows}</div><div class="exec-line"><span>دکان والی ٹنکی کے باقی پانی کی مالیت (تخمینی)</span><b>${fmtNullable(shopWaterRemainingValue)}</b></div><div class="exec-line"><span>پروڈکشن ٹنکی کے باقی پانی کی مالیت</span><b>${fmtNullable(fillWaterRemainingValue)}</b></div><p class="muted">ٹنکی کی باقی مالیت = باقی لیٹر × اس ٹنکی کی اوسط فی لیٹر لاگت۔ دکان والی ٹنکی کے لیٹر آپ کے تخمینے کی وجہ سے اس کی مالیت بھی تخمینی ہے۔</p><p class="muted">اسٹاک کے اعداد موجودہ ماڈل کے تخمینے ہیں؛ مفت کلیم بوتلوں کی مکمل مقدار درج نہ ہونے پر کچھ خام مال کا تخمینہ محدود ہے۔</p></section>
    </div>
    ${report.notes?'<div class="warning"><b>حساب کی اہم حد:</b> '+esc(report.notes)+'</div>':""}
    ${Number(report.expense_entry_count||0)===0?'<div class="warning"><b>اس مدت میں اخراجات کی کوئی انٹری نہیں:</b> تصدیق کریں کہ واقعی کوئی کاروباری خرچ نہیں ہوا؛ اگر پیٹرول، مرمت، بجلی یا دوسرا خرچ ہوا ہے تو درج کیے بغیر منافع حتمی نہیں ہوگا۔</div>':'<p class="muted">اس مدت میں اخراجات کی محفوظ انٹریاں: '+Number(report.expense_entry_count)+'</p>'}
