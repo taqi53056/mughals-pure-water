@@ -1140,10 +1140,13 @@ async function completePasswordReset(){
  if(password!==confirmation){$("loginMsg").className="error";$("loginMsg").textContent="دونوں پاس ورڈ ایک جیسے درج کریں۔";$("confirmNewPassword").focus();return;}
  button.disabled=true;button.textContent="پاس ورڈ محفوظ ہو رہا ہے...";
  clearAuthMessage();
+ let passwordUpdated=false;
  try{
   await ensureSupabase();
   const {error}=await db.auth.updateUser({password});
   if(error)throw error;
+  passwordUpdated=true;
+  await clearCurrentDevicePushSubscription();
   await db.auth.signOut();
   history.replaceState(null,document.title,window.location.pathname);
   $("newPassword").value="";$("confirmNewPassword").value="";
@@ -1152,7 +1155,9 @@ async function completePasswordReset(){
   $("loginMsg").textContent="پاس ورڈ تبدیل ہوگیا ہے۔ اب نئے پاس ورڈ سے لاگ اِن کریں۔";
  }catch(e){
   $("loginMsg").className="error";
-  $("loginMsg").textContent="پاس ورڈ تبدیل نہیں ہوسکا: "+(e?.message||String(e));
+  $("loginMsg").textContent=passwordUpdated
+   ?"پاس ورڈ تبدیل ہوگیا ہے، مگر اس ڈیوائس کی Push رکنیت ختم نہیں ہوسکی؛ محفوظ لاگ آؤٹ نہیں کیا گیا۔ ایپ دوبارہ کھول کر لاگ آؤٹ کی کوشش کریں۔"
+   :"پاس ورڈ تبدیل نہیں ہوسکا: "+(e?.message||String(e));
  }finally{
   button.disabled=false;button.textContent="نیا پاس ورڈ محفوظ کریں";
  }
@@ -1289,7 +1294,28 @@ async function restoreSavedSession(){
 }
 window.addEventListener("load",restoreSavedSession,{once:true});
 
-async function logout(){if(!db)return;await stopAdminCustomerRealtime();await db.auth.signOut();location.reload()}
+async function clearCurrentDevicePushSubscription(){
+ if(!db||!("serviceWorker" in navigator)||!("PushManager" in window))return;
+ const {data,error}=await db.auth.getUser();
+ if(error)throw error;
+ if(!data?.user?.id)return;
+ const registration=await navigator.serviceWorker.ready;
+ const subscription=await registration.pushManager.getSubscription();
+ if(!subscription)return;
+ const {error:deleteError}=await db.from("customer_push_subscriptions")
+  .delete().eq("auth_user_id",data.user.id).eq("endpoint",subscription.endpoint);
+ if(deleteError)throw deleteError;
+ try{await subscription.unsubscribe();}catch(e){console.warn("Local push unsubscribe failed after server-side removal",e);}
+}
+
+async function logout(){
+ if(!db)return;
+ await stopAdminCustomerRealtime();
+ try{await clearCurrentDevicePushSubscription();}
+ catch(e){msg("محفوظ لاگ آؤٹ مکمل نہیں ہوا؛ اس ڈیوائس کی Push رکنیت ختم نہیں ہوسکی: "+(e?.message||String(e)));return;}
+ await db.auth.signOut();
+ location.reload();
+}
 
 
 function filterAdminModules(category){
