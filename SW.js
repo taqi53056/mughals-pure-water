@@ -1,4 +1,4 @@
-const CACHE_NAME = "mughals-pure-water-v97-opening-stock-history-correction";
+const CACHE_NAME = "mughals-pure-water-v98-owner-unassigned-delivery";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./logo.svg"];
 const APP_SHELL_PATHS = new Set(APP_SHELL.map(path => new URL(path, self.location.href).pathname));
 
