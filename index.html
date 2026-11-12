@@ -2751,7 +2751,8 @@ async function loadExecutiveDashboard(){
    ["1.5L کارٹن",stock.cartons_1_5l],
    ["ٹیپ بنڈل",stock.tape_bundles],
    ["اسٹیکر",stock.stickers],
-   ["پانی کا مجموعی تخمینہ (لیٹر)",stock.water_litres]
+   ["دکان والی ٹنکی — 19L / 6L باقی پانی (لیٹر)",stock.water_shop_pool_remaining_litres],
+   ["پروڈکشن والی ٹنکی — 500ml / 1.5L باقی پانی (لیٹر)",stock.water_product_filling_litres]
   ].map(([label,value])=>`<div class="exec-stock-item"><span>${label}</span><b>${Number(value)||0}</b></div>`).join("");
   const productChartRows=Object.entries(products).map(([name,r])=>({name,revenue:Number(r.revenue)||0})).filter(x=>x.revenue>0);
    const productChartMax=Math.max(1,...productChartRows.map(x=>x.revenue));
@@ -2910,7 +2911,7 @@ async function loadMonthlySnapshots(){
    "<div class='worker-summary-grid'><div><small>19L شعبہ</small><b>"+money(seg["19L"]?.profit_before_shared||0)+"</b></div><div><small>مصنوعات کا شعبہ</small><b>"+money(seg.finished_goods?.profit_before_shared||0)+"</b></div><div><small>مجموعی نتیجہ</small><b>"+result+"</b></div><div><small>مالکان کی ذاتی نکاسی</small><b>"+money(owners.total||0)+"</b></div></div>"+
    "<div class='stat'>500ml فروخت: "+money((r.products?.["500ml"]?.revenue)||0)+" — 1.5L فروخت: "+money((r.products?.["1.5L"]?.revenue)||0)+" — 6L فروخت: "+money((r.products?.["6L"]?.revenue)||0)+"</div>"+
    missing+notes+
-   "<p class='muted'>موجودہ محفوظ اسٹاک تخمینہ: 500ml "+(stock.finished_500ml_cartons||0)+" کارٹن، 1.5L "+(stock.finished_1_5l_cartons||0)+" کارٹن، 6L "+(stock.finished_6l_bottles||0)+" بوتلیں۔</p>"+
+   "<p class='muted'>موجودہ محفوظ اسٹاک تخمینہ: 500ml "+(stock.finished_500ml_cartons||0)+" کارٹن، 1.5L "+(stock.finished_1_5l_cartons||0)+" کارٹن، 6L "+(stock.finished_6l_bottles||0)+" بوتلیں۔ دکان والی ٹنکی: "+(stock.water_shop_pool_remaining_litres||0)+" لیٹر؛ پروڈکشن والی ٹنکی: "+(stock.water_product_filling_litres||0)+" لیٹر۔</p>"+
    "<p class='muted'>تیار ہونے کا وقت: "+esc(new Date(row.generated_at).toLocaleString("ur-PK"))+"</p></div>";
  }).join("");
 }
@@ -3028,7 +3029,9 @@ async function runReport(){
    ["500ml کارٹن",stock.cartons_500ml,"کارٹن"],["1.5L کارٹن",stock.cartons_1_5l,"کارٹن"],
    ["ٹیپ بنڈل",stock.tape_bundles,"بنڈل"],["اسٹیکر",stock.stickers,"عدد"],
    ["تیار 500ml",stock.finished_500ml_cartons,"کارٹن"],["تیار 1.5L",stock.finished_1_5l_cartons,"کارٹن"],
-   ["تیار 6L",stock.finished_6l_bottles,"بوتل"]
+   ["تیار 6L",stock.finished_6l_bottles,"بوتل"],
+   ["دکان والی ٹنکی — 19L / 6L باقی پانی",stock.water_shop_pool_remaining_litres,"لیٹر"],
+   ["پروڈکشن والی ٹنکی — 500ml / 1.5L باقی پانی",stock.water_product_filling_litres,"لیٹر"]
   ].map(([label,value,unit])=>"<div class='exec-stock-item'><span>"+label+"</span><b>"+(value==null?"—":Number(value).toLocaleString("ur-PK")+" "+unit)+"</b></div>").join("");
   const previous=Number(data.previous_period?.segments?.net_profit)||0;
   box.innerHTML=
