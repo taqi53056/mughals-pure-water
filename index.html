@@ -2382,15 +2382,15 @@ async function saveCounterWaterSale(){
 async function unassigned19lModule(){
  setTitle("بغیر گاہک 19L سپلائی");
  $("moduleBody").innerHTML=
- '<p class="muted">یہ اندراج صرف اس سپلائی کے لیے ہے جس کا ابھی کوئی کسٹمر اکاؤنٹ موجود نہیں۔ اس سے کسٹمر، کسٹمر بل یا کسٹمر ہسٹری نہیں بنے گی۔ ہر بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔</p>'+
+ '<p class="muted">یہ اندراج صرف اس سپلائی کے لیے ہے جس کا ابھی کوئی کسٹمر اکاؤنٹ موجود نہیں۔ اس سے کسٹمر، کسٹمر بل یا کسٹمر ہسٹری نہیں بنے گی۔ ہر کامیاب بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔</p>'+
  '<div class="card"><h3>نئی غیر منسلک سپلائی</h3>'+
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
  '<label for="u19Worker">سپلائی کرنے والا مزدور</label><select id="u19Worker"><option value="">ورکر لوڈ ہو رہا ہے...</option></select>'+
  '<label for="u19Bottles">سپلائی کی گئی بھری 19L بوتلیں</label><input id="u19Bottles" type="number" min="1" step="1" inputmode="numeric" value="5">'+
- '<label for="u19Empties">واپس آنے والی خالی بوتلیں (اگر ہوں)</label><input id="u19Empties" type="number" min="0" step="1" inputmode="numeric" value="0">'+
+ '<label for="u19Empties">واپس آنے والی خالی بوتلیں (اگر ہوں)</label><input id="u19Empties" type="number" min="0" step="1" inputmode="numeric" value="0" oninput="updateUnassigned19lLabor()">'+
  '<label for="u19DamagedCaps">اس سپلائی میں خراب 19L ڈھکن</label><input id="u19DamagedCaps" type="number" min="0" step="1" inputmode="numeric" value="0">'+
  '<label for="u19Details">تفصیل (اختیاری)</label><input id="u19Details" maxlength="300" placeholder="مثلاً عارضی سپلائی">'+
- '<div class="stat">مزدوری: <b id="u19Labor">Rs. 100</b> — فی بوتل Rs.20</div>'+
+ '<div class="stat">مزدوری: <b id="u19Labor">Rs. 0</b> — فی کامیاب بوتل Rs.20</div>'+
  '<button id="u19SaveButton" onclick="saveUnassigned19lDelivery()">سپلائی اور مزدوری محفوظ کریں</button></div>'+
  '<div id="u19History"></div>';
  const sel=$("u19Worker");
@@ -2405,7 +2405,7 @@ async function unassigned19lModule(){
  await loadUnassigned19lHistory();
 }
 function updateUnassigned19lLabor(){
- const n=Number($("u19Bottles")?.value)||0;
+ const n=Number($("u19Empties")?.value)||0;
  if($("u19Labor"))$("u19Labor").textContent=money(n*20);
 }
 async function loadUnassigned19lHistory(){
@@ -2425,7 +2425,7 @@ async function saveUnassigned19lDelivery(){
  const date=$("u19Date").value,worker=Number($("u19Worker").value),bottles=Number($("u19Bottles").value),empties=Number($("u19Empties").value||0),damagedCaps=Number($("u19DamagedCaps").value||0),details=$("u19Details").value.trim();
  if(!date||!Number.isInteger(worker)||worker<=0||!Number.isInteger(bottles)||bottles<=0||!Number.isInteger(empties)||empties<0||empties>bottles||!Number.isInteger(damagedCaps)||damagedCaps<0){msg("تاریخ، مزدور، بوتلوں، خالی بوتلوں اور خراب ڈھکنوں کی تعداد درست درج کریں۔");return;}
  if(date>today()){msg("مستقبل کی تاریخ پر سپلائی درج نہیں ہو سکتی۔");return;}
- if(!confirm("تصدیق کریں:\nتاریخ: "+date+"\nبوتلیں: "+bottles+"\nمزدوری: "+money(bottles*20)+"\nیہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
+ if(!confirm("تصدیق کریں:\nتاریخ: "+date+"\nبوتلیں: "+bottles+"\nمزدوری: "+money(empties*20)+"\nیہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
  const button=$("u19SaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  const signature=[date,worker,bottles,empties,damagedCaps,details].join("|");
  const requestId=mpwPendingRequestId("unassigned19l",signature);
