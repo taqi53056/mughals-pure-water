@@ -2922,8 +2922,8 @@ async function previewMonthClose(){
   if(report.complete!==true)reason.push("مالی رپورٹ مکمل نہیں۔");
   box.innerHTML=`
    <div class="exec-status-row"><b>${esc(range.start)} تا ${esc(range.end)}</b><span class="exec-status ${ready?"closed":"open"}">${ready?"کلوزنگ کے لیے تیار":data.month_closed?"پہلے سے بند":"مزید اصلاح درکار"}</span></div>
-   <div class="exec-line"><span>فروخت / آمدن</span><b>${money(Number(report.segments?.["19L"]?.revenue||0)+Number(report.segments?.finished_goods?.revenue||0))}</b></div>
-   <div class="exec-line"><span>تخمینی خالص منافع / نقصان</span><b>${money(report.segments?.net_profit||0)}</b></div>
+   <div class="exec-line"><span>فروخت / آمدن</span><b>${money(Number(report.segments?.["19L"]?.revenue||0)+Number(report.finished_goods?.revenue||0))}</b></div>
+   <div class="exec-line"><span>تخمینی خالص منافع / نقصان</span><b>${money(report.net_profit||0)}</b></div>
    <div class="exec-line"><span>کسٹمر بل باقی</span><b>${Number(data.unbilled_customers)||0}</b></div>
    ${notes?'<div class="warning"><b>کلوزنگ سے پہلے لازمی جائزہ:</b> '+esc(notes)+'</div>':""}
    ${reason.length?'<div class="warning"><b>کلوزنگ ابھی نہیں ہو سکتی:</b><ul>'+reason.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':'<p class="success">بنیادی خودکار چیکس پاس ہیں۔ مستقل بندش سے پہلے اخراجات کی دستی تصدیق بھی کریں۔</p>'}
