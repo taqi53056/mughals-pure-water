@@ -2909,8 +2909,9 @@ async function previewMonthClose(){
   const report=data.profit_and_loss||{},missing=Array.isArray(report.missing_costs)?report.missing_costs:[],notes=report.notes||"";
   const stock=report.stock_estimate||{};
   const negatives=Object.entries(stock).filter(([k,v])=>Number(v)<0);
-  const d=new Date(),currentMonth=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+  const currentMonth=today().slice(0,7);
   const isPast=month<currentMonth;
+  const profitLabel=report.net_profit_is_estimated===true?"تخمینی خالص منافع / نقصان":"خالص منافع / نقصان";
   const billsReady=Number(data.unbilled_customers||0)===0;
   const ready=isPast&&!data.month_closed&&report.complete===true&&missing.length===0&&negatives.length===0&&billsReady;
   const reason=[];
@@ -2923,7 +2924,7 @@ async function previewMonthClose(){
   box.innerHTML=`
    <div class="exec-status-row"><b>${esc(range.start)} تا ${esc(range.end)}</b><span class="exec-status ${ready?"closed":"open"}">${ready?"کلوزنگ کے لیے تیار":data.month_closed?"پہلے سے بند":"مزید اصلاح درکار"}</span></div>
    <div class="exec-line"><span>فروخت / آمدن</span><b>${money(Number(report.segments?.["19L"]?.revenue||0)+Number(report.finished_goods?.revenue||0))}</b></div>
-   <div class="exec-line"><span>تخمینی خالص منافع / نقصان</span><b>${money(report.net_profit||0)}</b></div>
+   <div class="exec-line"><span>${profitLabel}</span><b>${money(report.net_profit||0)}</b></div>
    <div class="exec-line"><span>کسٹمر بل باقی</span><b>${Number(data.unbilled_customers)||0}</b></div>
    ${notes?'<div class="warning"><b>کلوزنگ سے پہلے لازمی جائزہ:</b> '+esc(notes)+'</div>':""}
    ${reason.length?'<div class="warning"><b>کلوزنگ ابھی نہیں ہو سکتی:</b><ul>'+reason.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':'<p class="success">بنیادی خودکار چیکس پاس ہیں۔ مستقل بندش سے پہلے اخراجات کی دستی تصدیق بھی کریں۔</p>'}
