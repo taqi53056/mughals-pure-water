@@ -2183,13 +2183,14 @@ async function saveRawMaterialPurchase(){
  finally{if(button)button.disabled=false;}
 }
 async function loadRawMaterialPurchases(){
- let rows=[],prod=[],capDeliveries=[],unassignedDeliveries=[];
+ let rows=[],prod=[],capDeliveries=[],unassignedDeliveries=[],counterCapSales=[];
  try{
-  [rows,prod,capDeliveries,unassignedDeliveries]=await Promise.all([
+  [rows,prod,capDeliveries,unassignedDeliveries,counterCapSales]=await Promise.all([
    financeFetchAll("raw_material_purchases","*","purchase_date",null,null),
    financeFetchAll("production","product_type,quantity,production_date","production_date",null,null),
    financeFetchAll("customer_19l_deliveries","bottles_delivered,damaged_caps,delivery_date","delivery_date",null,null),
-   financeFetchAll("unassigned_19l_deliveries","bottles_delivered,delivery_date","delivery_date",null,null)
+   financeFetchAll("unassigned_19l_deliveries","damaged_caps,delivery_date","delivery_date",null,null),
+   financeFetchAll("counter_water_sales","caps_sold,sale_date","sale_date",null,null)
   ]);
  }catch(e){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
  const rawOpeningDate=key=>rows.find(x=>x.record_type==="opening_stock"&&x.material_type===key)?.purchase_date||null;
@@ -2343,10 +2344,11 @@ async function loadTankerPurchases(){
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
  $("moduleBody").innerHTML=
- '<p class="muted">پورے دن کے کُل فروخت شدہ لیٹر اور کُل وصول شدہ رقم درج کریں۔ اس تاریخ کا ریکارڈ پہلے موجود ہو تو خانے اسی کل سے بھر جائیں گے؛ نئی رقم جمع نہ کریں بلکہ پورے دن کا درست مجموعہ درج کرکے اسی ریکارڈ کو اپڈیٹ کریں۔</p>'+
+ '<p class="muted">پورے دن کے پانی کے کُل لیٹر اور پانی کی وصول شدہ رقم درج کریں۔ خراب یا فروخت شدہ 19L ڈھکن الگ درج ہوں گے؛ فی فروخت شدہ ڈھکن 10 روپے الگ آمدن شمار ہوگی۔ پہلے سے موجود تاریخ پر پورے دن کا درست مجموعہ درج کرکے اسی ریکارڈ کو اپڈیٹ کریں۔</p>'+
  '<div class="card"><input id="counterDate" type="date" value="'+today()+'">'+
  '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنے لیٹر فروخت ہوئے؟">'+
- '<input id="counterAmount" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنی رقم وصول ہوئی؟">'+
+ '<input id="counterAmount" type="number" min="0.01" step="0.01" placeholder="صرف پانی کی آج کُل وصول شدہ رقم؟">'+
+ '<label for="counterCapsSold">آج الگ فروخت کیے گئے 19L ڈھکن (10 روپے فی عدد)</label><input id="counterCapsSold" type="number" min="0" step="1" value="0" inputmode="numeric">'+
  '<select id="counterMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="mixed">مختلف ذرائع</option></select>'+
  '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ کاؤنٹر فروخت محفوظ کریں</button></div>';
  $("counterDate").addEventListener("change",loadCounterWaterForDate);await loadCounterWaterForDate();
@@ -2358,22 +2360,23 @@ async function loadCounterWaterForDate(){
  $("counterLitres").value=data?.total_litres??"";
  $("counterAmount").value=data?.total_amount??"";
  $("counterMethod").value=data?.payment_method||"cash";
+ $("counterCapsSold").value=data?.caps_sold??0;
  const saveButton=$("counterSaveButton");
  if(saveButton)saveButton.textContent=data?"روزانہ کا کُل اپڈیٹ کریں":"روزانہ کاؤنٹر فروخت محفوظ کریں";
  const {data:history}=await db.from("counter_water_sales").select("*").order("sale_date",{ascending:false}).limit(30);
- $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر فروخت کی ہسٹری</h3><table><tr><th>تاریخ</th><th>لیٹر</th><th>وصول شدہ رقم</th><th>فی لیٹر اوسط</th></tr>'+
- (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.total_litres))+'</td></tr>').join("")+'</table>';
+ $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر فروخت کی ہسٹری</h3><table><tr><th>تاریخ</th><th>لیٹر</th><th>پانی کی رقم</th><th>فروخت شدہ ڈھکن</th><th>ڈھکن آمدن</th><th>فی لیٹر پانی اوسط</th></tr>'+
+ (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td>'+Number(r.caps_sold||0)+'</td><td>'+money(Number(r.caps_sold||0)*10)+'</td><td>'+money(Number(r.total_amount)/Number(r.total_litres))+'</td></tr>').join("")+'</table>';
 }
 async function saveCounterWaterSale(){
- const sale_date=$("counterDate").value,total_litres=Number($("counterLitres").value),total_amount=Number($("counterAmount").value);
- if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<=0){msg("تاریخ، کل لیٹر اور وصول شدہ رقم درست درج کریں۔");return;}
- if(!confirmLargeEntry("کاؤنٹر فروخت کے لیٹر",total_litres,1000)||!confirmLargeEntry("وصول شدہ رقم",total_amount,100000))return;
+ const sale_date=$("counterDate").value,total_litres=Number($("counterLitres").value),total_amount=Number($("counterAmount").value),caps_sold=Number($("counterCapsSold").value||0);
+ if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<=0||!Number.isInteger(caps_sold)||caps_sold<0){msg("تاریخ، پانی کے لیٹر، پانی کی رقم اور ڈھکنوں کی تعداد درست درج کریں۔");return;}
+ if(!confirmLargeEntry("کاؤنٹر فروخت کے لیٹر",total_litres,1000)||!confirmLargeEntry("پانی کی وصول شدہ رقم",total_amount,100000)||!confirmLargeEntry("فروخت شدہ 19L ڈھکن",caps_sold,100))return;
  const button=$("counterSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
-  const payload={sale_date,total_litres,total_amount,payment_method:$("counterMethod").value,entered_by:user?.id||null};
+  const payload={sale_date,total_litres,total_amount,caps_sold,payment_method:$("counterMethod").value,entered_by:user?.id||null};
   const {error}=await db.from("counter_water_sales").upsert(payload,{onConflict:"sale_date"});
   if(error)throw error;
-  msg("اس تاریخ کی روزانہ کاؤنٹر فروخت محفوظ/اپڈیٹ ہوگئی؛ دوسرا ریکارڈ نہیں بنایا گیا۔",true);
+  msg("پانی کی فروخت اور الگ ڈھکنوں کی فروخت محفوظ/اپڈیٹ ہوگئی؛ ڈھکن آمدن "+money(caps_sold*10)+" ہے۔",true);
   await loadCounterWaterForDate();await loadTodaySummary();
  }catch(error){msg("کاؤنٹر فروخت محفوظ نہیں ہوئی: "+(error?.message||String(error)));}
  finally{if(button)button.disabled=false;}
@@ -2389,6 +2392,7 @@ async function unassigned19lModule(){
  '<label for="u19Worker">سپلائی کرنے والا مزدور</label><select id="u19Worker"><option value="">ورکر لوڈ ہو رہا ہے...</option></select>'+
  '<label for="u19Bottles">سپلائی کی گئی بھری 19L بوتلیں</label><input id="u19Bottles" type="number" min="1" step="1" inputmode="numeric" value="5">'+
  '<label for="u19Empties">واپس آنے والی خالی بوتلیں (اگر ہوں)</label><input id="u19Empties" type="number" min="0" step="1" inputmode="numeric" value="0">'+
+ '<label for="u19DamagedCaps">اس سپلائی میں خراب 19L ڈھکن</label><input id="u19DamagedCaps" type="number" min="0" step="1" inputmode="numeric" value="0">'+
  '<label for="u19Details">تفصیل (اختیاری)</label><input id="u19Details" maxlength="300" placeholder="مثلاً عارضی سپلائی">'+
  '<div class="stat">مزدوری: <b id="u19Labor">Rs. 100</b> — فی بوتل Rs.20</div>'+
  '<button id="u19SaveButton" onclick="saveUnassigned19lDelivery()">سپلائی اور مزدوری محفوظ کریں</button></div>'+
@@ -2411,34 +2415,34 @@ function updateUnassigned19lLabor(){
 async function loadUnassigned19lHistory(){
  const box=$("u19History");if(!box)return;
  try{
-  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,worker_id,bottles_delivered,empty_bottles_returned,labor_amount,details").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
+  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,worker_id,bottles_delivered,empty_bottles_returned,damaged_caps,labor_amount,details").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
   if(error)throw error;
   const {data:workers,error:we}=await db.from("workers").select("id,full_name");
   if(we)throw we;
   const map=new Map((workers||[]).map(w=>[Number(w.id),w.full_name]));
-  box.innerHTML='<h3>غیر منسلک سپلائی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>مزدور</th><th>بھری بوتلیں</th><th>خالی واپس</th><th>مزدوری</th><th>تفصیل</th></tr>'+
-   (data||[]).map(r=>'<tr><td>'+esc(r.delivery_date)+'</td><td>'+esc(map.get(Number(r.worker_id))||"ورکر")+'</td><td>'+Number(r.bottles_delivered)+'</td><td>'+Number(r.empty_bottles_returned)+'</td><td>'+money(r.labor_amount)+'</td><td>'+esc(r.details||"—")+'</td></tr>').join("")+
+  box.innerHTML='<h3>غیر منسلک سپلائی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>مزدور</th><th>بھری بوتلیں</th><th>خالی واپس</th><th>خراب ڈھکن</th><th>مزدوری</th><th>تفصیل</th></tr>'+
+   (data||[]).map(r=>'<tr><td>'+esc(r.delivery_date)+'</td><td>'+esc(map.get(Number(r.worker_id))||"ورکر")+'</td><td>'+Number(r.bottles_delivered)+'</td><td>'+Number(r.empty_bottles_returned)+'</td><td>'+Number(r.damaged_caps||0)+'</td><td>'+money(r.labor_amount)+'</td><td>'+esc(r.details||"—")+'</td></tr>').join("")+
    '</table></div>';
  }catch(e){box.textContent="سپلائی ہسٹری لوڈ نہیں ہوئی: "+(e.message||String(e));}
 }
 async function saveUnassigned19lDelivery(){
- const date=$("u19Date").value,worker=Number($("u19Worker").value),bottles=Number($("u19Bottles").value),empties=Number($("u19Empties").value||0),details=$("u19Details").value.trim();
- if(!date||!Number.isInteger(worker)||worker<=0||!Number.isInteger(bottles)||bottles<=0||!Number.isInteger(empties)||empties<0||empties>bottles){msg("تاریخ، مزدور، بوتلوں اور خالی بوتلوں کی تعداد درست درج کریں۔");return;}
+ const date=$("u19Date").value,worker=Number($("u19Worker").value),bottles=Number($("u19Bottles").value),empties=Number($("u19Empties").value||0),damagedCaps=Number($("u19DamagedCaps").value||0),details=$("u19Details").value.trim();
+ if(!date||!Number.isInteger(worker)||worker<=0||!Number.isInteger(bottles)||bottles<=0||!Number.isInteger(empties)||empties<0||empties>bottles||!Number.isInteger(damagedCaps)||damagedCaps<0){msg("تاریخ، مزدور، بوتلوں، خالی بوتلوں اور خراب ڈھکنوں کی تعداد درست درج کریں۔");return;}
  if(date>today()){msg("مستقبل کی تاریخ پر سپلائی درج نہیں ہو سکتی۔");return;}
  if(!confirm("تصدیق کریں:\nتاریخ: "+date+"\nبوتلیں: "+bottles+"\nمزدوری: "+money(bottles*20)+"\nیہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
  const button=$("u19SaveButton");if(button?.disabled)return;if(button)button.disabled=true;
- const signature=[date,worker,bottles,empties,details].join("|");
+ const signature=[date,worker,bottles,empties,damagedCaps,details].join("|");
  const requestId=mpwPendingRequestId("unassigned19l",signature);
  try{
   const {data,error}=await db.rpc("record_unassigned_19l_delivery",{
    p_delivery_date:date,p_worker_id:worker,p_bottles_delivered:bottles,
-   p_empty_bottles_returned:empties,p_details:details||null,p_request_id:requestId
+   p_empty_bottles_returned:empties,p_details:details||null,p_request_id:requestId,p_damaged_caps:damagedCaps
   });
   if(error)throw error;
   if(!data?.id)throw new Error("محفوظ اندراج کی تصدیق موصول نہیں ہوئی۔");
   mpwClearPendingRequestId("unassigned19l");
   msg("غیر منسلک سپلائی محفوظ ہوگئی۔ مزدوری "+money(data.labor_amount)+" ورکر لیجر میں درج ہوگئی۔",true);
-  $("u19Bottles").value="";$("u19Empties").value="0";$("u19Details").value="";
+  $("u19Bottles").value="";$("u19Empties").value="0";$("u19DamagedCaps").value="0";$("u19Details").value="";
   updateUnassigned19lLabor();
   await Promise.all([loadUnassigned19lHistory(),loadTankerPurchases(),loadTodaySummary()]);
  }catch(e){msg("سپلائی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
