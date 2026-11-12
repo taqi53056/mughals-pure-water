@@ -2456,7 +2456,7 @@ async function unassigned19lModule(){
  '<div class="card"><h3>نئی غیر منسلک سپلائی</h3>'+
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
  '<label for="u19Worker">سپلائی کس نے کی؟ *</label><select id="u19Worker" required><option value="" selected disabled>سپلائی کرنے والا منتخب کریں</option><option value="owner">مالک نے خود سپلائی کی</option><option value="worker">مزدور نے سپلائی کی</option></select><div id="u19WorkerPicker" class="hidden"><label for="u19WorkerId">مزدور منتخب کریں *</label><select id="u19WorkerId" required><option value="">ورکر لوڈ ہو رہا ہے...</option></select></div><div id="u19OwnerNote" class="muted hidden">مالک کی اپنی محنت پر ورکر لیجر میں مزدوری نہیں بنے گی؛ بچائی گئی مزدوری الگ دکھائی جائے گی۔</div>'+
- '<label for="u19Bottles">سپلائی کی گئی بھری 19L بوتلیں</label><input id="u19Bottles" type="number" min="1" step="1" inputmode="numeric" value="5">'+
+ '<label for="u19Bottles">سپلائی کی گئی بھری 19L بوتلیں</label><input id="u19Bottles" type="number" min="1" step="1" inputmode="numeric" value="" placeholder="بوتلوں کی تعداد">'+
  '<label for="u19Empties">واپس آنے والی خالی بوتلیں (اگر ہوں)</label><input id="u19Empties" type="number" min="0" step="1" inputmode="numeric" value="0" oninput="updateUnassigned19lLabor()">'+
  '<label for="u19DamagedCaps">اس سپلائی میں خراب 19L ڈھکن</label><input id="u19DamagedCaps" type="number" min="0" step="1" inputmode="numeric" value="0">'+
  '<label for="u19Details">تفصیل (اختیاری)</label><input id="u19Details" maxlength="300" placeholder="مثلاً عارضی سپلائی">'+
@@ -2467,7 +2467,7 @@ async function unassigned19lModule(){
  try{
   const {data,error}=await db.from("workers").select("id,full_name").eq("is_active",true).eq("is_owner",false).contains("work_categories",["19L delivery"]).order("full_name");
   if(error)throw error;
-  sel.innerHTML=(data||[]).map(w=>'<option value="'+w.id+'">'+esc(w.full_name)+'</option>').join("");
+  sel.innerHTML='<option value="">مزدور منتخب کریں</option>'+(data||[]).map(w=>'<option value="'+w.id+'">'+esc(w.full_name)+'</option>').join("");
   if(!(data||[]).length)sel.innerHTML='<option value="">کوئی فعال 19L مزدور موجود نہیں</option>';
  }catch(e){sel.innerHTML='<option value="">ورکر لوڈ نہیں ہوا</option>';msg("ورکر لوڈ نہیں ہوئے: "+(e.message||String(e)));return;}
  $("u19Worker").addEventListener("change",()=>{const owner=$("u19Worker").value==="owner";$("u19WorkerPicker").classList.toggle("hidden",owner);$("u19OwnerNote").classList.toggle("hidden",!owner);$("u19WorkerId").required=!owner;});
@@ -2486,9 +2486,17 @@ async function loadUnassigned19lHistory(){
   if(error)throw error;
   const {data:workers,error:we}=await db.from("workers").select("id,full_name");
   if(we)throw we;
+  const {data:receipts,error:re}=await db.from("unassigned_19l_delivery_collections").select("delivery_id,amount");
+  if(re)throw re;
   const map=new Map((workers||[]).map(w=>[Number(w.id),w.full_name]));
-  box.innerHTML='<h3>غیر منسلک سپلائی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>سپلائی کس نے کی</th><th>بھری بوتلیں</th><th>خالی واپس</th><th>خراب ڈھکن</th><th>ورکر مزدوری</th><th>مالک کی بچائی مزدوری</th><th>تفصیل</th></tr>'+
-   (data||[]).map(r=>'<tr><td>'+esc(r.delivery_date)+'</td><td>'+esc(r.performed_by_owner?"مالک":map.get(Number(r.worker_id))||"ورکر")+'</td><td>'+Number(r.bottles_delivered)+'</td><td>'+Number(r.empty_bottles_returned)+'</td><td>'+Number(r.damaged_caps||0)+'</td><td>'+money(r.labor_amount)+'</td><td>'+money(r.owner_labor_saving)+'</td><td>'+esc(r.details||"—")+'</td></tr>').join("")+
+  const collected=new Map();
+  (receipts||[]).forEach(x=>collected.set(Number(x.delivery_id),(collected.get(Number(x.delivery_id))||0)+Number(x.amount)));
+  box.innerHTML='<h3>غیر منسلک سپلائی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>سپلائی کس نے کی</th><th>بھری بوتلیں</th><th>خالی واپس</th><th>خراب ڈھکن</th><th>وصول شدہ رقم</th><th>باقی رقم</th><th>ورکر مزدوری</th><th>مالک کی بچائی مزدوری</th><th>تفصیل</th></tr>'+
+   (data||[]).map(r=>{
+    const received=collected.get(Number(r.id))||0;
+    const due=Number(r.empty_bottles_returned||0)*100+Number(r.damaged_caps||0)*10;
+    return '<tr><td>'+esc(r.delivery_date)+'</td><td>'+esc(r.performed_by_owner?"مالک":map.get(Number(r.worker_id))||"ورکر")+'</td><td>'+Number(r.bottles_delivered)+'</td><td>'+Number(r.empty_bottles_returned)+'</td><td>'+Number(r.damaged_caps||0)+'</td><td>'+money(received)+'</td><td>'+money(Math.max(due-received,0))+'</td><td>'+money(r.labor_amount)+'</td><td>'+money(r.owner_labor_saving)+'</td><td>'+esc(r.details||"—")+'</td></tr>';
+   }).join("")+
    '</table></div>';
  }catch(e){box.textContent="سپلائی ہسٹری لوڈ نہیں ہوئی: "+(e.message||String(e));}
 }
@@ -2501,7 +2509,7 @@ async function saveUnassigned19lCollection(){
  if(!Number.isInteger(deliveryId)||deliveryId<=0||!receivedDate||!Number.isFinite(amount)||amount<=0||!["cash","bank","easypaisa","jazzcash"].includes(method)){msg("سپلائی، تاریخ، درست رقم اور طریقہ منتخب کریں۔");return;}if(receivedDate>today()){msg("مستقبل کی تاریخ پر وصولی درج نہیں ہو سکتی۔");return;}
  if(!confirm("سپلائی #"+deliveryId+" کے لیے "+money(amount)+" وصولی درج ہوگی؛ منافع دوبارہ شمار نہیں ہوگا۔ کیا محفوظ کریں؟"))return;
  const button=$("u19CollectionSave");if(button?.disabled)return;if(button)button.disabled=true;const signature=[deliveryId,receivedDate,amount,method].join("|"),requestId=mpwPendingRequestId("unassigned19l-collection",signature);
- try{const {data,error}=await db.rpc("record_unassigned_19l_collection",{p_delivery_id:deliveryId,p_received_date:receivedDate,p_amount:amount,p_payment_method:method,p_request_id:requestId});if(error)throw error;if(!data?.id)throw new Error("وصولی کی تصدیق موصول نہیں ہوئی۔");mpwClearPendingRequestId("unassigned19l-collection");msg("وصولی سپلائی سے منسلک محفوظ ہوگئی۔ بقایا: "+money(data.remaining_due??0),true);$("u19CollectionAmount").value="";await Promise.all([loadUnassigned19lCollectionOptions(),loadTodaySummary(),runReport()]);}catch(e){msg("وصولی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}finally{if(button)button.disabled=false;}
+ try{const {data,error}=await db.rpc("record_unassigned_19l_collection",{p_delivery_id:deliveryId,p_received_date:receivedDate,p_amount:amount,p_payment_method:method,p_request_id:requestId});if(error)throw error;if(!data?.id)throw new Error("وصولی کی تصدیق موصول نہیں ہوئی۔");mpwClearPendingRequestId("unassigned19l-collection");msg("وصولی سپلائی سے منسلک محفوظ ہوگئی۔ بقایا: "+money(data.remaining_due??0),true);$("u19CollectionAmount").value="";await Promise.all([loadUnassigned19lHistory(),loadUnassigned19lCollectionOptions(),loadTodaySummary(),runReport()]);}catch(e){msg("وصولی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}finally{if(button)button.disabled=false;}
 }
 
 async function saveUnassigned19lDelivery(){
