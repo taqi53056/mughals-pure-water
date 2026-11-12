@@ -2011,6 +2011,7 @@ async function stockModule(type){
  <select id="adjDirection"><option value="increase">اسٹاک میں اضافہ</option><option value="decrease">اسٹاک میں کمی</option></select>
  <input id="adjQty" type="number" min="1" step="1" placeholder="درستگی کی مقدار">
  <input id="adjReason" maxlength="250" placeholder="وجہ لازمی درج کریں">
+ <p class="muted">اسٹاک میں کمی پر اس پروڈکٹ کی درج شدہ فی یونٹ لاگت سے نقصان خودکار نکال کر منافع و نقصان میں شامل ہوگا۔ لاگت نامکمل ہو تو کمی محفوظ نہیں ہوگی۔</p>
  <button id="adjustmentSaveButton" onclick="saveFinishedAdjustment()">درستگی محفوظ کریں</button></div>`}
  <button class="secondary" onclick="loadStock('${type}')">ریکارڈ تازہ کریں</button>`;
  await loadStock(type);
@@ -2024,14 +2025,16 @@ async function saveFinishedAdjustment(){
  try{
   const signature=[product,qty,direction,date,reason].join("|");
   const requestId=mpwPendingRequestId("finished-stock-adjustment",signature);
-  const r=await db.from("finished_stock_adjustments").upsert({product_type:product,quantity:qty,adjustment_type:direction,adjustment_date:date,reason,entered_by:user.id,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
+  const r=await db.from("finished_stock_adjustments").upsert({product_type:product,quantity:qty,adjustment_type:direction,adjustment_date:date,reason,entered_by:user.id,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id,loss_amount").maybeSingle();
   if(r.error)throw r.error;
-  if(!r.data){
-   const existing=await db.from("finished_stock_adjustments").select("id").eq("request_id",requestId).maybeSingle();
+  let savedAdjustment=r.data;
+  if(!savedAdjustment){
+   const existing=await db.from("finished_stock_adjustments").select("id,loss_amount").eq("request_id",requestId).maybeSingle();
    if(existing.error||!existing.data)throw existing.error||new Error("سابقہ اسٹاک درستگی کی تصدیق نہیں ہوئی۔");
+   savedAdjustment=existing.data;
   }
   mpwClearPendingRequestId("finished-stock-adjustment");
-  msg("اسٹاک درستگی محفوظ ہوگئی۔",true);$("adjQty").value="";$("adjReason").value="";await loadStock("finished");await loadTodaySummary();
+  msg(direction==="decrease"?"اسٹاک کی کمی اور اس کی لاگت منافع و نقصان میں خودکار طور پر درج ہوگئی: "+money(savedAdjustment.loss_amount):"اسٹاک میں اضافہ محفوظ ہوگیا۔",true);$("adjQty").value="";$("adjReason").value="";await loadStock("finished");await loadTodaySummary();
  }catch(e){msg("اسٹاک درستگی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
 }
@@ -2080,7 +2083,7 @@ async function loadStock(type){
  }
  const [{data:summary,error:summaryError},{data:adjustments,error:ae},{data:production,error:pre}]=await Promise.all([
   db.rpc("get_finished_stock_summary"),
-  db.from("finished_stock_adjustments").select("product_type,quantity,adjustment_type,adjustment_date,reason").order("adjustment_date",{ascending:false}).limit(1000),
+  db.from("finished_stock_adjustments").select("product_type,quantity,adjustment_type,adjustment_date,reason,loss_amount").order("adjustment_date",{ascending:false}).limit(1000),
   db.from("production").select("production_date,product_type,quantity").order("production_date",{ascending:false}).limit(500)
  ]);
  if(summaryError||ae||pre){$("moduleTable").textContent="اسٹاک کا مکمل حساب لوڈ نہیں ہوا: "+(summaryError||ae||pre).message;return}
@@ -2090,8 +2093,8 @@ async function loadStock(type){
  (data||[]).map(r=>`<tr><td>${esc(r.entry_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity}</td><td>${esc(r.unit)}</td></tr>`).join("")+"</table>"+
  "<h3>پروڈکشن کی تازہ انٹریاں</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>یونٹ</th></tr>"+
  (production||[]).map(r=>`<tr><td>${esc(r.production_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity}</td><td>${r.product_type==="6L"?"بوتل":"کارٹن"}</td></tr>`).join("")+"</table>"+
- "<h3>اسٹاک درستگی کی ہسٹری</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>قسم</th><th>مقدار</th><th>وجہ</th></tr>"+
- (adjustments||[]).map(r=>`<tr><td>${esc(r.adjustment_date)}</td><td>${esc(r.product_type)}</td><td>${r.adjustment_type==="increase"?"اضافہ":"کمی"}</td><td>${r.quantity}</td><td>${esc(r.reason)}</td></tr>`).join("")+"</table>";
+ "<h3>اسٹاک درستگی کی ہسٹری</h3><table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>قسم</th><th>مقدار</th><th>وجہ</th><th>نقصان کی لاگت</th></tr>"+
+ (adjustments||[]).map(r=>`<tr><td>${esc(r.adjustment_date)}</td><td>${esc(r.product_type)}</td><td>${r.adjustment_type==="increase"?"اضافہ":"کمی"}</td><td>${r.quantity}</td><td>${esc(r.reason)}</td><td>${money(r.loss_amount||0)}</td></tr>`).join("")+"</table>";
 }
 
 
