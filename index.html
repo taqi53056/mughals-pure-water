@@ -2435,7 +2435,7 @@ async function loadCounterWaterForDate(){
  (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.total_litres))+'</td><td><button class="secondary" onclick="editCounterWaterSale(\''+esc(r.sale_date)+'\')">غلطی درست کریں</button></td></tr>').join("")+'</table>';
 }
 async function editCounterWaterSale(date){
- if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(date||""))){msg("ریکارڈ کی تاریخ درست نہیں۔");return;}
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(date||""))){msg("ریکارڈ کی تاریخ درست نہیں۔");return;}
  $("counterDate").value=date;
  await loadCounterWaterForDate();
  $("counterLitres").focus();
