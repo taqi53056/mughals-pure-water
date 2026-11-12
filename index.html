@@ -1504,7 +1504,7 @@ function renderCustomers(){
   const pending=c.is_active!==true&&!c.approved_at;
   const accessAction=c.is_active===true?"غیر فعال کریں":pending?"منظوری دیں":"دوبارہ فعال کریں";
   const accessHandler=pending?"approveCustomer":"toggleCustomerStatus";
-  return `<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td>${customerStatusLabel(c)}</td><td><button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button></td><td><button onclick="editCustomer(${c.id})">ترمیم</button></td><td><button class="secondary" onclick="${accessHandler}(${Number(c.id)})">${accessAction}</button></td><td><button class="danger-button" onclick="archiveCustomer(${Number(c.id)})">آرکائیو + مستقل حذف</button></td></tr>`;
+  return `<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td>${customerStatusLabel(c)}</td><td><button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button></td><td><button onclick="editCustomer(${c.id})">غلطی درست کریں</button></td><td><button class="secondary" onclick="${accessHandler}(${Number(c.id)})">${accessAction}</button></td><td><button class="danger-button" onclick="archiveCustomer(${Number(c.id)})">آرکائیو + مستقل حذف</button></td></tr>`;
  }).join("")+"</table>";
 }
 
@@ -2779,7 +2779,7 @@ async function loadMoney(type){
  const {data,error}=await db.from(table).select("*").order(datecol,{ascending:false}).limit(100);
  if(error){$("moduleTable").textContent=error.message;return}
  $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>مد</th><th>تفصیل</th><th>رقم</th><th>عمل</th></tr>"+
- (data||[]).map(r=>`<tr><td>${esc(r[datecol])}</td><td>${esc(r.category)}</td><td>${esc(r.details)}</td><td>${money(r.amount)}</td><td><button class="secondary" onclick="editMoneyRecord('${type}',${r.id})">ترمیم</button><button class="secondary" onclick="deleteMoneyRecord('${type}',${r.id})">حذف</button></td></tr>`).join("")+"</table>";
+ (data||[]).map(r=>`<tr><td>${esc(r[datecol])}</td><td>${esc(r.category)}</td><td>${esc(r.details)}</td><td>${money(r.amount)}</td><td><button class="secondary" onclick="editMoneyRecord('${type}',${r.id})">غلطی درست کریں</button><button class="secondary" onclick="deleteMoneyRecord('${type}',${r.id})">حذف</button></td></tr>`).join("")+"</table>";
 }
 
 /* آج کا خلاصہ اور رپورٹس */
