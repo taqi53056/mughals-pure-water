@@ -2763,6 +2763,7 @@ async function loadExecutiveDashboard(){
   if(error)throw error;
   const report=data?.profit_and_loss||{},segments=report.segments||{};
   const water=segments["19L"]||{},finished=segments.finished_goods||{},shared=segments.shared||{};
+  const fmt=n=>money(Number(n)||0),fmtNullable=n=>n==null?"—":fmt(n);
   const unassignedCashflowWarning=Number(water.unassigned_delivery_cash_unclassified||0)>0
    ?'<div class="warning"><b>غیر منسلک سپلائی کی وصولی باقی ہے:</b> '+fmt(water.unassigned_delivery_cash_unclassified)+' کی وصولی اس مدت میں درج نہیں۔ اگر رقم وصول ہوچکی ہے تو آمدن ماڈیول میں "غیر منسلک 19L سپلائی کی وصولی" منتخب کرکے درج کریں؛ یہ منافع میں دوبارہ شامل نہیں ہوگی۔ اگر رقم وصول نہیں ہوئی تو وصولی درج نہ کریں۔</div>'
    :"";
@@ -2780,7 +2781,6 @@ async function loadExecutiveDashboard(){
   const shopWaterRemainingValue=shopWaterRate===null?null:Number(stock.water_shop_pool_remaining_litres||0)*shopWaterRate;
   const fillWaterRemainingValue=fillWaterRate===null?null:Number(stock.water_product_filling_litres||0)*fillWaterRate;
   const closed=data.month_closed===true;
-  const fmt=n=>money(Number(n)||0),fmtNullable=n=>n==null?"—":fmt(n);
   const status=report.complete===true&&missing.length===0?(report.net_profit_is_estimated?"لاگت دستیاب؛ کاؤنٹر پانی کی مقدار تخمینی":"درج شدہ لاگت کے اجزا دستیاب"):"حساب میں لاگت کی کمی ہے";
   const kpis=[
    ["کل فروخت / آمدن",fmt(revenue),"19L + تیار مال کی فروخت"],
