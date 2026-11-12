@@ -2118,20 +2118,20 @@ const rawMaterialUnits={
 async function rawMaterialsModule(){
  setTitle("خام مال کی خریداری");
  $("moduleBody").innerHTML=
- '<p class="muted">نئی خریداری یا پہلے سے موجود ابتدائی اسٹاک منتخب کریں۔ 500ml، 1.5L اور 6L کی خالی بوتل کے ساتھ ڈھکن شامل شمار ہوگا؛ بوتل کی مقدار درج کرنے پر اتنے ہی ڈھکن خودکار اسٹاک میں شامل ہوں گے، ان کی الگ رقم نہیں ہوگی۔ 19L ڈھکن الگ درج کریں۔ کارٹن، ٹیپ بنڈل اور اسٹیکر بھی اپنی الگ اکائی میں درج ہوں گے۔ اسٹیکر کلوگرام میں نہ درج کریں؛ لاگت فی اسٹیکر کے حساب سے بنتی ہے۔ ٹیپ کا ایک بنڈل تقریباً 200 کارٹن کے لیے شمار ہوتا ہے۔ سپلائر کے کلیم سے آنے والی مفت تبدیلیاں فی الحال الگ درج نہیں ہوتیں۔</p>'+
+ '<p class="muted">نئی خریداری یا پہلے سے موجود ابتدائی اسٹاک منتخب کریں۔ 500ml، 1.5L اور 6L کی خالی بوتل کے ساتھ ڈھکن شامل شمار ہوگا؛ بوتل کی مقدار درج کرنے پر اتنے ہی ڈھکن خودکار اسٹاک میں شامل ہوں گے، ان کی الگ رقم نہیں ہوگی۔ 19L ڈھکن الگ درج کریں۔ کارٹن، ٹیپ بنڈل اور اسٹیکر بھی اپنی الگ اکائی میں درج ہوں گے۔ اسٹیکر کلوگرام میں نہ درج کریں؛ لاگت فی اسٹیکر کے حساب سے بنتی ہے۔ ٹیپ کا ایک بنڈل تقریباً 200 کارٹن کے لیے شمار ہوتا ہے۔ اگر سپلائر فری کلیم کی بوتلیں دے تو مقدار میں ادا شدہ اور فری کلیم سمیت کل وصول شدہ بوتلیں درج کریں، جبکہ رقم صرف حقیقتاً ادا شدہ کل رقم درج کریں؛ اس سے اوسط لاگت درست تقسیم ہوگی۔</p>'+
  '<div class="card"><h3>نئی خریداری</h3>'+
  '<input id="rawPurchaseDate" type="date" value="'+today()+'">'+
  '<select id="rawPurchaseKind" onchange="toggleRawPurchaseKind()"><option value="purchase">نئی خریداری</option><option value="opening_stock">پہلے سے موجود ابتدائی اسٹاک</option></select>'+
  '<select id="rawPurchaseType">'+
  Object.keys(rawMaterialLabels).filter(k=>!["cap_500ml","cap_1_5l","cap_6l"].includes(k)).map(k=>'<option value="'+k+'">'+rawMaterialLabels[k]+'</option>').join("")+
  '</select>'+
- '<input id="rawPurchaseQty" type="number" min="1" step="1" placeholder="مقدار: بوتل / کارٹن / بنڈل / عدد">'+
+ '<input id="rawPurchaseQty" type="number" min="1" step="1" placeholder="کل وصول شدہ مقدار (فری کلیم سمیت) — بوتل / کارٹن / عدد">'+
  '<input id="rawPurchaseAmount" type="number" min="0.01" step="0.01" placeholder="کل ادا شدہ رقم / ابتدائی مالیت (روپے)">'+
  '<div id="rawPaymentWrap"><label>ادائیگی کا طریقہ</label><select id="rawPurchaseMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select></div>'+
  '<input id="rawPurchaseSupplier" maxlength="120" placeholder="سپلائر (اختیاری)">'+
  '<textarea id="rawPurchaseDetails" maxlength="300" placeholder="بل نمبر / تفصیل (اختیاری)"></textarea>'+
  '<button id="rawPurchaseSaveButton" onclick="saveRawMaterialPurchase()">خریداری محفوظ کریں</button></div>'+
- '<div class="card"><h3>خام مال کا اندازاً باقی اسٹاک</h3><p class="muted">پیداوار کے مطابق بوتل، کارٹن، ٹیپ اور اسٹیکر کا استعمال خود منہا ہوگا۔ سپلائر کے کلیم سے آنے والی مفت تبدیلیاں درج نہ ہونے کی وجہ سے مقدار اندازاً ہوگی۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div></div>';
+ '<div class="card"><h3>خام مال کا اندازاً باقی اسٹاک</h3><p class="muted">پیداوار کے مطابق بوتل، کارٹن، ٹیپ اور اسٹیکر کا استعمال خود منہا ہوگا۔ فری کلیم کی مقدار بھی خریداری میں کل وصول شدہ مقدار کے اندر شامل کریں؛ پرانے ابتدائی اسٹاک میں اگر کلیم شامل نہیں تھا تو اس حصے کا موجودہ تخمینہ محدود رہے گا۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div></div>';
  await loadRawMaterialPurchases();
 }
 async function saveRawMaterialPurchase(){
@@ -2343,9 +2343,9 @@ async function loadTankerPurchases(){
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
  $("moduleBody").innerHTML=
- '<p class="muted">پورے دن کے پانی کے کُل لیٹر اور پانی کی وصول شدہ رقم درج کریں۔ کاؤنٹر پر ڈھکنوں کی فروخت کی الگ گنتی یا اندراج ضروری نہیں؛ صرف سپلائی کے دوران خراب ڈھکن درج ہوں گے۔</p>'+
+ '<p class="muted">پانی کے لیٹر اندازاً درج کریں، لیکن وصول شدہ رقم بالکل درست درج کریں۔ کاؤنٹر پر ڈھکنوں کی فروخت کی الگ گنتی یا اندراج ضروری نہیں؛ صرف سپلائی کے دوران خراب ڈھکن درج ہوں گے۔</p>'+
  '<div class="card"><input id="counterDate" type="date" value="'+today()+'">'+
- '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنے لیٹر فروخت ہوئے؟">'+
+ '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج تقریباً کتنے لیٹر پانی فروخت ہوا؟">'+
  '<input id="counterAmount" type="number" min="0.01" step="0.01" placeholder="آج پانی کی کُل وصول شدہ رقم؟">'+
  '<select id="counterMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="mixed">مختلف ذرائع</option></select>'+
  '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ کاؤنٹر فروخت محفوظ کریں</button></div>';
@@ -2361,13 +2361,13 @@ async function loadCounterWaterForDate(){
  const saveButton=$("counterSaveButton");
  if(saveButton)saveButton.textContent=data?"روزانہ کا کُل اپڈیٹ کریں":"روزانہ کاؤنٹر فروخت محفوظ کریں";
  const {data:history}=await db.from("counter_water_sales").select("*").order("sale_date",{ascending:false}).limit(30);
- $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر پانی کی فروخت</h3><table><tr><th>تاریخ</th><th>لیٹر</th><th>پانی کی وصولی</th><th>فی لیٹر اوسط</th></tr>'+
+ $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر پانی کی فروخت</h3><table><tr><th>تاریخ</th><th>اندازاً لیٹر</th><th>درست وصولی</th><th>فی اندازاً لیٹر اوسط</th></tr>'+
  (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.total_litres))+'</td></tr>').join("")+'</table>';
 }
 async function saveCounterWaterSale(){
  const sale_date=$("counterDate").value,total_litres=Number($("counterLitres").value),total_amount=Number($("counterAmount").value);
- if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<=0){msg("تاریخ، پانی کے لیٹر اور پانی کی وصول شدہ رقم درست درج کریں۔");return;}
- if(!confirmLargeEntry("کاؤنٹر فروخت کے لیٹر",total_litres,1000)||!confirmLargeEntry("پانی کی وصول شدہ رقم",total_amount,100000))return;
+ if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<=0){msg("تاریخ، اندازاً پانی کے لیٹر اور درست وصول شدہ رقم درج کریں۔");return;}
+ if(!confirmLargeEntry("کاؤنٹر فروخت کے اندازاً لیٹر",total_litres,1000)||!confirmLargeEntry("پانی کی وصول شدہ رقم",total_amount,100000))return;
  const button=$("counterSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
   const payload={sale_date,total_litres,total_amount,payment_method:$("counterMethod").value,entered_by:user?.id||null};
