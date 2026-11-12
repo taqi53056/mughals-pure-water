@@ -2606,7 +2606,7 @@ async function moneyModule(type){
  const exp=type==="expenses";
  moneyEditingId=null;setTitle(exp?"اخراجات":"آمدن");
  $("moduleBody").innerHTML=`
- <p class="muted">${exp?"صرف روزمرہ کاروباری اخراجات درج کریں۔ ورکر کی مزدوری ورکر لیجر سے خود شمار ہوتی ہے؛ وہی مزدوری یہاں دوبارہ درج نہ کریں۔ اسٹاک اور مشینری کی خریداری مالی لین دین میں درج کریں۔":"یہاں صرف دوسری آمدن درج کریں؛ 19L ڈلیوری یا پروڈکٹ سیل کی رقم یہاں دوبارہ درج نہ کریں۔"}</p>
+ <p class="muted">${exp?"صرف روزمرہ کاروباری اخراجات درج کریں۔ ورکر کی کمائی ورکر لیجر سے خود شمار ہوتی ہے؛ وہی مزدوری یہاں دوبارہ درج نہ کریں۔ خام مال، ٹینکر، پروڈکشن اور مشینری کی خریداری اپنے مخصوص بٹن سے درج کریں۔ پیٹرول/مرمت اگر 19L ڈیلیوری موٹر سائیکل کا ہو تو سیکشن 19L منتخب کریں؛ اگر مشترکہ ہو تو عمومی خرچ، اور اگر تیار مال کی ترسیل کا ہو تو تیار مال منتخب کریں۔":"یہاں صرف دوسری آمدن درج کریں؛ 19L ڈلیوری یا پروڈکٹ سیل کی رقم یہاں دوبارہ درج نہ کریں۔"}</p>
  <input id="mDate" type="date" value="${today()}">
  ${exp?'<select id="mCategory"><option value="">خرچ کی مد منتخب کریں</option><option value="گھر کا سامان">گھر کا سامان</option><option value="پیٹرول / ٹرانسپورٹ">پیٹرول / ٹرانسپورٹ</option><option value="چائے / کھانا">چائے / کھانا</option><option value="بجلی کا بل">بجلی کا بل</option><option value="پانی کا بل">پانی کا بل</option><option value="کرایہ">کرایہ</option><option value="فون / انٹرنیٹ">فون / انٹرنیٹ</option><option value="مرمت / دیکھ بھال">مرمت / دیکھ بھال</option><option value="دیگر عمومی خرچ">دیگر عمومی خرچ</option></select>':'<select id="mCategory"><option value="">آمدن کی مد منتخب کریں</option><option value="دیگر غیر فروخت آمدن">دیگر غیر فروخت آمدن (پروڈکٹ سیل / ڈلیوری کے علاوہ)</option></select>'}
  ${exp?'<select id="mSegment"><option value="general">مشترکہ خرچ — کرایہ / بجلی وغیرہ</option><option value="19L">19L گھریلو ڈیلیوری</option><option value="finished_goods">500ml / 1.5L / 6L ترسیل</option></select><select id="mMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>':''}
@@ -2682,6 +2682,15 @@ async function loadTodaySummary(){
   const tankerSpend=await sumTable("water_tanker_purchases","total_amount","purchase_date",date);
   const expenses=await sumTable("business_expenses","amount","expense_date",date);
   const income=await sumTable("business_income","amount","income_date",date);
+  let dailyPnlHtml="";
+  try{
+   const {data:dailyDash,error:dailyError}=await db.rpc("get_management_dashboard",{p_month_start:date,p_month_end:date});
+   if(dailyError)throw dailyError;
+   const dailyReport=dailyDash?.profit_and_loss||{},dailySegments=dailyReport.segments||{},dailyWater=dailySegments["19L"]||{};
+   const dailyNet=Number(dailySegments.net_profit)||0;
+   const dailyBeforeEstimate=Number(dailyWater.net_profit_before_counter_water_estimate??dailyNet);
+   dailyPnlHtml="<div class=\"stat\">روزانہ خالص نتیجہ: <b>"+money(dailyNet)+"</b> — "+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+"</div><div class=\"stat\">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>"+money(dailyBeforeEstimate)+"</b></div><div class=\"stat\">کاؤنٹر پانی کی تخمینی لاگت: <b>"+money(dailyWater.estimated_counter_water_cost||0)+"</b></div>"+(dailyReport.missing_costs?.length?"<div class=\"warning\">لاگت کی کمی: "+dailyReport.missing_costs.map(esc).join("، ")+"</div>":"")+(dailyReport.notes?"<div class=\"warning\">"+esc(dailyReport.notes)+"</div>":"");
+  }catch(dailyPnlError){dailyPnlHtml=`<div class="warning">روزانہ منافع و نقصان کا حساب لوڈ نہیں ہوا: ${esc(dailyPnlError?.message||String(dailyPnlError))}</div>`;}
   el.innerHTML=`<div class="stat">تاریخ: ${date}</div>
   <div class="stat">19L کامیاب بوتلیں: <b>${bottles}</b></div>
   <div class="stat">بوتلوں کا فرق: <b>${diff}</b></div>
@@ -2691,7 +2700,8 @@ async function loadTodaySummary(){
   <div class="stat">19L کاؤنٹر: <b>تقریباً ${counterLitres} لیٹر — ${money(counterAmount)}</b></div>
   <div class="stat">آج ٹینکر خریداری: <b>${money(tankerSpend)}</b></div>
   <div class="stat">اخراجات: <b>${money(expenses)}</b></div>
-  <div class="stat">درج شدہ آمدن: <b>${money(income)}</b></div>`;
+  <div class="stat">درج شدہ آمدن: <b>${money(income)}</b></div>
+  ${dailyPnlHtml}`;
  }catch(e){el.textContent="خلاصہ لوڈ نہیں ہوا: "+e.message}
 }
 
