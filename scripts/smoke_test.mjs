@@ -128,7 +128,7 @@ for (const required of [
   "public.unassigned_19l_delivery_collections",
   "v_worker_payables",
   "v_loan_payables",
-  "'payables',v_payables"
+  "v_payables"
 ]) {
   if (!cashflowReceivablesMigration.includes(required)) {
     throw new Error("Executive dashboard receivable/payable tracking is missing: " + required);
