@@ -584,11 +584,11 @@ try {
       fixture.remove();
       return { worker, owner, invalid };
     });
-    if (deliveryMath.worker.success !== 10 || deliveryMath.worker.diff !== 2 ||
-        deliveryMath.worker.labor !== 200 || deliveryMath.worker.capAmount !== 20) {
+    if (deliveryMath.worker.success !== 12 || deliveryMath.worker.diff !== 2 ||
+        deliveryMath.worker.labor !== 240 || deliveryMath.worker.capAmount !== 20) {
       failures.push("19L worker delivery calculation is incorrect");
     }
-    if (deliveryMath.owner.labor !== 0 || deliveryMath.owner.ownerSaving !== 200) {
+    if (deliveryMath.owner.labor !== 0 || deliveryMath.owner.ownerSaving !== 240) {
       failures.push("19L owner labor saving calculation is incorrect");
     }
     if (!deliveryMath.invalid.invalid) failures.push("19L returned-bottles validation is incorrect");
