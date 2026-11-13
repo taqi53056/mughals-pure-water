@@ -257,6 +257,20 @@ for (const required of [
     throw new Error("Bottle custody RPC security boundary is incomplete: " + required);
   }
 }
+const bottleCustodyGrantMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113151000_revoke_public_bottle_custody_rpc_execute.sql"),
+  "utf8"
+);
+for (const required of [
+  "FROM PUBLIC, anon",
+  "TO authenticated",
+  "record_customer_19l_bottle_return",
+  "record_customer_bottle_deposit"
+]) {
+  if (!bottleCustodyGrantMigration.includes(required)) {
+    throw new Error("Bottle custody RPC grants are too broad: " + required);
+  }
+}
 const monthlyRetryMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
   "utf8"
