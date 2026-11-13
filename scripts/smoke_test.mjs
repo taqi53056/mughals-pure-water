@@ -61,6 +61,21 @@ if (monthlyRetryMigration.includes("extract(day from v_today)>3")) {
   throw new Error("Monthly report retries must not stop after the first three days");
 }
 
+const cashflowReceivablesMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113102000_include_unassigned_receivables_and_worker_loan_payables_in_dashboard.sql"),
+  "utf8"
+);
+for (const required of [
+  "v_unassigned_due",
+  "public.unassigned_19l_delivery_collections",
+  "v_worker_payables",
+  "v_loan_payables",
+  "'payables',v_payables"
+]) {
+  if (!cashflowReceivablesMigration.includes(required)) {
+    throw new Error("Executive dashboard receivable/payable tracking is missing: " + required);
+  }
+}
 const finishedStockActivityMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111141230_include_finished_stock_in_monthly_report_activity.sql"),
   "utf8"
