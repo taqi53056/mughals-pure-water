@@ -42,6 +42,38 @@ for (const required of [
     throw new Error("Filled-bottle billing migration is missing: " + required);
   }
 }
+const stickerKilogramMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113112000_support_sticker_purchases_by_kilogram_and_fixed_yield.sql"),
+  "utf8"
+);
+for (const required of [
+  "sticker_500ml",
+  "sticker_1_5l_6l",
+  "THEN 1900::numeric",
+  "THEN 1200::numeric",
+  "v_sticker_shared",
+  "save_raw_material_purchase_atomic",
+  "mpw_guard_production_packaging_stock",
+  "mpw_guard_raw_material_opening_stock",
+  "record_production_with_workers"
+]) {
+  if (!stickerKilogramMigration.includes(required)) {
+    throw new Error("Kilogram sticker stock/cost migration is incomplete: " + required);
+  }
+}
+for (const required of [
+  'sticker_500ml:"kg"',
+  'sticker_1_5l_6l:"kg"',
+  'sticker_500ml:1900',
+  'sticker_1_5l_6l:1200',
+  'quantity*1900',
+  'quantity*1200',
+  "فی کلو قیمت (روپے)"
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("Kilogram sticker purchase UI or yield calculation is missing: " + required);
+  }
+}
 const monthlyRetryMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
   "utf8"
