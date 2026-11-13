@@ -66,8 +66,9 @@ for (const required of [
   'sticker_1_5l_6l:"kg"',
   'sticker_500ml:1900',
   'sticker_1_5l_6l:1200',
-  'quantity*1900',
-  'quantity*1200',
+  "stickerYield={sticker_500ml:1900,sticker_1_5l_6l:1200}",
+  "Number(x.quantity||0)*(stickerYield[key]||1)",
+  'kg*(type==="sticker_500ml"?1900:1200)',
   "فی کلو قیمت (روپے)"
 ]) {
   if (!appSource.includes(required)) {
