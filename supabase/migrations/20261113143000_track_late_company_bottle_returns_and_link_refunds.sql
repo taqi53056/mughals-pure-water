@@ -320,7 +320,7 @@ BEGIN
   v_def:=replace(v_def,v_old,v_new);
  END IF;
 
- v_old:=$old$      SELECT date_trunc('month',d.delivery_date)::date FROM public.customer_19l_deliveries d WHERE d.customer_id=p_customer_id
+ v_old:=$old$      SELECT date_trunc('month',d.delivery_date)::date AS month_start FROM public.customer_19l_deliveries d WHERE d.customer_id=p_customer_id
       UNION
       SELECT date_trunc('month',p.payment_date)::date FROM public.customer_payments p WHERE p.customer_id=p_customer_id
       UNION
