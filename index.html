@@ -3217,11 +3217,11 @@ async function loadExecutiveDashboard(){
    ["خام 6L ڈھکن",stock.raw_6l_caps],
    ["500ml کارٹن",stock.cartons_500ml],
    ["1.5L کارٹن",stock.cartons_1_5l],
-   ["ٹیپ بنڈل",stock.tape_bundles],
+   ["ٹیپ بنڈل — استعمال نامعلوم",stock.tape_bundles],
    ["اسٹیکر",stock.stickers],
    ["دکان والی ٹنکی — باقی پانی (اندازاً لیٹر)",stock.water_shop_pool_remaining_litres],
    ["پروڈکشن والی ٹنکی — 500ml / 1.5L باقی پانی (لیٹر)",stock.water_product_filling_litres]
-  ].map(([label,value])=>`<div class="exec-stock-item"><span>${label}</span><b>${Number(value)||0}</b></div>`).join("");
+  ].map(([label,value])=>`<div class="exec-stock-item"><span>${label}</span><b>${label==="ٹیپ بنڈل"&&value==null?"استعمال نامعلوم":Number(value)||0}</b></div>`).join("");
   const productChartRows=Object.entries(products).map(([name,r])=>({name,revenue:Number(r.revenue)||0})).filter(x=>x.revenue>0);
    const productChartMax=Math.max(1,...productChartRows.map(x=>x.revenue));
    const productChart=productChartRows.map(x=>`<div class="exec-bar-row"><div class="exec-bar-label"><span>${esc(x.name)}</span><b>${fmt(x.revenue)}</b></div><div class="exec-bar-track"><i style="width:${Math.max(2,x.revenue/productChartMax*100)}%"></i></div></div>`).join("");
@@ -3516,7 +3516,7 @@ async function runReport(){
    ["1.5L بوتلیں",stock.raw_1_5l_bottles,"عدد"],["1.5L ڈھکن",stock.raw_1_5l_caps,"عدد"],
    ["6L بوتلیں",stock.raw_6l_bottles,"عدد"],["6L ڈھکن",stock.raw_6l_caps,"عدد"],
    ["500ml کارٹن",stock.cartons_500ml,"کارٹن"],["1.5L کارٹن",stock.cartons_1_5l,"کارٹن"],
-   ["ٹیپ بنڈل",stock.tape_bundles,"بنڈل"],["اسٹیکر",stock.stickers,"عدد"],
+   ["ٹیپ بنڈل — استعمال نامعلوم",stock.tape_bundles,"بنڈل"],["اسٹیکر",stock.stickers,"عدد"],
    ["تیار 500ml",stock.finished_500ml_cartons,"کارٹن"],["تیار 1.5L",stock.finished_1_5l_cartons,"کارٹن"],
    ["تیار 6L",stock.finished_6l_bottles,"بوتل"],
    ["دکان والی ٹنکی — 19L / 6L باقی پانی",stock.water_shop_pool_remaining_litres,"لیٹر"],
