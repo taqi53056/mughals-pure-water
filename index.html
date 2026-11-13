@@ -3159,8 +3159,8 @@ async function loadExecutiveDashboard(){
    ["کل فروخت / آمدن",fmt(revenue),"19L + تیار مال کی فروخت"],
    ["سیکشن کنٹریبیوشن",fmt(contribution),"براہِ راست سیکشن اخراجات کے بعد"],
    ["تخمینی خالص منافع / نقصان",fmt(net),report.net_profit_is_estimated?"کاؤنٹر پانی کے لیٹر کے تخمینے سمیت":"درج شدہ اعداد کے مطابق"],
-   ["کل قابلِ وصول",fmt(data.receivables),"گاہک بل، غیر منسلک سپلائی، منظور شدہ دکانوں کا ادھار اور دیے گئے قرض"],
-   ["مدت کی وصولیاں",fmt(data.recorded_collections),"نقد فروخت، کسٹمر/دکان ادھار وصولی اور دیگر درج شدہ وصولیاں"],
+   ["کل قابلِ وصول",fmt(data.receivables),"گاہک بل، غیر منسلک سپلائی، منظور شدہ دکانوں کا ادھار اور دیے گئے قرض؛ بوتل ضمانت الگ"],
+   ["مدت کی وصولیاں",fmt(data.recorded_collections),"نقد فروخت، کسٹمر/دکان ادھار وصولی، بوتل ضمانت اور دیگر درج شدہ وصولیاں"],
    ["مالکین کی نکاسی",fmt(data.owner_withdrawals),"منافع کے خرچ میں شامل نہیں"]
   ];
   const productRows=Object.entries(products).map(([name,r])=>`<tr><td>${esc(name)}</td><td>${Number(r.quantity)||0}</td><td>${fmt(r.revenue)}</td><td>${fmtNullable(r.unit_cost)}</td><td>${fmtNullable(r.direct_unit_cost)}</td><td>${fmtNullable(r.average_sale_price)}</td><td>${fmtNullable(r.unit_contribution)}</td><td>${fmt(r.material_cost)}</td><td>${fmt(r.production_labor)}</td></tr>`).join("");
@@ -3238,7 +3238,10 @@ async function loadExecutiveDashboard(){
      <div class="exec-line"><span>بقایا رکھنے والے گاہک</span><b>${Number(data.customers_with_due)||0}</b></div>
      <div class="exec-line"><span>منظور شدہ دکانوں کا ادھار</span><b>${fmt(data.store_credit_receivables||0)}</b></div>
      <div class="exec-line"><span>اس مدت میں دکانوں سے وصولی</span><b>${fmt(data.store_credit_collections||0)}</b></div>
-     <p class="muted">قابل وصول میں کسٹمر بل، غیر منسلک 19L سپلائی، منظور شدہ دکانوں کا ادھار اور درج شدہ قرض شامل ہیں۔ واجب الادا میں ورکر لیجر اور درج شدہ قرض شامل ہیں؛ سپلائر ادھار/کریڈٹ خریداری ابھی اس حساب میں شامل نہیں۔</p>
+     <div class="exec-line"><span>کسٹمر کمپنی بوتل ضمانت (بل سے الگ)</span><b>${fmt(data.customer_bottle_deposit_held||0)}</b></div>
+     <div class="exec-line"><span>اس مدت میں ضمانت وصول</span><b>${fmt(data.customer_bottle_deposit_received||0)}</b></div>
+     <div class="exec-line"><span>اس مدت میں ضمانت ریفنڈ</span><b>${fmt(data.customer_bottle_deposit_refunded||0)}</b></div>
+     <p class="muted">قابل وصول میں کسٹمر بل، غیر منسلک 19L سپلائی، منظور شدہ دکانوں کا ادھار اور درج شدہ قرض شامل ہیں۔ بوتل ضمانت الگ قابلِ واپسی رقم ہے اور ماہانہ بل میں شامل نہیں۔ واجب الادا میں ورکر لیجر اور درج شدہ قرض شامل ہیں؛ سپلائر ادھار/کریڈٹ خریداری ابھی اس حساب میں شامل نہیں۔</p>
      <p class="warning">${esc(data.cash_balance_note||"نقد بیلنس کی تصدیق دستیاب نہیں۔")}</p>
     </section>
    </div>
