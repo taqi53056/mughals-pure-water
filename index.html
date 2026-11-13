@@ -2367,7 +2367,7 @@ async function saveRawMaterialPurchase(){
   saved=true;
   msg(record_type==="opening_stock"?"ابتدائی خام مال اور متعلقہ ڈھکن کا اسٹاک اکٹھا محفوظ ہوگیا。":freeClaim?"سپلائر کی مفت کلیم مقدار اور متعلقہ ڈھکن بغیر لاگت کے اسٹاک میں شامل ہوگئے۔":"خام مال اور متعلقہ ڈھکن کی خریداری اکٹھی محفوظ ہوگئی۔",true);
   $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
-  $("rawPurchaseSupplier").value="";$("rawPurchaseDetails").value="";
+  $("rawPurchaseDetails").value="";
   await Promise.all([loadRawMaterialPurchases(),loadTodaySummary()]);
  }catch(e){msg(saved?"خام مال محفوظ ہوگیا، مگر فہرست تازہ نہیں ہوسکی: "+(e?.message||String(e)):"خام مال محفوظ نہیں ہوا: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
