@@ -326,7 +326,7 @@ BEGIN
   END IF;
 
   v_old:=$old$      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
-    ) AS months$new$;
+    ) AS months$old$;
   v_new:=$new$      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
       UNION
       SELECT date_trunc('month',l.transaction_date)::date FROM public.customer_bottle_deposit_ledger l WHERE l.customer_id=p_customer_id
@@ -337,7 +337,7 @@ BEGIN
   END IF;
 
   v_old:=$old$      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
-    ) AS activity$new$;
+    ) AS activity$old$;
   v_new:=$new$      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
       UNION
       SELECT date_trunc('month',l.transaction_date)::date FROM public.customer_bottle_deposit_ledger l WHERE l.customer_id=p_customer_id
