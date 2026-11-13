@@ -43,7 +43,7 @@ for (const required of [
   }
 }
 const stickerKilogramMigration = await readFile(
-  resolve(ROOT, "supabase/migrations/20261113112000_support_sticker_purchases_by_kilogram_and_fixed_yield.sql"),
+  resolve(ROOT, "supabase/migrations/20261113114026_support_sticker_purchases_by_kilogram_and_fixed_yield.sql"),
   "utf8"
 );
 for (const required of [
@@ -72,6 +72,21 @@ for (const required of [
 ]) {
   if (!appSource.includes(required)) {
     throw new Error("Kilogram sticker purchase UI or yield calculation is missing: " + required);
+  }
+}
+const stickerUnitConstraintMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113114333_allow_kg_units_for_sticker_purchases.sql"),
+  "utf8"
+);
+for (const required of [
+  "sticker_500ml",
+  "sticker_1_5l_6l",
+  "unit='kg'",
+  "quantity=round(quantity,3)",
+  "raw_material_purchases_quantity_precision_check"
+]) {
+  if (!stickerUnitConstraintMigration.includes(required)) {
+    throw new Error("Sticker kilogram database constraints are missing: " + required);
   }
 }
 const monthlyRetryMigration = await readFile(
