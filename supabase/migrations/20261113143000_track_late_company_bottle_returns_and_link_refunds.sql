@@ -304,7 +304,7 @@ BEGIN
       SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
       UNION
       SELECT date_trunc('month',l.transaction_date)::date FROM public.customer_bottle_deposit_ledger l WHERE l.customer_id=p_customer_id
-    ) AS activity$old$;
+    ) AS months$old$;
  v_new:=$new$      SELECT date_trunc('month',d.delivery_date)::date FROM public.customer_19l_deliveries d WHERE d.customer_id=p_customer_id
       UNION
       SELECT date_trunc('month',p.payment_date)::date FROM public.customer_payments p WHERE p.customer_id=p_customer_id
@@ -314,15 +314,27 @@ BEGIN
       SELECT date_trunc('month',l.transaction_date)::date FROM public.customer_bottle_deposit_ledger l WHERE l.customer_id=p_customer_id
       UNION
       SELECT date_trunc('month',r.return_date)::date FROM public.customer_19l_bottle_returns r WHERE r.customer_id=p_customer_id
-    ) AS activity$new$;
+    ) AS months$new$;
  IF position(v_new in v_def)=0 THEN
   IF position(v_old in v_def)=0 THEN RAISE EXCEPTION 'Archive return month-lock anchor missing'; END IF;
   v_def:=replace(v_def,v_old,v_new);
  END IF;
 
- v_old:=$old$      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
+ v_old:=$old$      SELECT date_trunc('month',d.delivery_date)::date FROM public.customer_19l_deliveries d WHERE d.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',p.payment_date)::date FROM public.customer_payments p WHERE p.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',l.transaction_date)::date FROM public.customer_bottle_deposit_ledger l WHERE l.customer_id=p_customer_id
     ) AS activity$old$;
- v_new:=$new$      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
+ v_new:=$new$      SELECT date_trunc('month',d.delivery_date)::date FROM public.customer_19l_deliveries d WHERE d.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',p.payment_date)::date FROM public.customer_payments p WHERE p.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',l.transaction_date)::date FROM public.customer_bottle_deposit_ledger l WHERE l.customer_id=p_customer_id
       UNION
       SELECT date_trunc('month',r.return_date)::date FROM public.customer_19l_bottle_returns r WHERE r.customer_id=p_customer_id
     ) AS activity$new$;
