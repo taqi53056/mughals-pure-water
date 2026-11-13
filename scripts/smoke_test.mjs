@@ -88,6 +88,34 @@ for (const required of [
     throw new Error("Sticker kilogram database constraints are missing: " + required);
   }
 }
+const supplierReturnMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113121000_fix_supplier_replacement_return_stock_and_idempotency.sql"),
+  "utf8"
+);
+for (const required of [
+  "mpw-product-return-",
+  "p_request_id IS NULL",
+  "replacement_quantity",
+  "ON CONFLICT(request_id) DO NOTHING",
+  "SECURITY DEFINER",
+  "SET search_path TO ''"
+]) {
+  if (!supplierReturnMigration.includes(required)) {
+    throw new Error("Supplier replacement return guard is incomplete: " + required);
+  }
+}
+if (supplierReturnMigration.includes("get_finished_stock_balance")) {
+  throw new Error("Supplier replacement returns must not consume finished stock.");
+}
+for (const required of [
+  "سپلائر کو واپس",
+  "سپلائر سے موصول ہونے پر",
+  "تیار مال کے اسٹاک سے دوبارہ کمی نہیں ہوگی"
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("Supplier replacement return guidance is missing: " + required);
+  }
+}
 const monthlyRetryMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
   "utf8"
