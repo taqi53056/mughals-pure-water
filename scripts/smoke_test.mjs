@@ -42,6 +42,54 @@ for (const required of [
     throw new Error("Filled-bottle billing migration is missing: " + required);
   }
 }
+const stickerKilogramMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113114026_support_sticker_purchases_by_kilogram_and_fixed_yield.sql"),
+  "utf8"
+);
+for (const required of [
+  "sticker_500ml",
+  "sticker_1_5l_6l",
+  "THEN 1900::numeric",
+  "THEN 1200::numeric",
+  "v_sticker_shared",
+  "save_raw_material_purchase_atomic",
+  "mpw_guard_production_packaging_stock",
+  "mpw_guard_raw_material_opening_stock",
+  "record_production_with_workers"
+]) {
+  if (!stickerKilogramMigration.includes(required)) {
+    throw new Error("Kilogram sticker stock/cost migration is incomplete: " + required);
+  }
+}
+for (const required of [
+  'sticker_500ml:"kg"',
+  'sticker_1_5l_6l:"kg"',
+  'sticker_500ml:1900',
+  'sticker_1_5l_6l:1200',
+  "stickerYield={sticker_500ml:1900,sticker_1_5l_6l:1200}",
+  "Number(x.quantity||0)*(stickerYield[key]||1)",
+  'kg*(type==="sticker_500ml"?1900:1200)',
+  "فی کلو قیمت (روپے)"
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("Kilogram sticker purchase UI or yield calculation is missing: " + required);
+  }
+}
+const stickerUnitConstraintMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113114333_allow_kg_units_for_sticker_purchases.sql"),
+  "utf8"
+);
+for (const required of [
+  "sticker_500ml",
+  "sticker_1_5l_6l",
+  "unit='kg'",
+  "quantity=round(quantity,3)",
+  "raw_material_purchases_quantity_precision_check"
+]) {
+  if (!stickerUnitConstraintMigration.includes(required)) {
+    throw new Error("Sticker kilogram database constraints are missing: " + required);
+  }
+}
 const monthlyRetryMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
   "utf8"
@@ -80,7 +128,7 @@ for (const required of [
   "public.unassigned_19l_delivery_collections",
   "v_worker_payables",
   "v_loan_payables",
-  "'payables',v_payables"
+  "v_payables"
 ]) {
   if (!cashflowReceivablesMigration.includes(required)) {
     throw new Error("Executive dashboard receivable/payable tracking is missing: " + required);
@@ -248,7 +296,6 @@ if (!billLockMigration.includes("SECURITY INVOKER") ||
 if (!billLockMigration.includes("Future customer bills cannot be calculated.")) {
   failures.push("Customer bill recalculation must reject future billing months");
 }
-const appSource = await readFile(resolve(ROOT, "index.html"), "utf8");
 if (!appSource.includes('id="bMonth" type="month" value="${today().slice(0,7)}" max="${today().slice(0,7)}"')) {
   failures.push("Customer bill month picker must prevent selecting future months");
 }
