@@ -2303,7 +2303,7 @@ async function rawMaterialsModule(){
  ''+
  '<textarea id="rawPurchaseDetails" maxlength="300" placeholder="بل نمبر / تفصیل (اختیاری)"></textarea>'+
  '<button id="rawPurchaseSaveButton" onclick="saveRawMaterialPurchase()">خریداری محفوظ کریں</button></div>'+
- '<div class="card"><h3>خام مال کا باقی اسٹاک اور لاگت</h3><p class="muted">پیداوار کے مطابق استعمال منہا ہوگا۔ ہر خام مال کی اوسط درج شدہ فی اکائی لاگت اور باقی اسٹاک کی مالیت الگ دکھائی جائے گی۔ یہ مالیت اسٹاک کی قدر ہے، اسی دن کا خرچ نہیں۔ ابتدائی اسٹاک کی مالیت تخمینی ہو سکتی ہے؛ مفت کلیم صفر اضافی خریداری لاگت پر شمار ہوگا۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div><div id="rawStockValuation">لاگت کا حساب لوڈ ہو رہا ہے...</div></div>';
+ '<div class="card"><h3>خام مال کا باقی اسٹاک اور لاگت</h3><p class="muted">جہاں پیداوار سے استعمال کی مقدار یقینی طور پر معلوم ہے وہاں خودکار کمی ہوگی۔ ٹیپ کا استعمال ابھی قطعی متعین نہیں، اس لیے اسے باقی اسٹاک یا مالیت میں شامل نہیں کیا جائے گا؛ بنڈل کی اصل باقی مقدار الگ جسمانی گنتی کے بعد ہی طے کریں۔ یہ مالیت اسٹاک کی قدر ہے، اسی دن کا خرچ نہیں۔ ابتدائی اسٹاک کی مالیت تخمینی ہو سکتی ہے؛ مفت کلیم صفر اضافی خریداری لاگت پر شمار ہوگا۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div><div id="rawStockValuation">لاگت کا حساب لوڈ ہو رہا ہے...</div></div>';
  await loadRawMaterialPurchases();
 }
 function updateRawStickerPurchaseUI(){
@@ -2398,7 +2398,7 @@ async function loadRawMaterialPurchases(){
  const used={
   bottle_500ml:made("500ml")*24,bottle_1_5l:made("1.5L")*12,bottle_6l:made("6L"),
   carton_500ml:made("500ml"),carton_1_5l:made("1.5L"),
-  tape_bundle:(made("500ml","tape_bundle")+made("1.5L","tape_bundle"))/200,
+  tape_bundle:null,
   sticker:0,
   sticker_500ml:made("500ml","sticker_500ml")*24,
   sticker_1_5l_6l:made("1.5L","sticker_1_5l_6l")*12+made("6L","sticker_1_5l_6l"),
@@ -2412,25 +2412,25 @@ async function loadRawMaterialPurchases(){
   const qty=purchased(k);
   const amount=source.reduce((n,x)=>n+Number(x.total_amount||0),0);
   const average=qty>0?amount/qty:null;
-  const remaining=purchased(k)-(k==="cap_19l"?capsUsed:used[k]||0);
-  const value=average===null?null:Math.max(0,remaining)*average;
+  const remaining=k==="tape_bundle"?null:purchased(k)-(k==="cap_19l"?capsUsed:used[k]||0);
+  const value=average===null||remaining===null?null:Math.max(0,remaining)*average;
   const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"||k.startsWith("sticker_")||k.startsWith("cap_")?"اسٹیکر/عدد":"بوتل";
   return {key:k,label:rawMaterialLabels[k]||k,qty,amount,average,remaining,value,unit};
  });
  const totalRawStockValue=valuationRows.reduce((n,r)=>n+(r.value||0),0);
- const shortages=valuationRows.filter(r=>r.remaining<0);
+ const shortages=valuationRows.filter(r=>r.remaining!==null&&r.remaining<0);
  const rawStockValuationBox=$("rawStockValuation");
  if(rawStockValuationBox)rawStockValuationBox.innerHTML=
   '<div class="stat">باقی خام مال کی درج شدہ تخمینی مالیت <b>'+money(totalRawStockValue)+'</b><small>صرف موجودہ مثبت مقدار × اوسط درج شدہ فی اکائی لاگت؛ یہ رقم منافع میں دوبارہ خرچ نہیں کی گئی۔</small></div>'+
   '<div class="tablewrap"><table><tr><th>خام مال</th><th>اسٹاک میں شامل مقدار (عدد/اکائی)</th><th>اوسط فی اکائی لاگت</th><th>استعمال</th><th>باقی مقدار</th><th>باقی مالیت</th></tr>'+
-  valuationRows.map(r=>'<tr><td>'+esc(r.label)+'</td><td>'+r.qty.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.average===null?"لاگت درج نہیں":money(r.average))+'</td><td>'+((r.qty-r.remaining).toLocaleString("en-US",{maximumFractionDigits:2}))+' '+r.unit+'</td><td class="'+(r.remaining<0?"warning":"")+'">'+r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.value===null?"—":money(r.value))+'</td></tr>').join("")+
+  valuationRows.map(r=>'<tr><td>'+esc(r.label)+'</td><td>'+r.qty.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.average===null?"لاگت درج نہیں":money(r.average))+'</td><td>'+(r.remaining===null?"استعمال نامعلوم":(r.qty-r.remaining).toLocaleString("en-US",{maximumFractionDigits:2})+" "+r.unit)+'</td><td class="'+(r.remaining!==null&&r.remaining<0?"warning":"")+'">'+(r.remaining===null?"موجودہ مقدار غیر متعین":r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+" "+r.unit)+'</td><td>'+(r.value===null?"شامل نہیں":money(r.value))+'</td></tr>').join("")+
   '</table></div>'+
   (shortages.length?'<div class="warning">خام مال کے اسٹاک میں کمی/منفی بیلنس: '+shortages.map(r=>esc(r.label)+" ("+r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+")").join("، ")+'۔ انٹری اور پیداوار دوبارہ چیک کریں۔</div>':"");
 
  $("rawStockBalance").innerHTML='<div class="grid">'+balanceKeys.map(k=>{
   const remaining=purchased(k)-used[k];
   const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"||k.startsWith("sticker_")?"اسٹیکر":k.startsWith("cap_")?"عدد":"بوتل";
-  return '<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
+  return k==="tape_bundle"?'<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+purchased(k).toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+' درج شدہ</b><small>استعمال نامعلوم — باقی مقدار کی تصدیق درکار</small></div>':'<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
  }).join("")+'<div class="stat">19L ڈھکن<br><b>باقی: '+(purchased("cap_19l")-capsUsed)+' عدد</b><small>خریدے: '+purchased("cap_19l")+' — استعمال: '+capsUsed+' (صرف کسٹمر اور بغیر کسٹمر سپلائی کے خراب ڈھکن)</small></div></div>';
  $("moduleTable").innerHTML='<h3>خریداری، ابتدائی اسٹاک اور مفت کلیم کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ / فی کلو ریٹ</th><th>سپلائر</th></tr>'+
  rows.filter(r=>Number(r.quantity)>0||Number(r.total_amount)>0).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(r.record_type==="opening_stock"?"ابتدائی اسٹاک":r.record_type==="free_claim"?"مفت کلیم":"خریداری")+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
@@ -2572,9 +2572,9 @@ async function loadTankerPurchases(){
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
  $("moduleBody").innerHTML=
- '<p class="muted">پورے دن کے پانی کے کُل لیٹر اور پانی کی وصول شدہ رقم درج کریں۔ کاؤنٹر پر ڈھکنوں کی فروخت کی الگ گنتی یا اندراج ضروری نہیں؛ صرف سپلائی کے دوران خراب ڈھکن درج ہوں گے۔</p>'+
+ '<p class="muted">صرف دکان کی الگ کاؤنٹر فروخت کے کُل لیٹر اور وصول شدہ رقم درج کریں۔ 19L ڈیلیوری کی بوتلیں اور ان کی وصولی یہاں شامل نہ کریں؛ وہ ڈیلیوری ماڈیول میں الگ درج ہوتی ہیں اور پانی کے اسٹاک میں خود شمار ہوتی ہیں۔ کاؤنٹر پر ڈھکنوں کی فروخت کی الگ گنتی ضروری نہیں۔</p>'+
  '<div class="card"><input id="counterDate" type="date" value="'+today()+'">'+
- '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنے لیٹر فروخت ہوئے؟">'+
+ '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج الگ کاؤنٹر سے کتنے لیٹر فروخت ہوئے؟">'+
  '<input id="counterAmount" type="number" min="0.01" step="0.01" placeholder="آج پانی کی کُل وصول شدہ رقم؟">'+
  '<select id="counterMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="mixed">مختلف ذرائع</option></select>'+
  '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ کاؤنٹر فروخت محفوظ کریں</button></div>';
@@ -3217,11 +3217,11 @@ async function loadExecutiveDashboard(){
    ["خام 6L ڈھکن",stock.raw_6l_caps],
    ["500ml کارٹن",stock.cartons_500ml],
    ["1.5L کارٹن",stock.cartons_1_5l],
-   ["ٹیپ بنڈل",stock.tape_bundles],
+   ["ٹیپ بنڈل — استعمال نامعلوم",stock.tape_bundles],
    ["اسٹیکر",stock.stickers],
    ["دکان والی ٹنکی — باقی پانی (اندازاً لیٹر)",stock.water_shop_pool_remaining_litres],
    ["پروڈکشن والی ٹنکی — 500ml / 1.5L باقی پانی (لیٹر)",stock.water_product_filling_litres]
-  ].map(([label,value])=>`<div class="exec-stock-item"><span>${label}</span><b>${Number(value)||0}</b></div>`).join("");
+  ].map(([label,value])=>`<div class="exec-stock-item"><span>${label}</span><b>${label==="ٹیپ بنڈل"&&value==null?"استعمال نامعلوم":Number(value)||0}</b></div>`).join("");
   const productChartRows=Object.entries(products).map(([name,r])=>({name,revenue:Number(r.revenue)||0})).filter(x=>x.revenue>0);
    const productChartMax=Math.max(1,...productChartRows.map(x=>x.revenue));
    const productChart=productChartRows.map(x=>`<div class="exec-bar-row"><div class="exec-bar-label"><span>${esc(x.name)}</span><b>${fmt(x.revenue)}</b></div><div class="exec-bar-track"><i style="width:${Math.max(2,x.revenue/productChartMax*100)}%"></i></div></div>`).join("");
@@ -3516,7 +3516,7 @@ async function runReport(){
    ["1.5L بوتلیں",stock.raw_1_5l_bottles,"عدد"],["1.5L ڈھکن",stock.raw_1_5l_caps,"عدد"],
    ["6L بوتلیں",stock.raw_6l_bottles,"عدد"],["6L ڈھکن",stock.raw_6l_caps,"عدد"],
    ["500ml کارٹن",stock.cartons_500ml,"کارٹن"],["1.5L کارٹن",stock.cartons_1_5l,"کارٹن"],
-   ["ٹیپ بنڈل",stock.tape_bundles,"بنڈل"],["اسٹیکر",stock.stickers,"عدد"],
+   ["ٹیپ بنڈل — استعمال نامعلوم",stock.tape_bundles,"بنڈل"],["اسٹیکر",stock.stickers,"عدد"],
    ["تیار 500ml",stock.finished_500ml_cartons,"کارٹن"],["تیار 1.5L",stock.finished_1_5l_cartons,"کارٹن"],
    ["تیار 6L",stock.finished_6l_bottles,"بوتل"],
    ["دکان والی ٹنکی — 19L / 6L باقی پانی",stock.water_shop_pool_remaining_litres,"لیٹر"],
@@ -3631,7 +3631,7 @@ async function loadWorkers(){
  const wageWorkers=(data||[]).filter(w=>!w.is_owner);const ids=wageWorkers.map(w=>w.id);let entries=[];const month=$("wlMonth")?.value||today().slice(0,7);const start=month+"-01";const endDate=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),1);const end=endDate.getFullYear()+"-"+String(endDate.getMonth()+1).padStart(2,"0")+"-01";if(ids.length){let offset=0;while(true){const r=await db.from("worker_ledger").select("id,worker_id,entry_type,amount,entry_date,work_category,note").in("worker_id",ids).lt("entry_date",end).order("entry_date",{ascending:true}).order("id",{ascending:true}).range(offset,offset+999);if(r.error){msg("لیجر لوڈ نہیں ہوا: "+r.error.message);return;}const page=r.data||[];entries.push(...page);if(page.length<1000)break;offset+=1000;}}
  const catLabels={"19L delivery":"19L ڈیلیوری","carton loading/unloading":"کارٹن","cleaning":"صفائی","production":"پروڈکشن","bottle washing":"بوتل دھلائی"};
  const typeLabels={earning:"کمائی",payment:"ادائیگی",advance:"ایڈوانس",deduction:"کٹوتی",adjustment:"درستگی"};
- const rows=wageWorkers.map(w=>{const es=entries.filter(e=>e.worker_id===w.id);const before=es.filter(e=>e.entry_date<start);const current=es.filter(e=>e.entry_date>=start);const opening=before.reduce((n,e)=>n+(e.entry_type==="earning"?Number(e.amount):-Number(e.amount)),0);const earned=current.filter(e=>e.entry_type==="earning").reduce((n,e)=>n+Number(e.amount),0);const out=current.filter(e=>e.entry_type!=="earning").reduce((n,e)=>n+Number(e.amount),0);const status=workerStatusLabel(w);const action=workerStatusActionLabel(w);return '<article class="worker-summary-card"><h3>'+esc(w.full_name)+'</h3><p class="muted">حیثیت: '+status+' — '+esc((w.work_categories||[]).map(c=>catLabels[c]||c).join("، "))+'</p><div class="worker-summary-grid"><div><small>پچھلا بقایا</small><b>'+money(opening)+'</b></div><div><small>اس ماہ کمائی</small><b>'+money(earned)+'</b></div><div><small>ادائیگی، ایڈوانس، کٹوتی</small><b>'+money(out)+'</b></div><div class="worker-balance"><small>اب تک بقایا</small><b>'+money(opening+earned-out)+'</b></div></div><button class="secondary" onclick="toggleWorkerStatus('+Number(w.id)+')">'+action+'</button></article>'}).join("");
+ const rows=wageWorkers.map(w=>{const es=entries.filter(e=>e.worker_id===w.id);const before=es.filter(e=>e.entry_date<start);const current=es.filter(e=>e.entry_date>=start);const opening=before.reduce((n,e)=>n+(e.entry_type==="earning"?Number(e.amount):-Number(e.amount)),0);const earned=current.filter(e=>e.entry_type==="earning").reduce((n,e)=>n+Number(e.amount),0);const out=current.filter(e=>["payment","advance","deduction"].includes(e.entry_type)).reduce((n,e)=>n+Number(e.amount),0);const status=workerStatusLabel(w);const action=workerStatusActionLabel(w);return '<article class="worker-summary-card"><h3>'+esc(w.full_name)+'</h3><p class="muted">حیثیت: '+status+' — '+esc((w.work_categories||[]).map(c=>catLabels[c]||c).join("، "))+'</p><div class="worker-summary-grid"><div><small>پچھلا بقایا</small><b>'+money(opening)+'</b></div><div><small>اس ماہ کمائی</small><b>'+money(earned)+'</b></div><div><small>ادائیگی، ایڈوانس، کٹوتی</small><b>'+money(out)+'</b></div><div class="worker-balance"><small>اب تک بقایا</small><b>'+money(opening+earned-out)+'</b></div></div><button class="secondary" onclick="toggleWorkerStatus('+Number(w.id)+')">'+action+'</button></article>'}).join("");
  const details=entries.filter(e=>e.entry_date>=start).map(e=>'<article class="worker-entry-card"><div><b>'+esc((data||[]).find(w=>w.id===e.worker_id)?.full_name||"ورکر")+'</b><span>'+esc(e.entry_date)+'</span></div><p>'+esc(catLabels[e.work_category]||e.work_category)+' — '+esc(typeLabels[e.entry_type]||e.entry_type)+'</p><strong>'+money(e.amount)+'</strong>'+(e.note?'<small>'+esc(e.note)+'</small>':"")+'</article>').join("");
  $("moduleTable").innerHTML='<h3>'+esc(month)+' کا ورکر حساب</h3><p class="muted">ہر ورکر کا حساب الگ اور آسان انداز میں دکھایا گیا ہے۔</p><div class="worker-summary-list">'+(rows||'<p class="muted">ابھی کوئی ورکر ریکارڈ موجود نہیں۔</p>')+'</div><h3>اس ماہ کی انٹریاں</h3><div class="worker-entry-list">'+(details||'<p class="muted">اس ماہ کوئی انٹری نہیں۔</p>')+'</div>';
 }
