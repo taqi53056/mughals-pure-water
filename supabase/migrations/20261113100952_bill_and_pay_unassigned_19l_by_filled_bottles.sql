@@ -28,8 +28,11 @@ BEGIN
   from public.unassigned_19l_delivery_collections rc
   join public.unassigned_19l_deliveries d on d.id=rc.delivery_id
   where d.delivery_date between p_month_start and p_month_end;';
-  IF position(v_old in v_def)=0 THEN RAISE EXCEPTION 'Monthly report linked collection aggregation not found'; END IF;
-  v_def:=replace(v_def,v_old,v_new);
+  IF position(v_old in v_def)>0 THEN
+    v_def:=replace(v_def,v_old,v_new);
+  ELSIF position(v_new in v_def)=0 THEN
+    RAISE EXCEPTION 'Monthly report linked collection aggregation not found';
+  END IF;
   EXECUTE v_def;
 
   SELECT p.oid INTO v_oid
