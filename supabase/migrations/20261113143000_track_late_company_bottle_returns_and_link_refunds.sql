@@ -124,6 +124,28 @@ $function$;
 REVOKE ALL ON FUNCTION public.record_customer_19l_bottle_return(bigint,date,integer,uuid,text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.record_customer_19l_bottle_return(bigint,date,integer,uuid,text) TO authenticated;
 
+-- Keep deposit eligibility in sync with late-return custody movements.
+DO $migration$
+DECLARE v_def text; v_old text; v_new text;
+BEGIN
+ v_def:=pg_get_functiondef('private.record_customer_bottle_deposit(bigint,date,text,integer,text,uuid,text,boolean)'::regprocedure);
+ v_old:=$old$  SELECT greatest(coalesce(sum(company_bottles_delivered),0)-coalesce(sum(empty_bottles_returned),0),0)::bigint
+    INTO v_outstanding
+  FROM public.customer_19l_deliveries
+  WHERE customer_id=p_customer_id;$old$;
+ v_new:=$new$  SELECT greatest(coalesce(sum(company_bottles_delivered),0)-coalesce(sum(empty_bottles_returned),0)
+      -coalesce((SELECT sum(quantity) FROM public.customer_19l_bottle_returns WHERE customer_id=p_customer_id),0),0)::bigint
+    INTO v_outstanding
+  FROM public.customer_19l_deliveries
+  WHERE customer_id=p_customer_id;$new$;
+ IF position(v_new in v_def)=0 THEN
+  IF position(v_old in v_def)=0 THEN RAISE EXCEPTION 'Deposit outstanding return anchor missing'; END IF;
+  v_def:=replace(v_def,v_old,v_new);
+ END IF;
+ EXECUTE v_def;
+END;
+$migration$;
+
 -- Replace the old public eight-argument entry point with a refund-aware nine-argument API.
 CREATE OR REPLACE FUNCTION public.record_customer_bottle_deposit(
   p_customer_id bigint,
