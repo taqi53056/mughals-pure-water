@@ -82,3 +82,12 @@
 - Run one controlled real customer signup, privacy isolation, delivery, payment, bill approval and notification cycle before relying on month-end automation.
 - Verify push on an actually subscribed device. SMS/WhatsApp is not enabled without a configured provider.
 - Supabase leaked-password protection remains unavailable on the current Free plan.
+
+- Later-returned 19L company empties now have a separate admin-only custody movement, so a return on a later date reduces the customer's company-bottle balance without editing an old delivery.
+- Bottle refunds are linked to a specific recorded return. A refund cannot exceed the returned quantity, cannot be dated before the return, and requires explicit admin confirmation. This avoids issuing a Rs1,600 refund without recording the actual bottle return.
+- Customer archive checks and history include late-return records. The company-bottle custody guard now considers both delivery-day empties and later returns, so edits cannot silently create negative bottle custody.
+- Rollback-only integration tests passed for two bottle deposits, two later returns, linked refunds, partial held-deposit balances, over-return and over-refund rejection, idempotent retry, and dashboard exposure. All test rows were rolled back.
+- Service worker cache advanced to v111 for the latest customer bottle return and refund UI.
+
+- The public bottle-return and bottle-deposit RPC endpoints now run as SECURITY INVOKER wrappers. The privileged implementation resides in non-exposed private-schema SECURITY DEFINER helpers with explicit admin checks. The Supabase security advisor no longer flags these two new public endpoints.
+- Authenticated-role integration test passed for the complete deposit → later bottle return → linked refund sequence; all test data was rolled back.
