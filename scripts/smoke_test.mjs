@@ -172,6 +172,36 @@ for (const required of [
     throw new Error("Store credit history display is incomplete: " + required);
   }
 }
+const companyBottleDepositMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113140000_add_company_bottle_deposit_and_refund_ledger.sql"),
+  "utf8"
+);
+for (const required of [
+  "customer_bottle_deposit_ledger",
+  "unit_amount=1600",
+  "bottle_return_confirmed",
+  "private.record_customer_bottle_deposit",
+  "customer_bottle_deposit_balances",
+  "customer_bottle_deposit_held",
+  "v_company_bottles_outstanding",
+  "کمپنی کی تمام خالی بوتلیں واپس لیے بغیر کسٹمر آرکائیو نہیں ہو سکتا",
+  "DELETE FROM public.customer_bottle_deposit_ledger"
+]) {
+  if (!companyBottleDepositMigration.includes(required)) {
+    throw new Error("Company bottle deposit/refund safeguards are incomplete: " + required);
+  }
+}
+for (const required of [
+  "customerBottleDepositModule",
+  "saveCustomerBottleDeposit",
+  "کمپنی بوتل ضمانت / واپسی",
+  "یہ رقم ماہانہ پانی کے بل سے الگ ہے",
+  "customer_bottle_deposit_held"
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("Company bottle deposit admin UI is incomplete: " + required);
+  }
+}
 const monthlyRetryMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
   "utf8"
