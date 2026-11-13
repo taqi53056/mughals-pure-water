@@ -316,7 +316,7 @@ BEGIN
     RAISE EXCEPTION 'صرف ایڈمن ادھار وصولی درج کر سکتا ہے۔' USING ERRCODE='42501';
   END IF;
   IF p_request_id IS NULL OR p_sale_id IS NULL OR p_payment_date IS NULL
-     OR p_amount IS NULL OR p_amount<=0
+     OR p_amount IS NULL OR p_amount<=0 OR p_amount<>round(p_amount,2)
      OR p_payment_method NOT IN ('cash','bank','jazzcash','easypaisa','other')
      OR (p_details IS NOT NULL AND length(p_details)>300) THEN
     RAISE EXCEPTION 'ادھار وصولی کی تاریخ، مثبت رقم، طریقہ اور درخواست شناخت درست درج کریں۔' USING ERRCODE='22023';
@@ -357,6 +357,9 @@ BEGIN
   SELECT * INTO v_sale FROM public.product_sales WHERE id=p_sale_id FOR UPDATE;
   IF NOT FOUND OR v_sale.payment_method<>'credit' OR v_sale.credit_store_id IS NULL THEN
     RAISE EXCEPTION 'منتخب سیل منظور شدہ دکان کی ادھار سیل نہیں۔' USING ERRCODE='23514';
+  END IF;
+  IF p_payment_date<v_sale.sale_date THEN
+    RAISE EXCEPTION 'ادھار وصولی کی تاریخ سیل کی تاریخ سے پہلے نہیں ہو سکتی۔' USING ERRCODE='23514';
   END IF;
 
   SELECT coalesce(sum(amount),0) INTO v_paid
