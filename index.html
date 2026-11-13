@@ -2564,9 +2564,9 @@ async function loadTankerPurchases(){
  '<div class="grid">'+
  '<div class="stat"><b>دکان والی ٹنکی — 19L / 6L</b><br><strong>'+fmtLitres(shopBalance)+'</strong><small>کل دستیاب: '+fmtLitres(shopAvailable)+' — استعمال: '+fmtLitres(shopConsumed)+'</small></div>'+
  '<div class="stat"><b>پروڈکشن والی ٹنکی — 500ml / 1.5L</b><br><strong>'+fmtLitres(fillingBalance)+'</strong><small>کل دستیاب: '+fmtLitres(fillingAvailable)+' — استعمال: '+fmtLitres(fillingConsumed)+'</small></div>'+
- '</div><h3>ٹینکر خریداری اور ابتدائی پانی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>مقدار</th><th>فی ٹینکر / مالیت</th><th>کل رقم</th></tr>'+
- (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||esc(r.water_use))+' — ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td></tr>').join("")+
- (rows||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||esc(r.water_use))+' — خریداری</td><td>'+fmtLitres(Number(r.tanker_count)*1000)+'</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td></tr>').join("")+
+ '</div><h3>ٹینکر خریداری اور ابتدائی پانی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>مقدار</th><th>فی ٹینکر / مالیت</th><th>کل رقم</th><th>ادائیگی / تفصیل</th></tr>'+
+ (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||esc(r.water_use))+' — ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td><td>—</td></tr>').join("")+
+ (rows||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||esc(r.water_use))+' — خریداری</td><td>'+fmtLitres(Number(r.tanker_count)*1000)+'</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td><td>'+({"cash":"نقد","bank":"بینک","jazzcash":"جاز کیش","easypaisa":"ایزی پیسہ","other":"دیگر"}[r.payment_method]||esc(r.payment_method||"—"))+(r.details?" — "+esc(r.details):"") +'</td></tr>').join("")+
  '</table></div>';
 }
 async function counterWaterModule(){
