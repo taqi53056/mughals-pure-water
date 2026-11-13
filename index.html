@@ -1729,7 +1729,7 @@ async function loadSelectedDelivery(){
    if(button)button.textContent="موجودہ ڈلیوری میں ترمیم محفوظ کریں";
    msg("اس تاریخ کا ریکارڈ پہلے سے موجود ہے؛ نیا ریکارڈ نہیں بنے گا، اسی میں ترمیم ہوگی۔",true);
   }else{
-   $("dOut").value="";$("dBack").value="0";$("dCaps").value="0";
+   $("dOut").value="";$("dOwn").value="0";$("dBack").value="0";$("dCaps").value="0";
    if($("dWorker"))$("dWorker").value=String(window.deliveryOwnerId||"");
    if(button)button.textContent="ڈلیوری محفوظ کریں";
   }
@@ -1741,7 +1741,7 @@ async function loadSelectedDelivery(){
 
 function startNewDeliveryEntry(){
  window.currentDeliveryRecordId=null;
- $("dOut").value="";$("dBack").value="0";$("dCaps").value="0";
+ $("dOut").value="";$("dOwn").value="0";$("dBack").value="0";$("dCaps").value="0";
  const button=$("deliverySaveButton");if(button)button.textContent="نئی ڈلیوری محفوظ کریں";
  setDeliverySavedState(false);calcDelivery();
  msg("نئی الگ ڈلیوری کے لیے خالی فارم تیار ہے۔",true);
@@ -1788,13 +1788,6 @@ async function saveDelivery(){
      if(retryError)throw retryError;
      if(retry){deliveryRecord=retry;}
      else{
-      const {data:dayRecord,error:dayError}=await db.from("customer_19l_deliveries").select("id").eq("customer_id",Number(id)).eq("delivery_date",date).maybeSingle();
-      if(dayError)throw dayError;
-      if(dayRecord){
-       window.currentDeliveryRecordId=Number(dayRecord.id);
-       await loadSelectedDelivery();
-       throw new Error("اس گاہک کی اس تاریخ کی ڈلیوری پہلے محفوظ ہوچکی ہے۔ ریکارڈ کھول دیا گیا ہے؛ ضرورت ہو تو اسی میں ترمیم کریں۔");
-      }
       throw error;
      }
     }else throw error;
@@ -1863,9 +1856,11 @@ async function loadDailyDeliveries(){
  }catch(error){$("moduleTable").textContent="ڈلیوریاں لوڈ نہیں ہوئیں: "+(error?.message||String(error));return;}
  const names=await getActiveCustomers().catch(()=>customerList);
  const {data:workers}=await db.from("workers").select("id,full_name,is_owner");
- $("moduleTable").innerHTML="<h3>تمام ڈلیوریاں (نئی تاریخ پہلے)</h3><table><tr><th>تاریخ</th><th>گاہک</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th><th>ورکر</th><th>حقیقی مزدوری خرچ</th><th>مالک کی مزدوری بچت</th><th>اصلاح</th></tr>"+
- (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));let w=(workers||[]).find(x=>Number(x.id)===Number(d.worker_id));const who=w?.full_name||(Number(d.owner_labor_saving)>0?"مالک":"غیر منسوب");return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${Number(d.customer_owned_bottles)||0}</td><td>${Number(d.company_bottles_delivered??(d.bottles_delivered-(Number(d.customer_owned_bottles)||0)))}</td><td>${d.empty_bottles_returned}</td><td>${d.successful_bottles}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${esc(who)}</td><td>${money(d.delivery_labor)}</td><td>${money(d.owner_labor_saving)}</td><td><button class="secondary" onclick="editCustomerDeliveryRecordById(${Number(d.id)})">غلطی درست کریں</button></td></tr>`}).join("")+"</table>";
+ $("moduleTable").innerHTML="<h3>تمام ڈلیوریاں (نئی تاریخ پہلے)</h3><table><tr><th>تاریخ</th><th>گاہک</th><th>کل بھری</th><th>اپنی بوتلیں</th><th>کمپنی کی بوتلیں</th><th>واپس کمپنی کی خالی</th><th>بل کے قابل</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th><th>ورکر</th><th>مزدوری</th><th>مالک بچت</th><th>اصلاح</th></tr>"+
+ (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));let w=(workers||[]).find(x=>Number(x.id)===Number(d.worker_id));const who=w?.full_name||(Number(d.owner_labor_saving)>0?"مالک":"غیر منسوب");return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${Number(d.customer_owned_bottles)||0}</td><td>${Number(d.company_bottles_delivered??(d.bottles_delivered-(Number(d.customer_owned_bottles)||0)))}</td><td>${d.empty_bottles_returned}</td><td>${d.successful_bottles}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${esc(who)}</td><td>${money(d.delivery_labor)}</td><td>${money(d.owner_labor_saving)}</td><td><button class="secondary" onclick="editCustomerDeliveryRecordById(${Number(d.id)})">غلطی درست کریں</button></td></tr>`}).join("")+"</table>";
 }
+
+
 
 /* ماہانہ بل */
 async function billingModule(){
