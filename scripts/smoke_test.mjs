@@ -568,7 +568,7 @@ try {
           <option value="2" data-owner="false" selected>Worker</option>
           <option value="1" data-owner="true">Owner</option>
         </select>
-        <input id="dOut"><input id="dBack"><input id="dCaps">
+        <input id="dOut"><input id="dOwn"><input id="dBack"><input id="dCaps">
         <b id="dSuccess"></b><b id="dDiff"></b><b id="dLabor"></b>
         <b id="dOwnerSaving"></b><b id="dCapAmount"></b><div id="dWarn"></div>
       `;
@@ -580,9 +580,11 @@ try {
       document.querySelector("#dWorker").value = "1";
       const owner = window.calcDelivery();
       document.querySelector("#dBack").value = "13";
+      const returnedPrevious = window.calcDelivery();
+      document.querySelector("#dOwn").value = "13";
       const invalid = window.calcDelivery();
       fixture.remove();
-      return { worker, owner, invalid };
+      return { worker, owner, returnedPrevious, invalid };
     });
     if (deliveryMath.worker.success !== 12 || deliveryMath.worker.diff !== 2 ||
         deliveryMath.worker.labor !== 240 || deliveryMath.worker.capAmount !== 20) {
@@ -591,7 +593,7 @@ try {
     if (deliveryMath.owner.labor !== 0 || deliveryMath.owner.ownerSaving !== 240) {
       failures.push("19L owner labor saving calculation is incorrect");
     }
-    if (!deliveryMath.invalid.invalid) failures.push("19L returned-bottles validation is incorrect");
+    if (deliveryMath.returnedPrevious.invalid || deliveryMath.returnedPrevious.diff !== 0 || !deliveryMath.invalid.invalid) failures.push("19L bottle ownership / previous-empty return validation is incorrect");
 
     const deliveryConfirmation = await page.evaluate(() => ({
       warning: window.deliveryConfirmationSummary({ out: 120, diff: 2, caps: 3, capAmount: 30 }),
