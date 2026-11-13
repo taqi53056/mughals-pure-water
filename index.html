@@ -1664,7 +1664,7 @@ async function deliveryModule(){
  <div class="stat">بوتلوں کا فرق: <b id="dDiff">0</b></div>
  <div class="stat">مزدور کی واجب الادا مزدوری: <b id="dLabor">Rs. 0</b></div><div class="stat">مالک کی ممکنہ بچت: <b id="dOwnerSaving">Rs. 0</b></div>
  <div id="dWarn" class="warning hidden">بوتلوں میں فرق ہے؛ اسی دن جانچیں۔</div>
- <button id="deliverySaveButton" onclick="saveDelivery()">ڈلیوری محفوظ کریں</button>
+ <button id="deliverySaveButton" onclick="saveDelivery()">ڈلیوری محفوظ کریں</button><button class="secondary" type="button" onclick="startNewDeliveryEntry()">اسی دن نئی ڈلیوری درج کریں</button>
  <p class="muted">ڈلیوری محفوظ ہونے کے بعد ہی پیغام تیار کیا جا سکے گا؛ پیغام فون میں کھلے گا، Send آپ کریں گے۔</p><button id="deliveryWhatsAppButton" class="secondary" disabled onclick="shareCurrentDeliveryWhatsApp()">WhatsApp پیغام تیار کریں</button><button id="deliverySMSButton" class="secondary" disabled onclick="shareCurrentDeliverySMS()">SMS پیغام تیار کریں</button>
  <button class="secondary" onclick="loadDailyDeliveries()">تمام ڈلیوریاں تازہ کریں</button>`;
  await loadWorkerOptions();
@@ -1713,7 +1713,7 @@ async function loadSelectedDelivery(){
  try{
   const {data,error}=await db.from("customer_19l_deliveries")
    .select("id,bottles_delivered,empty_bottles_returned,damaged_caps,worker_id,owner_labor_saving")
-   .eq("customer_id",customerId).eq("delivery_date",date).maybeSingle();
+   .eq("customer_id",customerId).eq("delivery_date",date).order("id",{ascending:false}).limit(1).maybeSingle();
   if(error)throw error;
   if(data){
    window.currentDeliveryRecordId=Number(data.id);
@@ -1732,6 +1732,14 @@ async function loadSelectedDelivery(){
  }catch(error){
   msg("موجودہ ڈلیوری چیک نہیں ہوسکی؛ محفوظ کرنے سے پہلے دوبارہ کوشش کریں: "+(error?.message||String(error)));
  }
+}
+
+function startNewDeliveryEntry(){
+ window.currentDeliveryRecordId=null;
+ $("dOut").value="";$("dBack").value="0";$("dCaps").value="0";
+ const button=$("deliverySaveButton");if(button)button.textContent="نئی ڈلیوری محفوظ کریں";
+ setDeliverySavedState(false);calcDelivery();
+ msg("نئی الگ ڈلیوری کے لیے خالی فارم تیار ہے۔",true);
 }
 
 function deliveryConfirmationSummary(c){
@@ -1828,12 +1836,17 @@ async function saveDelivery(){
 }
 
 async function editCustomerDeliveryRecordById(id){
- const {data,error}=await db.from("customer_19l_deliveries").select("id,customer_id,delivery_date").eq("id",Number(id)).maybeSingle();
+ const {data,error}=await db.from("customer_19l_deliveries").select("*").eq("id",Number(id)).maybeSingle();
  if(error||!data){msg("ڈلیوری ریکارڈ نہیں ملا: "+(error?.message||""));return;}
- const customer=$("dCustomer");if(!customer||![...customer.options].some(o=>Number(o.value)===Number(data.customer_id))){msg("یہ گاہک فعال ڈلیوری فہرست میں نہیں؛ اکاؤنٹ کی حیثیت چیک کریں۔");return;}
- customer.value=String(data.customer_id);$("dDate").value=data.delivery_date;await loadSelectedDelivery();
- if(Number(window.currentDeliveryRecordId)!==Number(id)){msg("منتخب ڈلیوری کی تصدیق نہیں ہوئی؛ کوئی تبدیلی نہیں کی گئی۔");return;}
- $("deliverySaveButton").textContent="درست شدہ ڈلیوری محفوظ کریں";$("dDate").scrollIntoView({behavior:"smooth",block:"center"});msg("اصل ڈلیوری ریکارڈ کھل گیا ہے۔ مطلوبہ فیلڈ درست کرکے محفوظ کریں۔",true);
+ const customer=$("dCustomer");
+ if(!customer||![...customer.options].some(o=>Number(o.value)===Number(data.customer_id))){msg("یہ گاہک فعال ڈلیوری فہرست میں نہیں؛ اکاؤنٹ کی حیثیت چیک کریں۔");return;}
+ customer.value=String(data.customer_id);$("dDate").value=data.delivery_date;
+ window.currentDeliveryRecordId=Number(data.id);
+ $("dOut").value=String(data.bottles_delivered);$("dBack").value=String(data.empty_bottles_returned);$("dCaps").value=String(data.damaged_caps||0);
+ if($("dWorker"))$("dWorker").value=data.worker_id?String(data.worker_id):(Number(data.owner_labor_saving)>0?String(window.deliveryOwnerId||""):"");
+ const button=$("deliverySaveButton");if(button)button.textContent="منتخب ڈلیوری میں ترمیم محفوظ کریں";
+ setDeliverySavedState(false);calcDelivery();$("dDate").scrollIntoView({behavior:"smooth",block:"center"});
+ msg("منتخب ڈلیوری ریکارڈ کھل گیا ہے۔",true);
 }
 
 async function loadDailyDeliveries(){
@@ -2506,7 +2519,7 @@ async function unassigned19lModule(){
  await loadUnassigned19lHistory();await loadUnassigned19lCollectionOptions();
 }
 function updateUnassigned19lLabor(){
- const n=Number($("u19Empties")?.value)||0;
+ const n=Number($("u19Bottles")?.value)||0;
  if($("u19Labor"))$("u19Labor").textContent=money(n*20);
 }
 async function loadUnassigned19lHistory(){
