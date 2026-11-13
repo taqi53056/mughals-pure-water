@@ -243,6 +243,20 @@ for (const required of [
     throw new Error("Company bottle return/refund UI is incomplete: " + required);
   }
 }
+const bottleCustodySecurityMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113145500_move_bottle_custody_writes_to_private_definers.sql"),
+  "utf8"
+);
+for (const required of [
+  "private.record_customer_19l_bottle_return",
+  "private.record_customer_bottle_deposit_v2",
+  "LANGUAGE plpgsql",
+  "GRANT EXECUTE ON FUNCTION public.record_customer_bottle_deposit"
+]) {
+  if (!bottleCustodySecurityMigration.includes(required)) {
+    throw new Error("Bottle custody RPC security boundary is incomplete: " + required);
+  }
+}
 const monthlyRetryMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
   "utf8"
