@@ -1840,7 +1840,7 @@ async function editCustomerDeliveryRecordById(id){
  if(!customer||![...customer.options].some(o=>Number(o.value)===Number(data.customer_id))){msg("یہ گاہک فعال ڈلیوری فہرست میں نہیں؛ اکاؤنٹ کی حیثیت چیک کریں۔");return;}
  customer.value=String(data.customer_id);$("dDate").value=data.delivery_date;
  window.currentDeliveryRecordId=Number(data.id);
- $("dOut").value=String(data.bottles_delivered);$("dBack").value=String(data.empty_bottles_returned);$("dCaps").value=String(data.damaged_caps||0);
+ $("dOut").value=String(data.bottles_delivered);$("dOwn").value=String(data.customer_owned_bottles||0);$("dBack").value=String(data.empty_bottles_returned);$("dCaps").value=String(data.damaged_caps||0);
  if($("dWorker"))$("dWorker").value=data.worker_id?String(data.worker_id):(Number(data.owner_labor_saving)>0?String(window.deliveryOwnerId||""):"");
  const button=$("deliverySaveButton");if(button)button.textContent="منتخب ڈلیوری میں ترمیم محفوظ کریں";
  setDeliverySavedState(false);calcDelivery();$("dDate").scrollIntoView({behavior:"smooth",block:"center"});
@@ -2537,7 +2537,7 @@ async function loadUnassigned19lHistory(){
   box.innerHTML='<h3>غیر منسلک سپلائی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>سپلائی کس نے کی</th><th>بھری بوتلیں</th><th>خالی واپس</th><th>خراب ڈھکن</th><th>وصول شدہ رقم</th><th>باقی رقم</th><th>ورکر مزدوری</th><th>مالک کی بچائی مزدوری</th><th>تفصیل</th></tr>'+
    (data||[]).map(r=>{
     const received=collected.get(Number(r.id))||0;
-    const due=Number(r.empty_bottles_returned||0)*100+Number(r.damaged_caps||0)*10;
+    const due=Number(r.bottles_delivered||0)*100+Number(r.damaged_caps||0)*10;
     return '<tr><td>'+esc(r.delivery_date)+'</td><td>'+esc(r.performed_by_owner?"مالک":map.get(Number(r.worker_id))||"ورکر")+'</td><td>'+Number(r.bottles_delivered)+'</td><td>'+Number(r.empty_bottles_returned)+'</td><td>'+Number(r.damaged_caps||0)+'</td><td>'+money(received)+'</td><td>'+money(Math.max(due-received,0))+'</td><td>'+money(r.labor_amount)+'</td><td>'+money(r.owner_labor_saving)+'</td><td>'+esc(r.details||"—")+'</td></tr>';
    }).join("")+
    '</table></div>';
@@ -2545,7 +2545,7 @@ async function loadUnassigned19lHistory(){
 }
 async function loadUnassigned19lCollectionOptions(){
  const sel=$("u19CollectionDelivery");if(!sel)return;
- try{const {data:deliveries,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,empty_bottles_returned,damaged_caps");if(error)throw error;const {data:receipts,error:re}=await db.from("unassigned_19l_delivery_collections").select("delivery_id,amount");if(re)throw re;const totals=new Map();(receipts||[]).forEach(r=>totals.set(Number(r.delivery_id),(totals.get(Number(r.delivery_id))||0)+Number(r.amount)));const pending=(deliveries||[]).map(d=>({d,remaining:Number(d.empty_bottles_returned)*100+Number(d.damaged_caps||0)*10-(totals.get(Number(d.id))||0)})).filter(x=>x.remaining>0);sel.innerHTML='<option value="">سپلائی منتخب کریں</option>'+pending.map(x=>'<option value="'+x.d.id+'">#'+x.d.id+' — '+esc(x.d.delivery_date)+' — بقایا '+money(x.remaining)+'</option>').join("");}catch(e){sel.innerHTML='<option value="">وصولی فہرست لوڈ نہیں ہوئی</option>';msg("وصولی کی فہرست لوڈ نہیں ہوئی: "+(e.message||String(e)));}
+ try{const {data:deliveries,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps");if(error)throw error;const {data:receipts,error:re}=await db.from("unassigned_19l_delivery_collections").select("delivery_id,amount");if(re)throw re;const totals=new Map();(receipts||[]).forEach(r=>totals.set(Number(r.delivery_id),(totals.get(Number(r.delivery_id))||0)+Number(r.amount)));const pending=(deliveries||[]).map(d=>({d,remaining:Number(d.bottles_delivered)*100+Number(d.damaged_caps||0)*10-(totals.get(Number(d.id))||0)})).filter(x=>x.remaining>0);sel.innerHTML='<option value="">سپلائی منتخب کریں</option>'+pending.map(x=>'<option value="'+x.d.id+'">#'+x.d.id+' — '+esc(x.d.delivery_date)+' — بقایا '+money(x.remaining)+'</option>').join("");}catch(e){sel.innerHTML='<option value="">وصولی فہرست لوڈ نہیں ہوئی</option>';msg("وصولی کی فہرست لوڈ نہیں ہوئی: "+(e.message||String(e)));}
 }
 async function saveUnassigned19lCollection(){
  const deliveryId=Number($("u19CollectionDelivery").value),receivedDate=$("u19CollectionDate").value,amount=Number($("u19CollectionAmount").value),method=$("u19CollectionMethod").value;
