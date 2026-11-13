@@ -56,3 +56,29 @@
 - Production labor: Rs.10 per carton for 500ml/1.5L; 6L labor is zero.
 - 500ml sticker yield: 1,900/kg; shared 1.5L/6L sticker yield: 1,200/kg.
 
+
+## Additional verified changes merged later on 2026-11-13
+
+- Supplier replacement returns now follow the 1:1 exchange rule: a defective bottle is returned to the supplier and the same number of good replacements is recorded. The RPC no longer requires finished stock to already contain the replacement units; this avoids blocking a valid same-day supplier exchange when shop finished stock is zero.
+- Return writes are serialized by request ID. Reusing an idempotency token with a different return payload is rejected. The return record does not create a sale, cash refund, water movement or duplicate finished-stock deduction.
+- Product sales can now be made on credit only to an active store that an admin has explicitly approved. Cash remains the default. There is no automatic credit limit or due date.
+- Stores are added by admins and start with credit approval disabled. Admins must explicitly approve a store before it appears in the credit-sale selector.
+- Store credit is attached to an individual sale. Partial or full receipts are recorded against that sale; the system rejects overpayment, payment dates before the sale date, sub-paisa precision, duplicate requests and request-ID payload changes.
+- Credit sales count as sales revenue once. They do not count as cash collections until a receipt is recorded. Partial receipts increase cash collections and reduce receivables without counting revenue a second time.
+- Store credit balances, full sale history and receipt history are available in the admin sales workflow. Stores can be deactivated or have credit approval revoked without deleting their historical balances.
+- The current Supabase project has the approved-store credit migration applied. Transaction-only tests using the authenticated role passed for store creation, approved credit sale, full/partial receipt, dashboard balance changes, cash sale compatibility, RLS access, and all negative guards. All test stores, sales, payments, purchases and production rows were rolled back.
+- Supabase performance advisor now reports no unindexed foreign keys and no auth RLS initialization-plan warning. The two new user foreign-key indexes are expected to appear as unused until stores and credit receipts are actually entered.
+
+## Current app entry points
+
+- To add a store or approve it for credit: open **سیل / مال کا اخراج** and choose **منظور شدہ دکانیں / ادھار وصولی**.
+- To record a credit sale: choose **ادھار — منظور شدہ دکان**, then select an approved active store. Otherwise keep the default **نقد وصولی**.
+- To collect a partial/full payment: open the same store-credit page, choose the store and the outstanding sale, enter the received amount and method, then save.
+- To view paid and unpaid credit sales and their receipts, use the complete history sections on that page.
+
+## Remaining release gates (unchanged)
+
+- Verify the deployed website/PWA is serving the latest `main` build and that the installed phone app refreshes to service-worker cache v109. Repository merge and browser smoke tests do not prove that a separate hosting provider has deployed it.
+- Run one controlled real customer signup, privacy isolation, delivery, payment, bill approval and notification cycle before relying on month-end automation.
+- Verify push on an actually subscribed device. SMS/WhatsApp is not enabled without a configured provider.
+- Supabase leaked-password protection remains unavailable on the current Free plan.
