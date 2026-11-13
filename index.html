@@ -1528,7 +1528,7 @@ async function showCustomerFullAccount(id){
  <div class="stat">تازہ ترین بقایا: <b>${money(totalDue)}</b> — تازہ ترین بل میں باقی ایڈوانس: <b>${money(totalAdvance)}</b></div>
  <h4>ماہانہ بل</h4>${bs.length?`<table><tr><th>مہینہ</th><th>بوتلیں</th><th>بوتل رقم</th><th>ڈھکن</th><th>ڈھکن رقم</th><th>پچھلا بقایا</th><th>ادائیگی</th><th>ایڈوانس استعمال</th><th>بقایا</th><th>باقی ایڈوانس</th></tr>${bs.map(r=>`<tr><td>${esc(r.bill_month)}</td><td>${Number(r.bottles_19l)||0}</td><td>${money(r.bottle_amount)}</td><td>${Number(r.damaged_caps)||0}</td><td>${money(r.cap_amount)}</td><td>${money(r.previous_balance)}</td><td>${money(r.payments)}</td><td>${money(r.advance_used)}</td><td>${money(r.current_due)}</td><td>${money(r.closing_advance)}</td></tr>`).join("")}</table>`:"ابھی بل موجود نہیں۔"}
  <h4>ادائیگیوں کی مکمل ہسٹری</h4>${ps.length?`<table><tr><th>تاریخ</th><th>قسم</th><th>رقم</th></tr>${ps.map(r=>`<tr><td>${esc(r.payment_date)}</td><td>${esc(r.payment_type)}</td><td>${money(r.amount)}</td></tr>`).join("")}</table>`:"ابھی ادائیگی موجود نہیں۔"}
- <h4>19L ڈلیوری ہسٹری</h4>${ds.length?`<table><tr><th>تاریخ</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>مزدوری</th></tr>${ds.map(r=>`<tr><td>${esc(r.delivery_date)}</td><td>${Number(r.bottles_delivered)||0}</td><td>${Number(r.empty_bottles_returned)||0}</td><td>${Number(r.successful_bottles)||0}</td><td>${Number(r.bottle_difference)||0}</td><td>${Number(r.damaged_caps)||0}</td><td>${money(r.delivery_labor)}</td></tr>`).join("")}</table>`:"ابھی ڈلیوری موجود نہیں۔"}`;
+ <h4>19L ڈلیوری ہسٹری</h4>${ds.length?`<table><tr><th>تاریخ</th><th>کل بھری</th><th>گاہک کی اپنی</th><th>کمپنی کی</th><th>واپس کمپنی کی خالی</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>مزدوری</th></tr>${ds.map(r=>`<tr><td>${esc(r.delivery_date)}</td><td>${Number(r.bottles_delivered)||0}</td><td>${Number(r.empty_bottles_returned)||0}</td><td>${Number(r.successful_bottles)||0}</td><td>${Number(r.bottle_difference)||0}</td><td>${Number(r.damaged_caps)||0}</td><td>${money(r.delivery_labor)}</td></tr>`).join("")}</table>`:"ابھی ڈلیوری موجود نہیں۔"}`;
 }
 
 async function loadCustomerArchiveHistory(){
@@ -1655,7 +1655,10 @@ async function deliveryModule(){
  <input id="dDate" type="date" value="${today()}" required onchange="loadSelectedDelivery()">
  <label for="dOut">دی گئی بھری بوتلیں</label>
  <input id="dOut" type="number" min="1" step="1" inputmode="numeric" placeholder="مثال: 12" required oninput="markDeliveryDirty();calcDelivery()">
- <label for="dBack">واپس خالی بوتلیں (نہ ہوں تو 0)</label>
+ <label for="dOwn">ان میں گاہک کی اپنی بوتلیں</label>
+ <input id="dOwn" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="عام طور پر 0؛ اپنی بوتلیں ہوں تو تعداد" oninput="markDeliveryDirty();calcDelivery()">
+ <p class="muted">گاہک کی اپنی بوتلیں بھی Rs.100 فی بوتل بل میں شامل ہوں گی؛ کمپنی کے اسٹاک میں شامل نہیں ہوں گی۔</p>
+ <label for="dBack">واپس آنے والی کمپنی کی خالی بوتلیں (نہ ہوں تو 0)</label>
  <input id="dBack" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="واپس آنے والی خالی بوتلوں کی تعداد" oninput="markDeliveryDirty();calcDelivery()">
  <label for="dCaps">خراب ڈھکن (نہ ہوں تو 0)</label>
  <input id="dCaps" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="خراب ڈھکنوں کی تعداد؛ فی ڈھکن Rs.10" oninput="markDeliveryDirty();calcDelivery()">
@@ -1685,8 +1688,9 @@ async function loadWorkerOptions(selected=""){
 
 function calcDelivery(){
  const out=Number($("dOut").value)||0,back=Number($("dBack").value)||0;
+ const own=Number($("dOwn")?.value)||0,companyOut=out-own;
  const caps=Number($("dCaps")?.value)||0;
- const success=out,diff=Math.max(0,out-back);
+ const success=out,diff=Math.max(0,companyOut-back);
  $("dSuccess").textContent=success;$("dDiff").textContent=back>out?"غلط اندراج":diff;
  const workerSelected=!!$("dWorker")?.value;
  const selectedIsOwner=$("dWorker")?.selectedOptions?.[0]?.dataset.owner==="true";
@@ -1696,7 +1700,7 @@ function calcDelivery(){
  if($("dCapAmount"))$("dCapAmount").textContent=money(caps*10);
  $("dWarn").classList.toggle("hidden",diff===0);
  const labor=workerSelected&&!isOwner?success*20:0;
- return {out,back,caps,capAmount:caps*10,success,diff,labor,isOwner,ownerSaving:isOwner?success*20:0,invalid:back>out};
+ return {out,back,own,companyOut,caps,capAmount:caps*10,success,diff,labor,isOwner,ownerSaving:isOwner?success*20:0,invalid:own>out};
 }
 
 async function loadSelectedDelivery(){
@@ -1705,7 +1709,7 @@ async function loadSelectedDelivery(){
  const button=$("deliverySaveButton");
  window.currentDeliveryRecordId=null;
  if(!customerId||!date){
-  $("dOut").value="";$("dBack").value="0";$("dCaps").value="0";
+  $("dOut").value="";$("dOwn").value="0";$("dBack").value="0";$("dCaps").value="0";
   if($("dWorker"))$("dWorker").value=String(window.deliveryOwnerId||"");
   if(button)button.textContent="ڈلیوری محفوظ کریں";
   calcDelivery();return;
@@ -1718,6 +1722,7 @@ async function loadSelectedDelivery(){
   if(data){
    window.currentDeliveryRecordId=Number(data.id);
    $("dOut").value=String(data.bottles_delivered);
+   $("dOwn").value=String(data.customer_owned_bottles||0);
    $("dBack").value=String(data.empty_bottles_returned);
    $("dCaps").value=String(data.damaged_caps);
    if($("dWorker"))$("dWorker").value=data.worker_id?String(data.worker_id):(Number(data.owner_labor_saving)>0?String(window.deliveryOwnerId||""):"");
@@ -1756,8 +1761,8 @@ function deliveryConfirmationSummary(c){
 async function saveDelivery(){
  const id=$("dCustomer").value,date=$("dDate").value,c=calcDelivery();
  if(!id||!date){msg("گاہک اور تاریخ منتخب کریں۔");return}
- if(c.invalid){msg("واپس آنے والی خالی بوتلیں دی گئی بوتلوں سے زیادہ نہیں ہوسکتیں۔");return}
- if(!Number.isInteger(c.out)||!Number.isInteger(c.back)||c.out<=0||c.back<0){msg("دی گئی اور واپس آنے والی بوتلوں کی تعداد مکمل عدد میں درج کریں۔");return}
+ if(c.invalid){msg("گاہک کی اپنی بوتلوں کی تعداد کل بھری بوتلوں سے زیادہ نہیں ہوسکتی۔");return}
+ if(!Number.isInteger(c.out)||!Number.isInteger(c.own)||!Number.isInteger(c.back)||c.out<=0||c.own<0||c.back<0){msg("دی گئی اور واپس آنے والی بوتلوں کی تعداد مکمل عدد میں درج کریں۔");return}
  if(!Number.isInteger(c.caps)||c.caps<0){msg("خراب ڈھکنوں کی تعداد صحیح عدد میں درج کریں۔");return}
  const confirmationText=deliveryConfirmationSummary(c);
  if(confirmationText&&!confirm(confirmationText))return;
@@ -1766,7 +1771,7 @@ async function saveDelivery(){
  const wasEditing=!!window.currentDeliveryRecordId;
  try{
   const workerId=c.isOwner?null:($("dWorker")?.value||null);
-  const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
+  const payload={customer_id:Number(id),delivery_date:date,bottles_delivered:c.out,customer_owned_bottles:c.own,empty_bottles_returned:c.back,successful_bottles:c.success,delivery_labor:c.labor,owner_labor_saving:c.ownerSaving,bottle_difference:c.diff,damaged_caps:c.caps,worker_id:workerId?Number(workerId):null};
   let deliveryRecord=null;
   if(window.currentDeliveryRecordId){
    const {data,error}=await db.from("customer_19l_deliveries").update(payload)
@@ -1774,7 +1779,7 @@ async function saveDelivery(){
    if(error)throw error;
    deliveryRecord=data;
   }else{
-   const requestSignature=[id,date,c.out,c.back,c.caps,workerId||"owner"].join("|");
+   const requestSignature=[id,date,c.out,c.own,c.back,c.caps,workerId||"owner"].join("|");
    const requestId=mpwPendingRequestId("delivery",requestSignature);
    const {data,error}=await db.from("customer_19l_deliveries").insert({...payload,request_id:requestId}).select("id").single();
    if(error){
@@ -1804,7 +1809,7 @@ async function saveDelivery(){
   const customerName=customerList.find(x=>Number(x.id)===Number(id))?.name||"گاہک";
   const deliveryNotice={
    customer_id:Number(id),title:"ڈلیوری ریکارڈ اپڈیٹ ہوگیا",
-   message:`السلام علیکم ${customerName} صاحب! ${date} کی ڈلیوری کی تفصیل درج/اپڈیٹ ہوگئی ہے۔ دی گئی بھری بوتلیں: ${c.out}، واپس خالی: ${c.back}، کامیاب بوتلیں: ${c.success}، خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,
+   message:`السلام علیکم ${customerName} صاحب! ${date} کی ڈلیوری کی تفصیل درج/اپڈیٹ ہوگئی ہے۔ دی گئی بھری بوتلیں: ${c.out}، گاہک کی اپنی: ${c.own}، کمپنی کی: ${c.companyOut}، واپس کمپنی کی خالی: ${c.back}، خراب ڈھکن: ${c.caps}۔ MUGHAL'S PURE WATER کا شکریہ۔`,
    notification_type:"delivery",reference_key:`delivery:${date}:${deliveryRecord.id}`
   };
   let shouldPush=false;
@@ -1859,7 +1864,7 @@ async function loadDailyDeliveries(){
  const names=await getActiveCustomers().catch(()=>customerList);
  const {data:workers}=await db.from("workers").select("id,full_name,is_owner");
  $("moduleTable").innerHTML="<h3>تمام ڈلیوریاں (نئی تاریخ پہلے)</h3><table><tr><th>تاریخ</th><th>گاہک</th><th>دی گئیں</th><th>واپس</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>ڈھکن رقم</th><th>ورکر</th><th>حقیقی مزدوری خرچ</th><th>مالک کی مزدوری بچت</th><th>اصلاح</th></tr>"+
- (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));let w=(workers||[]).find(x=>Number(x.id)===Number(d.worker_id));const who=w?.full_name||(Number(d.owner_labor_saving)>0?"مالک":"غیر منسوب");return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${d.empty_bottles_returned}</td><td>${d.successful_bottles}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${esc(who)}</td><td>${money(d.delivery_labor)}</td><td>${money(d.owner_labor_saving)}</td><td><button class="secondary" onclick="editCustomerDeliveryRecordById(${Number(d.id)})">غلطی درست کریں</button></td></tr>`}).join("")+"</table>";
+ (data||[]).map(d=>{let c=names.find(x=>Number(x.id)===Number(d.customer_id));let w=(workers||[]).find(x=>Number(x.id)===Number(d.worker_id));const who=w?.full_name||(Number(d.owner_labor_saving)>0?"مالک":"غیر منسوب");return `<tr><td>${esc(d.delivery_date)}</td><td>${esc(c?.name||"گاہک")}</td><td>${d.bottles_delivered}</td><td>${Number(d.customer_owned_bottles)||0}</td><td>${Number(d.company_bottles_delivered??(d.bottles_delivered-(Number(d.customer_owned_bottles)||0)))}</td><td>${d.empty_bottles_returned}</td><td>${d.successful_bottles}</td><td>${d.bottle_difference}</td><td>${Number(d.damaged_caps)||0}</td><td>${money((Number(d.damaged_caps)||0)*10)}</td><td>${esc(who)}</td><td>${money(d.delivery_labor)}</td><td>${money(d.owner_labor_saving)}</td><td><button class="secondary" onclick="editCustomerDeliveryRecordById(${Number(d.id)})">غلطی درست کریں</button></td></tr>`}).join("")+"</table>";
 }
 
 /* ماہانہ بل */
