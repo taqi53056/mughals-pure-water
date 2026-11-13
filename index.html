@@ -1904,6 +1904,9 @@ async function saveDelivery(){
      if(retryError)throw retryError;
      if(retry){deliveryRecord=retry;}
      else{
+      const sameDay=await db.from("customer_19l_deliveries").select("id").eq("customer_id",Number(id)).eq("delivery_date",date).maybeSingle();
+      if(sameDay.error)throw sameDay.error;
+      if(sameDay.data)throw new Error("اس گاہک کی اس تاریخ کی ڈلیوری پہلے سے موجود ہے؛ موجودہ ریکارڈ کھول کر اسی میں ترمیم کریں، نئی انٹری نہ بنائیں۔");
       throw error;
      }
     }else throw error;
