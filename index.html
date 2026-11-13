@@ -2659,15 +2659,17 @@ async function salesModule(){
  <select id="saleWorker"><option value="">ورکر مقرر نہیں — بچت شمار نہیں ہوگی</option></select>
  <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview(true,false)">
  <input id="saleUnitPrice" type="number" min="55" step="1" value="${default500}" placeholder="اصل فی کارٹن / بوتل قیمت" oninput="salePricePreview(false,false)">
- <select id="salePaymentMethod"><option value="cash">نقد وصولی</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>
+ <select id="salePaymentMethod" onchange="toggleSaleCreditFields()"><option value="cash">نقد وصولی</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option><option value="credit">ادھار — منظور شدہ دکان</option></select><div id="saleCreditFields" class="hidden"><select id="saleCreditStore" required><option value="">منظور شدہ دکان منتخب کریں</option></select><p class="muted">ادھار صرف فعال اور ایڈمن سے منظور شدہ دکان کو دیا جا سکتا ہے؛ کوئی خودکار کریڈٹ حد نہیں۔ وصولی اسی سیل کے کھاتے میں درج ہوگی۔</p></div>
  <div class="stat">فی یونٹ قیمت: <b id="salePrice">Rs. ${default500}</b></div>
  <div class="stat" id="saleSpecialNote">100 یا زیادہ کارٹن پر مقررہ خصوصی قیمت خود منتخب ہوگی۔</div>
  <div class="total">کل رقم: <span id="saleTotal">Rs. 0</span></div>
  <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.270 فی کارٹن ہے؛ عمومی قیمت Rs.280 اور خصوصی قیمت Rs.270 ہے۔ 6L کی کم از کم قیمت Rs.55 فی بوتل ہے؛ اصل فروخت قیمت درج کریں۔</p>
  <button onclick="saveSale()">سیل محفوظ کریں</button>
- <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button>`;
+ <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button><button class="secondary" onclick="storeCreditModule()">منظور شدہ دکانیں / ادھار وصولی</button>`;
  salePricePreview(false,true);
  await loadSales();
+ await loadApprovedCreditStores();
+ toggleSaleCreditFields();
  const {data:workers,error:workerError}=await db.from("workers").select("id,full_name,is_owner,work_categories").eq("is_active",true).order("full_name");
  if(workerError){$("moduleMsg").textContent="ورکر فہرست لوڈ نہیں ہوئی: "+workerError.message;return;}
  const eligible=(workers||[]).filter(w=>w.is_owner||(w.work_categories||[]).includes("carton loading/unloading"));
@@ -2728,7 +2730,9 @@ async function saveSale(){
   const saleDate=$("saleDate").value;
   const saleWorkerId=c.type==="6L"?null:(Number($("saleWorker").value)||null);
   const salePaymentMethod=$("salePaymentMethod").value;
-  const requestSignature=[saleDate,c.type,c.qty,c.price,saleWorkerId||"",salePaymentMethod].join("|");
+  const creditStoreId=salePaymentMethod==="credit"?(Number($("saleCreditStore")?.value)||null):null;
+  if(salePaymentMethod==="credit"&&!creditStoreId){msg("ادھار سیل کے لیے منظور شدہ دکان منتخب کریں۔");return;}
+  const requestSignature=[saleDate,c.type,c.qty,c.price,saleWorkerId||"",salePaymentMethod,creditStoreId||""].join("|");
   const requestId=mpwPendingRequestId("product-sale",requestSignature);
   const {data,error}=await db.rpc("record_product_sale",{
    p_sale_date:saleDate,
@@ -2737,13 +2741,14 @@ async function saveSale(){
    p_worker_id:saleWorkerId,
    p_unit_price:c.price,
    p_payment_method:salePaymentMethod,
-   p_request_id:requestId
+   p_request_id:requestId,
+   p_credit_store_id:creditStoreId
   });
   if(error)throw error;
   if(!data||!data.sale_id)throw new Error("ڈیٹابیس سے سیل کی تصدیق موصول نہیں ہوئی۔");
   mpwClearPendingRequestId("product-sale");
   const ownerSelected=$("saleWorker")?.selectedOptions?.[0]?.dataset.owner==="true";
-  msg("سیل محفوظ ہوگئی: "+money(data.total_amount)+(ownerSelected?"۔ مالک کی ممکنہ بچت: "+money(data.owner_saved_labor||0):(data.labor_amount?"۔ ورکر کی واجب الادا مزدوری: "+money(data.labor_amount):"۔ ورکر منتخب نہیں، اس لیے مزدوری درج نہیں ہوئی۔")),true);
+  msg("سیل محفوظ ہوگئی: "+money(data.total_amount)+(salePaymentMethod==="credit"?"۔ ادھار بقایا: "+money(data.receivable_amount||data.total_amount):"")+(ownerSelected?"۔ مالک کی ممکنہ بچت: "+money(data.owner_saved_labor||0):(data.labor_amount?"۔ ورکر کی واجب الادا مزدوری: "+money(data.labor_amount):"۔ ورکر منتخب نہیں، اس لیے مزدوری درج نہیں ہوئی۔")),true);
   $("saleQty").value="";salePricePreview();
   await loadSales();await loadTodaySummary();
  }catch(e){msg("سیل محفوظ نہیں ہوئی: "+(e?.message||String(e)))}
@@ -2752,8 +2757,15 @@ async function saveSale(){
 async function loadSales(){
  const {data,error}=await db.from("product_sales").select("*").order("sale_date",{ascending:false}).limit(100);
  if(error){$("moduleTable").textContent=error.message;return}
- $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>فی یونٹ</th><th>کل</th><th>ادائیگی</th></tr>"+
- (data||[]).map(r=>`<tr><td>${esc(r.sale_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity} ${esc(r.unit)}</td><td>${money(r.unit_price)}</td><td>${money(r.total_amount)}</td><td>${esc(r.payment_method||"cash")}</td></tr>`).join("")+"</table>";
+ const storeIds=[...new Set((data||[]).map(r=>r.credit_store_id).filter(Boolean))];
+ let storeNames={};
+ if(storeIds.length){
+  const sr=await db.from("business_stores").select("id,store_name").in("id",storeIds);
+  if(sr.error){$("moduleTable").textContent="دکانوں کے نام لوڈ نہیں ہوئے: "+sr.error.message;return;}
+  storeNames=Object.fromEntries((sr.data||[]).map(s=>[s.id,s.store_name]));
+ }
+ $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>پروڈکٹ</th><th>مقدار</th><th>فی یونٹ</th><th>کل</th><th>ادائیگی / دکان</th></tr>"+
+ (data||[]).map(r=>`<tr><td>${esc(r.sale_date)}</td><td>${esc(r.product_type)}</td><td>${r.quantity} ${esc(r.unit)}</td><td>${money(r.unit_price)}</td><td>${money(r.total_amount)}</td><td>${r.payment_method==="credit"?"ادھار — "+esc(storeNames[r.credit_store_id]||"دکان"):esc(r.payment_method||"cash")}</td></tr>`).join("")+"</table>";
 }
 
 /* اخراجات اور آمدن */
