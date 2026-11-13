@@ -86,6 +86,20 @@ for (const required of [
     throw new Error("Executive dashboard receivable/payable tracking is missing: " + required);
   }
 }
+const periodAwareBalancesMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113103500_make_dashboard_receivable_payable_balances_period_aware.sql"),
+  "utf8"
+);
+for (const required of [
+  "bill_month<=date_trunc",
+  "d.delivery_date<=p_month_end",
+  "c.received_date<=p_month_end",
+  "entry_date<=p_month_end"
+]) {
+  if (!periodAwareBalancesMigration.includes(required)) {
+    throw new Error("Historical dashboard balances are not period-aware: " + required);
+  }
+}
 const finishedStockActivityMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111141230_include_finished_stock_in_monthly_report_activity.sql"),
   "utf8"
