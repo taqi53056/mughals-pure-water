@@ -2572,10 +2572,11 @@ async function loadTankerPurchases(){
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
  $("moduleBody").innerHTML=
- '<p class="muted">پورے دن کے پانی کے کُل لیٹر اور پانی کی وصول شدہ رقم درج کریں۔ کاؤنٹر پر ڈھکنوں کی فروخت کی الگ گنتی یا اندراج ضروری نہیں؛ صرف سپلائی کے دوران خراب ڈھکن درج ہوں گے۔</p>'+
+ '<div class="card warning"><b>اہم: یہاں صرف کاؤنٹر کی روزانہ وصولی درج کریں۔</b><p>گاہکوں کو دی گئی 19L بوتلوں کے 100 روپے فی کامیاب بوتل یہاں شامل نہ کریں۔ ان کی وصولی گاہک کی ڈلیوری کے وقت الگ درج ہوگی؛ سسٹم اسے خود حساب کرے گا۔ کاؤنٹر کی رقم میں 19L گاہکوں کی وصولی شامل کرنے سے رقم دو مرتبہ شمار ہو سکتی ہے۔</p></div>'+
+ '<p class="muted">پورے دن کاؤنٹر سے فروخت ہونے والے پانی کے کُل لیٹر اور صرف کاؤنٹر سے حقیقتاً وصول شدہ رقم درج کریں۔ ڈھکنوں کی الگ گنتی ضروری نہیں؛ صرف سپلائی کے دوران خراب ڈھکن درج ہوں گے۔</p>'+
  '<div class="card"><input id="counterDate" type="date" value="'+today()+'">'+
  '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنے لیٹر فروخت ہوئے؟">'+
- '<input id="counterAmount" type="number" min="0.01" step="0.01" placeholder="آج پانی کی کُل وصول شدہ رقم؟">'+
+ '<label for="counterAmount">صرف کاؤنٹر سے آج حقیقتاً وصول رقم (19L گاہک ڈلیوری کی وصولی شامل نہ کریں)</label><input id="counterAmount" type="number" min="0.01" step="0.01" placeholder="صرف کاؤنٹر کی وصول شدہ رقم">'+
  '<select id="counterMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="mixed">مختلف ذرائع</option></select>'+
  '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ کاؤنٹر فروخت محفوظ کریں</button></div>';
  $("counterDate").addEventListener("change",loadCounterWaterForDate);await loadCounterWaterForDate();
@@ -2591,7 +2592,7 @@ async function loadCounterWaterForDate(){
  const saveButton=$("counterSaveButton");
  if(saveButton)saveButton.textContent=data?"روزانہ کا کُل اپڈیٹ کریں":"روزانہ کاؤنٹر فروخت محفوظ کریں";
  const {data:history}=await db.from("counter_water_sales").select("*").order("sale_date",{ascending:false}).limit(30);
- $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر پانی کی فروخت</h3><p class="muted">کسی دن کی تاریخ، لیٹر یا وصولی میں غلطی ہو تو اسی قطار سے "غلطی درست کریں" منتخب کریں۔ تبدیلی اسی روزانہ ریکارڈ میں ہوگی، نئی ڈپلیکیٹ انٹری نہیں بنے گی۔</p><table><tr><th>تاریخ</th><th>لیٹر</th><th>پانی کی وصولی</th><th>فی لیٹر اوسط</th><th>اصلاح</th></tr>'+
+ $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر پانی کی فروخت</h3><p class="muted">یہ رقم صرف کاؤنٹر کی وصولی ہے؛ کسٹمر 19L ڈلیوری کی وصولی اس میں شامل نہیں۔ کسی دن کی تاریخ، لیٹر یا وصولی میں غلطی ہو تو اسی قطار سے "غلطی درست کریں" منتخب کریں۔ تبدیلی اسی روزانہ ریکارڈ میں ہوگی، نئی ڈپلیکیٹ انٹری نہیں بنے گی۔</p><table><tr><th>تاریخ</th><th>لیٹر</th><th>پانی کی وصولی</th><th>فی لیٹر اوسط</th><th>اصلاح</th></tr>'+
  (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.total_litres))+'</td><td><button class="secondary" onclick="editCounterWaterSale(\''+esc(r.sale_date)+'\')">غلطی درست کریں</button></td></tr>').join("")+'</table>';
 }
 async function editCounterWaterSale(date){
@@ -3143,7 +3144,7 @@ async function loadTodaySummary(){
   <div class="stat">کسٹمر 19L ڈلیوری مزدوری: <b>${money(labor)}</b></div>
   <div class="stat">بغیر گاہک سپلائی: <b>${unassignedBottles} بوتلیں — مزدوری ${money(unassignedLabor)}</b></div>
   <div class="stat">500ml / 1.5L / 6L فروخت: <b>${money(sales)}</b></div>
-  <div class="stat">19L کاؤنٹر: <b>تقریباً ${counterLitres} لیٹر — ${money(counterAmount)}</b></div>
+  <div class="stat">19L کاؤنٹر: <b>${counterLitres} لیٹر — صرف کاؤنٹر وصولی ${money(counterAmount)}</b><small>گاہکوں کی 19L ڈلیوری کی وصولی اس رقم سے الگ درج ہوتی ہے۔</small></div>
   <div class="stat">آج ٹینکر خریداری: <b>${money(tankerSpend)}</b></div>
   <div class="stat">درج شدہ اخراجات: <b>${money(expenses)} (${expenseCount} انٹریاں)</b></div>
   <div class="stat">درج شدہ آمدن: <b>${money(income)}</b></div>
