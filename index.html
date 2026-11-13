@@ -2572,9 +2572,9 @@ async function loadTankerPurchases(){
 async function counterWaterModule(){
  setTitle("19L کاؤنٹر فروخت");
  $("moduleBody").innerHTML=
- '<p class="muted">پورے دن کے پانی کے کُل لیٹر اور پانی کی وصول شدہ رقم درج کریں۔ کاؤنٹر پر ڈھکنوں کی فروخت کی الگ گنتی یا اندراج ضروری نہیں؛ صرف سپلائی کے دوران خراب ڈھکن درج ہوں گے۔</p>'+
+ '<p class="muted">صرف دکان کی الگ کاؤنٹر فروخت کے کُل لیٹر اور وصول شدہ رقم درج کریں۔ 19L ڈیلیوری کی بوتلیں اور ان کی وصولی یہاں شامل نہ کریں؛ وہ ڈیلیوری ماڈیول میں الگ درج ہوتی ہیں اور پانی کے اسٹاک میں خود شمار ہوتی ہیں۔ کاؤنٹر پر ڈھکنوں کی فروخت کی الگ گنتی ضروری نہیں۔</p>'+
  '<div class="card"><input id="counterDate" type="date" value="'+today()+'">'+
- '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج کُل کتنے لیٹر فروخت ہوئے؟">'+
+ '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج الگ کاؤنٹر سے کتنے لیٹر فروخت ہوئے؟">'+
  '<input id="counterAmount" type="number" min="0.01" step="0.01" placeholder="آج پانی کی کُل وصول شدہ رقم؟">'+
  '<select id="counterMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="mixed">مختلف ذرائع</option></select>'+
  '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ کاؤنٹر فروخت محفوظ کریں</button></div>';
