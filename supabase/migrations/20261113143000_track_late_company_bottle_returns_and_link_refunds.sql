@@ -151,7 +151,9 @@ BEGIN
     RAISE EXCEPTION 'کمپنی بوتل کی ضمانت/واپسی صرف ایڈمن درج کر سکتا ہے۔' USING ERRCODE='42501';
   END IF;
 
-  PERFORM pg_advisory_xact_lock(hashtextextended('mpw-customer-bottle-deposit-'||p_customer_id::text,0));
+  IF p_customer_id IS NULL OR p_request_id IS NULL OR p_transaction_date IS NULL THEN
+    RAISE EXCEPTION 'کسٹمر، تاریخ اور درخواست شناخت لازمی ہیں۔' USING ERRCODE='22023';
+  END IF;
   PERFORM pg_advisory_xact_lock(hashtextextended('mpw-customer-bottle-deposit-request-'||p_request_id::text,0));
 
   SELECT * INTO v_existing FROM public.customer_bottle_deposit_ledger WHERE request_id=p_request_id;
@@ -164,6 +166,8 @@ BEGIN
       p_request_id,p_details,p_bottle_return_confirmed
     );
   END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtextextended('mpw-month-close-'||date_trunc('month',p_transaction_date)::date::text,0));
 
   IF p_transaction_type='deposit_received' THEN
     IF p_bottle_return_id IS NOT NULL THEN
@@ -293,12 +297,24 @@ DO $migration$
 DECLARE v_def text; v_old text; v_new text;
 BEGIN
  v_def:=pg_get_functiondef('private.prepare_customer_archive(bigint)'::regprocedure);
- v_old:=$old$      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
-    ) AS months$old$;
- v_new:=$new$      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
+ v_old:=$old$      SELECT date_trunc('month',d.delivery_date)::date FROM public.customer_19l_deliveries d WHERE d.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',p.payment_date)::date FROM public.customer_payments p WHERE p.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',l.transaction_date)::date FROM public.customer_bottle_deposit_ledger l WHERE l.customer_id=p_customer_id
+    ) AS activity$old$;
+ v_new:=$new$      SELECT date_trunc('month',d.delivery_date)::date FROM public.customer_19l_deliveries d WHERE d.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',p.payment_date)::date FROM public.customer_payments p WHERE p.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',b.bill_month)::date FROM public.customer_monthly_bills b WHERE b.customer_id=p_customer_id
+      UNION
+      SELECT date_trunc('month',l.transaction_date)::date FROM public.customer_bottle_deposit_ledger l WHERE l.customer_id=p_customer_id
       UNION
       SELECT date_trunc('month',r.return_date)::date FROM public.customer_19l_bottle_returns r WHERE r.customer_id=p_customer_id
-    ) AS months$new$;
+    ) AS activity$new$;
  IF position(v_new in v_def)=0 THEN
   IF position(v_old in v_def)=0 THEN RAISE EXCEPTION 'Archive return month-lock anchor missing'; END IF;
   v_def:=replace(v_def,v_old,v_new);
