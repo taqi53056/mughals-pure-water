@@ -2641,7 +2641,7 @@ async function loadProductReturns(){
 
 /* سیل / مال کا اخراج */
 let saleSettings={};
-let storeCreditStores=[],storeCreditSales=[];
+let storeCreditStores=[],storeCreditSales=[],storeCreditSalesAll=[],storeCreditPayments=[];
 async function loadApprovedCreditStores(){
  const {data,error}=await db.from("business_stores").select("id,store_name").eq("is_active",true).eq("credit_approved",true).order("store_name");
  if(error){msg("منظور شدہ دکانیں لوڈ نہیں ہوئیں: "+error.message);return;}
@@ -2681,7 +2681,8 @@ async function storeCreditModule(){
   <input id="scPayDetails" maxlength="300" placeholder="رسید / تفصیل (اختیاری)">
   <button id="scPayButton" onclick="saveStoreCreditPayment()">وصولی محفوظ کریں</button>
  </section>
- <section class="card"><h3>بقایا ادھار سیلز</h3><div id="scCreditHistory" class="muted">لوڈ ہو رہا ہے...</div></section>`;
+ <section class="card"><h3>ادھار سیلز کی مکمل ہسٹری</h3><div id="scCreditHistory" class="muted">لوڈ ہو رہا ہے...</div></section>
+ <section class="card"><h3>ادھار وصولیوں کی ہسٹری</h3><div id="scPaymentHistory" class="muted">لوڈ ہو رہا ہے...</div></section>`;
  await loadStoreCreditData();
 }
 async function saveBusinessStore(){
@@ -2716,13 +2717,18 @@ async function setBusinessStoreActive(storeId,next){
  await loadStoreCreditData();await loadApprovedCreditStores();
 }
 async function loadStoreCreditData(){
- const [storesRes,salesRes]=await Promise.all([
+ const [storesRes,salesRes,paymentsRes]=await Promise.all([
   db.from("business_store_credit_balances").select("*").order("store_name"),
-  db.from("store_credit_sale_balances").select("*").gt("balance_due",0).order("sale_date",{ascending:true}).order("sale_id",{ascending:true})
+  db.from("store_credit_sale_balances").select("*").order("sale_date",{ascending:false}).order("sale_id",{ascending:false}),
+  db.from("store_credit_payments").select("id,sale_id,payment_date,amount,payment_method,details").order("payment_date",{ascending:false}).order("id",{ascending:false}).limit(100)
  ]);
  if(storesRes.error){$("scStoreList").textContent="دکانیں لوڈ نہیں ہوئیں: "+storesRes.error.message;return;}
- if(salesRes.error){$("scCreditHistory").textContent="ادھار ہسٹری لوڈ نہیں ہوئی: "+salesRes.error.message;return;}
- storeCreditStores=storesRes.data||[];storeCreditSales=salesRes.data||[];
+ if(salesRes.error){$("scCreditHistory").textContent="ادھار سیل ہسٹری لوڈ نہیں ہوئی: "+salesRes.error.message;return;}
+ if(paymentsRes.error){$("scPaymentHistory").textContent="وصولی ہسٹری لوڈ نہیں ہوئی: "+paymentsRes.error.message;return;}
+ storeCreditStores=storesRes.data||[];
+ storeCreditSalesAll=salesRes.data||[];
+ storeCreditSales=storeCreditSalesAll.filter(s=>Number(s.balance_due)>0);
+ storeCreditPayments=paymentsRes.data||[];
  $("scStoreList").innerHTML=storeCreditStores.length?storeCreditStores.map(s=>`
   <article class="worker-summary-card">
    <h3>${esc(s.store_name)}</h3>
@@ -2739,8 +2745,19 @@ async function loadStoreCreditData(){
   if(old&&storeCreditStores.some(s=>String(s.store_id)===old))storeSel.value=old;
   filterStoreCreditSales();
  }
- $("scCreditHistory").innerHTML=storeCreditSales.length?'<table><tr><th>تاریخ</th><th>دکان</th><th>سیل</th><th>کل</th><th>وصول</th><th>بقایا</th></tr>'+
- storeCreditSales.map(s=>'<tr><td>'+esc(s.sale_date)+'</td><td>'+esc(s.store_name)+'</td><td>'+esc(s.product_type)+' — '+s.quantity+' '+esc(s.unit)+'</td><td>'+money(s.total_amount)+'</td><td>'+money(s.amount_paid)+'</td><td>'+money(s.balance_due)+'</td></tr>').join("")+'</table>':'<p class="muted">کوئی بقایا ادھار سیل موجود نہیں۔</p>';
+ $("scCreditHistory").innerHTML=storeCreditSalesAll.length?'<table><tr><th>تاریخ</th><th>دکان</th><th>سیل</th><th>کل</th><th>وصول</th><th>بقایا / حیثیت</th></tr>'+
+ storeCreditSalesAll.map(s=>'<tr><td>'+esc(s.sale_date)+'</td><td>'+esc(s.store_name)+'</td><td>'+esc(s.product_type)+' — '+s.quantity+' '+esc(s.unit)+'</td><td>'+money(s.total_amount)+'</td><td>'+money(s.amount_paid)+'</td><td>'+money(s.balance_due)+(Number(s.balance_due)<=0?' — ادا':' — بقایا')+'</td></tr>').join("")+'</table>':'<p class="muted">ابھی کوئی ادھار سیل موجود نہیں۔</p>';
+ const paymentSaleIds=[...new Set(storeCreditPayments.map(p=>p.sale_id))];
+ let paymentSales={};
+ if(paymentSaleIds.length){
+  const ps=await db.from("product_sales").select("id,credit_store_id,product_type,quantity,unit").in("id",paymentSaleIds);
+  if(ps.error){$("scPaymentHistory").textContent="وصولی سے متعلق سیلز لوڈ نہیں ہوئیں: "+ps.error.message;return;}
+  paymentSales=Object.fromEntries((ps.data||[]).map(s=>[s.id,s]));
+ }
+ const storeNames=Object.fromEntries(storeCreditStores.map(s=>[s.store_id,s.store_name]));
+ const paymentMethods={cash:"نقد",bank:"بینک",jazzcash:"جاز کیش",easypaisa:"ایزی پیسہ",other:"دیگر"};
+ $("scPaymentHistory").innerHTML=storeCreditPayments.length?'<table><tr><th>وصولی تاریخ</th><th>دکان</th><th>سیل</th><th>وصول رقم</th><th>طریقہ</th><th>تفصیل</th></tr>'+
+ storeCreditPayments.map(p=>{const sale=paymentSales[p.sale_id]||{};return '<tr><td>'+esc(p.payment_date)+'</td><td>'+esc(storeNames[sale.credit_store_id]||"دکان")+'</td><td>'+esc(sale.product_type||"")+' — '+(sale.quantity||"")+' '+esc(sale.unit||"")+'</td><td>'+money(p.amount)+'</td><td>'+esc(paymentMethods[p.payment_method]||p.payment_method)+'</td><td>'+esc(p.details||"")+'</td></tr>';}).join("")+'</table>':'<p class="muted">ابھی کوئی ادھار وصولی درج نہیں۔</p>';
 }
 function filterStoreCreditSales(){
  const storeId=Number($("scStoreSelect")?.value)||0;

@@ -149,6 +149,29 @@ for (const required of [
     throw new Error("Approved-store credit UI is incomplete: " + required);
   }
 }
+const storeCreditIndexMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113132500_index_store_credit_foreign_keys_and_optimize_rls.sql"),
+  "utf8"
+);
+for (const required of [
+  "business_stores_created_by_idx",
+  "store_credit_payments_entered_by_idx",
+  "(SELECT auth.uid())"
+]) {
+  if (!storeCreditIndexMigration.includes(required)) {
+    throw new Error("Store credit RLS/index optimization is incomplete: " + required);
+  }
+}
+for (const required of [
+  "storeCreditSalesAll",
+  "storeCreditPayments",
+  "ادھار وصولیوں کی ہسٹری",
+  "store_credit_payments"
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("Store credit history display is incomplete: " + required);
+  }
+}
 const monthlyRetryMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
   "utf8"
