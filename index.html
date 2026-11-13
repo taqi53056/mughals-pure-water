@@ -1647,10 +1647,10 @@ async function deliveryModule(){
  let list;
  try{list=await getActiveCustomers()}catch(e){msg("گاہک لوڈ نہیں ہوئے: "+e.message);return}
  $("moduleBody").innerHTML=`
- <p class="muted">ہر گاہک کی ایک تاریخ میں صرف ایک ڈلیوری محفوظ ہوگی۔ اگر اسی تاریخ کا ریکارڈ موجود ہو تو نیا ریکارڈ بنانے کے بجائے اسی میں ترمیم کریں۔ کمپنی کی بوتلیں فروخت نہیں ہوتیں۔</p>
+ <p class="muted">ہر الگ سپلائی کا الگ اندراج کریں۔ ہر بھری 19L بوتل کی قیمت Rs.100 ہے؛ خالی بوتل واپس نہ آنے سے پانی کی قیمت ختم نہیں ہوتی۔</p>
  <label for="dCustomer">گاہک منتخب کریں</label>
  <select id="dCustomer" required onchange="loadSelectedDelivery()">${customerOptions(list)}</select>
- <label for="dWorker">ڈیلیوری کس نے کی؟</label><select id="dWorker" onchange="markDeliveryDirty();calcDelivery()"><option value="">ورکر مقرر نہیں — مزدوری/بچت شمار نہیں ہوگی</option></select><p class="muted">مالک خود ڈلیوری کرے تو مالک منتخب کریں؛ ہر کامیاب بوتل پر Rs.20 ممکنہ بچت ہوگی۔ ملازم منتخب کریں تو Rs.20 حقیقی مزدوری اس کے لیجر میں جائے گی۔ خالی انتخاب صرف غیر منسوب ڈلیوری ہے، اس پر نہ مزدوری بنے گی نہ مالک کی بچت۔</p>
+ <label for="dWorker">ڈیلیوری کس نے کی؟</label><select id="dWorker" onchange="markDeliveryDirty();calcDelivery()"><option value="">ورکر مقرر نہیں — مزدوری/بچت شمار نہیں ہوگی</option></select><p class="muted">مالک خود ڈلیوری کرے تو مالک منتخب کریں؛ ہر بھری بوتل پر Rs.20 ممکنہ بچت ہوگی۔ ملازم منتخب کریں تو Rs.20 حقیقی مزدوری اس کے لیجر میں جائے گی۔ خالی انتخاب صرف غیر منسوب ڈلیوری ہے، اس پر نہ مزدوری بنے گی نہ مالک کی بچت۔</p>
  <label for="dDate">ڈلیوری کی تاریخ</label>
  <input id="dDate" type="date" value="${today()}" required onchange="loadSelectedDelivery()">
  <label for="dOut">دی گئی بھری بوتلیں</label>
@@ -1686,7 +1686,7 @@ async function loadWorkerOptions(selected=""){
 function calcDelivery(){
  const out=Number($("dOut").value)||0,back=Number($("dBack").value)||0;
  const caps=Number($("dCaps")?.value)||0;
- const success=Math.min(out,back),diff=Math.max(0,out-back);
+ const success=out,diff=Math.max(0,out-back);
  $("dSuccess").textContent=success;$("dDiff").textContent=back>out?"غلط اندراج":diff;
  const workerSelected=!!$("dWorker")?.value;
  const selectedIsOwner=$("dWorker")?.selectedOptions?.[0]?.dataset.owner==="true";
@@ -2482,7 +2482,7 @@ async function saveCounterWaterSale(){
 async function unassigned19lModule(){
  setTitle("بغیر گاہک 19L سپلائی");
  $("moduleBody").innerHTML=
- '<p class="muted">یہ اندراج صرف اس سپلائی کے لیے ہے جس کا ابھی کوئی کسٹمر اکاؤنٹ موجود نہیں۔ اس سے کسٹمر، کسٹمر بل یا کسٹمر ہسٹری نہیں بنے گی۔ ہر کامیاب بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔ اس اندراج سے 19L آمدن منافع میں شمار ہوگی۔ رقم حقیقتاً ملنے پر نیچے اسی سپلائی کے ساتھ وصولی درج کریں؛ وصولی منافع میں دوبارہ شامل نہیں ہوگی۔</p>'+
+ '<p class="muted">یہ اندراج صرف اس سپلائی کے لیے ہے جس کا ابھی کوئی کسٹمر اکاؤنٹ موجود نہیں۔ اس سے کسٹمر، کسٹمر بل یا کسٹمر ہسٹری نہیں بنے گی۔ ہر بھری بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔ اس اندراج سے 19L آمدن منافع میں شمار ہوگی۔ رقم حقیقتاً ملنے پر نیچے اسی سپلائی کے ساتھ وصولی درج کریں؛ وصولی منافع میں دوبارہ شامل نہیں ہوگی۔</p>'+
  '<div class="card"><h3>نئی غیر منسلک سپلائی</h3>'+
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
  '<label for="u19Worker">سپلائی کس نے کی؟ *</label><select id="u19Worker" required><option value="" selected disabled>سپلائی کرنے والا منتخب کریں</option><option value="owner">مالک نے خود سپلائی کی</option><option value="worker">مزدور نے سپلائی کی</option></select><div id="u19WorkerPicker" class="hidden"><label for="u19WorkerId">مزدور منتخب کریں *</label><select id="u19WorkerId" required><option value="">ورکر لوڈ ہو رہا ہے...</option></select></div><div id="u19OwnerNote" class="muted hidden">مالک کی اپنی محنت پر ورکر لیجر میں مزدوری نہیں بنے گی؛ بچائی گئی مزدوری الگ دکھائی جائے گی۔</div>'+
@@ -2490,7 +2490,7 @@ async function unassigned19lModule(){
  '<label for="u19Empties">واپس آنے والی خالی بوتلیں (اگر ہوں)</label><input id="u19Empties" type="number" min="0" step="1" inputmode="numeric" value="0" oninput="updateUnassigned19lLabor()">'+
  '<label for="u19DamagedCaps">اس سپلائی میں خراب 19L ڈھکن</label><input id="u19DamagedCaps" type="number" min="0" step="1" inputmode="numeric" value="0">'+
  '<label for="u19Details">تفصیل (اختیاری)</label><input id="u19Details" maxlength="300" placeholder="مثلاً عارضی سپلائی">'+
- '<div class="stat">مزدوری: <b id="u19Labor">Rs. 0</b> — فی کامیاب بوتل Rs.20</div>'+
+ '<div class="stat">مزدوری: <b id="u19Labor">Rs. 0</b> — فی بھری بوتل Rs.20</div>'+
  '<button id="u19SaveButton" onclick="saveUnassigned19lDelivery()">سپلائی اور مزدوری محفوظ کریں</button></div>'+
  '<div class="card"><h3>غیر منسلک سپلائی کی رقم وصول کریں</h3><p class="muted">وصولی اصل سپلائی سے منسلک ہوگی؛ منافع میں دوبارہ شامل نہیں ہوگی۔ جزوی وصولی بھی درج ہو سکتی ہے۔</p><label for="u19CollectionDelivery">متعلقہ سپلائی *</label><select id="u19CollectionDelivery" required><option value="">سپلائی منتخب کریں</option></select><label for="u19CollectionDate">وصولی کی تاریخ *</label><input id="u19CollectionDate" type="date" value="'+today()+'"><label for="u19CollectionAmount">وصول شدہ رقم *</label><input id="u19CollectionAmount" type="number" min="0.01" step="0.01"><label for="u19CollectionMethod">طریقہ *</label><select id="u19CollectionMethod" required><option value="">طریقہ منتخب کریں</option><option value="cash">نقد</option><option value="bank">بینک</option><option value="easypaisa">ایزی پیسہ</option><option value="jazzcash">جاز کیش</option></select><button id="u19CollectionSave" onclick="saveUnassigned19lCollection()">وصولی محفوظ کریں</button></div><div id="u19History"></div>';
  const sel=$("u19WorkerId");
@@ -2546,7 +2546,7 @@ async function saveUnassigned19lDelivery(){
  const date=$("u19Date").value,actor=$("u19Worker").value,isOwner=actor==="owner",worker=isOwner?null:Number($("u19WorkerId").value),bottles=Number($("u19Bottles").value),empties=Number($("u19Empties").value||0),damagedCaps=Number($("u19DamagedCaps").value||0),details=$("u19Details").value.trim();
  if(!date||!["owner","worker"].includes(actor)||(!isOwner&&(!Number.isInteger(worker)||worker<=0))||!Number.isInteger(bottles)||bottles<=0||!Number.isInteger(empties)||empties<0||empties>bottles||!Number.isInteger(damagedCaps)||damagedCaps<0){msg("سپلائی کرنے والا، مزدور (اگر لاگو ہو)، تاریخ اور مقدار درست منتخب/درج کریں۔");return;}
  if(date>today()){msg("مستقبل کی تاریخ پر سپلائی درج نہیں ہو سکتی۔");return;}
- const labor=isOwner?0:empties*20,ownerSaving=isOwner?empties*20:0;
+ const labor=isOwner?0:bottles*20,ownerSaving=isOwner?bottles*20:0;
  if(!confirm("تصدیق کریں:\nتاریخ: "+date+"\nسپلائی: "+(isOwner?"مالک نے خود":"مزدور")+"\nبوتلیں: "+bottles+"\nورکر مزدوری: "+money(labor)+"\nمالک کی بچائی گئی مزدوری: "+money(ownerSaving)+"\nیہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
  const button=$("u19SaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  const signature=[date,actor,worker,bottles,empties,damagedCaps,details].join("|");
