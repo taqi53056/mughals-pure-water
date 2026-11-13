@@ -2180,8 +2180,8 @@ async function rawMaterialsModule(){
  Object.keys(rawMaterialLabels).filter(k=>!["cap_500ml","cap_1_5l","cap_6l","sticker"].includes(k)).map(k=>'<option value="'+k+'">'+rawMaterialLabels[k]+'</option>').join("")+
  '</select>'+
  '<input id="rawPurchaseQty" type="number" min="0.001" step="0.001" required placeholder="مقدار: بوتل / کارٹن / بنڈل / کلوگرام *" oninput="updateRawStickerPurchaseUI()">'+
- '<input id="rawPurchaseAmount" type="number" min="0.01" step="0.01" required placeholder="کل ادا شدہ رقم / ابتدائی مالیت (روپے) *" oninput="updateRawStickerPurchaseUI()">
- <div id="rawStickerCostPreview" class="muted hidden"></div>'+
+ '<input id="rawPurchaseAmount" type="number" min="0.01" step="0.01" required placeholder="کل ادا شدہ رقم / ابتدائی مالیت (روپے) *" oninput="updateRawStickerPurchaseUI()">'+
+ '<div id="rawStickerCostPreview" class="muted hidden"></div>'+
  '<div id="rawPaymentWrap"><label>ادائیگی کا طریقہ</label><select id="rawPurchaseMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select></div>'+
  ''+
  '<textarea id="rawPurchaseDetails" maxlength="300" placeholder="بل نمبر / تفصیل (اختیاری)"></textarea>'+
@@ -2293,7 +2293,7 @@ async function loadRawMaterialPurchases(){
  const valuationKeys=[...balanceKeys,"sticker","cap_19l"];
  const valuationRows=valuationKeys.map(k=>{
   const source=relevantRawRows(k);
-  const qty=source.reduce((n,x)=>n+Number(x.quantity||0),0);
+  const qty=purchased(k);
   const amount=source.reduce((n,x)=>n+Number(x.total_amount||0),0);
   const average=qty>0?amount/qty:null;
   const remaining=purchased(k)-(k==="cap_19l"?capsUsed:used[k]||0);
@@ -2306,7 +2306,7 @@ async function loadRawMaterialPurchases(){
  const rawStockValuationBox=$("rawStockValuation");
  if(rawStockValuationBox)rawStockValuationBox.innerHTML=
   '<div class="stat">باقی خام مال کی درج شدہ تخمینی مالیت <b>'+money(totalRawStockValue)+'</b><small>صرف موجودہ مثبت مقدار × اوسط درج شدہ فی اکائی لاگت؛ یہ رقم منافع میں دوبارہ خرچ نہیں کی گئی۔</small></div>'+
-  '<div class="tablewrap"><table><tr><th>خام مال</th><th>خریدی/ابتدائی/مفت مقدار</th><th>اوسط فی اکائی لاگت</th><th>استعمال</th><th>باقی مقدار</th><th>باقی مالیت</th></tr>'+
+  '<div class="tablewrap"><table><tr><th>خام مال</th><th>اسٹاک میں شامل مقدار (عدد/اکائی)</th><th>اوسط فی اکائی لاگت</th><th>استعمال</th><th>باقی مقدار</th><th>باقی مالیت</th></tr>'+
   valuationRows.map(r=>'<tr><td>'+esc(r.label)+'</td><td>'+r.qty.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.average===null?"لاگت درج نہیں":money(r.average))+'</td><td>'+((r.qty-r.remaining).toLocaleString("en-US",{maximumFractionDigits:2}))+' '+r.unit+'</td><td class="'+(r.remaining<0?"warning":"")+'">'+r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.value===null?"—":money(r.value))+'</td></tr>').join("")+
   '</table></div>'+
   (shortages.length?'<div class="warning">خام مال کے اسٹاک میں کمی/منفی بیلنس: '+shortages.map(r=>esc(r.label)+" ("+r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+")").join("، ")+'۔ انٹری اور پیداوار دوبارہ چیک کریں۔</div>':"");
