@@ -202,6 +202,47 @@ for (const required of [
     throw new Error("Company bottle deposit admin UI is incomplete: " + required);
   }
 }
+const lateBottleReturnMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113143000_track_late_company_bottle_returns_and_link_refunds.sql"),
+  "utf8"
+);
+const depositReturnLinkMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113144500_persist_return_link_in_deposit_insert.sql"),
+  "utf8"
+);
+for (const required of [
+  "customer_19l_bottle_returns",
+  "record_customer_19l_bottle_return",
+  "customer_19l_bottle_return_balances",
+  "bottle_return_id",
+  "p_bottle_return_id",
+  "Archive return month-lock anchor",
+  "Archive return activity anchor",
+  "company_bottles_outstanding"
+]) {
+  if (!lateBottleReturnMigration.includes(required)) {
+    throw new Error("Late company bottle return/refund safeguards are incomplete: " + required);
+  }
+}
+for (const required of [
+  "mpw.customer_bottle_return_id",
+  "bottle_return_id",
+  "customer_bottle_deposit_ledger"
+]) {
+  if (!depositReturnLinkMigration.includes(required)) {
+    throw new Error("Atomic bottle refund link is incomplete: " + required);
+  }
+}
+for (const required of [
+  "saveCustomerBottleReturn",
+  "customer_19l_bottle_return_balances",
+  "p_bottle_return_id",
+  "متعلقہ بوتل واپسی منتخب کریں"
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("Company bottle return/refund UI is incomplete: " + required);
+  }
+}
 const monthlyRetryMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
   "utf8"
