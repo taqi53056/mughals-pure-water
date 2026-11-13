@@ -2169,6 +2169,7 @@ const rawMaterialUnits={
  carton_500ml:"carton",carton_1_5l:"carton",tape_bundle:"bundle",
  sticker:"piece",sticker_500ml:"kg",sticker_1_5l_6l:"kg"
 };
+const rawMaterialYieldPerKg=Object.freeze({sticker_500ml:1900,sticker_1_5l_6l:1200});
 async function rawMaterialsModule(){
  setTitle("خام مال کی خریداری");
  $("moduleBody").innerHTML=
@@ -2198,7 +2199,7 @@ function updateRawStickerPurchaseUI(){
  if(preview){
   const kg=Number(qty?.value)||0,rate=Number(amount?.value)||0,kind=$("rawPurchaseKind")?.value||"purchase";
   preview.classList.toggle("hidden",!isSticker||kind==="free_claim"||kg<=0||rate<=0);
-  preview.textContent=isSticker&&kind!=="free_claim"&&kg>0&&rate>0?"کل لاگت: "+money(kg*rate)+" — حاصل شدہ اسٹیکر: "+(kg*(type==="sticker_500ml"?1900:1200)).toLocaleString("en-US",{maximumFractionDigits:2}):"";
+  preview.textContent=isSticker&&kind!=="free_claim"&&kg>0&&rate>0?"کل لاگت: "+money(kg*rate)+" — حاصل شدہ اسٹیکر: "+(kg*rawMaterialYieldPerKg[type]).toLocaleString("en-US",{maximumFractionDigits:2}):"";
  }
 }
 async function saveRawMaterialPurchase(){
@@ -2267,8 +2268,7 @@ async function loadRawMaterialPurchases(){
  }catch(e){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
  const rawOpeningDate=key=>rows.filter(x=>x.record_type==="opening_stock"&&x.material_type===key).map(x=>x.purchase_date).sort()[0]||null;
  const relevantRawRows=key=>rows.filter(x=>x.material_type===key&&(!rawOpeningDate(key)||x.record_type==="opening_stock"||x.purchase_date>=rawOpeningDate(key)));
- const stickerYield={sticker_500ml:1900,sticker_1_5l_6l:1200};
- const purchased=key=>relevantRawRows(key).reduce((n,x)=>n+Number(x.quantity||0)*(stickerYield[key]||1),0);
+ const purchased=key=>relevantRawRows(key).reduce((n,x)=>n+Number(x.quantity||0)*(rawMaterialYieldPerKg[key]||1),0);
  const made=(key,materialKey=key)=>prod.filter(x=>x.product_type===key&&(!rawOpeningDate(materialKey)||x.production_date>=rawOpeningDate(materialKey))).reduce((n,x)=>n+Number(x.quantity||0),0);
  const capBase=rawOpeningDate("cap_19l");
  const customerCapsUsed=capDeliveries.filter(r=>!capBase||r.delivery_date>=capBase).reduce((n,r)=>n+Number(r.damaged_caps||0),0);
