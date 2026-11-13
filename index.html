@@ -2641,6 +2641,148 @@ async function loadProductReturns(){
 
 /* سیل / مال کا اخراج */
 let saleSettings={};
+let storeCreditStores=[],storeCreditSales=[];
+async function loadApprovedCreditStores(){
+ const {data,error}=await db.from("business_stores").select("id,store_name").eq("is_active",true).eq("credit_approved",true).order("store_name");
+ if(error){msg("منظور شدہ دکانیں لوڈ نہیں ہوئیں: "+error.message);return;}
+ const sel=$("saleCreditStore");
+ if(sel)sel.innerHTML='<option value="">منظور شدہ دکان منتخب کریں</option>'+(data||[]).map(s=>'<option value="'+s.id+'">'+esc(s.store_name)+'</option>').join("");
+}
+function toggleSaleCreditFields(){
+ const isCredit=$("salePaymentMethod")?.value==="credit";
+ $("saleCreditFields")?.classList.toggle("hidden",!isCredit);
+ if($("saleCreditStore"))$("saleCreditStore").required=isCredit;
+}
+async function storeCreditModule(){
+ setTitle("منظور شدہ دکانیں اور ادھار وصولی");
+ $("moduleBody").innerHTML=`
+ <button class="secondary" onclick="salesModule()">واپس سیل کے صفحے پر</button>
+ <section class="card">
+  <h3>نئی دکان شامل کریں</h3>
+  <p class="muted">نئی دکان پہلے غیر منظور شدہ بنے گی۔ ادھار کی اجازت الگ سے ایڈمن منظور کرے گا۔ کوئی خودکار کریڈٹ حد یا مقررہ تاریخ نہیں۔</p>
+  <input id="scStoreName" maxlength="120" placeholder="دکان کا نام *">
+  <input id="scStoreMobile" maxlength="30" placeholder="موبائل نمبر (اختیاری)">
+  <input id="scStoreAddress" maxlength="250" placeholder="پتہ (اختیاری)">
+  <button onclick="saveBusinessStore()">دکان شامل کریں</button>
+ </section>
+ <section class="card">
+  <h3>دکانوں کی منظوری اور بقایا</h3>
+  <div id="scStoreList" class="muted">لوڈ ہو رہا ہے...</div>
+ </section>
+ <section class="card">
+  <h3>ادھار کی جزوی یا مکمل وصولی</h3>
+  <p class="muted">وصولی منتخب سیل کے کھاتے میں لگے گی؛ بقایا سے زیادہ رقم قبول نہیں ہوگی۔</p>
+  <select id="scStoreSelect" onchange="filterStoreCreditSales()"><option value="">دکان منتخب کریں</option></select>
+  <select id="scSaleSelect" onchange="updateStoreCreditDue()"><option value="">بقایا والی سیل منتخب کریں</option></select>
+  <div id="scSaleDue" class="stat">سیل کا بقایا منتخب کریں۔</div>
+  <input id="scPayDate" type="date" value="${today()}">
+  <input id="scPayAmount" type="number" min="0.01" step="0.01" placeholder="وصول شدہ رقم (روپے) *">
+  <select id="scPayMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>
+  <input id="scPayDetails" maxlength="300" placeholder="رسید / تفصیل (اختیاری)">
+  <button id="scPayButton" onclick="saveStoreCreditPayment()">وصولی محفوظ کریں</button>
+ </section>
+ <section class="card"><h3>بقایا ادھار سیلز</h3><div id="scCreditHistory" class="muted">لوڈ ہو رہا ہے...</div></section>`;
+ await loadStoreCreditData();
+}
+async function saveBusinessStore(){
+ const store_name=$("scStoreName").value.trim();
+ const mobile=$("scStoreMobile").value.trim();
+ const address=$("scStoreAddress").value.trim();
+ if(store_name.length<2){msg("دکان کا درست نام درج کریں۔");return;}
+ if(mobile&& (mobile.length<7||mobile.length>30)){msg("موبائل نمبر درست درج کریں۔");return;}
+ if(!confirm("کیا یہ دکان شامل کرنی ہے؟ ادھار کی منظوری ابھی بند رہے گی۔"))return;
+ const {data,error}=await db.from("business_stores").insert({
+  store_name,mobile:mobile||null,address:address||null,is_active:true,credit_approved:false
+ }).select("id").single();
+ if(error){msg("دکان محفوظ نہیں ہوئی: "+error.message);return;}
+ $("scStoreName").value="";$("scStoreMobile").value="";$("scStoreAddress").value="";
+ msg("دکان شامل ہوگئی؛ ادھار دینے سے پہلے منظوری فعال کریں۔",true);
+ await loadStoreCreditData();await loadApprovedCreditStores();
+}
+async function setStoreCreditApproval(storeId,next){
+ const s=storeCreditStores.find(x=>Number(x.store_id)===Number(storeId));
+ if(!s)return;
+ if(!confirm("کیا "+s.store_name+" کے لیے ادھار "+(next?"منظور":"بند")+" کرنا ہے؟"))return;
+ const {error}=await db.from("business_stores").update({credit_approved:next}).eq("id",storeId);
+ if(error){msg("منظوری تبدیل نہیں ہوئی: "+error.message);return;}
+ await loadStoreCreditData();await loadApprovedCreditStores();
+}
+async function setBusinessStoreActive(storeId,next){
+ const s=storeCreditStores.find(x=>Number(x.store_id)===Number(storeId));
+ if(!s)return;
+ if(!confirm("کیا "+s.store_name+" کو "+(next?"دوبارہ فعال":"غیر فعال")+" کرنا ہے؟ موجودہ بقایا محفوظ رہے گا۔"))return;
+ const {error}=await db.from("business_stores").update({is_active:next}).eq("id",storeId);
+ if(error){msg("دکان کی حیثیت تبدیل نہیں ہوئی: "+error.message);return;}
+ await loadStoreCreditData();await loadApprovedCreditStores();
+}
+async function loadStoreCreditData(){
+ const [storesRes,salesRes]=await Promise.all([
+  db.from("business_store_credit_balances").select("*").order("store_name"),
+  db.from("store_credit_sale_balances").select("*").gt("balance_due",0).order("sale_date",{ascending:true}).order("sale_id",{ascending:true})
+ ]);
+ if(storesRes.error){$("scStoreList").textContent="دکانیں لوڈ نہیں ہوئیں: "+storesRes.error.message;return;}
+ if(salesRes.error){$("scCreditHistory").textContent="ادھار ہسٹری لوڈ نہیں ہوئی: "+salesRes.error.message;return;}
+ storeCreditStores=storesRes.data||[];storeCreditSales=salesRes.data||[];
+ $("scStoreList").innerHTML=storeCreditStores.length?storeCreditStores.map(s=>`
+  <article class="worker-summary-card">
+   <h3>${esc(s.store_name)}</h3>
+   <p class="muted">${esc(s.mobile||"موبائل درج نہیں")} ${s.address?" — "+esc(s.address):""}</p>
+   <p>ادھار: <b>${s.credit_approved?"منظور":"منظور نہیں"}</b> — حیثیت: <b>${s.is_active?"فعال":"غیر فعال"}</b></p>
+   <p>کل بقایا: <b>${money(s.balance_due||0)}</b></p>
+   <button class="secondary" onclick="setStoreCreditApproval(${s.store_id},${!s.credit_approved})">${s.credit_approved?"ادھار منظوری بند کریں":"ادھار منظور کریں"}</button>
+   <button class="secondary" onclick="setBusinessStoreActive(${s.store_id},${!s.is_active})">${s.is_active?"دکان غیر فعال کریں":"دکان فعال کریں"}</button>
+  </article>`).join(""):'<p class="muted">ابھی کوئی دکان شامل نہیں۔</p>';
+ const storeSel=$("scStoreSelect");
+ if(storeSel){
+  const old=storeSel.value;
+  storeSel.innerHTML='<option value="">دکان منتخب کریں</option>'+storeCreditStores.map(s=>'<option value="'+s.store_id+'">'+esc(s.store_name)+'</option>').join("");
+  if(old&&storeCreditStores.some(s=>String(s.store_id)===old))storeSel.value=old;
+  filterStoreCreditSales();
+ }
+ $("scCreditHistory").innerHTML=storeCreditSales.length?'<table><tr><th>تاریخ</th><th>دکان</th><th>سیل</th><th>کل</th><th>وصول</th><th>بقایا</th></tr>'+
+ storeCreditSales.map(s=>'<tr><td>'+esc(s.sale_date)+'</td><td>'+esc(s.store_name)+'</td><td>'+esc(s.product_type)+' — '+s.quantity+' '+esc(s.unit)+'</td><td>'+money(s.total_amount)+'</td><td>'+money(s.amount_paid)+'</td><td>'+money(s.balance_due)+'</td></tr>').join("")+'</table>':'<p class="muted">کوئی بقایا ادھار سیل موجود نہیں۔</p>';
+}
+function filterStoreCreditSales(){
+ const storeId=Number($("scStoreSelect")?.value)||0;
+ const rows=storeCreditSales.filter(s=>Number(s.store_id)===storeId);
+ const sel=$("scSaleSelect");
+ if(!sel)return;
+ sel.innerHTML='<option value="">بقایا والی سیل منتخب کریں</option>'+rows.map(s=>'<option value="'+s.sale_id+'">'+esc(s.sale_date)+' — '+esc(s.product_type)+' '+s.quantity+' '+esc(s.unit)+' — بقایا '+money(s.balance_due)+'</option>').join("");
+ updateStoreCreditDue();
+}
+function updateStoreCreditDue(){
+ const saleId=Number($("scSaleSelect")?.value)||0;
+ const s=storeCreditSales.find(x=>Number(x.sale_id)===saleId);
+ $("scSaleDue").textContent=s?"سیل کی کل رقم: "+money(s.total_amount)+" — وصول: "+money(s.amount_paid)+" — بقایا: "+money(s.balance_due):"سیل کا بقایا منتخب کریں۔";
+ if($("scPayAmount"))$("scPayAmount").max=s?String(s.balance_due):"";
+}
+async function saveStoreCreditPayment(){
+ const saleId=Number($("scSaleSelect").value)||0;
+ const paymentDate=$("scPayDate").value,amount=Number($("scPayAmount").value);
+ const paymentMethod=$("scPayMethod").value,details=$("scPayDetails").value.trim();
+ const sale=storeCreditSales.find(x=>Number(x.sale_id)===saleId);
+ if(!saleId||!sale){msg("بقایا والی ادھار سیل منتخب کریں۔");return;}
+ if(!paymentDate||!Number.isFinite(amount)||amount<=0){msg("تاریخ اور مثبت وصولی رقم درج کریں۔");return;}
+ if(amount>Number(sale.balance_due)){msg("وصولی موجودہ بقایا سے زیادہ نہیں ہو سکتی۔");return;}
+ if(!confirmLargeEntry("ادھار وصولی",amount,1000))return;
+ const button=$("scPayButton");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const signature=[saleId,paymentDate,amount,paymentMethod,details].join("|");
+  const requestId=mpwPendingRequestId("store-credit-payment",signature);
+  const {data,error}=await db.rpc("record_store_credit_payment",{
+   p_sale_id:saleId,p_payment_date:paymentDate,p_amount:amount,
+   p_payment_method:paymentMethod,p_request_id:requestId,p_details:details||null
+  });
+  if(error)throw error;
+  if(!data||!data.payment_id)throw new Error("ادھار وصولی کی تصدیق موصول نہیں ہوئی۔");
+  mpwClearPendingRequestId("store-credit-payment");
+  $("scPayAmount").value="";$("scPayDetails").value="";
+  msg("وصولی محفوظ ہوگئی؛ نیا بقایا: "+money(data.remaining_due),true);
+  await loadStoreCreditData();await loadExecutiveDashboard();await loadTodaySummary();
+ }catch(e){msg("وصولی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
+}
+
 async function salesModule(){
  setTitle("سیل / مال کا اخراج");
  $("moduleBody").innerHTML='<p class="muted">قیمتوں کی سیٹنگز لوڈ ہو رہی ہیں...</p>';
