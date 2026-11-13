@@ -2891,7 +2891,7 @@ async function loadExecutiveDashboard(){
    ["کل فروخت / آمدن",fmt(revenue),"19L + تیار مال کی فروخت"],
    ["سیکشن کنٹریبیوشن",fmt(contribution),"براہِ راست سیکشن اخراجات کے بعد"],
    ["تخمینی خالص منافع / نقصان",fmt(net),report.net_profit_is_estimated?"کاؤنٹر پانی کے لیٹر کے تخمینے سمیت":"درج شدہ اعداد کے مطابق"],
-   ["گاہکوں سے بقایا",fmt(data.receivables),"بقایا رکھنے والے گاہک: "+(data.customers_with_due||0)],
+   ["کل قابلِ وصول",fmt(data.receivables),"گاہک بل، غیر منسلک سپلائی اور دیے گئے قرض"],
    ["مدت کی وصولیاں",fmt(data.recorded_collections),"درج شدہ وصولیاں، نقد بیلنس نہیں"],
    ["مالکین کی نکاسی",fmt(data.owner_withdrawals),"منافع کے خرچ میں شامل نہیں"]
   ];
@@ -2962,9 +2962,13 @@ async function loadExecutiveDashboard(){
      <div class="exec-line"><span>درج شدہ نقد آمدن</span><b>${fmt(data.recorded_collections)}</b></div>
      <div class="exec-line"><span>درج شدہ نقد اخراجات</span><b>${fmt(data.recorded_cash_outflows)}</b></div>
      <div class="exec-line exec-net"><span>درج شدہ خالص نقد حرکت</span><b>${fmt(data.recorded_net_cash_movement)}</b></div>
+     <div class="exec-line"><span>غیر منسلک 19L قابلِ وصول</span><b>${fmt(data.unassigned_receivables)}</b></div>
+     <div class="exec-line"><span>درج شدہ واجب الادا (ورکر + قرض)</span><b>${fmt(data.payables)}</b></div>
+     <div class="exec-line"><span>ورکر بقایا</span><b>${fmt(data.worker_payables)}</b></div>
      <div class="exec-line"><span>فعال گاہک</span><b>${Number(data.active_customers)||0}</b></div>
      <div class="exec-line"><span>اس مہینے کے بل باقی</span><b>${Number(data.unbilled_customers)||0}</b></div>
      <div class="exec-line"><span>بقایا رکھنے والے گاہک</span><b>${Number(data.customers_with_due)||0}</b></div>
+     <p class="muted">واجب الادا رقم میں ورکر لیجر اور درج شدہ قرض شامل ہیں؛ سپلائر ادھار/کریڈٹ خریداری ابھی اس حساب میں شامل نہیں۔</p>
      <p class="warning">${esc(data.cash_balance_note||"نقد بیلنس کی تصدیق دستیاب نہیں۔")}</p>
     </section>
    </div>
