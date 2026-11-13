@@ -2172,7 +2172,7 @@ const rawMaterialUnits={
 async function rawMaterialsModule(){
  setTitle("خام مال کی خریداری");
  $("moduleBody").innerHTML=
- '<p class="muted">تاریخ، اندراج کی قسم، خام مال، مقدار اور کل رقم درج کریں۔ ایک رسید میں کئی اشیاء ہوں تو ہر آئٹم الگ درج کریں۔ سپلائر کا نام ضروری نہیں۔</p>'+
+ '<p class="muted">تاریخ، اندراج کی قسم، خام مال اور مقدار درج کریں۔ اسٹیکر وزن کلوگرام میں درج ہوگا: 500ml کے 1,900 اور مشترکہ 1.5L/6L کے 1,200 اسٹیکر فی کلو۔ فی کلو قیمت درج کرنے پر کل رقم خود حساب ہوگی۔ ایک رسید میں کئی اشیاء ہوں تو ہر آئٹم الگ درج کریں۔</p>'+
  '<div class="card"><h3>نئی خریداری</h3>'+
  '<input id="rawPurchaseDate" type="date" value="'+today()+'" required>'+
  '<select id="rawPurchaseKind" required onchange="toggleRawPurchaseKind()"><option value="" selected disabled>پہلے اندراج کی قسم منتخب کریں *</option><option value="purchase">نئی خریداری (واقعی خریدا ہوا مال)</option><option value="free_claim">سپلائر سے مفت کلیم / تبدیلی</option><option value="opening_stock">پہلے سے موجود ابتدائی اسٹاک</option></select>'+
@@ -2316,7 +2316,7 @@ async function loadRawMaterialPurchases(){
   const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"||k.startsWith("sticker_")?"اسٹیکر":k.startsWith("cap_")?"عدد":"بوتل";
   return '<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
  }).join("")+'<div class="stat">19L ڈھکن<br><b>باقی: '+(purchased("cap_19l")-capsUsed)+' عدد</b><small>خریدے: '+purchased("cap_19l")+' — استعمال: '+capsUsed+' (صرف کسٹمر اور بغیر کسٹمر سپلائی کے خراب ڈھکن)</small></div></div>';
- $("moduleTable").innerHTML='<h3>خریداری، ابتدائی اسٹاک اور مفت کلیم کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ لاگت</th><th>سپلائر</th></tr>'+
+ $("moduleTable").innerHTML='<h3>خریداری، ابتدائی اسٹاک اور مفت کلیم کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ / فی کلو ریٹ</th><th>سپلائر</th></tr>'+
  rows.filter(r=>Number(r.quantity)>0||Number(r.total_amount)>0).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(r.record_type==="opening_stock"?"ابتدائی اسٹاک":r.record_type==="free_claim"?"مفت کلیم":"خریداری")+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
  '</table></div>';
 }
