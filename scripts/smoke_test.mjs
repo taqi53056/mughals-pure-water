@@ -61,6 +61,16 @@ if (monthlyRetryMigration.includes("extract(day from v_today)>3")) {
   throw new Error("Monthly report retries must not stop after the first three days");
 }
 
+for (const required of [
+  "data.unassigned_receivables",
+  "data.worker_payables",
+  "data.payables",
+  "درج شدہ واجب الادا (ورکر + قرض)"
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("Executive cashflow dashboard is missing balance display: " + required);
+  }
+}
 const cashflowReceivablesMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261113102000_include_unassigned_receivables_and_worker_loan_payables_in_dashboard.sql"),
   "utf8"
