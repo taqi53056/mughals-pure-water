@@ -17,10 +17,11 @@ BEGIN
 
   v_old:='  v_cash_out numeric(14,2):=0;';
   v_new:=v_old || E'\n  v_unassigned_due numeric(14,2):=0;\n  v_worker_payables numeric(14,2):=0;\n  v_loan_payables numeric(14,2):=0;\n  v_payables numeric(14,2):=0;';
-  IF position(v_old in v_def)>0 THEN
+  IF position('v_unassigned_due numeric(14,2):=0;' in v_def)=0 THEN
+    IF position(v_old in v_def)=0 THEN
+      RAISE EXCEPTION 'Dashboard cashflow variable declaration anchor not found';
+    END IF;
     v_def:=replace(v_def,v_old,v_new);
-  ELSIF position('v_unassigned_due numeric(14,2):=0;' in v_def)=0 THEN
-    RAISE EXCEPTION 'Dashboard cashflow variable declaration anchor not found';
   END IF;
 
   v_old:=E'  select coalesce(sum(current_due),0),count(*) filter(where current_due>0)\n    into v_due,v_due_customers\n  from (\n    select distinct on(customer_id) customer_id,current_due\n    from public.customer_monthly_bills\n    order by customer_id,bill_month desc\n  ) latest;';
