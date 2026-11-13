@@ -14,6 +14,34 @@ const mime = {
   ".css": "text/css; charset=utf-8"
 };
 
+const appSource = await readFile(resolve(ROOT, "index.html"), "utf8");
+for (const required of [
+  'const due=Number(r.bottles_delivered||0)*100+Number(r.damaged_caps||0)*10;',
+  'remaining:Number(d.bottles_delivered)*100+Number(d.damaged_caps||0)*10',
+  '$("dOwn").value=String(data.customer_owned_bottles||0);'
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("19L filled-bottle billing / ownership UI is missing: " + required);
+  }
+}
+if (appSource.includes('Number(r.empty_bottles_returned||0)*100') ||
+    appSource.includes('Number(d.empty_bottles_returned)*100')) {
+  throw new Error("19L customer charges must not depend on returned empty bottles");
+}
+const filledBottleBillingMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113100952_bill_and_pay_unassigned_19l_by_filled_bottles.sql"),
+  "utf8"
+);
+for (const required of [
+  "sum(bottles_delivered),0),coalesce(sum(bottles_delivered),0)",
+  "v_delivery.bottles_delivered::numeric*100",
+  "new.bottles_delivered,0)::numeric*20",
+  "unassigned_19l_delivery_collections"
+]) {
+  if (!filledBottleBillingMigration.includes(required)) {
+    throw new Error("Filled-bottle billing migration is missing: " + required);
+  }
+}
 const monthlyRetryMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
   "utf8"
@@ -33,6 +61,31 @@ if (monthlyRetryMigration.includes("extract(day from v_today)>3")) {
   throw new Error("Monthly report retries must not stop after the first three days");
 }
 
+for (const required of [
+  "data.unassigned_receivables",
+  "data.worker_payables",
+  "data.payables",
+  "درج شدہ واجب الادا (ورکر + قرض)"
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("Executive cashflow dashboard is missing balance display: " + required);
+  }
+}
+const cashflowReceivablesMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113102000_include_unassigned_receivables_and_worker_loan_payables_in_dashboard.sql"),
+  "utf8"
+);
+for (const required of [
+  "v_unassigned_due",
+  "public.unassigned_19l_delivery_collections",
+  "v_worker_payables",
+  "v_loan_payables",
+  "'payables',v_payables"
+]) {
+  if (!cashflowReceivablesMigration.includes(required)) {
+    throw new Error("Executive dashboard receivable/payable tracking is missing: " + required);
+  }
+}
 const finishedStockActivityMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111141230_include_finished_stock_in_monthly_report_activity.sql"),
   "utf8"
