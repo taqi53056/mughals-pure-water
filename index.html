@@ -1537,15 +1537,17 @@ async function customerBottleDepositModule(id){
  if(!panel)return;
  panel.classList.remove("hidden");
  panel.textContent="کمپنی بوتل ضمانت کا ریکارڈ لوڈ ہو رہا ہے...";
- const [balanceRes,ledgerRes]=await Promise.all([
+ const [balanceRes,ledgerRes,returnRes]=await Promise.all([
   db.from("customer_bottle_deposit_balances").select("*").eq("customer_id",id).maybeSingle(),
-  db.from("customer_bottle_deposit_ledger").select("transaction_date,transaction_type,quantity,unit_amount,total_amount,payment_method,bottle_return_confirmed,details").eq("customer_id",id).order("transaction_date",{ascending:false})
+  db.from("customer_bottle_deposit_ledger").select("transaction_date,transaction_type,quantity,unit_amount,total_amount,payment_method,bottle_return_confirmed,bottle_return_id,details").eq("customer_id",id).order("transaction_date",{ascending:false}),
+  db.from("customer_19l_bottle_return_balances").select("return_id,return_date,quantity,refunded_quantity,available_for_refund,details").eq("customer_id",id).order("return_date",{ascending:false})
  ]);
- if(balanceRes.error||ledgerRes.error){
-  panel.textContent="بوتل ضمانت کا ریکارڈ لوڈ نہیں ہوا: "+[balanceRes.error,ledgerRes.error].filter(Boolean).map(e=>e.message).join(" | ");return;
+ if(balanceRes.error||ledgerRes.error||returnRes.error){
+  panel.textContent="بوتل ضمانت/واپسی کا ریکارڈ لوڈ نہیں ہوا: "+[balanceRes.error,ledgerRes.error,returnRes.error].filter(Boolean).map(e=>e.message).join(" | ");return;
  }
  const b=balanceRes.data||{};
  const rows=ledgerRes.data||[];
+ const returnRows=returnRes.data||[];
  const available=Math.max(0,Number(b.company_bottles_outstanding||0)-Number(b.deposit_held_quantity||0));
  panel.innerHTML=`
   <h4>کمپنی بوتل کی ضمانت</h4>
@@ -1554,8 +1556,16 @@ async function customerBottleDepositModule(id){
    ضمانت واپس: <b>${Number(b.deposit_refunded_quantity)||0} — ${money(b.deposit_refunded_amount||0)}</b><br>
    کمپنی کے پاس موجود ضمانت: <b>${Number(b.deposit_held_quantity)||0} — ${money(b.deposit_held_amount||0)}</b></div>
   <p class="muted">فی کمپنی بوتل مقررہ ضمانت Rs.1,600 ہے۔ وصولی صرف غیر واپس شدہ کمپنی بوتل کے مقابل درج ہوگی۔ ریفنڈ صرف اس وقت درج کریں جب کمپنی کی بوتل حقیقتاً واپس مل چکی ہو؛ اس کی تصدیق لازمی ہے۔ یہ اندراج ماہانہ کسٹمر بل کو تبدیل نہیں کرتا۔</p>
+  <h4>خالی کمپنی بوتل واپس وصول کریں</h4>
+  <p class="muted">پہلے خالی کمپنی بوتل کی واپسی درج کریں۔ اس سے کسٹمر کے پاس موجود کمپنی بوتلوں کا بقایا کم ہوگا۔</p>
+  <label>واپسی کی تاریخ</label><input id="cbReturnDate" type="date" value="${today()}">
+  <label>واپس ملنے والی کمپنی بوتلیں</label><input id="cbReturnQty" type="number" min="1" step="1" value="1">
+  <label>تفصیل (اختیاری)</label><input id="cbReturnDetails" maxlength="300" placeholder="مثلاً سابقہ سپلائی کی خالی بوتلیں">
+  <button id="cbReturnSave" onclick="saveCustomerBottleReturn(${Number(id)})">خالی بوتل واپسی محفوظ کریں</button>
+  <h4>ضمانت وصولی / ریفنڈ</h4>
   <label>اندراج کی قسم</label>
   <select id="cbDepositType" onchange="toggleCustomerBottleDepositType()"><option value="deposit_received">ضمانت وصول کریں</option><option value="deposit_refunded">بوتل واپس ملنے پر ضمانت ریفنڈ کریں</option></select>
+  <div id="cbDepositReturnWrap" class="hidden"><label>متعلقہ بوتل واپسی منتخب کریں</label><select id="cbDepositReturn"><option value="">واپسی منتخب کریں</option>${returnRows.filter(r=>Number(r.available_for_refund)>0).map(r=>'<option value="'+Number(r.return_id)+'">'+esc(r.return_date)+' — کل '+Number(r.quantity)+'، باقی ریفنڈ '+Number(r.available_for_refund)+' بوتلیں</option>').join('')}</select></div>
   <label>تاریخ</label><input id="cbDepositDate" type="date" value="${today()}">
   <label>بوتلوں کی تعداد</label><input id="cbDepositQty" type="number" min="1" step="1" value="1">
   <label>رقم وصول/واپس کرنے کا طریقہ</label><select id="cbDepositMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>
@@ -1563,6 +1573,8 @@ async function customerBottleDepositModule(id){
   <label>تفصیل / رسید حوالہ (اختیاری)</label><input id="cbDepositDetails" maxlength="300" placeholder="تفصیل">
   <button id="cbDepositSave" onclick="saveCustomerBottleDeposit(${Number(id)})">ضمانت کا اندراج محفوظ کریں</button>
   <p class="muted">اس کسٹمر کے لیے اس وقت نئی ضمانت کی زیادہ سے زیادہ مقدار: ${available} بوتلیں۔</p>
+  <h4>خالی کمپنی بوتل واپسی کی ہسٹری</h4>
+  ${returnRows.length?'<table><tr><th>تاریخ</th><th>واپس ملیں</th><th>ریفنڈ شدہ</th><th>ریفنڈ باقی</th><th>تفصیل</th></tr>'+returnRows.map(r=>'<tr><td>'+esc(r.return_date)+'</td><td>'+r.quantity+'</td><td>'+r.refunded_quantity+'</td><td>'+r.available_for_refund+'</td><td>'+esc(r.details||'')+'</td></tr>').join('')+'</table>':'<p class="muted">ابھی کمپنی بوتل واپسی درج نہیں۔</p>'}
   <h4>ضمانت اور ریفنڈ کی ہسٹری</h4>
   ${rows.length?'<table><tr><th>تاریخ</th><th>اندراج</th><th>بوتلیں</th><th>فی بوتل</th><th>کل رقم</th><th>طریقہ</th><th>واپسی تصدیق</th><th>تفصیل</th></tr>'+rows.map(r=>'<tr><td>'+esc(r.transaction_date)+'</td><td>'+(r.transaction_type==='deposit_received'?'ضمانت وصول':'ضمانت ریفنڈ')+'</td><td>'+r.quantity+'</td><td>'+money(r.unit_amount)+'</td><td>'+money(r.total_amount)+'</td><td>'+esc(r.payment_method)+'</td><td>'+(r.bottle_return_confirmed?'ہاں':'—')+'</td><td>'+esc(r.details||'')+'</td></tr>').join('')+'</table>':'<p class="muted">ابھی ضمانت/ریفنڈ کا کوئی اندراج نہیں۔</p>'}
   `;
@@ -1571,15 +1583,42 @@ async function customerBottleDepositModule(id){
 function toggleCustomerBottleDepositType(){
  const refund=$("cbDepositType")?.value==="deposit_refunded";
  $("cbBottleReturnConfirmWrap")?.classList.toggle("hidden",!refund);
+ $("cbDepositReturnWrap")?.classList.toggle("hidden",!refund);
  if($("cbBottleReturned"))$("cbBottleReturned").required=refund;
+ if($("cbDepositReturn"))$("cbDepositReturn").required=refund;
+}
+async function saveCustomerBottleReturn(customerId){
+ const date=$("cbReturnDate").value,qty=Number($("cbReturnQty").value),details=$("cbReturnDetails").value.trim();
+ if(!date||!Number.isInteger(qty)||qty<=0){msg("واپسی کی درست تاریخ اور مثبت مکمل بوتل تعداد درج کریں۔");return;}
+ const balance=await db.from("customer_bottle_deposit_balances").select("company_bottles_outstanding").eq("customer_id",customerId).maybeSingle();
+ if(balance.error){msg("کمپنی بوتل بیلنس نہیں ملا: "+balance.error.message);return;}
+ const outstanding=Number(balance.data?.company_bottles_outstanding||0);
+ if(qty>outstanding){msg("اس وقت کمپنی کی صرف "+outstanding+" بوتلیں کسٹمر کے پاس بقایا ہیں۔");return;}
+ if(!confirm("کیا "+qty+" خالی کمپنی بوتلیں حقیقتاً واپس وصول ہو چکی ہیں؟"))return;
+ const button=$("cbReturnSave");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const signature=[customerId,date,qty,details].join("|");
+  const requestId=mpwPendingRequestId("customer-19l-bottle-return",signature);
+  const {data,error}=await db.rpc("record_customer_19l_bottle_return",{
+   p_customer_id:customerId,p_return_date:date,p_quantity:qty,p_request_id:requestId,p_details:details||null
+  });
+  if(error)throw error;
+  if(!data||!data.return_id)throw new Error("بوتل واپسی کی تصدیق موصول نہیں ہوئی۔");
+  mpwClearPendingRequestId("customer-19l-bottle-return");
+  $("cbReturnQty").value="1";$("cbReturnDetails").value="";
+  msg(qty+" خالی کمپنی بوتلیں واپس درج ہو گئیں؛ باقی کمپنی بوتلیں: "+data.company_bottles_outstanding,true);
+  await customerBottleDepositModule(customerId);await loadExecutiveDashboard();
+ }catch(e){msg("بوتل واپسی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
 async function saveCustomerBottleDeposit(customerId){
  const type=$("cbDepositType").value,date=$("cbDepositDate").value;
  const qty=Number($("cbDepositQty").value),method=$("cbDepositMethod").value;
  const details=$("cbDepositDetails").value.trim();
  const confirmed=!!$("cbBottleReturned")?.checked;
+ const returnId=Number($("cbDepositReturn")?.value)||null;
  if(!date||!Number.isInteger(qty)||qty<=0){msg("درست تاریخ اور مثبت مکمل بوتل تعداد درج کریں۔");return;}
- if(type==="deposit_refunded"&&!confirmed){msg("ریفنڈ سے پہلے کمپنی بوتل کی واپسی کی تصدیق لازمی ہے۔");return;}
+ if(type==="deposit_refunded"&&(!confirmed||!returnId)){msg("ریفنڈ کے لیے متعلقہ درج شدہ بوتل واپسی منتخب کریں اور واپسی کی تصدیق کریں۔");return;}
  const balance=await db.from("customer_bottle_deposit_balances").select("company_bottles_outstanding,deposit_held_quantity").eq("customer_id",customerId).maybeSingle();
  if(balance.error){msg("موجودہ بوتل/ضمانت بیلنس نہیں ملا: "+balance.error.message);return;}
  const available=Math.max(0,Number(balance.data?.company_bottles_outstanding||0)-Number(balance.data?.deposit_held_quantity||0));
@@ -1590,12 +1629,13 @@ async function saveCustomerBottleDeposit(customerId){
  if(!confirm("کیا "+qty+" بوتلوں کے لیے Rs."+amount.toLocaleString("en-US")+" کا "+(type==="deposit_received"?"ضمانت وصولی":"ضمانت ریفنڈ")+" درج کرنا ہے؟ یہ ماہانہ بل سے الگ رہے گا۔"))return;
  const button=$("cbDepositSave");if(button?.disabled)return;if(button)button.disabled=true;
  try{
-  const signature=[customerId,date,type,qty,method,details,confirmed].join("|");
+  const signature=[customerId,date,type,qty,method,details,confirmed,returnId||""].join("|");
   const requestId=mpwPendingRequestId("customer-bottle-deposit",signature);
   const {data,error}=await db.rpc("record_customer_bottle_deposit",{
    p_customer_id:customerId,p_transaction_date:date,p_transaction_type:type,
    p_quantity:qty,p_payment_method:method,p_request_id:requestId,
-   p_details:details||null,p_bottle_return_confirmed:confirmed
+   p_details:details||null,p_bottle_return_confirmed:confirmed,
+   p_bottle_return_id:returnId
   });
   if(error)throw error;
   if(!data||!data.ledger_id)throw new Error("ضمانت اندراج کی تصدیق موصول نہیں ہوئی۔");
