@@ -2367,7 +2367,7 @@ async function saveRawMaterialPurchase(){
   saved=true;
   msg(record_type==="opening_stock"?"ابتدائی خام مال اور متعلقہ ڈھکن کا اسٹاک اکٹھا محفوظ ہوگیا。":freeClaim?"سپلائر کی مفت کلیم مقدار اور متعلقہ ڈھکن بغیر لاگت کے اسٹاک میں شامل ہوگئے۔":"خام مال اور متعلقہ ڈھکن کی خریداری اکٹھی محفوظ ہوگئی۔",true);
   $("rawPurchaseQty").value="";$("rawPurchaseAmount").value="";
-  $("rawPurchaseSupplier").value="";$("rawPurchaseDetails").value="";
+  $("rawPurchaseDetails").value="";
   await Promise.all([loadRawMaterialPurchases(),loadTodaySummary()]);
  }catch(e){msg(saved?"خام مال محفوظ ہوگیا، مگر فہرست تازہ نہیں ہوسکی: "+(e?.message||String(e)):"خام مال محفوظ نہیں ہوا: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
@@ -2521,7 +2521,7 @@ async function saveTankerPurchase(){
   if(opening){msg("ابتدائی پانی کا اسٹاک محفوظ ہوگیا۔",true);$("tankOpeningLitres").value="";$("tankOpeningValue").value="";}
   else{
    msg("ٹینکر خریداری محفوظ ہوگئی۔ اگلی خریداری کے لیے مقدار اور قیمت دوبارہ درج کریں۔",true);
-   $("tankCount").value="";$("tankRate").value="";$("tankSupplier").value="";$("tankPaymentMethod").value="cash";updateTankerTotal();
+   $("tankCount").value="";$("tankRate").value="";$("tankPaymentMethod").value="cash";updateTankerTotal();
   }
   await Promise.all([loadTankerPurchases(),loadTodaySummary()]);
  }catch(e){msg(saved?"پانی کا اندراج محفوظ ہوگیا، مگر فہرست تازہ نہیں ہوسکی: "+(e?.message||String(e)):(opening?"ابتدائی پانی کا اسٹاک":"ٹینکر خریداری")+" محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
