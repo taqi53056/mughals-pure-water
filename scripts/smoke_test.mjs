@@ -110,7 +110,7 @@ if (supplierReturnMigration.includes("get_finished_stock_balance")) {
 for (const required of [
   "سپلائر کو واپس",
   "سپلائر سے موصول ہونے پر",
-  "تیار مال کے اسٹاک سے دوبارہ کمی نہیں ہوگی"
+  "نہ ہی دکان کے تیار مال کے اسٹاک سے دوبارہ کمی ہوگی"
 ]) {
   if (!appSource.includes(required)) {
     throw new Error("Supplier replacement return guidance is missing: " + required);
