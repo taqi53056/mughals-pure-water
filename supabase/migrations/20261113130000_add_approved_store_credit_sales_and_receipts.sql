@@ -251,26 +251,11 @@ BEGIN
 END;
 $function$;
 
+GRANT EXECUTE ON FUNCTION private.record_product_sale_with_store_credit(date,text,integer,bigint,numeric,text,uuid,bigint) TO authenticated;
+GRANT EXECUTE ON FUNCTION private.record_store_credit_payment(bigint,date,numeric,text,uuid,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.record_product_sale(date,text,integer,bigint,numeric,text,uuid,bigint) TO authenticated;
 REVOKE EXECUTE ON FUNCTION public.record_product_sale(date,text,integer,bigint,numeric,text,uuid,bigint) FROM anon;
 
-CREATE TABLE public.store_credit_sale_balances AS
-SELECT
-  ps.id AS sale_id,
-  ps.credit_store_id AS store_id,
-  s.store_name,
-  ps.sale_date,
-  ps.product_type,
-  ps.quantity,
-  ps.unit,
-  ps.total_amount,
-  0::numeric(14,2) AS amount_paid,
-  ps.total_amount::numeric(14,2) AS balance_due
-FROM public.product_sales ps
-JOIN public.business_stores s ON s.id=ps.credit_store_id
-WHERE false;
-
-DROP TABLE public.store_credit_sale_balances;
 CREATE VIEW public.store_credit_sale_balances
 WITH (security_invoker=true)
 AS
