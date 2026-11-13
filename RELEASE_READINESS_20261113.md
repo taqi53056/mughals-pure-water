@@ -88,3 +88,6 @@
 - Customer archive checks and history include late-return records. The company-bottle custody guard now considers both delivery-day empties and later returns, so edits cannot silently create negative bottle custody.
 - Rollback-only integration tests passed for two bottle deposits, two later returns, linked refunds, partial held-deposit balances, over-return and over-refund rejection, idempotent retry, and dashboard exposure. All test rows were rolled back.
 - Service worker cache advanced to v111 for the latest customer bottle return and refund UI.
+
+- The public bottle-return and bottle-deposit RPC endpoints now run as SECURITY INVOKER wrappers. The privileged implementation resides in non-exposed private-schema SECURITY DEFINER helpers with explicit admin checks. The Supabase security advisor no longer flags these two new public endpoints.
+- Authenticated-role integration test passed for the complete deposit → later bottle return → linked refund sequence; all test data was rolled back.
