@@ -116,6 +116,39 @@ for (const required of [
     throw new Error("Supplier replacement return guidance is missing: " + required);
   }
 }
+const approvedStoreCreditMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261113130000_add_approved_store_credit_sales_and_receipts.sql"),
+  "utf8"
+);
+for (const required of [
+  "business_stores",
+  "credit_approved",
+  "product_sales_credit_store_required_check",
+  "private.record_product_sale_with_store_credit",
+  "private.record_store_credit_payment",
+  "store_credit_sale_balances",
+  "business_store_credit_balances",
+  "store_credit_receivables",
+  "payment_method<>'credit'",
+  "store_credit_payments"
+]) {
+  if (!approvedStoreCreditMigration.includes(required)) {
+    throw new Error("Approved-store credit accounting migration is incomplete: " + required);
+  }
+}
+for (const required of [
+  'value="credit">ادھار — منظور شدہ دکان',
+  'p_credit_store_id:creditStoreId',
+  "function storeCreditModule()",
+  "function saveStoreCreditPayment()",
+  "record_store_credit_payment",
+  "منظور شدہ دکانیں / ادھار وصولی",
+  "منظور شدہ دکانوں کا ادھار"
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("Approved-store credit UI is incomplete: " + required);
+  }
+}
 const monthlyRetryMigration = await readFile(
   resolve(ROOT, "supabase/migrations/20261111133356_retry_monthly_billing_and_reports.sql"),
   "utf8"
