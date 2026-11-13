@@ -2158,14 +2158,16 @@ const rawMaterialLabels={
  carton_500ml:"500ml کارٹن",
  carton_1_5l:"1.5L کارٹن",
  tape_bundle:"ٹیپ کا بنڈل",
- sticker:"اسٹیکر",
+ sticker:"پرانا عمومی اسٹیکر",
+ sticker_500ml:"500ml اسٹیکر",
+ sticker_1_5l_6l:"1.5L / 6L مشترکہ اسٹیکر",
  cap_19l:"19L ڈھکن"
 };
 const rawMaterialUnits={
  bottle_500ml:"bottle",bottle_1_5l:"bottle",bottle_6l:"bottle",
  cap_500ml:"piece",cap_1_5l:"piece",cap_6l:"piece",cap_19l:"piece",
  carton_500ml:"carton",carton_1_5l:"carton",tape_bundle:"bundle",
- sticker:"piece"
+ sticker:"piece",sticker_500ml:"kg",sticker_1_5l_6l:"kg"
 };
 async function rawMaterialsModule(){
  setTitle("خام مال کی خریداری");
@@ -2174,11 +2176,12 @@ async function rawMaterialsModule(){
  '<div class="card"><h3>نئی خریداری</h3>'+
  '<input id="rawPurchaseDate" type="date" value="'+today()+'" required>'+
  '<select id="rawPurchaseKind" required onchange="toggleRawPurchaseKind()"><option value="" selected disabled>پہلے اندراج کی قسم منتخب کریں *</option><option value="purchase">نئی خریداری (واقعی خریدا ہوا مال)</option><option value="free_claim">سپلائر سے مفت کلیم / تبدیلی</option><option value="opening_stock">پہلے سے موجود ابتدائی اسٹاک</option></select>'+
- '<select id="rawPurchaseType" required><option value="" selected disabled>خام مال منتخب کریں *</option>'+
- Object.keys(rawMaterialLabels).filter(k=>!["cap_500ml","cap_1_5l","cap_6l"].includes(k)).map(k=>'<option value="'+k+'">'+rawMaterialLabels[k]+'</option>').join("")+
+ '<select id="rawPurchaseType" required onchange="updateRawStickerPurchaseUI()"><option value="" selected disabled>خام مال منتخب کریں *</option>'+
+ Object.keys(rawMaterialLabels).filter(k=>!["cap_500ml","cap_1_5l","cap_6l","sticker"].includes(k)).map(k=>'<option value="'+k+'">'+rawMaterialLabels[k]+'</option>').join("")+
  '</select>'+
- '<input id="rawPurchaseQty" type="number" min="1" step="1" required placeholder="مقدار: بوتل / کارٹن / بنڈل / عدد *">'+
- '<input id="rawPurchaseAmount" type="number" min="0.01" step="0.01" required placeholder="کل ادا شدہ رقم / ابتدائی مالیت (روپے) *">'+
+ '<input id="rawPurchaseQty" type="number" min="0.001" step="0.001" required placeholder="مقدار: بوتل / کارٹن / بنڈل / کلوگرام *" oninput="updateRawStickerPurchaseUI()">'+
+ '<input id="rawPurchaseAmount" type="number" min="0.01" step="0.01" required placeholder="کل ادا شدہ رقم / ابتدائی مالیت (روپے) *" oninput="updateRawStickerPurchaseUI()">
+ <div id="rawStickerCostPreview" class="muted hidden"></div>'+
  '<div id="rawPaymentWrap"><label>ادائیگی کا طریقہ</label><select id="rawPurchaseMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select></div>'+
  ''+
  '<textarea id="rawPurchaseDetails" maxlength="300" placeholder="بل نمبر / تفصیل (اختیاری)"></textarea>'+
@@ -2186,18 +2189,32 @@ async function rawMaterialsModule(){
  '<div class="card"><h3>خام مال کا باقی اسٹاک اور لاگت</h3><p class="muted">پیداوار کے مطابق استعمال منہا ہوگا۔ ہر خام مال کی اوسط درج شدہ فی اکائی لاگت اور باقی اسٹاک کی مالیت الگ دکھائی جائے گی۔ یہ مالیت اسٹاک کی قدر ہے، اسی دن کا خرچ نہیں۔ ابتدائی اسٹاک کی مالیت تخمینی ہو سکتی ہے؛ مفت کلیم صفر اضافی خریداری لاگت پر شمار ہوگا۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div><div id="rawStockValuation">لاگت کا حساب لوڈ ہو رہا ہے...</div></div>';
  await loadRawMaterialPurchases();
 }
+function updateRawStickerPurchaseUI(){
+ const type=$("rawPurchaseType")?.value||"";
+ const isSticker=type==="sticker_500ml"||type==="sticker_1_5l_6l";
+ const qty=$("rawPurchaseQty"),amount=$("rawPurchaseAmount"),preview=$("rawStickerCostPreview");
+ if(qty){qty.step=isSticker?"0.001":"1";qty.min=isSticker?"0.001":"1";qty.placeholder=isSticker?"وزن کلوگرام (مثلاً 1 یا 0.5) *":"مقدار: بوتل / کارٹن / بنڈل / عدد *";}
+ if(amount)amount.placeholder=isSticker?"فی کلو قیمت (روپے) *":"کل ادا شدہ رقم / ابتدائی مالیت (روپے) *";
+ if(preview){
+  const kg=Number(qty?.value)||0,rate=Number(amount?.value)||0,kind=$("rawPurchaseKind")?.value||"purchase";
+  preview.classList.toggle("hidden",!isSticker||kind==="free_claim"||kg<=0||rate<=0);
+  preview.textContent=isSticker&&kind!=="free_claim"&&kg>0&&rate>0?"کل لاگت: "+money(kg*rate)+" — حاصل شدہ اسٹیکر: "+(kg*(type==="sticker_500ml"?1900:1200)).toLocaleString("en-US",{maximumFractionDigits:2}):"";
+ }
+}
 async function saveRawMaterialPurchase(){
  const type=$("rawPurchaseType").value,date=$("rawPurchaseDate").value,record_type=$("rawPurchaseKind").value;
  const freeClaim=record_type==="free_claim";
- const quantity=Number($("rawPurchaseQty").value),amountText=$("rawPurchaseAmount").value.trim(),total_amount=freeClaim?0:Number(amountText);
+ const isSticker=type==="sticker_500ml"||type==="sticker_1_5l_6l";
+ const quantity=Number($("rawPurchaseQty").value),amountText=$("rawPurchaseAmount").value.trim();
+ const enteredAmount=Number(amountText),total_amount=freeClaim?0:(isSticker?quantity*enteredAmount:enteredAmount);
  const validKinds=["purchase","free_claim","opening_stock"];
- const validTypes=Object.keys(rawMaterialLabels).filter(k=>!["cap_500ml","cap_1_5l","cap_6l"].includes(k));
- const fields=[["rawPurchaseKind",validKinds.includes(record_type),"اندراج کی قسم منتخب کریں۔"],["rawPurchaseType",validTypes.includes(type),"خام مال منتخب کریں۔"],["rawPurchaseDate",!!date,"تاریخ درج کریں۔"],["rawPurchaseQty",Number.isInteger(quantity)&&quantity>0,"مقدار ایک سے زیادہ مکمل عدد ہونی چاہیے۔"],["rawPurchaseAmount",freeClaim||(amountText!==""&&Number.isFinite(total_amount)&&total_amount>0),"رقم درج کریں؛ مفت کلیم میں رقم خود صفر ہوگی۔"]];
+ const validTypes=Object.keys(rawMaterialLabels).filter(k=>!["cap_500ml","cap_1_5l","cap_6l","sticker"].includes(k));
+ const fields=[["rawPurchaseKind",validKinds.includes(record_type),"اندراج کی قسم منتخب کریں۔"],["rawPurchaseType",validTypes.includes(type),"خام مال منتخب کریں۔"],["rawPurchaseDate",!!date,"تاریخ درج کریں۔"],["rawPurchaseQty",Number.isFinite(quantity)&&quantity>0&&(isSticker||Number.isInteger(quantity)),isSticker?"اسٹیکر کا وزن کلوگرام میں درست درج کریں۔":"مقدار ایک سے زیادہ مکمل عدد ہونی چاہیے۔"],["rawPurchaseAmount",freeClaim||(amountText!==""&&Number.isFinite(enteredAmount)&&enteredAmount>0&&Number.isFinite(total_amount)&&total_amount>0),isSticker?"فی کلو قیمت درج کریں۔":"رقم درج کریں؛ مفت کلیم میں رقم خود صفر ہوگی۔"]];
  for(const [id,ok,message] of fields){const el=$(id);if(el){el.setAttribute("aria-invalid",ok?"false":"true");if(!ok){el.focus();el.scrollIntoView({behavior:"smooth",block:"center"});msg(message);return;}}}
- if(!date||!Number.isInteger(quantity)||quantity<=0||!Number.isFinite(total_amount)||(!freeClaim&&total_amount<=0)){
+ if(!date||!Number.isFinite(quantity)||quantity<=0||(!isSticker&&!Number.isInteger(quantity))||!Number.isFinite(total_amount)||(!freeClaim&&total_amount<=0)){
   msg("سرخ نشان والے خانے درست مکمل کریں۔ مفت کلیم میں رقم صفر ہوگی۔");return;
  }
- if(!confirmLargeEntry("خام مال کی مقدار",quantity,1000)||(!freeClaim&&!confirmLargeEntry("خریداری کی رقم",total_amount,100000)))return;
+ if(!confirmLargeEntry(isSticker?"اسٹیکر کا وزن (کلوگرام)":"خام مال کی مقدار",quantity,1000)||(!freeClaim&&!confirmLargeEntry(isSticker?"اسٹیکر کی کل خریداری رقم":"خریداری کی رقم",total_amount,100000)))return;
  const button=$("rawPurchaseSaveButton");
  if(button?.disabled)return;
  if(button)button.disabled=true;
@@ -2250,7 +2267,8 @@ async function loadRawMaterialPurchases(){
  }catch(e){$("moduleTable").textContent="خام مال لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
  const rawOpeningDate=key=>rows.filter(x=>x.record_type==="opening_stock"&&x.material_type===key).map(x=>x.purchase_date).sort()[0]||null;
  const relevantRawRows=key=>rows.filter(x=>x.material_type===key&&(!rawOpeningDate(key)||x.record_type==="opening_stock"||x.purchase_date>=rawOpeningDate(key)));
- const purchased=key=>relevantRawRows(key).reduce((n,x)=>n+Number(x.quantity||0),0);
+ const stickerYield={sticker_500ml:1900,sticker_1_5l_6l:1200};
+ const purchased=key=>relevantRawRows(key).reduce((n,x)=>n+Number(x.quantity||0)*(stickerYield[key]||1),0);
  const made=(key,materialKey=key)=>prod.filter(x=>x.product_type===key&&(!rawOpeningDate(materialKey)||x.production_date>=rawOpeningDate(materialKey))).reduce((n,x)=>n+Number(x.quantity||0),0);
  const capBase=rawOpeningDate("cap_19l");
  const customerCapsUsed=capDeliveries.filter(r=>!capBase||r.delivery_date>=capBase).reduce((n,r)=>n+Number(r.damaged_caps||0),0);
@@ -2265,12 +2283,14 @@ async function loadRawMaterialPurchases(){
   bottle_500ml:made("500ml")*24,bottle_1_5l:made("1.5L")*12,bottle_6l:made("6L"),
   carton_500ml:made("500ml"),carton_1_5l:made("1.5L"),
   tape_bundle:(made("500ml","tape_bundle")+made("1.5L","tape_bundle"))/200,
-  sticker:made("500ml","sticker")*24+made("1.5L","sticker")*12+made("6L","sticker"),
+  sticker:0,
+  sticker_500ml:made("500ml","sticker_500ml")*24,
+  sticker_1_5l_6l:made("1.5L","sticker_1_5l_6l")*12+made("6L","sticker_1_5l_6l"),
   ...capUsed
  };
  
- const balanceKeys=["bottle_500ml","cap_500ml","bottle_1_5l","cap_1_5l","bottle_6l","cap_6l","carton_500ml","carton_1_5l","tape_bundle","sticker"];
- const valuationKeys=[...balanceKeys,"cap_19l"];
+ const balanceKeys=["bottle_500ml","cap_500ml","bottle_1_5l","cap_1_5l","bottle_6l","cap_6l","carton_500ml","carton_1_5l","tape_bundle","sticker_500ml","sticker_1_5l_6l"];
+ const valuationKeys=[...balanceKeys,"sticker","cap_19l"];
  const valuationRows=valuationKeys.map(k=>{
   const source=relevantRawRows(k);
   const qty=source.reduce((n,x)=>n+Number(x.quantity||0),0);
@@ -2278,7 +2298,7 @@ async function loadRawMaterialPurchases(){
   const average=qty>0?amount/qty:null;
   const remaining=purchased(k)-(k==="cap_19l"?capsUsed:used[k]||0);
   const value=average===null?null:Math.max(0,remaining)*average;
-  const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"||k.startsWith("cap_")?"عدد":"بوتل";
+  const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"||k.startsWith("sticker_")||k.startsWith("cap_")?"اسٹیکر/عدد":"بوتل";
   return {key:k,label:rawMaterialLabels[k]||k,qty,amount,average,remaining,value,unit};
  });
  const totalRawStockValue=valuationRows.reduce((n,r)=>n+(r.value||0),0);
@@ -2293,7 +2313,7 @@ async function loadRawMaterialPurchases(){
 
  $("rawStockBalance").innerHTML='<div class="grid">'+balanceKeys.map(k=>{
   const remaining=purchased(k)-used[k];
-  const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"?"اسٹیکر":k.startsWith("cap_")?"عدد":"بوتل";
+  const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"||k.startsWith("sticker_")?"اسٹیکر":k.startsWith("cap_")?"عدد":"بوتل";
   return '<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
  }).join("")+'<div class="stat">19L ڈھکن<br><b>باقی: '+(purchased("cap_19l")-capsUsed)+' عدد</b><small>خریدے: '+purchased("cap_19l")+' — استعمال: '+capsUsed+' (صرف کسٹمر اور بغیر کسٹمر سپلائی کے خراب ڈھکن)</small></div></div>';
  $("moduleTable").innerHTML='<h3>خریداری، ابتدائی اسٹاک اور مفت کلیم کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ لاگت</th><th>سپلائر</th></tr>'+
@@ -2329,6 +2349,7 @@ function toggleRawPurchaseKind(){
   amount.setAttribute("aria-invalid",freeClaim||amount.value.trim()!==""?"false":"true");
   if(freeClaim)amount.value="0";else if(amount.value==="0")amount.value="";
  }
+ updateRawStickerPurchaseUI();
  if($("rawPurchaseDetails")){
   if(opening)$("rawPurchaseDetails").placeholder="ابتدائی اسٹاک کی تاریخ / اندازاً مالیت کی بنیاد";
   else if(freeClaim)$("rawPurchaseDetails").placeholder="سپلائر کلیم / مفت تبدیلی کی تفصیل";
