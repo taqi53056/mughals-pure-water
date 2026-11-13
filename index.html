@@ -2521,7 +2521,7 @@ async function saveTankerPurchase(){
   if(opening){msg("ابتدائی پانی کا اسٹاک محفوظ ہوگیا۔",true);$("tankOpeningLitres").value="";$("tankOpeningValue").value="";}
   else{
    msg("ٹینکر خریداری محفوظ ہوگئی۔ اگلی خریداری کے لیے مقدار اور قیمت دوبارہ درج کریں۔",true);
-   $("tankCount").value="";$("tankRate").value="";$("tankSupplier").value="";$("tankPaymentMethod").value="cash";updateTankerTotal();
+   $("tankCount").value="";$("tankRate").value="";$("tankPaymentMethod").value="cash";updateTankerTotal();
   }
   await Promise.all([loadTankerPurchases(),loadTodaySummary()]);
  }catch(e){msg(saved?"پانی کا اندراج محفوظ ہوگیا، مگر فہرست تازہ نہیں ہوسکی: "+(e?.message||String(e)):(opening?"ابتدائی پانی کا اسٹاک":"ٹینکر خریداری")+" محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
