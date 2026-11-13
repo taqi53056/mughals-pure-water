@@ -1616,7 +1616,7 @@ async function saveCustomerBottleDeposit(customerId){
  const qty=Number($("cbDepositQty").value),method=$("cbDepositMethod").value;
  const details=$("cbDepositDetails").value.trim();
  const confirmed=!!$("cbBottleReturned")?.checked;
- const returnId=Number($("cbDepositReturn")?.value)||null;
+ const returnId=type==="deposit_refunded"?(Number($("cbDepositReturn")?.value)||null):null;
  if(!date||!Number.isInteger(qty)||qty<=0){msg("درست تاریخ اور مثبت مکمل بوتل تعداد درج کریں۔");return;}
  if(type==="deposit_refunded"&&(!confirmed||!returnId)){msg("ریفنڈ کے لیے متعلقہ درج شدہ بوتل واپسی منتخب کریں اور واپسی کی تصدیق کریں۔");return;}
  const balance=await db.from("customer_bottle_deposit_balances").select("company_bottles_outstanding,deposit_held_quantity").eq("customer_id",customerId).maybeSingle();
