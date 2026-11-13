@@ -15,8 +15,11 @@ BEGIN
 
   v_old:='select coalesce(sum(bottles_delivered),0),coalesce(sum(empty_bottles_returned),0),coalesce(sum(labor_amount),0),coalesce(sum(damaged_caps),0)';
   v_new:='select coalesce(sum(bottles_delivered),0),coalesce(sum(bottles_delivered),0),coalesce(sum(labor_amount),0),coalesce(sum(damaged_caps),0)';
-  IF position(v_old in v_def)=0 THEN RAISE EXCEPTION 'Monthly report unassigned bottle aggregation not found'; END IF;
-  v_def:=replace(v_def,v_old,v_new);
+  IF position(v_old in v_def)>0 THEN
+    v_def:=replace(v_def,v_old,v_new);
+  ELSIF position(v_new in v_def)=0 THEN
+    RAISE EXCEPTION 'Monthly report unassigned bottle aggregation not found';
+  END IF;
 
   v_old:='select coalesce(sum(amount),0) into v_unassigned_receipts
   from public.business_income where income_date between p_month_start and p_month_end
