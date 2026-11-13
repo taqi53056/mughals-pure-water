@@ -252,7 +252,6 @@ END;
 $function$;
 
 GRANT EXECUTE ON FUNCTION private.record_product_sale_with_store_credit(date,text,integer,bigint,numeric,text,uuid,bigint) TO authenticated;
-GRANT EXECUTE ON FUNCTION private.record_store_credit_payment(bigint,date,numeric,text,uuid,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.record_product_sale(date,text,integer,bigint,numeric,text,uuid,bigint) TO authenticated;
 REVOKE EXECUTE ON FUNCTION public.record_product_sale(date,text,integer,bigint,numeric,text,uuid,bigint) FROM anon;
 
@@ -379,6 +378,8 @@ BEGIN
   );
 END;
 $function$;
+
+GRANT EXECUTE ON FUNCTION private.record_store_credit_payment(bigint,date,numeric,text,uuid,text) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.record_store_credit_payment(
   p_sale_id bigint,
