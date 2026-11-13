@@ -251,26 +251,10 @@ BEGIN
 END;
 $function$;
 
+GRANT EXECUTE ON FUNCTION private.record_product_sale_with_store_credit(date,text,integer,bigint,numeric,text,uuid,bigint) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.record_product_sale(date,text,integer,bigint,numeric,text,uuid,bigint) TO authenticated;
 REVOKE EXECUTE ON FUNCTION public.record_product_sale(date,text,integer,bigint,numeric,text,uuid,bigint) FROM anon;
 
-CREATE TABLE public.store_credit_sale_balances AS
-SELECT
-  ps.id AS sale_id,
-  ps.credit_store_id AS store_id,
-  s.store_name,
-  ps.sale_date,
-  ps.product_type,
-  ps.quantity,
-  ps.unit,
-  ps.total_amount,
-  0::numeric(14,2) AS amount_paid,
-  ps.total_amount::numeric(14,2) AS balance_due
-FROM public.product_sales ps
-JOIN public.business_stores s ON s.id=ps.credit_store_id
-WHERE false;
-
-DROP TABLE public.store_credit_sale_balances;
 CREATE VIEW public.store_credit_sale_balances
 WITH (security_invoker=true)
 AS
@@ -332,7 +316,7 @@ BEGIN
     RAISE EXCEPTION 'صرف ایڈمن ادھار وصولی درج کر سکتا ہے۔' USING ERRCODE='42501';
   END IF;
   IF p_request_id IS NULL OR p_sale_id IS NULL OR p_payment_date IS NULL
-     OR p_amount IS NULL OR p_amount<=0
+     OR p_amount IS NULL OR p_amount<=0 OR p_amount<>round(p_amount,2)
      OR p_payment_method NOT IN ('cash','bank','jazzcash','easypaisa','other')
      OR (p_details IS NOT NULL AND length(p_details)>300) THEN
     RAISE EXCEPTION 'ادھار وصولی کی تاریخ، مثبت رقم، طریقہ اور درخواست شناخت درست درج کریں۔' USING ERRCODE='22023';
@@ -374,6 +358,9 @@ BEGIN
   IF NOT FOUND OR v_sale.payment_method<>'credit' OR v_sale.credit_store_id IS NULL THEN
     RAISE EXCEPTION 'منتخب سیل منظور شدہ دکان کی ادھار سیل نہیں۔' USING ERRCODE='23514';
   END IF;
+  IF p_payment_date<v_sale.sale_date THEN
+    RAISE EXCEPTION 'ادھار وصولی کی تاریخ سیل کی تاریخ سے پہلے نہیں ہو سکتی۔' USING ERRCODE='23514';
+  END IF;
 
   SELECT coalesce(sum(amount),0) INTO v_paid
   FROM public.store_credit_payments WHERE sale_id=p_sale_id;
@@ -394,6 +381,8 @@ BEGIN
   );
 END;
 $function$;
+
+GRANT EXECUTE ON FUNCTION private.record_store_credit_payment(bigint,date,numeric,text,uuid,text) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.record_store_credit_payment(
   p_sale_id bigint,
