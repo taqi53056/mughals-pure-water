@@ -295,7 +295,6 @@ if (!billLockMigration.includes("SECURITY INVOKER") ||
 if (!billLockMigration.includes("Future customer bills cannot be calculated.")) {
   failures.push("Customer bill recalculation must reject future billing months");
 }
-const appSource = await readFile(resolve(ROOT, "index.html"), "utf8");
 if (!appSource.includes('id="bMonth" type="month" value="${today().slice(0,7)}" max="${today().slice(0,7)}"')) {
   failures.push("Customer bill month picker must prevent selecting future months");
 }
