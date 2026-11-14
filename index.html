@@ -3178,12 +3178,12 @@ async function loadTodaySummary(){
  }else{
   const dailyReport=dashboardR?.data?.profit_and_loss||{};
   const segments=dailyReport.segments||{},water=segments["19L"]||{};
-  const net=Number(dailyReport.net_profit)||0;
+  const netValue=dailyReport.net_profit===null||dailyReport.net_profit===undefined?null:Number(dailyReport.net_profit);
   const revenue=Number(water.revenue||0)+Number(dailyReport.finished_goods?.revenue||0)+Number(segments.shared?.other_income||0);
-  const beforeEstimate=net+Number(water.estimated_counter_water_cost??water.counter_water_cost??0);
+  const beforeEstimate=netValue===null?null:netValue+Number(water.estimated_counter_water_cost??water.counter_water_cost??0);
   dailyPnlHtml='<div class="stat">کل درج شدہ فروخت / آمدن: <b>'+money(revenue)+'</b></div>'+
-   '<div class="stat">روزانہ خالص نتیجہ: <b>'+money(net)+'</b> — '+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+'</div>'+
-   '<div class="stat">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>'+money(beforeEstimate)+'</b></div>'+
+   '<div class="stat">روزانہ خالص نتیجہ: <b>'+(netValue===null?"آج کوئی قابلِ حساب منافع / نقصان نہیں":money(netValue))+'</b> — '+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+'</div>'+
+   '<div class="stat">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>'+(beforeEstimate===null?"دستیاب نہیں":money(beforeEstimate))+'</b></div>'+
    '<div class="stat">کاؤنٹر پانی کی تخمینی لاگت: <b>'+money(water.estimated_counter_water_cost||0)+'</b></div>'+
    (dailyReport.missing_costs?.length?'<div class="warning">لاگت کی کمی: '+dailyReport.missing_costs.map(esc).join("، ")+'</div>':"")+
    (dailyReport.notes?'<div class="warning">'+esc(dailyReport.notes)+'</div>':"")+
