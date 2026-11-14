@@ -3143,14 +3143,14 @@ async function loadTodaySummary(){
   try{return await db.rpc("get_management_dashboard",{p_month_start:date,p_month_end:date});}
   catch(error){return {data:null,error};}
  })();
- const [customerR,unassignedR,salesR,counterR,tankerR,expensesR,incomeR,productionR,rawPurchaseR,finishedR,customerPaymentR,workerLedgerR,financeLedgerR,cleaningR,returnsR,adjustmentsR,dashboardR]=await Promise.all([
+ const [customerR,unassignedR,salesR,counterR,tankerR,expensesR,incomeR,productionR,rawPurchaseR,finishedR,customerPaymentR,workerLedgerR,financeLedgerR,cleaningR,returnsR,adjustmentsR,collectionR,dashboardR]=await Promise.all([
   readTodayRows("customer_19l_deliveries","successful_bottles,bottle_difference,delivery_labor","delivery_date",date),
   readTodayRows("unassigned_19l_deliveries","bottles_delivered,labor_amount","delivery_date",date),
   readTodayRows("product_sales","total_amount","sale_date",date),
   readTodayRows("counter_water_sales","total_amount,total_litres","sale_date",date),
   readTodayRows("water_tanker_purchases","tanker_count,total_amount","purchase_date",date),
   readTodayRows("business_expenses","amount","expense_date",date),
-  readTodayRows("business_income","amount","income_date",date),
+  readTodayRows("business_income","amount,category","income_date",date),
   readTodayRows("production","product_type,quantity,labor_amount","production_date",date),
   readTodayRows("raw_material_purchases","material_type,quantity,unit,total_amount,record_type","purchase_date",date),
   readTodayRows("finished_goods","product_type,quantity,unit","entry_date",date),
@@ -3160,6 +3160,7 @@ async function loadTodaySummary(){
   readTodayRows("daily_cleaning_labor","amount,work_category,worker_name","labor_date",date),
   readTodayRows("product_returns","product_type,quantity,replacement_quantity","return_date",date),
   readTodayRows("finished_stock_adjustments","product_type,quantity,adjustment_type,loss_amount","adjustment_date",date),
+  readTodayRows("unassigned_19l_delivery_collections","amount,payment_method","received_date",date),
   dashboardTask
  ]);
  const sum=(result,column)=>result.error?null:result.rows.reduce((n,row)=>n+(Number(row[column])||0),0);
@@ -3174,16 +3175,23 @@ async function loadTodaySummary(){
  const tankerQuantity=sum(tankerR,"tanker_count");
  const tankerSpend=sum(tankerR,"total_amount");
  const expenses=sum(expensesR,"amount");
- const income=sum(incomeR,"amount");
+ const income=incomeR.error?null:incomeR.rows.filter(row=>row.category!=="غیر منسلک 19L سپلائی کی وصولی").reduce((n,row)=>n+(Number(row.amount)||0),0);
+ const collectionTotal=sum(collectionR,"amount");
  const productionTotals=productionR.error?null:productionR.rows.reduce((o,r)=>{o[r.product_type]=(o[r.product_type]||0)+Number(r.quantity||0);return o;},{});
- const rawPurchaseAmount=rawPurchaseR.error?null:rawPurchaseR.rows.filter(r=>r.record_type==="purchase").reduce((n,r)=>n+Number(r.total_amount||0),0);
- const finishedQty=finishedR.error?null:finishedR.rows.reduce((n,r)=>n+Number(r.quantity||0),0);
- const customerReceipts=sum(customerPaymentR,"amount");
+ const rawPurchaseRows=rawPurchaseR.error?null:rawPurchaseR.rows.filter(r=>r.record_type==="purchase");
+ const rawPurchaseAmount=rawPurchaseRows===null?null:rawPurchaseRows.reduce((n,r)=>n+Number(r.total_amount||0),0);
+ const rawOtherCount=rawPurchaseR.error?null:rawPurchaseR.rows.filter(r=>r.record_type!=="purchase").length;
+ const unitLabel=unit=>({carton:"کارٹن",cartons:"کارٹن",bottle:"بوتل",bottles:"بوتل",piece:"عدد",pieces:"عدد",kg:"کلو"}[String(unit||"").toLowerCase()]||String(unit||"اکائی"));
+ const finishedSummary=finishedR.error?null:finishedR.rows.reduce((o,r)=>{const key=String(r.product_type||"مال")+" "+unitLabel(r.unit);o[key]=(o[key]||0)+Number(r.quantity||0);return o;},{});
+ const customerPaymentTotals=customerPaymentR.error?null:customerPaymentR.rows.reduce((o,r)=>{const amount=Number(r.amount)||0;if(r.payment_type==="refund")o.refunds+=amount;else o.received+=amount;return o;},{received:0,refunds:0});
  const workerTotals=workerLedgerR.error?null:workerLedgerR.rows.reduce((o,r)=>{o[r.entry_type]=(o[r.entry_type]||0)+Number(r.amount||0);return o;},{});
  const ownerWithdrawal=financeLedgerR.error?null:financeLedgerR.rows.filter(r=>r.entry_type==="owner_withdrawal").reduce((n,r)=>n+Number(r.amount||0),0);
  const cleaningAmount=sum(cleaningR,"amount");
  const returnsCount=returnsR.error?null:returnsR.rows.length;
+ const returnsQty=sum(returnsR,"quantity");
+ const replacementQty=sum(returnsR,"replacement_quantity");
  const adjustmentsCount=adjustmentsR.error?null:adjustmentsR.rows.length;
+ const adjustmentLoss=sum(adjustmentsR,"loss_amount");
  const dailyErrors=[
   ["کسٹمر ڈلیوری",customerR.error],["غیر منسلک سپلائی",unassignedR.error],
   ["پروڈکٹ سیل",salesR.error],["19L کاؤنٹر",counterR.error],
@@ -3191,7 +3199,7 @@ async function loadTodaySummary(){
   ["پروڈکشن",productionR.error],["خام مال",rawPurchaseR.error],["تیار مال",finishedR.error],
   ["گاہک وصولیاں",customerPaymentR.error],["ورکر لیجر",workerLedgerR.error],
   ["مالک نکاسی",financeLedgerR.error],["صفائی مزدوری",cleaningR.error],
-  ["واپسی",returnsR.error],["اسٹاک درستگی",adjustmentsR.error]
+  ["واپسی",returnsR.error],["اسٹاک درستگی",adjustmentsR.error],["غیر منسلک وصولیاں",collectionR.error]
  ].filter(([,error])=>error);
  let dailyPnlHtml="";
  if(dashboardR?.error){
@@ -3213,24 +3221,29 @@ async function loadTodaySummary(){
  }
  const errorHtml=dailyErrors.length?'<div class="warning">کچھ معلومات لوڈ نہیں ہوئیں: '+dailyErrors.map(([name,error])=>esc(name)+': '+esc(error.message||"خرابی")).join("؛ ")+'۔ باقی دستیاب سرگرمی دکھائی جا رہی ہے۔</div>':"";
  const shown=(n,formatter=x=>String(x))=>n===null?"ریکارڈ دستیاب نہیں":formatter(n);
+ const productionDisplay=productionTotals===null?"ریکارڈ دستیاب نہیں":Object.entries(productionTotals).map(([k,v])=>esc(k)+" "+v+(k==="6L"?" بوتلیں":" کارٹن")).join("، ")||"کوئی انٹری نہیں";
+ const finishedDisplay=finishedSummary===null?"ریکارڈ دستیاب نہیں":Object.entries(finishedSummary).map(([k,v])=>esc(k)+" "+v).join("، ")||"کوئی انٹری نہیں";
+ const receiptsDisplay=customerPaymentTotals===null?"ریکارڈ دستیاب نہیں":"وصولی "+money(customerPaymentTotals.received)+"، ریفنڈ "+money(customerPaymentTotals.refunds)+"، خالص "+money(customerPaymentTotals.received-customerPaymentTotals.refunds)+" ("+customerPaymentR.rows.length+" انٹریاں)";
  el.innerHTML='<div class="stat">تاریخ: '+date+'</div>'+
   '<div class="stat">گاہکوں کی کامیاب 19L بوتلیں: <b>'+shown(bottles)+'</b></div>'+
   '<div class="stat">بوتلوں کا فرق: <b>'+shown(difference)+'</b></div>'+
   '<div class="stat">کسٹمر 19L ڈلیوری مزدوری: <b>'+shown(deliveryLabor,money)+'</b></div>'+
   '<div class="stat">بغیر گاہک سپلائی: <b>'+(unassignedBottles===null?"ریکارڈ دستیاب نہیں":unassignedBottles+" بوتلیں — مزدوری "+money(unassignedLabor))+'</b></div>'+
+  '<div class="stat">19L سپلائی سے وصولی: <b>'+shown(collectionTotal,money)+'</b></div>'+
   '<div class="stat">500ml / 1.5L / 6L فروخت: <b>'+shown(sales,money)+'</b></div>'+
   '<div class="stat">19L کاؤنٹر فروخت: <b>'+(counterLitres===null?"ریکارڈ دستیاب نہیں":counterLitres+" درج شدہ لیٹر — "+money(counterAmount))+'</b></div>'+
   '<div class="stat">آج پانی کی خریداری: <b>'+(tankerQuantity===null?"ریکارڈ دستیاب نہیں":Number(tankerQuantity).toLocaleString("en-PK",{maximumFractionDigits:3})+" ٹینکر — "+(Number(tankerQuantity)*1000).toLocaleString("en-PK")+" لیٹر — "+money(tankerSpend))+'</b></div>'+
-  '<div class="stat">پروڈکشن: <b>'+(productionTotals===null?"ریکارڈ دستیاب نہیں":Object.entries(productionTotals).map(([k,v])=>esc(k)+" "+v).join("، ")||"کوئی انٹری نہیں")+'</b></div>'+
-  '<div class="stat">خام مال کے اندراجات: <b>'+(rawPurchaseAmount===null?"ریکارڈ دستیاب نہیں":money(rawPurchaseAmount)+" خریداری ("+rawPurchaseR.rows.length+" کل اندراجات)")+'</b></div>'+
-  '<div class="stat">تیار مال کی الگ انٹریاں: <b>'+(finishedQty===null?"ریکارڈ دستیاب نہیں":finishedQty+" ("+finishedR.rows.length+" انٹریاں)")+'</b></div>'+
-  '<div class="stat">گاہکوں سے وصولی: <b>'+(customerReceipts===null?"ریکارڈ دستیاب نہیں":money(customerReceipts)+" ("+customerPaymentR.rows.length+" انٹریاں)")+'</b></div>'+
+  '<div class="stat">پروڈکشن: <b>'+productionDisplay+'</b></div>'+
+  '<div class="stat">خام مال کی خریداری: <b>'+(rawPurchaseAmount===null?"ریکارڈ دستیاب نہیں":money(rawPurchaseAmount)+" ("+rawPurchaseRows.length+" خریداری)")+'</b></div>'+
+  '<div class="stat">خام مال کے افتتاحی / مفت اندراجات: <b>'+(rawOtherCount===null?"ریکارڈ دستیاب نہیں":rawOtherCount)+'</b></div>'+
+  '<div class="stat">تیار مال کی الگ انٹریاں: <b>'+finishedDisplay+" ("+(finishedSummary===null?"?":finishedR.rows.length)+" انٹریاں)"+'</b></div>'+
+  '<div class="stat">گاہکوں سے وصولی / ریفنڈ: <b>'+receiptsDisplay+'</b></div>'+
   '<div class="stat">ورکر لیجر: <b>'+(workerTotals===null?"ریکارڈ دستیاب نہیں":"اجرت "+money(workerTotals.earning||0)+"، ادائیگی "+money(workerTotals.payment||0)+"، ایڈوانس "+money(workerTotals.advance||0)+"، کٹوتی "+money(workerTotals.deduction||0))+'</b></div>'+
   '<div class="stat">مالک کی نکاسی: <b>'+(ownerWithdrawal===null?"ریکارڈ دستیاب نہیں":money(ownerWithdrawal))+'</b></div>'+
   '<div class="stat">مالک کی صفائی / دھلائی ممکنہ بچت: <b>'+(cleaningAmount===null?"ریکارڈ دستیاب نہیں":money(cleaningAmount))+'</b></div>'+
-  '<div class="stat">خراب مال واپسی / اسٹاک درستگی: <b>'+(returnsCount===null||adjustmentsCount===null?"ریکارڈ دستیاب نہیں":returnsCount+" واپسی، "+adjustmentsCount+" درستگیاں")+'</b></div>'+
+  '<div class="stat">خراب مال واپسی / اسٹاک درستگی: <b>'+(returnsCount===null||adjustmentsCount===null?"ریکارڈ دستیاب نہیں":returnsCount+" واپسی ("+returnsQty+" عدد، "+replacementQty+" متبادل)، "+adjustmentsCount+" درستگیاں ("+money(adjustmentLoss)+" نقصان)")+'</b></div>'+
   '<div class="stat">درج شدہ اخراجات: <b>'+(expenses===null?"ریکارڈ دستیاب نہیں":money(expenses)+" ("+expensesR.rows.length+" انٹریاں)")+'</b></div>'+
-  '<div class="stat">دیگر آمدن (فروخت سے الگ): <b>'+shown(income,money)+'</b></div>'+
+  '<div class="stat">دیگر آمدن (غیر منسلک 19L وصولی کے بغیر): <b>'+shown(income,money)+'</b></div>'+
   errorHtml+dailyPnlHtml;
 }
 
