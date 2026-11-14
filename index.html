@@ -886,6 +886,7 @@ const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today=()=>{const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Karachi",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const values=Object.fromEntries(parts.map(p=>[p.type,p.value]));return values.year+"-"+values.month+"-"+values.day};
 const monthNow=()=>today().slice(0,7)+"-01";
+function paymentMethodLabel(method){return ({cash:"نقد",bank:"بینک",jazzcash:"جاز کیش",easypaisa:"ایزی پیسہ",other:"دیگر"})[method]||"درج نہیں";}
 const money=n=>"Rs. "+(Number(n)||0).toLocaleString("en-PK");
 function mpwNewRequestId(){
  if(window.crypto&&typeof window.crypto.randomUUID==="function")return window.crypto.randomUUID();
@@ -1522,7 +1523,7 @@ async function showCustomerFullAccount(id){
  panel.scrollIntoView({behavior:"smooth",block:"start"});
  const [bills,payments,deliveries]=await Promise.all([
   db.from("customer_monthly_bills").select("bill_month,bottles_19l,bottle_amount,damaged_caps,cap_amount,previous_balance,payments,advance_used,current_due,closing_advance").eq("customer_id",id).order("bill_month",{ascending:false}),
-  db.from("customer_payments").select("payment_date,amount,payment_type").eq("customer_id",id).order("payment_date",{ascending:false}),
+  db.from("customer_payments").select("payment_date,amount,payment_type,payment_method").eq("customer_id",id).order("payment_date",{ascending:false}),
   db.from("customer_19l_deliveries").select("delivery_date,bottles_delivered,customer_owned_bottles,company_bottles_delivered,empty_bottles_returned,successful_bottles,bottle_difference,damaged_caps,delivery_labor").eq("customer_id",id).order("delivery_date",{ascending:false})
  ]);
  const failed=[bills.error,payments.error,deliveries.error].filter(Boolean);
@@ -1534,7 +1535,7 @@ async function showCustomerFullAccount(id){
  <div class="stat">تازہ ترین بقایا: <b>${money(totalDue)}</b> — تازہ ترین بل میں باقی ایڈوانس: <b>${money(totalAdvance)}</b></div>
  <div class="card"><button class="secondary" onclick="customerBottleDepositModule(${Number(customer.id)})">کمپنی بوتل ضمانت / واپسی</button><p class="muted">Rs.1,600 فی کمپنی بوتل؛ یہ رقم ماہانہ پانی کے بل سے الگ ہے اور خودکار طور پر بل میں شامل نہیں ہوتی۔</p><div id="customerBottleDepositPanel" class="hidden"></div></div>
  <h4>ماہانہ بل</h4>${bs.length?`<table><tr><th>مہینہ</th><th>بوتلیں</th><th>بوتل رقم</th><th>ڈھکن</th><th>ڈھکن رقم</th><th>پچھلا بقایا</th><th>ادائیگی</th><th>ایڈوانس استعمال</th><th>بقایا</th><th>باقی ایڈوانس</th></tr>${bs.map(r=>`<tr><td>${esc(r.bill_month)}</td><td>${Number(r.bottles_19l)||0}</td><td>${money(r.bottle_amount)}</td><td>${Number(r.damaged_caps)||0}</td><td>${money(r.cap_amount)}</td><td>${money(r.previous_balance)}</td><td>${money(r.payments)}</td><td>${money(r.advance_used)}</td><td>${money(r.current_due)}</td><td>${money(r.closing_advance)}</td></tr>`).join("")}</table>`:"ابھی بل موجود نہیں۔"}
- <h4>ادائیگیوں کی مکمل ہسٹری</h4>${ps.length?`<table><tr><th>تاریخ</th><th>قسم</th><th>رقم</th></tr>${ps.map(r=>`<tr><td>${esc(r.payment_date)}</td><td>${esc(r.payment_type)}</td><td>${money(r.amount)}</td></tr>`).join("")}</table>`:"ابھی ادائیگی موجود نہیں۔"}
+ <h4>ادائیگیوں کی مکمل ہسٹری</h4>${ps.length?`<table><tr><th>تاریخ</th><th>قسم</th><th>طریقہ</th><th>رقم</th></tr>${ps.map(r=>`<tr><td>${esc(r.payment_date)}</td><td>${esc(r.payment_type)}</td><td>${paymentMethodLabel(r.payment_method)}</td><td>${money(r.amount)}</td></tr>`).join("")}</table>`:"ابھی ادائیگی موجود نہیں۔"}
  <h4>19L ڈلیوری ہسٹری</h4>${ds.length?`<table><tr><th>تاریخ</th><th>کل بھری</th><th>گاہک کی اپنی</th><th>کمپنی کی</th><th>واپس کمپنی کی خالی</th><th>کامیاب</th><th>فرق</th><th>خراب ڈھکن</th><th>مزدوری</th></tr>${ds.map(r=>`<tr><td>${esc(r.delivery_date)}</td><td>${Number(r.bottles_delivered)||0}</td><td>${Number(r.customer_owned_bottles)||0}</td><td>${Number(r.company_bottles_delivered??((Number(r.bottles_delivered)||0)-(Number(r.customer_owned_bottles)||0)))}</td><td>${Number(r.empty_bottles_returned)||0}</td><td>${Number(r.successful_bottles)||0}</td><td>${Number(r.bottle_difference)||0}</td><td>${Number(r.damaged_caps)||0}</td><td>${money(r.delivery_labor)}</td></tr>`).join("")}</table>`:"ابھی ڈلیوری موجود نہیں۔"}`;
 }
 
@@ -2004,6 +2005,7 @@ async function billingModule(){
  <input id="paymentDate" type="date" value="${today()}">
  <input id="paymentAmount" type="number" min="0.01" step="0.01" placeholder="رقم (روپے)">
  <select id="paymentType"><option value="bill_payment">بل کی ادائیگی</option><option value="advance">ایڈوانس</option><option value="refund">واپسی / ریفنڈ</option></select>
+ <label for="paymentMethod">ادائیگی کا طریقہ</label><select id="paymentMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>
  <button id="paymentSaveButton" onclick="recordCustomerPayment()">ادائیگی محفوظ کریں</button></div>
  <h3>اس مہینے کی تاریخ وار ڈلیوری ہسٹری</h3><div id="billDeliveryHistory" class="tablewrap">گاہک منتخب کریں۔</div>
  <h3>اس مہینے کی ادائیگیاں</h3><div id="billPaymentHistory" class="tablewrap"></div>`;
@@ -2045,10 +2047,10 @@ async function loadBillDeliveryHistory(customerId,month){
 async function loadPaymentHistory(customerId,month){
  const box=$("billPaymentHistory");if(!box)return;
  const d=new Date(month+"T00:00:00");d.setMonth(d.getMonth()+1);const end=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-01";
- const {data,error}=await db.from("customer_payments").select("payment_date,amount,payment_type").eq("customer_id",customerId).gte("payment_date",month).lt("payment_date",end).order("payment_date",{ascending:false});
+ const {data,error}=await db.from("customer_payments").select("payment_date,amount,payment_type,payment_method").eq("customer_id",customerId).gte("payment_date",month).lt("payment_date",end).order("payment_date",{ascending:false});
  if(error){box.textContent="ادائیگیاں لوڈ نہیں ہوئیں: "+error.message;return}
  const labels={advance:"ایڈوانس",bill_payment:"بل ادائیگی",refund:"ریفنڈ"};
- box.innerHTML=!(data||[]).length?"اس ماہ کوئی ادائیگی درج نہیں۔":"<table><tr><th>تاریخ</th><th>قسم</th><th>رقم</th></tr>"+data.map(r=>`<tr><td>${esc(r.payment_date)}</td><td>${labels[r.payment_type]||esc(r.payment_type)}</td><td>${money(r.amount)}</td></tr>`).join("")+"</table>";
+ box.innerHTML=!(data||[]).length?"اس ماہ کوئی ادائیگی درج نہیں۔":"<table><tr><th>تاریخ</th><th>قسم</th><th>طریقہ</th><th>رقم</th></tr>"+data.map(r=>`<tr><td>${esc(r.payment_date)}</td><td>${labels[r.payment_type]||esc(r.payment_type)}</td><td>${paymentMethodLabel(r.payment_method)}</td><td>${money(r.amount)}</td></tr>`).join("")+"</table>";
 }
 
 async function loadSelectedBill(){
@@ -2113,15 +2115,15 @@ async function saveBill(){
 
 async function recordCustomerPayment(){
  setBillSavedState(false);
- const customerId=Number($("bCustomer").value),amount=Number($("paymentAmount").value),paymentDate=$("paymentDate").value,paymentType=$("paymentType").value;
+ const customerId=Number($("bCustomer").value),amount=Number($("paymentAmount").value),paymentDate=$("paymentDate").value,paymentType=$("paymentType").value,paymentMethod=$("paymentMethod").value;
  if(!customerId||!paymentDate||!Number.isFinite(amount)||amount<=0){msg("گاہک، تاریخ اور صفر سے زیادہ رقم درج کریں۔");return}
  if(!confirmLargeEntry("ادائیگی کی رقم (روپے)",amount,1000))return;
  const button=$("paymentSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  let paymentSaved=false;
  try{
-  const requestSignature=[customerId,paymentDate,amount,paymentType].join("|");
+  const requestSignature=[customerId,paymentDate,amount,paymentType,paymentMethod].join("|");
   const requestId=mpwPendingRequestId("customer-payment",requestSignature);
-  const {data:payment,error}=await db.from("customer_payments").upsert({customer_id:customerId,amount,payment_date:paymentDate,payment_type:paymentType,entered_by:user?.id||null,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
+  const {data:payment,error}=await db.from("customer_payments").upsert({customer_id:customerId,amount,payment_date:paymentDate,payment_type:paymentType,payment_method:paymentMethod,entered_by:user?.id||null,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
   if(error)throw error;
   let paymentRecord=payment;
   if(!paymentRecord){
@@ -3988,7 +3990,7 @@ function customerDateLabel(value,withTime=false){
 function customerPaymentLabel(type){return ({advance:"ایڈوانس",bill_payment:"بل کی ادائیگی",refund:"ریفنڈ"})[type]||"ادائیگی";}
 function renderCustomerPaymentRows(rows,append=false){
  const box=$("myPayments");if(!box)return;
- const html=(rows||[]).map(r=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(customerDateLabel(r.payment_date))+'</b><span class="customer-record-number">'+money(r.amount)+'</span></div><small class="muted">'+customerPaymentLabel(r.payment_type)+'</small></div>').join("");
+ const html=(rows||[]).map(r=>'<div class="customer-record"><div class="customer-record-head"><b>'+esc(customerDateLabel(r.payment_date))+'</b><span class="customer-record-number">'+money(r.amount)+'</span></div><small class="muted">'+customerPaymentLabel(r.payment_type)+" — طریقہ: "+paymentMethodLabel(r.payment_method)+'</small></div>').join("");
  if(append){const more=$("customerPaymentsMore");if(more)more.remove();box.insertAdjacentHTML("beforeend",html);}
  else box.innerHTML=html||'<div class="customer-empty">ابھی کوئی ادائیگی درج نہیں۔</div>';
  if(window.customerPaymentHasMore){const button=document.createElement("button");button.id="customerPaymentsMore";button.className="secondary";button.textContent="مزید ادائیگیاں دیکھیں";button.onclick=loadMoreCustomerPayments;box.appendChild(button);}
@@ -3997,7 +3999,7 @@ async function loadMoreCustomerPayments(){
  const button=$("customerPaymentsMore");if(!button||button.disabled||!myCustomer)return;
  button.disabled=true;button.textContent="لوڈ ہو رہا ہے...";
  const from=Number(window.customerPaymentOffset)||0,to=from+49;
- const {data,error}=await db.from("customer_payments").select("payment_date,amount,payment_type,created_at").eq("customer_id",myCustomer.id).order("payment_date",{ascending:false}).order("created_at",{ascending:false}).range(from,to);
+ const {data,error}=await db.from("customer_payments").select("payment_date,amount,payment_type,payment_method,created_at").eq("customer_id",myCustomer.id).order("payment_date",{ascending:false}).order("created_at",{ascending:false}).range(from,to);
  if(error){button.disabled=false;button.textContent="دوبارہ کوشش کریں";showAppToast("مزید ادائیگیاں لوڈ نہیں ہوئیں: "+(error.message||"خرابی"),"error");return;}
  const rows=data||[];window.customerPaymentOffset=from+rows.length;window.customerPaymentHasMore=rows.length===50;
  renderCustomerPaymentRows(rows,true);
@@ -4116,7 +4118,7 @@ async function loadCustomerPanel(){
  const monthStart=monthNow();
  const [billResult,paymentResult,deliveryResult]=await Promise.all([
   db.from("customer_monthly_bills").select("*").eq("customer_id",myCustomer.id).order("bill_month",{ascending:false}),
-  db.from("customer_payments").select("payment_date,amount,payment_type,created_at").eq("customer_id",myCustomer.id).order("payment_date",{ascending:false}).order("created_at",{ascending:false}).range(0,49),
+  db.from("customer_payments").select("payment_date,amount,payment_type,payment_method,created_at").eq("customer_id",myCustomer.id).order("payment_date",{ascending:false}).order("created_at",{ascending:false}).range(0,49),
   db.from("customer_19l_deliveries").select("delivery_date,bottles_delivered,customer_owned_bottles,company_bottles_delivered,empty_bottles_returned,successful_bottles,bottle_difference,damaged_caps").eq("customer_id",myCustomer.id).order("delivery_date",{ascending:false})
  ]);
  const bills=billResult.data||[],payments=paymentResult.data||[],deliveries=deliveryResult.data||[];
