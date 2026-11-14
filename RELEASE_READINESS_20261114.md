@@ -67,3 +67,17 @@ The month-end billing and monthly business-report cron jobs remain active. Their
 ## Release verification
 
 The app release at commit eb181b2 (2026-11-14) passed App static validation, including desktop/mobile browser smoke tests, and GitHub Pages deployment; the audit report was subsequently updated separately. A successful build/deploy is not proof of authenticated customer E2E or of every business transaction.
+
+## Follow-up audit — 2026-11-14 17:49 UTC
+
+- Rechecked the live Supabase project after the customer notification security migrations.
+- Current live customer data is no longer empty: exactly 1 active customer record (C001) exists, with 1 delivery, 1 monthly bill, 2 in-app notifications, and 1 active push subscription. Do not rely on the earlier “0 customers” snapshot above.
+- Exactly 3 admin profiles remain. All public base tables have RLS enabled; no public table lacks RLS; the anon role has no direct public table grants. No Storage buckets or Storage policies are configured. All 14 public views inspected have security_invoker=true.
+- SECURITY DEFINER functions inspected in public/private schemas all have pinned search_path settings; none are executable by anon. The private schema is not USAGE-accessible to anon. Authenticated access to selected private helpers is intentional through checked SECURITY INVOKER wrappers and private helper authorization.
+- Found and fixed a real customer-archive RPC failure. PostgreSQL logs showed private.prepare_customer_archive failing with SQLSTATE 55000 because the PL/pgSQL record variable `r` conflicted with the table alias `r` in the customer bottle-return month query. Renamed the table alias to `ret` and the loop record to `v_entered_by_table`. Migration `20261114174913_fix_customer_archive_record_alias_conflict_20261114` was applied; post-migration checks confirm the old alias is absent and the renamed references are present.
+- The failing archive requests occurred before the correction. The live customer row, its delivery, and its bill remain present and active after the fix; no customer was archived or deleted as part of this repair.
+- The three most recent scheduled month-end billing/report job runs recorded for Nov 11–13 succeeded. Current schedules remain 18:55 UTC for billing and 19:05 UTC for the monthly report.
+- Push endpoint logs show authenticated admin POST requests returning HTTP 200. This proves the Edge Function requests completed at the HTTP layer; it does not independently prove that a notification appeared on the customer's physical device.
+- Security Advisor still reports only leaked-password protection disabled (not available on the connected Free plan). Performance Advisor still reports six unused-index INFO notices; no index was removed without production workload evidence. Health Advisor remains clear.
+- Five historical PostgreSQL errors reading `"array_agg" is an aggregate function` were traced to management/API inspection queries that attempted to call `pg_get_functiondef` on aggregate functions; these were not application request errors. The archive RPC failure was separately identified and fixed as described above.
+- Latest GitHub main commit before this follow-up was `3f8f954d0d284540ccccee4eac03f575383edf12`; static validation, desktop/mobile Playwright smoke tests, and Pages build/deploy runs completed successfully. These checks do not replace live customer transaction and physical-device verification.
