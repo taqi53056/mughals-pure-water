@@ -33,7 +33,7 @@ The current main build passes static validation and desktop/mobile browser smoke
 
 ## Data integrity checks
 
-- No duplicate request IDs were found in business income, customer payments, product sales, raw-material purchases, production or worker ledger.
+- No duplicate request IDs were found across all 22 public tables carrying request_id; each has a unique request_id index. No duplicate worker-ledger source rows were found.
 - The two special unassigned-19L income entries each match exactly one collection record; no amount, payment-method or date mismatch was found.
 - No duplicate worker-ledger source rows or missing worker earnings were found for linked delivery/production sources.
 - No negative finished stock and no future-dated expense, income, product-sale or worker-ledger entries were found.
@@ -61,7 +61,7 @@ The month-end billing and monthly business-report cron jobs remain active. Their
 3. SMS/WhatsApp: no external provider/channel is configured, so external messaging is not enabled.
 4. Cash/bank/JazzCash reconciliation: no opening balances or reconciliation records are present. The app must not invent account balances; enter verified opening figures before relying on account-wise cash balances.
 5. Profit accuracy: shop-counter water usage and net profit remain marked estimated where source litres/costs are not exact. Zero expense rows do not prove that no expenses occurred; enter real expenses before relying on net profit or closing a month.
-6. Supabase leaked-password protection: unavailable on the current Free plan; this is an external plan limitation.
+6. Supabase leaked-password protection: remains disabled. The connected tools do not expose the Auth settings toggle; the project owner must enable it in Supabase Auth settings.
 7. Fresh-project rebuild / migration archive: the remote Supabase history lists 245 applied migrations while the repository contains 127 migration SQL files; older history still has missing or version-mismatched files. Recent 2026-11-14 migrations have matching SQL files, but the repository is not a complete fresh-database installer. Do not use it alone to create a new Supabase project.
 
 ## Release verification
