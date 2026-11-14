@@ -787,10 +787,10 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 </div>
 <div id="homeTiles" class="grid">
 <div class="admin-command-search" role="search">
- <label for="adminQuickSearch">آپ کیا کرنا چاہتے ہیں؟</label>
- <input id="adminQuickSearch" type="search" autocomplete="off" placeholder="مثلاً: نیا خرچ، پانی خریدنا، گاہک، ڈلیوری، اسٹاک..." oninput="searchAdminModules(this.value)" onkeydown="handleAdminSearchKey(event)" aria-controls="adminQuickResults" aria-expanded="false">
+ <label for="adminQuickSearch">فوری اندراج — کیا شامل یا درج کرنا ہے؟</label>
+ <input id="adminQuickSearch" type="search" autocomplete="off" placeholder="یہاں لکھیں: خرچ، 500ml، ٹینکر، گاہک کی وصولی، 19L ڈلیوری..." oninput="searchAdminModules(this.value)" onkeydown="handleAdminSearchKey(event)" aria-controls="adminQuickResults" aria-expanded="false">
  <div id="adminQuickResults" class="admin-quick-results hidden" role="listbox" aria-label="ممکنہ کام"></div>
- <small>کام کا نام لکھیں؛ متعلقہ حصہ سامنے آ جائے گا۔ اگر ایک سے زیادہ مطلب ہوں تو انتخاب آپ خود کریں گے۔</small>
+ <small>مثلاً: نیا خرچ، 500ml خریداری، ٹینکر، گاہک کی وصولی یا 19 لیٹر ڈلیوری۔ ایک سے زیادہ متعلقہ کام ہوں تو فہرست میں سے درست کام منتخب کریں؛ فارم کھلنے کے بعد ایپ مطلوبہ تفصیل مانگے گی۔</small>
 </div>
 <nav class="admin-module-filter" role="group" aria-label="انتظامی ماڈیولز کی اقسام">
 <button type="button" class="secondary active" data-filter="operations" onclick="filterAdminModules(this.dataset.filter)">روزمرہ اندراجات</button>
@@ -1343,19 +1343,19 @@ async function logout(){
 
 
 const ADMIN_SEARCH_ALIASES={
- customers:["نیا گاہک","کسٹمر","customer","گاہک کا اندراج","اکاؤنٹ"],
- delivery:["ڈلیوری","بوتل بھیجنا","19 لیٹر","انیس لیٹر","delivery"],
+ customers:["نیا گاہک","کسٹمر","customer","گاہک کا اندراج","اکاؤنٹ","گاہک بنانا","نیا کسٹمر","رجسٹریشن"],
+ delivery:["ڈلیوری","بوتل بھیجنا","19 لیٹر","انیس لیٹر","delivery","خالی بوتل","بوتل واپس","گاہک کو پانی"],
  billing:["بل","بلنگ","مہینے کا بل","گاہک کا بل","invoice"],
- raw:["خام مال","ڈھکن","بوتل خریدنا","کارٹن","اسٹیکر","ٹیپ","raw material"],
+ raw:["خام مال","ڈھکن","بوتل خریدنا","کارٹن","اسٹیکر","ٹیپ","raw material","500ml خریدنا","1.5l خریدنا","6l خریدنا","ریڈ ٹیپ","سرخ ٹیپ","پیکنگ"],
  finished:["تیار مال","تیار اسٹاک","باقی مال","finished stock"],
  sales:["سیل","فروخت","کارٹن فروخت","پروڈکٹ بیچنا"],
- expenses:["خرچ","نیا خرچ","اخراجات","بجلی","کرایہ","مزدوری خرچ"],
+ expenses:["خرچ","نیا خرچ","اخراجات","بجلی","کرایہ","مزدوری خرچ","دکان کا خرچہ","پیٹرول","چائے","کھانا","بل ادا"],
  income:["آمدن","دوسری آمدن","اضافی آمدن"],
- tanker:["ٹینکر","پانی خریدنا","ٹینکی میں پانی","پانی کا اسٹاک"],
- counterWater:["کاؤنٹر فروخت","پانی کی فروخت","کاؤنٹر سیل"],
+ tanker:["ٹینکر","پانی خریدنا","ٹینکی میں پانی","پانی کا اسٹاک","پروڈکشن ٹینکی","دکان کی ٹینکی","پانی کے لیٹر"],
+ counterWater:["کاؤنٹر فروخت","پانی کی فروخت","کاؤنٹر سیل","نقد فروخت","دکان سے فروخت"],
  unassigned19l:["غیر منسلک سپلائی","بغیر گاہک بوتل","اضافی 19l سپلائی"],
  returns:["واپسی","خراب بوتل","خراب مال","ریٹرن"],
- workers:["ورکر","مزدور","اجرت","مزدوری کا حساب","ورکر کی ادائیگی"],
+ workers:["ورکر","مزدور","اجرت","مزدوری کا حساب","ورکر کی ادائیگی","مزدور کا حساب","ایڈوانس مزدوری"],
  labor:["پروڈکشن","صفائی مزدوری","پیداوار"],
  finance:["منافع","نقصان","منافع نقصان","ماہانہ رپورٹ","مالی رپورٹ"],
  ownerWithdrawals:["مالک نکاسی","مالک نے رقم لی","ذاتی نکاسی"],
