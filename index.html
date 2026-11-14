@@ -3057,10 +3057,11 @@ async function moneyModule(type){
  const exp=type==="expenses";
  moneyEditingId=null;setTitle(exp?"اخراجات":"آمدن");
  $("moduleBody").innerHTML=`
- <p class="muted">${exp?"صرف روزمرہ کاروباری اخراجات درج کریں۔ ورکر کی کمائی ورکر لیجر سے خود شمار ہوتی ہے؛ وہی مزدوری یہاں دوبارہ درج نہ کریں۔ خام مال، ٹینکر، پروڈکشن اور مشینری کی خریداری اپنے مخصوص بٹن سے درج کریں۔ پیٹرول/مرمت اگر 19L ڈیلیوری موٹر سائیکل کا ہو تو سیکشن 19L منتخب کریں؛ اگر مشترکہ ہو تو عمومی خرچ، اور اگر تیار مال کی ترسیل کا ہو تو تیار مال منتخب کریں۔":"یہاں دوسری آمدن درج کریں۔ غیر منسلک 19L سپلائی کی وصولی کے لیے مخصوص مد استعمال کریں؛ وہ پہلے ہی 19L منافع میں شمار ہوتی ہے، اس لیے مخصوص مد نقد وصولی درج کرے گی مگر منافع دوبارہ نہیں بڑھائے گی۔ 19L ڈلیوری یا پروڈکٹ سیل کی اصل آمدن یہاں دوبارہ درج نہ کریں۔"}</p>
+ <p class="muted">${exp?"صرف روزمرہ کاروباری اخراجات درج کریں۔ ورکر کی کمائی ورکر لیجر سے خود شمار ہوتی ہے؛ وہی مزدوری یہاں دوبارہ درج نہ کریں۔ خام مال، ٹینکر، پروڈکشن اور مشینری کی خریداری اپنے مخصوص بٹن سے درج کریں۔ پیٹرول/مرمت اگر 19L ڈیلیوری موٹر سائیکل کا ہو تو سیکشن 19L منتخب کریں؛ اگر مشترکہ ہو تو عمومی خرچ، اور اگر تیار مال کی ترسیل کا ہو تو تیار مال منتخب کریں۔":"یہاں صرف دوسری غیر فروخت آمدن درج کریں۔ غیر منسلک 19L سپلائی کی وصولی مخصوص سپلائی ماڈیول سے خودکار طور پر درج ہوتی ہے؛ اسے یہاں دوبارہ درج نہ کریں۔ 19L ڈلیوری یا پروڈکٹ سیل کی اصل آمدن یہاں دوبارہ درج نہ کریں۔"}</p>
  <input id="mDate" type="date" value="${today()}">
- ${exp?'<input id="mCategory" list="expenseCategoryOptions" maxlength="100" placeholder="خرچ کی مد منتخب یا نئی مد لکھیں"><datalist id="expenseCategoryOptions"><option value="گھر کا سامان"><option value="پیٹرول / ٹرانسپورٹ"><option value="مزدوری"><option value="چائے / کھانا"><option value="بجلی کا بل"><option value="پانی کا بل"><option value="کرایہ"><option value="فون / انٹرنیٹ"><option value="مرمت / دیکھ بھال"><option value="دیگر عمومی خرچ"></datalist>':'<select id="mCategory"><option value="">آمدن کی مد منتخب کریں</option><option value="دیگر غیر فروخت آمدن">دیگر غیر فروخت آمدن (پروڈکٹ سیل / ڈلیوری کے علاوہ)</option><option value="غیر منسلک 19L سپلائی کی وصولی">غیر منسلک 19L سپلائی کی وصولی (منافع میں دوبارہ شامل نہیں ہوگی)</option></select>'}
- ${exp?'<select id="mSegment"><option value="general">مشترکہ خرچ — کرایہ / بجلی وغیرہ</option><option value="19L">19L گھریلو ڈیلیوری</option><option value="finished_goods">500ml / 1.5L / 6L ترسیل</option></select><select id="mMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>':''}
+ ${exp?'<input id="mCategory" list="expenseCategoryOptions" maxlength="100" placeholder="خرچ کی مد منتخب یا نئی مد لکھیں"><datalist id="expenseCategoryOptions"><option value="گھر کا سامان"><option value="پیٹرول / ٹرانسپورٹ"><option value="مزدوری"><option value="چائے / کھانا"><option value="بجلی کا بل"><option value="پانی کا بل"><option value="کرایہ"><option value="فون / انٹرنیٹ"><option value="مرمت / دیکھ بھال"><option value="دیگر عمومی خرچ"></datalist>':'<select id="mCategory"><option value="">آمدن کی مد منتخب کریں</option><option value="دیگر غیر فروخت آمدن">دیگر غیر فروخت آمدن (پروڈکٹ سیل / ڈلیوری کے علاوہ)</option></select>'}
+ ${exp?'<select id="mSegment"><option value="general">مشترکہ خرچ — کرایہ / بجلی وغیرہ</option><option value="19L">19L گھریلو ڈیلیوری</option><option value="finished_goods">500ml / 1.5L / 6L ترسیل</option></select>':''}
+ <label for="mMethod">رقم وصول / ادا کرنے کا طریقہ</label><select id="mMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>
  <input id="mAmount" type="number" min="1" placeholder="رقم">
  <textarea id="mDetails" placeholder="تفصیل (اختیاری)"></textarea>
  <button id="moneySaveButton" onclick="saveMoney('${type}')">محفوظ کریں</button>
@@ -3068,11 +3069,11 @@ async function moneyModule(type){
  <button class="secondary" onclick="loadMoney('${type}')">ریکارڈ تازہ کریں</button>`;
  await loadMoney(type);
 }
-function cancelMoneyEdit(type){moneyEditingId=null;$("mDate").value=today();$("mCategory").value="";$("mAmount").value="";$("mDetails").value="";if(type==="expenses"){$("mSegment").value="general";$("mMethod").value="cash";}$("moneySaveButton").textContent="محفوظ کریں";msg("نیا ریکارڈ درج کیا جا سکتا ہے۔",true);}
+function cancelMoneyEdit(type){moneyEditingId=null;$("mDate").value=today();$("mCategory").value="";$("mAmount").value="";$("mDetails").value="";if(type==="expenses")$("mSegment").value="general";$("mMethod").value="cash";$("moneySaveButton").textContent="محفوظ کریں";msg("نیا ریکارڈ درج کیا جا سکتا ہے۔",true);}
 async function saveMoney(type){
  const exp=type==="expenses",table=exp?"business_expenses":"business_income",amount=Number($("mAmount").value),category=$("mCategory").value.trim();
  const reservedExpenseCategories=["خام مال","ٹینکر","پروڈکشن","سیل","ڈلیوری","ورکر مزدوری"];
- const allowedIncomeCategories=["دیگر غیر فروخت آمدن","غیر منسلک 19L سپلائی کی وصولی"];
+ const allowedIncomeCategories=["دیگر غیر فروخت آمدن"];
  const reservedMatch=exp&&reservedExpenseCategories.some(x=>category.toLowerCase().includes(x.toLowerCase()));
  if(!category||amount<=0||!$("mDate").value){msg("تاریخ، مد اور درست رقم درج کریں۔");return}
  if(reservedMatch){msg("خام مال، ٹینکر، پروڈکشن، سیل، ڈلیوری اور ورکر مزدوری اپنے مخصوص حصے میں درج کریں۔");return}
@@ -3082,12 +3083,12 @@ async function saveMoney(type){
  if(!confirmLargeEntry("رقم (روپے)",amount,1000))return;
  const button=$("moneySaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
-  const payload=exp?{expense_date:$("mDate").value,category,amount,business_segment:$("mSegment").value,payment_method:$("mMethod").value,details:$("mDetails").value.trim()||null}:{income_date:$("mDate").value,category,amount,details:$("mDetails").value.trim()||null};
+  const payload=exp?{expense_date:$("mDate").value,category,amount,business_segment:$("mSegment").value,payment_method:$("mMethod").value,details:$("mDetails").value.trim()||null}:{income_date:$("mDate").value,category,amount,payment_method:$("mMethod").value,details:$("mDetails").value.trim()||null};
   let r;
   if(moneyEditingId){
    r=await db.from(table).update(payload).eq("id",moneyEditingId);
   }else{
-   const signature=[type,$("mDate").value,category,amount,exp?$("mSegment").value:"",exp?$("mMethod").value:"",payload.details||""].join("|");
+   const signature=[type,$("mDate").value,category,amount,exp?$("mSegment").value:"",$("mMethod").value,payload.details||""].join("|");
    const requestId=mpwPendingRequestId("money-"+type,signature);
    r=await db.from(table).upsert({...payload,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
    if(!r.error&&!r.data){
@@ -3097,12 +3098,12 @@ async function saveMoney(type){
    if(!r.error)mpwClearPendingRequestId("money-"+type);
   }
   if(r.error)throw r.error;
-  moneyEditingId=null;msg("ریکارڈ محفوظ ہوگیا۔",true);$("mDate").value=today();$("mCategory").value="";$("mAmount").value="";$("mDetails").value="";if(exp){$("mSegment").value="general";$("mMethod").value="cash";}$("moneySaveButton").textContent="محفوظ کریں";await loadMoney(type);await loadTodaySummary();
+  moneyEditingId=null;msg("ریکارڈ محفوظ ہوگیا۔",true);$("mDate").value=today();$("mCategory").value="";$("mAmount").value="";$("mDetails").value="";if(exp)$("mSegment").value="general";$("mMethod").value="cash";$("moneySaveButton").textContent="محفوظ کریں";await loadMoney(type);await loadTodaySummary();
  }catch(e){msg("ریکارڈ محفوظ نہیں ہوا: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
 }
-async function editMoneyRecord(type,id){const exp=type==="expenses",table=exp?"business_expenses":"business_income",datecol=exp?"expense_date":"income_date";const {data,error}=await db.from(table).select("*").eq("id",id).maybeSingle();if(error||!data){msg("ریکارڈ نہیں ملا: "+(error?.message||""));return;}moneyEditingId=id;$("mDate").value=data[datecol];$("mCategory").value=data.category||"";$("mAmount").value=data.amount;$("mDetails").value=data.details||"";if(exp){$("mSegment").value=data.business_segment||"general";$("mMethod").value=data.payment_method||"cash";}$("moneySaveButton").textContent="تبدیلی محفوظ کریں";msg("ریکارڈ ترمیم کے لیے کھل گیا۔",true);}
-async function deleteMoneyRecord(type,id){if(!confirm("کیا آپ یہ مالی ریکارڈ مستقل حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہوگا۔"))return;const table=type==="expenses"?"business_expenses":"business_income";const {error}=await db.from(table).delete().eq("id",id);if(error){msg("ریکارڈ حذف نہیں ہوا: "+error.message);return;}if(moneyEditingId===id)moneyEditingId=null;msg("ریکارڈ حذف ہوگیا۔",true);await loadMoney(type);await loadTodaySummary();}
+async function editMoneyRecord(type,id){const exp=type==="expenses",table=exp?"business_expenses":"business_income",datecol=exp?"expense_date":"income_date";if(!exp){const linked=await db.from("unassigned_19l_delivery_collections").select("id").eq("business_income_id",id).maybeSingle();if(linked.error||linked.data){msg("یہ وصولی سپلائی ریکارڈ سے منسلک ہے؛ اسے عمومی آمدن سے تبدیل نہ کریں۔");return;}}const {data,error}=await db.from(table).select("*").eq("id",id).maybeSingle();if(error||!data){msg("ریکارڈ نہیں ملا: "+(error?.message||""));return;}moneyEditingId=id;$("mDate").value=data[datecol];$("mCategory").value=data.category||"";$("mAmount").value=data.amount;$("mDetails").value=data.details||"";if(exp)$("mSegment").value=data.business_segment||"general";$("mMethod").value=data.payment_method||"cash";$("moneySaveButton").textContent="تبدیلی محفوظ کریں";msg("ریکارڈ ترمیم کے لیے کھل گیا۔",true);}
+async function deleteMoneyRecord(type,id){if(type!=="expenses"){const linked=await db.from("unassigned_19l_delivery_collections").select("id").eq("business_income_id",id).maybeSingle();if(linked.error||linked.data){msg("یہ وصولی سپلائی ریکارڈ سے منسلک ہے؛ اسے عمومی آمدن سے حذف نہ کریں۔");return;}}if(!confirm("کیا آپ یہ مالی ریکارڈ مستقل حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہوگا۔"))return;const table=type==="expenses"?"business_expenses":"business_income";const {error}=await db.from(table).delete().eq("id",id);if(error){msg("ریکارڈ حذف نہیں ہوا: "+error.message);return;}if(moneyEditingId===id)moneyEditingId=null;msg("ریکارڈ حذف ہوگیا۔",true);await loadMoney(type);await loadTodaySummary();}
 async function loadMoney(type){
  const exp=type==="expenses",table=exp?"business_expenses":"business_income",datecol=exp?"expense_date":"income_date";
  const {data,error}=await db.from(table).select("*").order(datecol,{ascending:false}).limit(100);
