@@ -3221,7 +3221,7 @@ async function loadTodaySummary(){
  }
  const errorHtml=dailyErrors.length?'<div class="warning">کچھ معلومات لوڈ نہیں ہوئیں: '+dailyErrors.map(([name,error])=>esc(name)+': '+esc(error.message||"خرابی")).join("؛ ")+'۔ باقی دستیاب سرگرمی دکھائی جا رہی ہے۔</div>':"";
  const shown=(n,formatter=x=>String(x))=>n===null?"ریکارڈ دستیاب نہیں":formatter(n);
- const productionDisplay=productionTotals===null?"ریکارڈ دستیاب نہیں":Object.entries(productionTotals).map(([k,v])=>esc(k)+" "+v+(k==="6L"?" بوتلیں":" کارٹن")).join("، ")||"کوئی انٹری نہیں";
+ const productionDisplay=productionTotals===null?"ریکارڈ دستیاب نہیں":Object.entries(productionTotals).map(([k,v])=>esc(k)+" "+v).join("، ")||"کوئی انٹری نہیں";
  const finishedDisplay=finishedSummary===null?"ریکارڈ دستیاب نہیں":Object.entries(finishedSummary).map(([k,v])=>esc(k)+" "+v).join("، ")||"کوئی انٹری نہیں";
  const receiptsDisplay=customerPaymentTotals===null?"ریکارڈ دستیاب نہیں":"وصولی "+money(customerPaymentTotals.received)+"، ریفنڈ "+money(customerPaymentTotals.refunds)+"، خالص "+money(customerPaymentTotals.received-customerPaymentTotals.refunds)+" ("+customerPaymentR.rows.length+" انٹریاں)";
  el.innerHTML='<div class="stat">تاریخ: '+date+'</div>'+
