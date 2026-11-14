@@ -88,20 +88,26 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 #adminPanel #homeTiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 #adminPanel #homeTiles .tile{min-height:96px;position:relative;overflow:hidden;justify-content:center;align-items:center;text-align:center;border-radius:18px;font-size:15px;line-height:1.5;padding:14px}
 #adminPanel #homeTiles .tile:before{display:block;font-size:23px;line-height:1.2;margin-bottom:7px;filter:drop-shadow(0 2px 3px #0002)}
-#adminPanel #homeTiles .tile:nth-child(1):before{content:"♙"}
-#adminPanel #homeTiles .tile:nth-child(2):before{content:"🚚"}
-#adminPanel #homeTiles .tile:nth-child(3):before{content:"▤"}
-#adminPanel #homeTiles .tile:nth-child(4):before{content:"▣"}
-#adminPanel #homeTiles .tile:nth-child(5):before{content:"↗"}
-#adminPanel #homeTiles .tile:nth-child(6):before{content:"−"}
-#adminPanel #homeTiles .tile:nth-child(7):before{content:"＋"}
-#adminPanel #homeTiles .tile:nth-child(8):before{content:"▧"}
-#adminPanel #homeTiles .tile:nth-child(9):before{content:"▥"}
-#adminPanel #homeTiles .tile:nth-child(10):before{content:"♧"}
-#adminPanel #homeTiles .tile:nth-child(11):before{content:"⚙"}
-#adminPanel #homeTiles .tile:nth-child(12):before{content:"☷"}
-#adminPanel #homeTiles .tile:nth-child(13):before{content:"⌑"}
-#adminPanel #homeTiles .tile:nth-child(14):before{content:"⚙"}
+#adminPanel #homeTiles .tile:nth-of-type(1):before{content:"♙"}
+#adminPanel #homeTiles .tile:nth-of-type(2):before{content:"🚚"}
+#adminPanel #homeTiles .tile:nth-of-type(3):before{content:"▤"}
+#adminPanel #homeTiles .tile:nth-of-type(4):before{content:"▣"}
+#adminPanel #homeTiles .tile:nth-of-type(5):before{content:"↗"}
+#adminPanel #homeTiles .tile:nth-of-type(6):before{content:"−"}
+#adminPanel #homeTiles .tile:nth-of-type(7):before{content:"＋"}
+#adminPanel #homeTiles .tile:nth-of-type(8):before{content:"▧"}
+#adminPanel #homeTiles .tile:nth-of-type(9):before{content:"▥"}
+#adminPanel #homeTiles .tile:nth-of-type(10):before{content:"♧"}
+#adminPanel #homeTiles .tile:nth-of-type(11):before{content:"⚙"}
+#adminPanel #homeTiles .tile:nth-of-type(12):before{content:"☷"}
+#adminPanel #homeTiles .tile:nth-of-type(13):before{content:"⌑"}
+#adminPanel #homeTiles .tile:nth-of-type(14):before{content:"⚙"}
+#adminPanel #homeTiles .tile:nth-of-type(15):before{content:"💧"}
+#adminPanel #homeTiles .tile:nth-of-type(16):before{content:"📦"}
+#adminPanel #homeTiles .tile:nth-of-type(17):before{content:"↩"}
+#adminPanel #homeTiles .tile:nth-of-type(18):before{content:"⚙"}
+#adminPanel #homeTiles .tile:nth-of-type(19):before{content:"💰"}
+#adminPanel #homeTiles .tile:nth-of-type(20):before{content:"▣"}
 #adminPanel #dashboard,#adminPanel #module{min-width:0;border-radius:22px}
 #adminPanel #dashboard h2{display:flex;align-items:center;gap:10px}
 #adminPanel #dashboard h2:before{content:"";width:5px;height:25px;border-radius:5px;background:var(--gold)}
@@ -786,7 +792,7 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 <div class="tile red" role="button" tabindex="0" aria-label="اخراجات" title="بجلی، کرایہ اور دوسرے خرچ" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('expenses')" data-category="operations"><span class="tile-title">اخراجات</span><small>بجلی، کرایہ اور دوسرے خرچ</small></div>
 <div class="tile green" role="button" tabindex="0" aria-label="آمدن" title="فروخت کے علاوہ دوسری آمدن" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('income')" data-category="finance"><span class="tile-title">آمدن</span><small>فروخت کے علاوہ دوسری آمدن</small></div>
 <div class="tile gray" role="button" tabindex="0" aria-label="ماہانہ بل" title="گاہکوں کے ماہانہ بل" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('billing')" data-category="management"><span class="tile-title">ماہانہ بل</span><small>گاہکوں کے ماہانہ بل</small></div>
-<div class="tile blue" role="button" tabindex="0" aria-label="تفصیلی رپورٹس" title="تفصیلی کاروباری رپورٹ" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('reports')" data-category="management"><span class="tile-title">تفصیلی رپورٹس</span><small>تفصیلی کاروباری رپورٹ</small></div>
+
 <div class="tile gray" role="button" tabindex="0" aria-label="ورکر لیجر" title="ورکر، اجرت اور ادائیگی" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('workers')" data-category="management"><span class="tile-title">ورکر لیجر</span><small>ورکر، اجرت اور ادائیگی</small></div>
 <div class="tile yellow" role="button" tabindex="0" aria-label="صفائی / پروڈکشن / دھلائی" title="پروڈکشن اور صفائی کی مزدوری" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('labor')" data-category="operations"><span class="tile-title">پروڈکشن</span><small>پروڈکشن اور صفائی کی مزدوری</small></div>
 <div class="tile red" role="button" tabindex="0" aria-label="کسٹمر شکایات" title="گاہکوں کے مسائل" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('complaints')" data-category="management"><span class="tile-title">گاہک شکایات</span><small>گاہکوں کے مسائل</small></div>
@@ -806,11 +812,11 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
   <div><h2>ایگزیکٹو مینجمنٹ ڈیش بورڈ</h2><p class="muted">منتخب مہینے کی مالی اور آپریشنل کارکردگی</p></div>
   <div class="executive-filter"><input id="execMonth" type="month"><button class="secondary" onclick="loadExecutiveDashboard()">رپورٹ تازہ کریں</button></div>
  </div>
- <div id="execDashboard"><p class="muted">کاروباری ڈیش بورڈ لوڈ ہو رہا ہے...</p></div>
  <div class="executive-today">
   <div class="executive-section-title"><h3>آج کی سرگرمی</h3><button class="secondary" onclick="loadTodaySummary()">تازہ کریں</button></div>
   <div id="todaySummary" class="exec-today-grid">خلاصہ لوڈ ہو رہا ہے...</div>
  </div>
+ <div id="execDashboard"><p class="muted">کاروباری ڈیش بورڈ لوڈ ہو رہا ہے...</p></div>
 </div>
 
 <div id="module" class="card hidden">
@@ -3103,54 +3109,85 @@ async function loadMoney(type){
  (data||[]).map(r=>`<tr><td>${esc(r[datecol])}</td><td>${esc(r.category)}</td><td>${esc(r.details)}</td><td>${money(r.amount)}</td><td><button class="secondary" onclick="editMoneyRecord('${type}',${r.id})">غلطی درست کریں</button><button class="secondary" onclick="deleteMoneyRecord('${type}',${r.id})">حذف</button></td></tr>`).join("")+"</table>";
 }
 
-/* آج کا خلاصہ اور رپورٹس */
+/* آج کی سرگرمی: صرف درکار کالم، متوازی لوڈنگ، جزوی خرابی میں بھی باقی خلاصہ دکھائیں */
+async function readTodayRows(table,columns,dateColumn,date){
+ try{
+  const {data,error}=await db.from(table).select(columns).eq(dateColumn,date);
+  return {rows:data||[],error:error||null};
+ }catch(error){return {rows:[],error};}
+}
 async function sumTable(table,column,datecol,date){
- const {data,error}=await db.from(table).select("*").eq(datecol,date);
- if(error)throw error;
- return (data||[]).reduce((s,r)=>s+(Number(r[column])||0),0);
+ const result=await readTodayRows(table,column,datecol,date);
+ if(result.error)throw result.error;
+ return result.rows.reduce((n,row)=>n+(Number(row[column])||0),0);
 }
 async function loadTodaySummary(){
  const el=$("todaySummary");if(!el)return;
- try{
-  const date=today();
-  const {data:d,error:de}=await db.from("customer_19l_deliveries").select("*").eq("delivery_date",date);
-  if(de)throw de;
-  const bottles=(d||[]).reduce((s,r)=>s+(Number(r.successful_bottles)||0),0);
-  const diff=(d||[]).reduce((s,r)=>s+(Number(r.bottle_difference)||0),0);
-  const labor=(d||[]).reduce((s,r)=>s+(Number(r.delivery_labor)||0),0);
-  const unassignedBottles=await sumTable("unassigned_19l_deliveries","bottles_delivered","delivery_date",date);
-  const unassignedLabor=await sumTable("unassigned_19l_deliveries","labor_amount","delivery_date",date);
-  const sales=await sumTable("product_sales","total_amount","sale_date",date);
-  const counterAmount=await sumTable("counter_water_sales","total_amount","sale_date",date);
-  const counterLitres=await sumTable("counter_water_sales","total_litres","sale_date",date);
-  const tankerSpend=await sumTable("water_tanker_purchases","total_amount","purchase_date",date);
-  const expenses=await sumTable("business_expenses","amount","expense_date",date);
-  const expenseRows=await db.from("business_expenses").select("id").eq("expense_date",date);if(expenseRows.error)throw expenseRows.error;const expenseCount=(expenseRows.data||[]).length;
-  const income=await sumTable("business_income","amount","income_date",date);
-  let dailyPnlHtml="";
-  try{
-   const {data:dailyDash,error:dailyError}=await db.rpc("get_management_dashboard",{p_month_start:date,p_month_end:date});
-   if(dailyError)throw dailyError;
-   const dailyReport=dailyDash?.profit_and_loss||{},dailySegments=dailyReport.segments||{},dailyWater=dailySegments["19L"]||{};
-   const dailyNet=Number(dailyReport.net_profit)||0;
-   const dailyRevenue=Number(dailySegments["19L"]?.revenue||0)+Number(dailyReport.finished_goods?.revenue||0)+Number(dailySegments.shared?.other_income||0);
-   const dailyBeforeEstimate=dailyNet+Number(dailyWater.estimated_counter_water_cost??dailyWater.counter_water_cost??0);
-   dailyPnlHtml="<div class=\"stat\">کل درج شدہ فروخت/آمدن: <b>"+money(dailyRevenue)+"</b></div><div class=\"stat\">روزانہ خالص نتیجہ: <b>"+money(dailyNet)+"</b> — "+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+"</div><div class=\"stat\">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>"+money(dailyBeforeEstimate)+"</b></div><div class=\"stat\">کاؤنٹر پانی کی تخمینی لاگت: <b>"+money(dailyWater.estimated_counter_water_cost||0)+"</b></div>"+(dailyReport.missing_costs?.length?"<div class=\"warning\">لاگت کی کمی: "+dailyReport.missing_costs.map(esc).join("، ")+"</div>":"")+(dailyReport.notes?"<div class=\"warning\">"+esc(dailyReport.notes)+"</div>":"")+(Number(dailyWater.unassigned_delivery_cash_unclassified||0)>0?"<div class=\"warning\">غیر منسلک 19L سپلائی کی وصولی درج نہیں۔ اگر رقم وصول ہوچکی ہے تو آمدن ماڈیول میں مخصوص وصولی کی مد سے درج کریں؛ اس سے منافع دوبارہ نہیں بڑھے گا۔</div>":"")+(expenseCount===0?"<div class=\"warning\">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو اسے درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>":"");
-  }catch(dailyPnlError){dailyPnlHtml=`<div class="warning">روزانہ منافع و نقصان کا حساب لوڈ نہیں ہوا: ${esc(dailyPnlError?.message||String(dailyPnlError))}</div>`;}
-  el.innerHTML=`<div class="stat">تاریخ: ${date}</div>
-  <div class="stat">19L کامیاب بوتلیں: <b>${bottles}</b></div>
-  <div class="stat">بوتلوں کا فرق: <b>${diff}</b></div>
-  <div class="stat">کسٹمر 19L ڈلیوری مزدوری: <b>${money(labor)}</b></div>
-  <div class="stat">بغیر گاہک سپلائی: <b>${unassignedBottles} بوتلیں — مزدوری ${money(unassignedLabor)}</b></div>
-  <div class="stat">500ml / 1.5L / 6L فروخت: <b>${money(sales)}</b></div>
-  <div class="stat">19L کاؤنٹر: <b>تقریباً ${counterLitres} لیٹر — ${money(counterAmount)}</b></div>
-  <div class="stat">آج ٹینکر خریداری: <b>${money(tankerSpend)}</b></div>
-  <div class="stat">درج شدہ اخراجات: <b>${money(expenses)} (${expenseCount} انٹریاں)</b></div>
-  <div class="stat">درج شدہ آمدن: <b>${money(income)}</b></div>
-  ${dailyPnlHtml}`;
- }catch(e){el.textContent="خلاصہ لوڈ نہیں ہوا: "+e.message}
+ el.innerHTML='<p class="muted">آج کا ریکارڈ تازہ ہو رہا ہے...</p>';
+ const date=today();
+ const dashboardTask=(async()=>{
+  try{return await db.rpc("get_management_dashboard",{p_month_start:date,p_month_end:date});}
+  catch(error){return {data:null,error};}
+ })();
+ const [customerR,unassignedR,salesR,counterR,tankerR,expensesR,incomeR,dashboardR]=await Promise.all([
+  readTodayRows("customer_19l_deliveries","successful_bottles,bottle_difference,delivery_labor","delivery_date",date),
+  readTodayRows("unassigned_19l_deliveries","bottles_delivered,labor_amount","delivery_date",date),
+  readTodayRows("product_sales","total_amount","sale_date",date),
+  readTodayRows("counter_water_sales","total_amount,total_litres","sale_date",date),
+  readTodayRows("water_tanker_purchases","total_amount","purchase_date",date),
+  readTodayRows("business_expenses","amount","expense_date",date),
+  readTodayRows("business_income","amount","income_date",date),
+  dashboardTask
+ ]);
+ const sum=(result,column)=>result.error?null:result.rows.reduce((n,row)=>n+(Number(row[column])||0),0);
+ const bottles=sum(customerR,"successful_bottles");
+ const difference=sum(customerR,"bottle_difference");
+ const deliveryLabor=sum(customerR,"delivery_labor");
+ const unassignedBottles=sum(unassignedR,"bottles_delivered");
+ const unassignedLabor=sum(unassignedR,"labor_amount");
+ const sales=sum(salesR,"total_amount");
+ const counterAmount=sum(counterR,"total_amount");
+ const counterLitres=sum(counterR,"total_litres");
+ const tankerSpend=sum(tankerR,"total_amount");
+ const expenses=sum(expensesR,"amount");
+ const income=sum(incomeR,"amount");
+ const dailyErrors=[
+  ["کسٹمر ڈلیوری",customerR.error],["غیر منسلک سپلائی",unassignedR.error],
+  ["پروڈکٹ سیل",salesR.error],["19L کاؤنٹر",counterR.error],
+  ["پانی اسٹاک",tankerR.error],["اخراجات",expensesR.error],["آمدن",incomeR.error]
+ ].filter(([,error])=>error);
+ let dailyPnlHtml="";
+ if(dashboardR?.error){
+  dailyPnlHtml='<div class="warning">روزانہ منافع و نقصان کی رپورٹ دستیاب نہیں: '+esc(dashboardR.error.message||"ڈیٹابیس سے جواب موصول نہیں ہوا")+'</div>';
+ }else{
+  const dailyReport=dashboardR?.data?.profit_and_loss||{};
+  const segments=dailyReport.segments||{},water=segments["19L"]||{};
+  const net=Number(dailyReport.net_profit)||0;
+  const revenue=Number(water.revenue||0)+Number(dailyReport.finished_goods?.revenue||0)+Number(segments.shared?.other_income||0);
+  const beforeEstimate=net+Number(water.estimated_counter_water_cost??water.counter_water_cost??0);
+  dailyPnlHtml='<div class="stat">کل درج شدہ فروخت / آمدن: <b>'+money(revenue)+'</b></div>'+
+   '<div class="stat">روزانہ خالص نتیجہ: <b>'+money(net)+'</b> — '+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+'</div>'+
+   '<div class="stat">کاؤنٹر پانی کے تخمینے سے پہلے نتیجہ: <b>'+money(beforeEstimate)+'</b></div>'+
+   '<div class="stat">کاؤنٹر پانی کی تخمینی لاگت: <b>'+money(water.estimated_counter_water_cost||0)+'</b></div>'+
+   (dailyReport.missing_costs?.length?'<div class="warning">لاگت کی کمی: '+dailyReport.missing_costs.map(esc).join("، ")+'</div>':"")+
+   (dailyReport.notes?'<div class="warning">'+esc(dailyReport.notes)+'</div>':"")+
+   (Number(water.unassigned_delivery_cash_unclassified||0)>0?'<div class="warning">غیر منسلک 19L سپلائی کی وصولی درج نہیں۔ اگر رقم وصول ہوچکی ہے تو آمدن ماڈیول میں مخصوص وصولی کی مد سے درج کریں؛ اس سے منافع دوبارہ نہیں بڑھے گا۔</div>':"")+
+   (expensesR.rows.length===0&&!expensesR.error?'<div class="warning">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>':"");
+ }
+ const errorHtml=dailyErrors.length?'<div class="warning">کچھ معلومات لوڈ نہیں ہوئیں: '+dailyErrors.map(([name,error])=>esc(name)+': '+esc(error.message||"خرابی")).join("؛ ")+'۔ باقی دستیاب سرگرمی دکھائی جا رہی ہے۔</div>':"";
+ const shown=(n,formatter=x=>String(x))=>n===null?"ریکارڈ دستیاب نہیں":formatter(n);
+ el.innerHTML='<div class="stat">تاریخ: '+date+'</div>'+
+  '<div class="stat">19L کامیاب بوتلیں: <b>'+shown(bottles)+'</b></div>'+
+  '<div class="stat">بوتلوں کا فرق: <b>'+shown(difference)+'</b></div>'+
+  '<div class="stat">کسٹمر 19L ڈلیوری مزدوری: <b>'+shown(deliveryLabor,money)+'</b></div>'+
+  '<div class="stat">بغیر گاہک سپلائی: <b>'+(unassignedBottles===null?"ریکارڈ دستیاب نہیں":unassignedBottles+" بوتلیں — مزدوری "+money(unassignedLabor))+'</b></div>'+
+  '<div class="stat">500ml / 1.5L / 6L فروخت: <b>'+shown(sales,money)+'</b></div>'+
+  '<div class="stat">19L کاؤنٹر: <b>'+(counterLitres===null?"ریکارڈ دستیاب نہیں":"تقریباً "+counterLitres+" لیٹر — "+money(counterAmount))+'</b></div>'+
+  '<div class="stat">آج ٹینکر خریداری: <b>'+shown(tankerSpend,money)+'</b></div>'+
+  '<div class="stat">درج شدہ اخراجات: <b>'+(expenses===null?"ریکارڈ دستیاب نہیں":money(expenses)+" ("+expensesR.rows.length+" انٹریاں)")+'</b></div>'+
+  '<div class="stat">درج شدہ آمدن: <b>'+shown(income,money)+'</b></div>'+
+  errorHtml+dailyPnlHtml;
 }
-
 
 function monthDateRange(month){
  const [year,monthNumber]=month.split("-").map(Number);
