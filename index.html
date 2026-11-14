@@ -40,18 +40,17 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 @media(min-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{min-height:112px;padding:24px;font-size:18px}#adminPanel{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(0,1.7fr);gap:16px;align-items:start}#homeTiles{grid-column:1;grid-row:1 / span 2}#dashboard,#module{grid-column:2;margin-top:0}#adminPanel #module{grid-column:1 / -1}}
 @media(max-width:520px){.wrap{padding:11px}.card{padding:15px;border-radius:15px}.grid{gap:9px}.tile{min-height:82px;padding:14px;font-size:14px}header{padding:18px 14px}input,select,button,textarea{font-size:16px}}
 
-.admin-command-search{grid-column:1/-1;position:relative;background:#f7faf7;border:1px solid #dce6dc;border-radius:16px;padding:13px;z-index:5}
-.admin-command-search label{display:block;font-weight:800;margin-bottom:7px;color:#20372a}
-.admin-command-search input{width:100%;min-height:48px;border:1px solid #aebdaf;border-radius:12px;padding:11px 14px;background:#fff;font-size:16px}
-.admin-command-search small{display:block;color:#637268;margin-top:7px;line-height:1.7}
-.admin-quick-results{position:absolute;top:calc(100% - 2px);right:13px;left:13px;background:#fff;border:1px solid #d7e1d8;border-radius:0 0 13px 13px;box-shadow:0 12px 28px #10231b20;max-height:320px;overflow:auto;padding:6px}
-.admin-search-shortcuts{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
-.admin-search-shortcuts button{min-height:36px;padding:7px 11px;font-size:13px}
-.admin-quick-results button{display:flex;width:100%;text-align:right;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:0;border-bottom:1px solid #edf1ed;border-radius:8px;background:#fff;color:#1d3024;min-height:46px}
+/* Compact single-line admin command search; results appear only after typing */
+.admin-command-search{grid-column:1/-1;position:relative;z-index:20;background:transparent;border:0;border-radius:12px;padding:0;margin:0 0 4px}
+.admin-command-search label,.admin-command-search>small,.admin-search-shortcuts{display:none!important}
+.admin-command-search input{display:block;width:100%;min-height:43px;height:43px;margin:0;border:1px solid #cbd8cc;border-radius:11px;padding:8px 13px;background:#fff;font-size:15px;box-shadow:0 2px 8px #10231b08}
+.admin-quick-results{position:absolute;top:calc(100% + 4px);right:0;left:0;background:#fff;border:1px solid #d7e1d8;border-radius:12px;box-shadow:0 12px 28px #10231b20;max-height:280px;overflow:auto;padding:6px;z-index:30}
+.admin-quick-results button{display:flex;width:100%;text-align:right;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:0;border-bottom:1px solid #edf1ed;border-radius:8px;background:#fff;color:#1d3024;min-height:44px}
 .admin-quick-results button:last-child{border-bottom:0}
 .admin-quick-results button:focus,.admin-quick-results button:hover{background:#edf4ed;outline:2px solid #7c9a7f}
 .admin-quick-results .quick-hint{font-size:12px;color:#64736a;white-space:nowrap}
-@media(min-width:900px){.admin-command-search{position:sticky;top:8px}}
+/* ID selectors previously overrode .hidden and could expose a hidden portal. */
+#app.hidden,#adminPanel.hidden,#customerPanel.hidden{display:none!important}
 /* Premium customer and responsive admin presentation */
 .customer-hero{background:linear-gradient(135deg,#101916,#263a31);color:#fff;border:0;border-radius:22px;padding:22px;box-shadow:0 14px 34px #10231b20}
 .customer-hero h2{color:#fff;font-size:23px;margin-bottom:4px}
@@ -807,17 +806,8 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 </div>
 <div id="homeTiles" class="grid">
 <div class="admin-command-search" role="search">
- <label for="adminQuickSearch">فوری اندراج — کیا شامل یا درج کرنا ہے؟</label>
- <input id="adminQuickSearch" type="search" autocomplete="off" placeholder="یہاں لکھیں: خرچ، 500ml، ٹینکر، گاہک کی وصولی، 19L ڈلیوری..." oninput="searchAdminModules(this.value)" onkeydown="handleAdminSearchKey(event)" aria-controls="adminQuickResults" aria-expanded="false">
- <div class="admin-search-shortcuts" aria-label="عام کام">
-  <button type="button" class="secondary" onclick="useAdminSearchShortcut('نیا خرچ')">+ نیا خرچ</button>
-  <button type="button" class="secondary" onclick="useAdminSearchShortcut('پانی خریداری')">پانی خریداری</button>
-  <button type="button" class="secondary" onclick="useAdminSearchShortcut('خام مال')">خام مال</button>
-  <button type="button" class="secondary" onclick="useAdminSearchShortcut('گاہک کی وصولی')">گاہک کی وصولی</button>
-  <button type="button" class="secondary" onclick="useAdminSearchShortcut('19 لیٹر ڈلیوری')">19 لیٹر ڈلیوری</button>
- </div>
- <div id="adminQuickResults" class="admin-quick-results hidden" role="listbox" aria-label="ممکنہ کام"></div>
- <small>کام کا نام خود لکھیں یا عام کام منتخب کریں۔ ایک واضح نتیجہ ہو تو فارم کھلے گا؛ کئی ممکنہ مطلب ہوں تو پہلے درست کام منتخب کریں۔ فارم میں ایپ ضروری تفصیل پوچھے گی۔</small>
+ <input id="adminQuickSearch" type="search" autocomplete="off" aria-label="ایڈمن فنکشن تلاش کریں" placeholder="فنکشن تلاش کریں..." oninput="searchAdminModules(this.value)" onkeydown="handleAdminSearchKey(event)" aria-controls="adminQuickResults" aria-expanded="false">
+ <div id="adminQuickResults" class="admin-quick-results hidden" role="listbox" aria-label="ممکنہ فنکشنز"></div>
 </div>
 <nav class="admin-module-filter" role="group" aria-label="انتظامی ماڈیولز کی اقسام">
 <button type="button" class="secondary active" data-filter="operations" onclick="filterAdminModules(this.dataset.filter)">روزمرہ اندراجات</button>
@@ -1526,6 +1516,8 @@ function enhanceModuleControls(root=$("moduleBody")){
 })();
 
 async function openModule(name){
+ // Admin modules must never open from a customer session, even if called manually.
+ if(!user||myCustomer){console.warn("Blocked admin module access outside an admin session.");return;}
  currentModule=name;editingId=null;
  $("adminPanel").classList.add("module-open");$("dashboard").classList.add("hidden");$("module").classList.remove("hidden");
  setTitle("");
