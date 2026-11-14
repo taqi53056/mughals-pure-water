@@ -3107,9 +3107,21 @@ async function deleteMoneyRecord(type,id){if(type!=="expenses"){const linked=awa
 async function loadMoney(type){
  const exp=type==="expenses",table=exp?"business_expenses":"business_income",datecol=exp?"expense_date":"income_date";
  const {data,error}=await db.from(table).select("*").order(datecol,{ascending:false}).limit(100);
- if(error){$("moduleTable").textContent=error.message;return}
- $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>مد</th><th>تفصیل</th><th>رقم</th><th>عمل</th></tr>"+
- (data||[]).map(r=>`<tr><td>${esc(r[datecol])}</td><td>${esc(r.category)}</td><td>${esc(r.details)}</td><td>${money(r.amount)}</td><td><button class="secondary" onclick="editMoneyRecord('${type}',${r.id})">غلطی درست کریں</button><button class="secondary" onclick="deleteMoneyRecord('${type}',${r.id})">حذف</button></td></tr>`).join("")+"</table>";
+ if(error){$("moduleTable").textContent=error.message;return;}
+ let linkedIncomeIds=new Set();
+ if(!exp){
+  const links=await db.from("unassigned_19l_delivery_collections").select("business_income_id");
+  if(links.error){$("moduleTable").textContent="منسلک وصولیوں کی جانچ نہیں ہو سکی: "+links.error.message;return;}
+  linkedIncomeIds=new Set((links.data||[]).map(x=>Number(x.business_income_id)));
+ }
+ $("moduleTable").innerHTML="<table><tr><th>تاریخ</th><th>مد</th><th>طریقہ</th><th>تفصیل</th><th>رقم</th><th>عمل</th></tr>"+
+ (data||[]).map(r=>{
+  const linked=!exp&&linkedIncomeIds.has(Number(r.id));
+  const actions=linked?'<small class="muted">سپلائی ماڈیول سے منسلک — صرف دیکھیں</small>':
+   "<button class='secondary' onclick='editMoneyRecord(\""+type+"\","+r.id+")'>غلطی درست کریں</button>"+
+   "<button class='secondary' onclick='deleteMoneyRecord(\""+type+"\","+r.id+")'>حذف</button>";
+  return "<tr><td>"+esc(r[datecol])+"</td><td>"+esc(r.category)+"</td><td>"+paymentMethodLabel(r.payment_method)+"</td><td>"+esc(r.details)+"</td><td>"+money(r.amount)+"</td><td>"+actions+"</td></tr>";
+ }).join("")+"</table>";
 }
 
 /* آج کی سرگرمی: صرف درکار کالم، متوازی لوڈنگ، جزوی خرابی میں بھی باقی خلاصہ دکھائیں */
