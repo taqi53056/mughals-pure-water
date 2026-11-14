@@ -968,10 +968,10 @@ async function enableCustomerPush(){
  if(!("Notification" in window)||!("serviceWorker" in navigator)||!("PushManager" in window)){say("اس براؤزر میں Push Notification دستیاب نہیں۔ Android پر Chrome استعمال کریں۔");return;}
  if(!window.isSecureContext){say("محفوظ HTTPS کنکشن ضروری ہے۔");return;}
  if(Notification.permission==="denied"){say("موبائل کی Site Settings میں Notifications کو Allow کریں۔");return;}
- const button=$("enablePushButton");if(button){button.disabled=true;button.textContent="فعال کیا جا رہا ہے...";}
+ const button=$("enablePushButton");let enabled=false;if(button){button.disabled=true;button.textContent="فعال کیا جا رہا ہے...";}
  try{
   const permission=Notification.permission==="granted"?"granted":await Notification.requestPermission();
-  if(permission!=="granted"){say("آپ نے موبائل اطلاعات کی اجازت نہیں دی۔");return;}
+  if(permission!=="granted"){say("موبائل اطلاعات کی اجازت نہیں ملی۔ براہِ کرم براؤزر کی Site Settings میں Notifications کو Allow کریں، پھر دوبارہ کوشش کریں۔");return;}
   const registration=await navigator.serviceWorker.ready;
   let subscription=await registration.pushManager.getSubscription();
   if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:mpwBase64UrlToBytes(MPW_VAPID_PUBLIC_KEY)});
@@ -983,10 +983,10 @@ async function enableCustomerPush(){
    is_active:true,updated_at:new Date().toISOString()
   },{onConflict:"endpoint"});
   if(error)throw error;
-  say("موبائل اطلاعات فعال ہوگئیں۔ نئی ڈیلیوری، بل اور ادائیگی کی اطلاع موبائل پر آئے گی۔");
+  enabled=true;say("موبائل اطلاعات فعال ہوگئیں۔ نئی ڈلیوری، بل اور ادائیگی کی اطلاع موبائل پر آئے گی۔");
   if(button){button.textContent="موبائل اطلاعات فعال ہیں";button.disabled=true;}
- }catch(e){console.error("Push subscription failed",e);say("اطلاعات فعال نہیں ہوئیں: "+(e?.message||String(e)));if(button){button.disabled=false;button.textContent="موبائل پر اطلاعات فعال کریں";}}
- finally{}
+ }catch(e){console.error("Push subscription failed",e);say("اطلاعات فعال نہیں ہوئیں: "+(e?.message||String(e)));}
+ finally{if(button&&!enabled){button.disabled=false;button.textContent="موبائل پر اطلاعات فعال کریں";}}
 }
 async function updateCustomerPushStatus(){
  const status=$("pushStatus"),button=$("enablePushButton");if(!status||!button)return;
