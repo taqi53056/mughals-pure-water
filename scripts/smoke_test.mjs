@@ -21,6 +21,17 @@ if (adminHomeStart < 0 || adminHomeEnd < 0) {
   throw new Error("Admin home navigation or dashboard is missing");
 }
 const adminHome = appSource.slice(adminHomeStart, adminHomeEnd);
+const adminQuickSearchChecks = [
+  'id="adminQuickSearch"',
+  'id="adminQuickResults"',
+  "function searchAdminModules(query)",
+  "function chooseAdminSearchResult(module)",
+  "function handleAdminSearchKey(event)",
+  "ADMIN_SEARCH_ALIASES"
+];
+for (const required of adminQuickSearchChecks) {
+  if (!appSource.includes(required)) throw new Error("Admin quick search is missing: " + required);
+}
 const adminTiles = adminHome.match(/class="tile /g) || [];
 if (adminTiles.length !== 20) {
   throw new Error("Admin home must expose 20 distinct modules after duplicate report shortcut removal; found " + adminTiles.length);
