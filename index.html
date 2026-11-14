@@ -3134,7 +3134,7 @@ async function loadTodaySummary(){
   readTodayRows("unassigned_19l_deliveries","bottles_delivered,labor_amount","delivery_date",date),
   readTodayRows("product_sales","total_amount","sale_date",date),
   readTodayRows("counter_water_sales","total_amount,total_litres","sale_date",date),
-  readTodayRows("water_tanker_purchases","total_amount","purchase_date",date),
+  readTodayRows("water_tanker_purchases","tanker_count,total_amount","purchase_date",date),
   readTodayRows("business_expenses","amount","expense_date",date),
   readTodayRows("business_income","amount","income_date",date),
   dashboardTask
@@ -3148,6 +3148,7 @@ async function loadTodaySummary(){
  const sales=sum(salesR,"total_amount");
  const counterAmount=sum(counterR,"total_amount");
  const counterLitres=sum(counterR,"total_litres");
+ const tankerQuantity=sum(tankerR,"tanker_count");
  const tankerSpend=sum(tankerR,"total_amount");
  const expenses=sum(expensesR,"amount");
  const income=sum(incomeR,"amount");
@@ -3183,7 +3184,7 @@ async function loadTodaySummary(){
   '<div class="stat">بغیر گاہک سپلائی: <b>'+(unassignedBottles===null?"ریکارڈ دستیاب نہیں":unassignedBottles+" بوتلیں — مزدوری "+money(unassignedLabor))+'</b></div>'+
   '<div class="stat">500ml / 1.5L / 6L فروخت: <b>'+shown(sales,money)+'</b></div>'+
   '<div class="stat">19L کاؤنٹر: <b>'+(counterLitres===null?"ریکارڈ دستیاب نہیں":"تقریباً "+counterLitres+" لیٹر — "+money(counterAmount))+'</b></div>'+
-  '<div class="stat">آج ٹینکر خریداری: <b>'+shown(tankerSpend,money)+'</b></div>'+
+  '<div class="stat">آج پانی کی خریداری: <b>'+(tankerQuantity===null?"ریکارڈ دستیاب نہیں":Number(tankerQuantity).toLocaleString("en-PK",{maximumFractionDigits:3})+" ٹینکر — "+(Number(tankerQuantity)*1000).toLocaleString("en-PK")+" لیٹر — "+money(tankerSpend))+'</b></div>'+
   '<div class="stat">درج شدہ اخراجات: <b>'+(expenses===null?"ریکارڈ دستیاب نہیں":money(expenses)+" ("+expensesR.rows.length+" انٹریاں)")+'</b></div>'+
   '<div class="stat">درج شدہ آمدن: <b>'+shown(income,money)+'</b></div>'+
   errorHtml+dailyPnlHtml;
