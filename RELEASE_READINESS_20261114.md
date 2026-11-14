@@ -85,3 +85,16 @@ The app release at commit eb181b2 (2026-11-14) passed App static validation, inc
 - Additional safe verification after the archive repair: invoked the public archive wrapper under the fixed admin identity using a deliberately nonexistent customer ID. The call traversed the archive month-lock query and reached the expected “customer not found” guard; the transaction made no data changes. The real C001 customer was not passed to the archive function. Its November 2026 business month is not yet closed, so the designed archive guard would correctly prevent deleting its open-period records.
 - Fresh authenticated-role simulation using C001's actual linked Auth identity: visible customers=1, deliveries=1, bills=1, notifications=2, push subscriptions=1; visible expenses=0, audit rows=0, workers=0, worker-ledger rows=0. An attempted no-op UPDATE against customer notifications affected 0 rows. All checks ran in rollback-only transactions.
 - The archive repair migration SQL is committed at `supabase/migrations/20261114174913_fix_customer_archive_record_alias_conflict_20261114.sql`; live migration version `20261114174913` is recorded.
+
+## Latest live operations snapshot — 2026-11-14 17:54 UTC
+
+- Customer C001: one delivery on Nov 14, 4 company bottles delivered, 4 empties returned, 4 successful bottles, 0 damaged caps, owner labor saving Rs.80. November bill is 4 × Rs.100 = Rs.400; no payment is recorded and current due is Rs.400.
+- Unassigned 19L deliveries: 17 successful bottles. The report records Rs.300 collected and Rs.1,400 unclassified/uncollected; total receivables are Rs.1,800 (C001 Rs.400 + unassigned Rs.1,400).
+- November 1–14 recorded collections Rs.2,720; recorded outflows Rs.3,600; net cash movement -Rs.880. This is not a cash/bank closing balance: opening cash/bank figures and reconciliation are absent.
+- Worker payable is Rs.100 (one worker-ledger earning row, no payout recorded). There is one active non-owner worker and one active owner.
+- Finished stock view: 1.5L = 10 cartons; 500ml = 0; 6L = 0.
+- Remaining raw-material estimate: 500ml bottles/caps 5,587 each and cartons 250; 1.5L bottles/caps 2,930 each and cartons 240; sticker balances 3,800 (500ml) and 2,280 (1.5L/6L); tape 0.857142857 bundle. 6L raw bottles/caps are 0.
+- Product-filling water estimate is 1,020 litres. Shop-counter water remaining is 1,001 litres and explicitly estimated, not a measured balance.
+- No `cap_19l` opening-stock row exists; available 19L caps therefore calculate as zero. Damaged caps currently recorded are zero. Enter the verified physical 19L-cap opening quantity before recording any damaged caps; do not invent a quantity.
+- Current P&L reports Rs.2,645.20 estimated net profit (Rs.3,725.20 before the estimated shop-counter water cost). Counter-water litres/cost are estimates, and no general business-expense rows are recorded. Unentered real expenses would overstate profit; do not treat this as final profit.
+- November is still open and has not been closed. Customer archive is intentionally blocked while the active customer's November activity period remains open.
