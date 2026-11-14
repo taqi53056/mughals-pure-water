@@ -3079,7 +3079,6 @@ async function saveMoney(type){
  if(reservedMatch){msg("خام مال، ٹینکر، پروڈکشن، سیل، ڈلیوری اور ورکر مزدوری اپنے مخصوص حصے میں درج کریں۔");return}
  if(!exp&&!allowedIncomeCategories.includes(category)&&!legacyEdit){msg("یہاں صرف دوسری غیر فروخت آمدن درج کریں۔ پروڈکٹ سیل، 19L ڈلیوری اور کاؤنٹر فروخت اپنے مخصوص بٹن سے خود حساب ہوں گی۔");return}
  if(category==="دیگر عمومی خرچ"&&!$("mDetails").value.trim()){msg("دیگر عمومی خرچ کے لیے تفصیل لازمی لکھیں۔");return}
- if(!exp&&category==="غیر منسلک 19L سپلائی کی وصولی"&&!$("mDetails").value.trim()){msg("اس وصولی کے ساتھ سپلائی کی تاریخ یا ریکارڈ نمبر تفصیل میں درج کریں۔");return}
  if(!confirmLargeEntry("رقم (روپے)",amount,1000))return;
  const button=$("moneySaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
@@ -3187,7 +3186,7 @@ async function loadTodaySummary(){
    '<div class="stat">کاؤنٹر پانی کی تخمینی لاگت: <b>'+money(water.estimated_counter_water_cost||0)+'</b></div>'+
    (dailyReport.missing_costs?.length?'<div class="warning">لاگت کی کمی: '+dailyReport.missing_costs.map(esc).join("، ")+'</div>':"")+
    (dailyReport.notes?'<div class="warning">'+esc(dailyReport.notes)+'</div>':"")+
-   (Number(water.unassigned_delivery_cash_unclassified||0)>0?'<div class="warning">غیر منسلک 19L سپلائی کی وصولی درج نہیں۔ اگر رقم وصول ہوچکی ہے تو آمدن ماڈیول میں مخصوص وصولی کی مد سے درج کریں؛ اس سے منافع دوبارہ نہیں بڑھے گا۔</div>':"")+
+   (Number(water.unassigned_delivery_cash_unclassified||0)>0?'<div class="warning">غیر منسلک سپلائی کی وصولی باقی ہے۔ اگر رقم وصول ہو چکی ہے تو مخصوص سپلائی ماڈیول میں متعلقہ ریکارڈ کے تحت وصولی درج کریں؛ یہ مالی وصولی خودکار درج ہوگی اور منافع دوبارہ نہیں بڑھے گا۔</div>':"")+
    (expensesR.rows.length===0&&!expensesR.error?'<div class="warning">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>':"");
  }
  const errorHtml=dailyErrors.length?'<div class="warning">کچھ معلومات لوڈ نہیں ہوئیں: '+dailyErrors.map(([name,error])=>esc(name)+': '+esc(error.message||"خرابی")).join("؛ ")+'۔ باقی دستیاب سرگرمی دکھائی جا رہی ہے۔</div>':"";
@@ -3225,7 +3224,7 @@ async function loadExecutiveDashboard(){
   const water=segments["19L"]||{},finished=segments.finished_goods||{},shared=segments.shared||{};
   const fmt=n=>money(Number(n)||0),fmtNullable=n=>n==null?"—":fmt(n);
   const unassignedCashflowWarning=Number(water.unassigned_delivery_cash_unclassified||0)>0
-   ?'<div class="warning"><b>غیر منسلک سپلائی کی وصولی باقی ہے:</b> '+fmt(water.unassigned_delivery_cash_unclassified)+' کی وصولی اس مدت میں درج نہیں۔ اگر رقم وصول ہوچکی ہے تو آمدن ماڈیول میں "غیر منسلک 19L سپلائی کی وصولی" منتخب کرکے درج کریں؛ یہ منافع میں دوبارہ شامل نہیں ہوگی۔ اگر رقم وصول نہیں ہوئی تو وصولی درج نہ کریں۔</div>'
+   ?'<div class="warning"><b>غیر منسلک سپلائی کی وصولی باقی ہے:</b> '+fmt(water.unassigned_delivery_cash_unclassified)+' کی وصولی اس مدت میں درج نہیں۔ اگر رقم وصول ہو چکی ہے تو مخصوص سپلائی ماڈیول میں متعلقہ ریکارڈ کے تحت وصولی درج کریں؛ مالی وصولی خودکار درج ہوگی اور منافع دوبارہ نہیں بڑھے گا۔ اگر رقم وصول نہیں ہوئی تو وصولی درج نہ کریں۔</div>'
    :"";
   const revenue=Number(water.revenue||0)+Number(finished.revenue||0);
   const net=Number(segments.net_profit||0);
