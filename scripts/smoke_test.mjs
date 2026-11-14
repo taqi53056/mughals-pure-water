@@ -50,6 +50,8 @@ for (const required of [
   'readTodayRows("water_tanker_purchases","tanker_count,total_amount"',
   "segments.net_profit===null||segments.net_profit===undefined?null",
   "آج کوئی قابلِ حساب منافع / نقصان نہیں",
+  "مخصوص سپلائی ماڈیول میں متعلقہ ریکارڈ کے تحت وصولی درج کریں",
+  "مالی وصولی خودکار درج ہوگی اور منافع دوبارہ نہیں بڑھے گا",
   'finished=segments.finished_goods||{}',
   'const net=Number(segments.net_profit||0)',
   'const previousNet=Number(previous.segments?.net_profit||0)',
