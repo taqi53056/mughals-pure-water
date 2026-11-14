@@ -38,7 +38,7 @@ for (const required of [
   "async function readTodayRows(",
   'select(columns).eq(dateColumn,date)',
   'readTodayRows("customer_19l_deliveries","successful_bottles,bottle_difference,delivery_labor"',
-  'readTodayRows("water_tanker_purchases","total_amount"',
+  'readTodayRows("water_tanker_purchases","tanker_count,total_amount"',
   'const [customerR,unassignedR,salesR,counterR,tankerR,expensesR,incomeR,dashboardR]=await Promise.all(['
 ]) {
   if (!appSource.includes(required)) {
