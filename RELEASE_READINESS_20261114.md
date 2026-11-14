@@ -12,7 +12,7 @@ The current main build passes static validation and desktop/mobile browser smoke
 - All 20 admin tiles support keyboard activation.
 - Today's activity is displayed before the longer monthly dashboard. Its data sources load in parallel; individual read failures are shown rather than hiding the whole panel.
 - Today's activity now reads 17 sources in parallel. Unassigned-19L collections are shown separately and excluded from generic other income to avoid double counting; customer refunds are separated from receipts; finished-goods quantities are grouped by product and unit; opening/free raw-material entries are not counted as purchases.
-- The earlier daily-activity panel's source queries and dashboard RPC returned HTTP 200 in live logs. The expanded 17-source panel now has its table columns, authenticated SELECT grants, anon denial, static checks and browser smoke tests verified; a new authenticated live session against all 17 reads has not yet been independently observed.
+- The expanded 17-source panel's table columns and authenticated SELECT permissions were checked. A read-only transaction under the authenticated admin role successfully read all 17 source tables and the daily dashboard RPC with RLS active; the separate browser smoke tests also pass. A fresh post-deploy PostgREST session for every expanded read has not yet been observed in request logs.
 - Worker wage balance views carton_worker_wage_balance and delivery_worker_wage_balance now use security_invoker=true.
 - Removed implicit PUBLIC execution from the admin product-sale and store-credit receipt wrappers. Authenticated execution remains available; the private implementations enforce admin authorization.
 - The service-worker cache is mughals-pure-water-v134-admin-daily-activity.
@@ -36,6 +36,7 @@ The current main build passes static validation and desktop/mobile browser smoke
 - No duplicate worker-ledger source rows or missing worker earnings were found for linked delivery/production sources.
 - No negative finished stock and no future-dated expense, income, product-sale or worker-ledger entries were found.
 - Current dataset: 3 admins, 0 customers, 2 active workers, 0 customer deliveries/payments/monthly bills, 1 production row, 0 product-sales rows, 0 expense rows, 2 linked unassigned-19L income rows, 0 general finance-ledger rows and 1 worker-ledger row.
+- For Pakistan date 2026-11-14, today's panel inputs show 2 tanker allocation rows totaling 1.000 tanker / 1,000 litres / Rs 1,200; no customer deliveries, unassigned deliveries/collections, product sales, counter sales, production, raw purchases, finished-goods entries, customer payments, worker-ledger entries, owner withdrawals, cleaning savings, returns, adjustments, business expenses or other income for that date.
 - Finished stock: 1.5L = 10 cartons; 500ml = 0; 6L = 0.
 - The two unassigned-19L receipts are linked to their delivery records and are not counted as independent extra revenue.
 
