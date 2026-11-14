@@ -903,6 +903,9 @@ try {
             getUser: async () => ({ data: { user: { id: "smoke-auth-user" } }, error: null }),
             signOut: async () => { signOutCount++; return { error: null }; }
           },
+          rpc: async name => name === "is_admin"
+            ? { data: profile?.role === "admin", error: null }
+            : { data: null, error: { message: "Unexpected RPC" } },
           from: table => queryResult(table === "profiles" ? profile : customer)
         };
         await loadApp();
