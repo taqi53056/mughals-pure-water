@@ -3152,7 +3152,7 @@ async function loadTodaySummary(){
   readTodayRows("business_expenses","amount","expense_date",date),
   readTodayRows("business_income","amount","income_date",date),
   readTodayRows("production","product_type,quantity,labor_amount","production_date",date),
-  readTodayRows("raw_material_purchases","material_type,quantity,unit,total_amount","purchase_date",date),
+  readTodayRows("raw_material_purchases","material_type,quantity,unit,total_amount,record_type","purchase_date",date),
   readTodayRows("finished_goods","product_type,quantity,unit","entry_date",date),
   readTodayRows("customer_payments","amount,payment_type,payment_method","payment_date",date),
   readTodayRows("worker_ledger","entry_type,amount,work_category","entry_date",date),
@@ -3176,7 +3176,7 @@ async function loadTodaySummary(){
  const expenses=sum(expensesR,"amount");
  const income=sum(incomeR,"amount");
  const productionTotals=productionR.error?null:productionR.rows.reduce((o,r)=>{o[r.product_type]=(o[r.product_type]||0)+Number(r.quantity||0);return o;},{});
- const rawPurchaseAmount=sum(rawPurchaseR,"total_amount");
+ const rawPurchaseAmount=rawPurchaseR.error?null:rawPurchaseR.rows.filter(r=>r.record_type==="purchase").reduce((n,r)=>n+Number(r.total_amount||0),0);
  const finishedQty=finishedR.error?null:finishedR.rows.reduce((n,r)=>n+Number(r.quantity||0),0);
  const customerReceipts=sum(customerPaymentR,"amount");
  const workerTotals=workerLedgerR.error?null:workerLedgerR.rows.reduce((o,r)=>{o[r.entry_type]=(o[r.entry_type]||0)+Number(r.amount||0);return o;},{});
@@ -3222,12 +3222,12 @@ async function loadTodaySummary(){
   '<div class="stat">19L کاؤنٹر فروخت: <b>'+(counterLitres===null?"ریکارڈ دستیاب نہیں":counterLitres+" درج شدہ لیٹر — "+money(counterAmount))+'</b></div>'+
   '<div class="stat">آج پانی کی خریداری: <b>'+(tankerQuantity===null?"ریکارڈ دستیاب نہیں":Number(tankerQuantity).toLocaleString("en-PK",{maximumFractionDigits:3})+" ٹینکر — "+(Number(tankerQuantity)*1000).toLocaleString("en-PK")+" لیٹر — "+money(tankerSpend))+'</b></div>'+
   '<div class="stat">پروڈکشن: <b>'+(productionTotals===null?"ریکارڈ دستیاب نہیں":Object.entries(productionTotals).map(([k,v])=>esc(k)+" "+v).join("، ")||"کوئی انٹری نہیں")+'</b></div>'+
-  '<div class="stat">خام مال کی خریداری: <b>'+(rawPurchaseAmount===null?"ریکارڈ دستیاب نہیں":money(rawPurchaseAmount)+" ("+rawPurchaseR.rows.length+" انٹریاں)")+'</b></div>'+
+  '<div class="stat">خام مال کے اندراجات: <b>'+(rawPurchaseAmount===null?"ریکارڈ دستیاب نہیں":money(rawPurchaseAmount)+" خریداری ("+rawPurchaseR.rows.length+" کل اندراجات)")+'</b></div>'+
   '<div class="stat">تیار مال کی الگ انٹریاں: <b>'+(finishedQty===null?"ریکارڈ دستیاب نہیں":finishedQty+" ("+finishedR.rows.length+" انٹریاں)")+'</b></div>'+
   '<div class="stat">گاہکوں سے وصولی: <b>'+(customerReceipts===null?"ریکارڈ دستیاب نہیں":money(customerReceipts)+" ("+customerPaymentR.rows.length+" انٹریاں)")+'</b></div>'+
   '<div class="stat">ورکر لیجر: <b>'+(workerTotals===null?"ریکارڈ دستیاب نہیں":"اجرت "+money(workerTotals.earning||0)+"، ادائیگی "+money(workerTotals.payment||0)+"، ایڈوانس "+money(workerTotals.advance||0)+"، کٹوتی "+money(workerTotals.deduction||0))+'</b></div>'+
   '<div class="stat">مالک کی نکاسی: <b>'+(ownerWithdrawal===null?"ریکارڈ دستیاب نہیں":money(ownerWithdrawal))+'</b></div>'+
-  '<div class="stat">صفائی / دھلائی مزدوری: <b>'+(cleaningAmount===null?"ریکارڈ دستیاب نہیں":money(cleaningAmount))+'</b></div>'+
+  '<div class="stat">مالک کی صفائی / دھلائی ممکنہ بچت: <b>'+(cleaningAmount===null?"ریکارڈ دستیاب نہیں":money(cleaningAmount))+'</b></div>'+
   '<div class="stat">خراب مال واپسی / اسٹاک درستگی: <b>'+(returnsCount===null||adjustmentsCount===null?"ریکارڈ دستیاب نہیں":returnsCount+" واپسی، "+adjustmentsCount+" درستگیاں")+'</b></div>'+
   '<div class="stat">درج شدہ اخراجات: <b>'+(expenses===null?"ریکارڈ دستیاب نہیں":money(expenses)+" ("+expensesR.rows.length+" انٹریاں)")+'</b></div>'+
   '<div class="stat">دیگر آمدن (فروخت سے الگ): <b>'+shown(income,money)+'</b></div>'+
