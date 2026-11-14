@@ -66,4 +66,4 @@ The month-end billing and monthly business-report cron jobs remain active. Their
 
 ## Release verification
 
-Latest main commit eb181b2 (2026-11-14) passed App static validation, including desktop/mobile browser smoke tests, and GitHub Pages deployment. A successful build/deploy is not proof of authenticated customer E2E or of every business transaction.
+The app release at commit eb181b2 (2026-11-14) passed App static validation, including desktop/mobile browser smoke tests, and GitHub Pages deployment; the audit report was subsequently updated separately. A successful build/deploy is not proof of authenticated customer E2E or of every business transaction.
