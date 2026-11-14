@@ -98,3 +98,13 @@ The app release at commit eb181b2 (2026-11-14) passed App static validation, inc
 - No `cap_19l` opening-stock row exists; available 19L caps therefore calculate as zero. Damaged caps currently recorded are zero. Enter the verified physical 19L-cap opening quantity before recording any damaged caps; do not invent a quantity.
 - Current P&L reports Rs.2,645.20 estimated net profit (Rs.3,725.20 before the estimated shop-counter water cost). Counter-water litres/cost are estimates, and no general business-expense rows are recorded. Unentered real expenses would overstate profit; do not treat this as final profit.
 - November is still open and has not been closed. Customer archive is intentionally blocked while the active customer's November activity period remains open.
+
+## User-directed stock correction — 2026-11-14
+
+- Removed mistaken production row `production.id=87`: 1.5L, quantity 10 cartons, effective production date 2026-11-11, entered 2026-11-13 19:04 UTC.
+- Deleting the production row cascaded its 10-carton worker allocation (id 30). The production stock-sync trigger added a matching `production_reversal` of -10 to the stock ledger. Net effect for reference 87 is zero; no finished stock remains from that mistaken production.
+- Two unverified opening carton balances were zeroed, not physically deleted, to preserve the audit trail: `raw_material_purchases.id=149` (1.5L, 250 cartons, Rs.8,750) and id 150 (500ml, 250 cartons, Rs.8,750). Both now have quantity=0 and total_amount=0 with explicit correction notes.
+- Added a narrow CHECK-constraint allowance for zero-quantity opening-stock correction rows only when total_amount=0 and details begin `اصلاحی اندراج:`. Normal opening stock and purchase rows remain positive; raw-material delete guard remains enabled.
+- Live migration version: `20261114183659`, mirrored at `supabase/migrations/20261114183659_allow_audited_zero_opening_stock_corrections.sql`.
+- Verification: production id 87 absent; allocation id 30 absent; both opening carton rows zero; stock ledger contains +10 original production and -10 reversal; current finished stock view shows 1.5L=0, 500ml=0, 6L=0.
+- User will recount physical cartons and enter verified opening carton stock and production quantities later. Do not infer or add any stock until they provide the measured counts.
