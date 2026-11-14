@@ -3178,8 +3178,8 @@ async function loadTodaySummary(){
  }else{
   const dailyReport=dashboardR?.data?.profit_and_loss||{};
   const segments=dailyReport.segments||{},water=segments["19L"]||{};
-  const netValue=dailyReport.net_profit===null||dailyReport.net_profit===undefined?null:Number(dailyReport.net_profit);
-  const revenue=Number(water.revenue||0)+Number(dailyReport.finished_goods?.revenue||0)+Number(segments.shared?.other_income||0);
+  const netValue=segments.net_profit===null||segments.net_profit===undefined?null:Number(segments.net_profit);
+  const revenue=Number(water.revenue||0)+Number(segments.finished_goods?.revenue||0)+Number(segments.shared?.other_income||0);
   const beforeEstimate=netValue===null?null:netValue+Number(water.estimated_counter_water_cost??water.counter_water_cost??0);
   dailyPnlHtml='<div class="stat">کل درج شدہ فروخت / آمدن: <b>'+money(revenue)+'</b></div>'+
    '<div class="stat">روزانہ خالص نتیجہ: <b>'+(netValue===null?"آج کوئی قابلِ حساب منافع / نقصان نہیں":money(netValue))+'</b> — '+(dailyReport.net_profit_is_estimated?"پانی کے لیٹر کے تخمینے سمیت":"درج شدہ ریکارڈ کے مطابق")+'</div>'+
@@ -3222,17 +3222,17 @@ async function loadExecutiveDashboard(){
   const {data,error}=await db.rpc("get_management_dashboard",{p_month_start:range.start,p_month_end:range.end});
   if(error)throw error;
   const report=data?.profit_and_loss||{},segments=report.segments||{};
-  const water=segments["19L"]||{},finished=report.finished_goods||{},shared=segments.shared||{};
+  const water=segments["19L"]||{},finished=segments.finished_goods||{},shared=segments.shared||{};
   const fmt=n=>money(Number(n)||0),fmtNullable=n=>n==null?"—":fmt(n);
   const unassignedCashflowWarning=Number(water.unassigned_delivery_cash_unclassified||0)>0
    ?'<div class="warning"><b>غیر منسلک سپلائی کی وصولی باقی ہے:</b> '+fmt(water.unassigned_delivery_cash_unclassified)+' کی وصولی اس مدت میں درج نہیں۔ اگر رقم وصول ہوچکی ہے تو آمدن ماڈیول میں "غیر منسلک 19L سپلائی کی وصولی" منتخب کرکے درج کریں؛ یہ منافع میں دوبارہ شامل نہیں ہوگی۔ اگر رقم وصول نہیں ہوئی تو وصولی درج نہ کریں۔</div>'
    :"";
   const revenue=Number(water.revenue||0)+Number(finished.revenue||0);
-  const net=Number(report.net_profit||0);
+  const net=Number(segments.net_profit||0);
   const contribution=Number(water.profit_before_shared||0)+Number(finished.profit_before_shared||0);
   const previous=data?.previous_period||{};
-  const previousNet=Number(previous.net_profit||0);
-  const previousRevenue=Number(previous.segments?.["19L"]?.revenue||0)+Number(previous.finished_goods?.revenue||0);
+  const previousNet=Number(previous.segments?.net_profit||0);
+  const previousRevenue=Number(previous.segments?.["19L"]?.revenue||0)+Number(previous.segments?.finished_goods?.revenue||0);
   const margin=revenue>0?(net/revenue*100):null;
   const missing=Array.isArray(report.missing_costs)?report.missing_costs:[];
   const stock=report.stock_estimate||{};
@@ -3393,8 +3393,8 @@ async function previewMonthClose(){
   if(report.complete!==true)reason.push("مالی رپورٹ مکمل نہیں۔");
   box.innerHTML=`
    <div class="exec-status-row"><b>${esc(range.start)} تا ${esc(range.end)}</b><span class="exec-status ${ready?"closed":"open"}">${ready?"کلوزنگ کے لیے تیار":data.month_closed?"پہلے سے بند":"مزید اصلاح درکار"}</span></div>
-   <div class="exec-line"><span>فروخت / آمدن</span><b>${money(Number(report.segments?.["19L"]?.revenue||0)+Number(report.finished_goods?.revenue||0))}</b></div>
-   <div class="exec-line"><span>${profitLabel}</span><b>${money(report.net_profit||0)}</b></div>
+   <div class="exec-line"><span>فروخت / آمدن</span><b>${money(Number(report.segments?.["19L"]?.revenue||0)+Number(report.segments?.finished_goods?.revenue||0))}</b></div>
+   <div class="exec-line"><span>${profitLabel}</span><b>${money(report.segments?.net_profit||0)}</b></div>
    <div class="exec-line"><span>کسٹمر بل باقی</span><b>${Number(data.unbilled_customers)||0}</b></div>
    ${notes?'<div class="warning"><b>کلوزنگ سے پہلے لازمی جائزہ:</b> '+esc(notes)+'</div>':""}
    ${reason.length?'<div class="warning"><b>کلوزنگ ابھی نہیں ہو سکتی:</b><ul>'+reason.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>':'<p class="success">بنیادی خودکار چیکس پاس ہیں۔ مستقل بندش سے پہلے اخراجات کی دستی تصدیق بھی کریں۔</p>'}
