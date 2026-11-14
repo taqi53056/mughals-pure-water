@@ -1,0 +1,1 @@
+drop trigger if exists production_worker_ledger_sync on public.production_worker_allocations;
