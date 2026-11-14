@@ -1283,14 +1283,24 @@ async function loadApp(){
  if(error||!data.user)return;
  user=data.user;
  myCustomer=null;
- // پہلے trusted profile role چیک کریں تاکہ ایڈمن کو customer record کی وجہ سے غلط پینل نہ ملے۔
+ // ہر نئے سیشن پر دونوں پورٹلز پہلے بند رکھیں؛ کسی سابقہ سیشن کا پینل ظاہر نہ ہو۔
+ $("adminPanel").classList.add("hidden");
+ $("customerPanel").classList.add("hidden");
+ $("app").classList.add("hidden");
+ // پروفائل رول کے ساتھ ڈیٹابیس کی allowlist پر مبنی is_admin() بھی لازماً تصدیق کرے۔
  const p=await db.from("profiles").select("role,full_name").eq("id",user.id).maybeSingle();
  if(p.error){
   await db.auth.signOut();
   $("loginMsg").textContent="اکاؤنٹ کی اجازت چیک نہیں ہوسکی؛ سیکیورٹی کے لیے رسائی روک دی گئی ہے۔";
   return;
  }
- const isAdmin=p.data?.role==="admin";
+ const adminCheck=await db.rpc("is_admin");
+ if(adminCheck.error){
+  await db.auth.signOut();
+  $("loginMsg").textContent="ایڈمن اجازت کی محفوظ تصدیق نہیں ہوسکی؛ سیکیورٹی کے لیے لاگ اِن روک دیا گیا ہے۔";
+  return;
+ }
+ const isAdmin=p.data?.role==="admin" && adminCheck.data===true;
  if(!isAdmin){
   const r=await db.from("customers").select("id,name,customer_code,mobile,address,auth_user_id,is_active").eq("auth_user_id",user.id).maybeSingle();
   if(r.error){
