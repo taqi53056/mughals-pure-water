@@ -77,6 +77,8 @@ for (const required of [
   'readTodayRows("water_tanker_purchases","tanker_count,total_amount"',
   "segments.net_profit===null||segments.net_profit===undefined?null",
   "const hasPnlActivity=dailyReport.has_pnl_activity===true",
+  'const netQualifier=hasPnlActivity?(dailyReport.net_profit_is_estimated?',
+  "netQualifier?' — '+netQualifier:''",
   "آج منافع و نقصان کی سرگرمی درج نہیں ہوئی",
   "مخصوص سپلائی ماڈیول میں متعلقہ ریکارڈ کے تحت وصولی درج کریں",
   "مالی وصولی خودکار درج ہوگی اور منافع دوبارہ نہیں بڑھے گا",
