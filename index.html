@@ -1623,7 +1623,7 @@ function renderCustomers(){
  if(!rows.length){target.innerHTML="<div class='customer-record-empty'>اس تلاش کے مطابق کوئی گاہک نہیں ملا۔</div>";return;}
  target.innerHTML="<div class='customer-record-list'>"+rows.map(c=>{
   const pending=c.is_active!==true&&!c.approved_at;
-  const accessAction=c.is_active===true?"اکاؤنٹ غیر فعال کریں":pending?"گاہک منظور کریں":"اکاؤنٹ دوبارہ فعال کریں";
+  const accessAction=c.is_active===true?"اکاؤنٹ غیر فعال کریں":pending?"منظوری دیں":"اکاؤنٹ دوبارہ فعال کریں";
   const accessHandler=pending?"approveCustomer":"toggleCustomerStatus";
   return `<article class="customer-record-card">
    <div class="customer-record-heading"><strong>${esc(c.name||"نام درج نہیں")}</strong><span class="customer-record-status ${c.is_active===true?"is-active":pending?"is-pending":"is-inactive"}">${customerStatusLabel(c)}</span></div>
