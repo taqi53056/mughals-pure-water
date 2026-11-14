@@ -3222,7 +3222,7 @@ async function loadExecutiveDashboard(){
    ["1.5L / 6L مشترکہ اسٹیکر",stock.stickers_1_5l_6l],
    ["دکان والی ٹنکی — باقی پانی (اندازاً لیٹر)",stock.water_shop_pool_remaining_litres],
    ["پروڈکشن والی ٹنکی — 500ml / 1.5L باقی پانی (لیٹر)",stock.water_product_filling_litres]
-  ].map(([label,value])=>`<div class="exec-stock-item"><span>${label}</span><b>${label==="ٹیپ بنڈل"&&value==null?"استعمال نامعلوم":Number(value)||0}</b></div>`).join("");
+  ].map(([label,value])=>`<div class="exec-stock-item"><span>${label}</span><b>${Number(value??0).toLocaleString("ur-PK",{maximumFractionDigits:2})}</b></div>`).join("");
   const productChartRows=Object.entries(products).map(([name,r])=>({name,revenue:Number(r.revenue)||0})).filter(x=>x.revenue>0);
    const productChartMax=Math.max(1,...productChartRows.map(x=>x.revenue));
    const productChart=productChartRows.map(x=>`<div class="exec-bar-row"><div class="exec-bar-label"><span>${esc(x.name)}</span><b>${fmt(x.revenue)}</b></div><div class="exec-bar-track"><i style="width:${Math.max(2,x.revenue/productChartMax*100)}%"></i></div></div>`).join("");
