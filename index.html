@@ -347,6 +347,24 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 @media(max-width:699px){.admin-module-filter{gap:6px}.admin-module-filter button{flex:1 1 calc(50% - 6px);font-size:12px;padding:8px 9px}}
 
 #moduleBody input[aria-invalid="true"],#moduleBody select[aria-invalid="true"],#moduleBody textarea[aria-invalid="true"]{border:2px solid #b42318!important;background:#fff7f6!important;box-shadow:0 0 0 3px #b4231818!important}
+
+/* Customer records: readable cards instead of squeezed multi-column tables */
+#moduleTable .customer-record-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px;min-width:0}
+#moduleTable .customer-record-card{min-width:0;padding:15px;border:1px solid #e0e8df;border-radius:16px;background:linear-gradient(145deg,#fff,#f8fbf8);box-shadow:0 4px 14px #173d2b08}
+#moduleTable .customer-record-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;padding-bottom:11px;border-bottom:1px solid #e9eee8}
+#moduleTable .customer-record-heading strong{font-size:17px;line-height:1.6;overflow-wrap:anywhere;color:#193d2e}
+#moduleTable .customer-record-status{flex:0 0 auto;padding:4px 10px;border-radius:30px;font-size:12px;font-weight:750;background:#edf3ed;color:#355a43}
+#moduleTable .customer-record-status.is-active{background:#e8f5ec;color:#17643e}
+#moduleTable .customer-record-status.is-pending{background:#fff4dc;color:#795719}
+#moduleTable .customer-record-status.is-inactive{background:#fbeceb;color:#963c36}
+#moduleTable .customer-record-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:12px 0}
+#moduleTable .customer-record-details>div{min-width:0;padding:9px 10px;border-radius:11px;background:#f2f6f2}
+#moduleTable .customer-record-details span{display:block;color:#64736a;font-size:12px;margin-bottom:3px}
+#moduleTable .customer-record-details b{display:block;font-size:14px;line-height:1.6;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+#moduleTable .customer-record-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+#moduleTable .customer-record-actions button{width:100%;min-width:0;min-height:43px;margin:0;padding:8px;font-size:13px;line-height:1.5;white-space:normal}
+#moduleTable .customer-record-empty{padding:18px;border:1px dashed #cbd8cb;border-radius:14px;text-align:center;color:#617267;background:#f8faf8}
+@media(max-width:420px){#moduleTable .customer-record-details{grid-template-columns:1fr}#moduleTable .customer-record-card{padding:12px}#moduleTable .customer-record-actions button{font-size:12px;padding:7px 5px}}
 </style>
 
 <style id="owner-withdrawal-premium">
@@ -1578,7 +1596,7 @@ async function approveCustomer(id){
    noticeStatus+=" مگر ایپ کے اندر منظوری کی اطلاع محفوظ نہیں ہوسکی: "+approvalNotice.error.message;
   }else{
    const pushResult=await notifyCustomerPush(id,approvalTitle,approvalMessage);
-   if(pushResult?.error||Number(pushResult?.sent||0)<1)noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہے، مگر موبائل Push کی تصدیق نہیں ہوئی: "+(pushResult?.error||pushResult?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔");
+   if(pushResult?.error||Number(pushResult?.sent||0)<1){const pushIssue=String(pushResult?.error||pushResult?.reason||"");noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہے، لیکن اس گاہک کے موبائل پر Push فعال نہیں۔ گاہک اپنے فون میں لاگ اِن کرکے ‘موبائل پر اطلاعات فعال کریں’ دبائے۔"+(/no active device subscription/i.test(pushIssue)?" (ابھی کوئی فعال موبائل سبسکرپشن موجود نہیں۔)":"");}
    else noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہوگئی اور موبائل Push بھی بھیج دی گئی۔";
   }
  }
@@ -1599,15 +1617,28 @@ async function toggleCustomerStatus(id){
 }
 
 function renderCustomers(){
- const q=($("customerSearch")?.value||"").toLowerCase();
- const rows=customerList.filter(c=>[c.name,c.customer_code,c.mobile].some(x=>String(x||"").toLowerCase().includes(q)));
- $("moduleTable").innerHTML="<table><tr><th>نام</th><th>ID</th><th>موبائل</th><th>حیثیت</th><th>مکمل اکاؤنٹ</th><th>ترمیم</th><th>رسائی</th><th>مستقل آرکائیو</th></tr>"+
- rows.map(c=>{
+ const q=($("customerSearch")?.value||"").trim().toLocaleLowerCase();
+ const rows=customerList.filter(c=>[c.name,c.customer_code,c.mobile].some(x=>String(x||"").toLocaleLowerCase().includes(q)));
+ const target=$("moduleTable");if(!target)return;
+ if(!rows.length){target.innerHTML="<div class='customer-record-empty'>اس تلاش کے مطابق کوئی گاہک نہیں ملا۔</div>";return;}
+ target.innerHTML="<div class='customer-record-list'>"+rows.map(c=>{
   const pending=c.is_active!==true&&!c.approved_at;
-  const accessAction=c.is_active===true?"غیر فعال کریں":pending?"منظوری دیں":"دوبارہ فعال کریں";
+  const accessAction=c.is_active===true?"اکاؤنٹ غیر فعال کریں":pending?"گاہک منظور کریں":"اکاؤنٹ دوبارہ فعال کریں";
   const accessHandler=pending?"approveCustomer":"toggleCustomerStatus";
-  return `<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code)}</td><td>${esc(c.mobile)}</td><td>${customerStatusLabel(c)}</td><td><button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button></td><td><button onclick="editCustomer(${c.id})">غلطی درست کریں</button></td><td><button class="secondary" onclick="${accessHandler}(${Number(c.id)})">${accessAction}</button></td><td><button class="danger-button" onclick="archiveCustomer(${Number(c.id)})">آرکائیو + مستقل حذف</button></td></tr>`;
- }).join("")+"</table>";
+  return `<article class="customer-record-card">
+   <div class="customer-record-heading"><strong>${esc(c.name||"نام درج نہیں")}</strong><span class="customer-record-status ${c.is_active===true?"is-active":pending?"is-pending":"is-inactive"}">${customerStatusLabel(c)}</span></div>
+   <div class="customer-record-details">
+    <div><span>کسٹمر ID</span><b dir="ltr">${esc(c.customer_code||"—")}</b></div>
+    <div><span>موبائل نمبر</span><b dir="ltr">${esc(c.mobile||"درج نہیں")}</b></div>
+   </div>
+   <div class="customer-record-actions">
+    <button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button>
+    <button onclick="editCustomer(${Number(c.id)})">معلومات درست کریں</button>
+    <button class="secondary" onclick="${accessHandler}(${Number(c.id)})">${accessAction}</button>
+    <button class="danger-button" onclick="archiveCustomer(${Number(c.id)})">آرکائیو / مستقل حذف</button>
+   </div>
+  </article>`;
+ }).join("")+"</div>";
 }
 
 async function showCustomerFullAccount(id){
