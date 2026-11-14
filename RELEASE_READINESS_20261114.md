@@ -108,3 +108,7 @@ The app release at commit eb181b2 (2026-11-14) passed App static validation, inc
 - Live migration version: `20261114183659`, mirrored at `supabase/migrations/20261114183659_allow_audited_zero_opening_stock_corrections.sql`.
 - Verification: production id 87 absent; allocation id 30 absent; both opening carton rows zero; stock ledger contains +10 original production and -10 reversal; current finished stock view shows 1.5L=0, 500ml=0, 6L=0.
 - User will recount physical cartons and enter verified opening carton stock and production quantities later. Do not infer or add any stock until they provide the measured counts.
+
+- Follow-up entry-readiness repair: zero-quantity correction rows are excluded from the one-active-opening-stock-per-material unique index. The private atomic raw-material RPC's two opening-stock `ON CONFLICT` clauses were updated to match the revised partial-index predicate.
+- Verified the actual public atomic RPC as the fixed admin identity with a one-carton test payload inside a rollback-only transaction. It returned a new `primary_id` (192); post-rollback check confirms no test row persisted. Thus the next real opening-stock entry can be inserted without colliding with the zeroed historical row.
+- Second migration: `20261114183955_align_opening_stock_rpc_with_zero_correction_index_20261114`, mirrored in GitHub.
