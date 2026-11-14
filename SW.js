@@ -1,4 +1,4 @@
-const CACHE_NAME = "mughals-pure-water-v119-tape-70-carton-yield";
+const CACHE_NAME = "mughals-pure-water-v120-red-tape-stock-label";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./logo.svg"];
 const APP_SHELL_PATHS = new Set(APP_SHELL.map(path => new URL(path, self.location.href).pathname));
 
