@@ -54,7 +54,7 @@ for (const required of [
   'const net=Number(segments.net_profit||0)',
   'const previousNet=Number(previous.segments?.net_profit||0)',
   'Number(previous.segments?.finished_goods?.revenue||0)',
-  'money(report.segments?.net_profit||0)'
+  'money(report.segments?.net_profit||0)',
   'const [customerR,unassignedR,salesR,counterR,tankerR,expensesR,incomeR,dashboardR]=await Promise.all(['
 ]) {
   if (!appSource.includes(required)) {
