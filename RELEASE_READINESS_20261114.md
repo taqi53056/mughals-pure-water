@@ -29,7 +29,7 @@ The current main build passes static validation and desktop/mobile browser smoke
 - Supabase Health Advisor reports no lints.
 - Security Advisor reports only auth_leaked_password_protection: leaked-password protection remains disabled. The connected project tools do not expose the Auth settings toggle, so it was not changed and must be enabled by the project owner in Supabase Auth settings.
 - Performance Advisor reports 11 unused-index INFO notices. These indexes were not dropped because the business tables are largely empty and there is no representative production workload to justify removal.
-- Edge Function HTTP error logs were not conclusively verified in this pass; no clean-log claim is made.
+- Last-24-hour logs: 437 edge requests, 336 PostgREST requests and 11 Auth requests; zero HTTP 4xx/5xx in those sources. PostgreSQL logs contain 5 SQLSTATE 42601 syntax-error events from management/API maintenance statements or test attempts, not app HTTP requests; the affected intended changes were subsequently applied and their current state verified.
 
 ## Data integrity checks
 
