@@ -48,8 +48,13 @@ for (const required of [
   'select(columns).eq(dateColumn,date)',
   'readTodayRows("customer_19l_deliveries","successful_bottles,bottle_difference,delivery_labor"',
   'readTodayRows("water_tanker_purchases","tanker_count,total_amount"',
-  "dailyReport.net_profit===null||dailyReport.net_profit===undefined?null",
+  "segments.net_profit===null||segments.net_profit===undefined?null",
   "آج کوئی قابلِ حساب منافع / نقصان نہیں",
+  'finished=segments.finished_goods||{}',
+  'const net=Number(segments.net_profit||0)',
+  'const previousNet=Number(previous.segments?.net_profit||0)',
+  'Number(previous.segments?.finished_goods?.revenue||0)',
+  'money(report.segments?.net_profit||0)'
   'const [customerR,unassignedR,salesR,counterR,tankerR,expensesR,incomeR,dashboardR]=await Promise.all(['
 ]) {
   if (!appSource.includes(required)) {
