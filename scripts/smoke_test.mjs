@@ -110,6 +110,14 @@ const workerMethodCheckMigration = await readFile(
 if (!workerMethodCheckMigration.includes("payment_method IS NOT NULL")) {
   throw new Error("Worker payouts must require an explicit payment method");
 }
+const linkedIncomeGuardMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261114013821_require_link_for_unassigned_collection_income.sql"),
+  "utf8"
+);
+if (!linkedIncomeGuardMigration.includes("CREATE CONSTRAINT TRIGGER business_income_unassigned_collection_link_guard") ||
+    !linkedIncomeGuardMigration.includes("DEFERRABLE INITIALLY DEFERRED")) {
+  throw new Error("Unassigned 19L income must be linked to a collection record in the same transaction");
+}
 for (const required of [
   'const due=Number(r.bottles_delivered||0)*100+Number(r.damaged_caps||0)*10;',
   'remaining:Number(d.bottles_delivered)*100+Number(d.damaged_caps||0)*10',
