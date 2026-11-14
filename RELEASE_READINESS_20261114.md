@@ -11,10 +11,11 @@ The current main build passes static validation and desktop/mobile browser smoke
 - Moved expenses into the finance category so expense, income, profit/loss and owner withdrawals are grouped together.
 - All 20 admin tiles support keyboard activation.
 - Today's activity is displayed before the longer monthly dashboard. Its data sources load in parallel; individual read failures are shown rather than hiding the whole panel.
-- The app's current activity queries and dashboard RPC were observed returning HTTP 200 in live request logs on 2026-11-14.
+- Today's activity now reads 17 sources in parallel. Unassigned-19L collections are shown separately and excluded from generic other income to avoid double counting; customer refunds are separated from receipts; finished-goods quantities are grouped by product and unit; opening/free raw-material entries are not counted as purchases.
+- The earlier daily-activity panel's source queries and dashboard RPC returned HTTP 200 in live logs. The expanded 17-source panel now has its table columns, authenticated SELECT grants, anon denial, static checks and browser smoke tests verified; a new authenticated live session against all 17 reads has not yet been independently observed.
 - Worker wage balance views carton_worker_wage_balance and delivery_worker_wage_balance now use security_invoker=true.
 - Removed implicit PUBLIC execution from the admin product-sale and store-credit receipt wrappers. Authenticated execution remains available; the private implementations enforce admin authorization.
-- The service-worker cache is mughals-pure-water-v133-finance-navigation.
+- The service-worker cache is mughals-pure-water-v134-admin-daily-activity.
 
 ## Security and database verification
 
@@ -58,4 +59,4 @@ The month-end billing and monthly business-report cron jobs remain active. Their
 
 ## Release verification
 
-The latest main commit after this audit's UI and permission changes must have both GitHub Actions checks complete successfully: static validation (including desktop/mobile smoke tests) and Pages deployment. A successful static test is not proof of authenticated customer E2E or of every business transaction.
+Latest main commit edb4f0d (2026-11-14) passed App static validation, including desktop/mobile browser smoke tests, and GitHub Pages deployment. A successful build/deploy is not proof of authenticated customer E2E or of every business transaction.
