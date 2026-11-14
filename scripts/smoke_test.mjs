@@ -49,6 +49,56 @@ if (appSource.includes("#adminPanel #homeTiles .tile:nth-child(1):before")) {
   throw new Error("Admin tile icons must account for the category navigation element");
 }
 for (const required of [
+  "function paymentMethodLabel(method)",
+  'id="paymentMethod"',
+  'payment_method:paymentMethod',
+  'id="wlMethod"',
+  "toggleWorkerPaymentMethod()",
+  'payment_method:$("mMethod").value',
+  "linkedIncomeIds",
+  "سپلائی ماڈیول سے منسلک — صرف دیکھیں",
+  'allowedIncomeCategories=["دیگر غیر فروخت آمدن"]'
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("Payment method / linked income safeguards are missing: " + required);
+  }
+}
+if (appSource.includes('<option value="غیر منسلک 19L سپلائی کی وصولی">')) {
+  throw new Error("Linked 19L collection must not be manually entered as generic income");
+}
+const paymentMethodMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261114012739_track_payment_methods_and_protect_linked_unassigned_income.sql"),
+  "utf8"
+);
+for (const required of [
+  "customer_payments",
+  "business_income",
+  "worker_ledger",
+  "private.record_unassigned_19l_collection",
+  "payment_method,details,request_id",
+  "mpw_guard_linked_unassigned_income_update",
+  "BEFORE UPDATE ON public.business_income"
+]) {
+  if (!paymentMethodMigration.includes(required)) {
+    throw new Error("Payment method migration is incomplete: " + required);
+  }
+}
+const legacyLaborMethodMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261114013049_carry_payment_method_into_legacy_labor_worker_ledger.sql"),
+  "utf8"
+);
+if (!legacyLaborMethodMigration.includes("NEW.payment_method") ||
+    !legacyLaborMethodMigration.includes("payment_method,source_table,source_id,entered_by")) {
+  throw new Error("Legacy labor payout trigger must preserve payment method");
+}
+const workerMethodCheckMigration = await readFile(
+  resolve(ROOT, "supabase/migrations/20261114013156_require_payment_method_for_worker_payouts.sql"),
+  "utf8"
+);
+if (!workerMethodCheckMigration.includes("payment_method IS NOT NULL")) {
+  throw new Error("Worker payouts must require an explicit payment method");
+}
+for (const required of [
   'const due=Number(r.bottles_delivered||0)*100+Number(r.damaged_caps||0)*10;',
   'remaining:Number(d.bottles_delivered)*100+Number(d.damaged_caps||0)*10',
   '$("dOwn").value=String(data.customer_owned_bottles||0);'
