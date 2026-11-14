@@ -45,6 +45,8 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 .admin-command-search input{width:100%;min-height:48px;border:1px solid #aebdaf;border-radius:12px;padding:11px 14px;background:#fff;font-size:16px}
 .admin-command-search small{display:block;color:#637268;margin-top:7px;line-height:1.7}
 .admin-quick-results{position:absolute;top:calc(100% - 2px);right:13px;left:13px;background:#fff;border:1px solid #d7e1d8;border-radius:0 0 13px 13px;box-shadow:0 12px 28px #10231b20;max-height:320px;overflow:auto;padding:6px}
+.admin-search-shortcuts{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.admin-search-shortcuts button{min-height:36px;padding:7px 11px;font-size:13px}
 .admin-quick-results button{display:flex;width:100%;text-align:right;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:0;border-bottom:1px solid #edf1ed;border-radius:8px;background:#fff;color:#1d3024;min-height:46px}
 .admin-quick-results button:last-child{border-bottom:0}
 .admin-quick-results button:focus,.admin-quick-results button:hover{background:#edf4ed;outline:2px solid #7c9a7f}
@@ -789,8 +791,15 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 <div class="admin-command-search" role="search">
  <label for="adminQuickSearch">فوری اندراج — کیا شامل یا درج کرنا ہے؟</label>
  <input id="adminQuickSearch" type="search" autocomplete="off" placeholder="یہاں لکھیں: خرچ، 500ml، ٹینکر، گاہک کی وصولی، 19L ڈلیوری..." oninput="searchAdminModules(this.value)" onkeydown="handleAdminSearchKey(event)" aria-controls="adminQuickResults" aria-expanded="false">
+ <div class="admin-search-shortcuts" aria-label="عام کام">
+  <button type="button" class="secondary" onclick="useAdminSearchShortcut('نیا خرچ')">+ نیا خرچ</button>
+  <button type="button" class="secondary" onclick="useAdminSearchShortcut('پانی خریداری')">پانی خریداری</button>
+  <button type="button" class="secondary" onclick="useAdminSearchShortcut('خام مال')">خام مال</button>
+  <button type="button" class="secondary" onclick="useAdminSearchShortcut('گاہک کی وصولی')">گاہک کی وصولی</button>
+  <button type="button" class="secondary" onclick="useAdminSearchShortcut('19 لیٹر ڈلیوری')">19 لیٹر ڈلیوری</button>
+ </div>
  <div id="adminQuickResults" class="admin-quick-results hidden" role="listbox" aria-label="ممکنہ کام"></div>
- <small>مثلاً: نیا خرچ، 500ml خریداری، ٹینکر، گاہک کی وصولی یا 19 لیٹر ڈلیوری۔ ایک سے زیادہ متعلقہ کام ہوں تو فہرست میں سے درست کام منتخب کریں؛ فارم کھلنے کے بعد ایپ مطلوبہ تفصیل مانگے گی۔</small>
+ <small>کام کا نام خود لکھیں یا عام کام منتخب کریں۔ ایک واضح نتیجہ ہو تو فارم کھلے گا؛ کئی ممکنہ مطلب ہوں تو پہلے درست کام منتخب کریں۔ فارم میں ایپ ضروری تفصیل پوچھے گی۔</small>
 </div>
 <nav class="admin-module-filter" role="group" aria-label="انتظامی ماڈیولز کی اقسام">
 <button type="button" class="secondary active" data-filter="operations" onclick="filterAdminModules(this.dataset.filter)">روزمرہ اندراجات</button>
@@ -1364,10 +1373,20 @@ const ADMIN_SEARCH_ALIASES={
  audit:["آڈٹ","کس نے تبدیلی کی","تبدیلیوں کا ریکارڈ"],
  settings:["ترتیبات","ریٹ","قیمت","ریٹ تبدیل","سیٹنگ"]
 };
+function useAdminSearchShortcut(query){
+ const input=$("adminQuickSearch");if(!input)return;
+ input.value=query;searchAdminModules(query);input.focus();
+}
+function normalizeAdminSearchText(value){
+ return String(value||"").toLocaleLowerCase()
+  .replace(/[ًٌٍَُِّْٰـ]/g,"")
+  .replace(/[؟?،,۔.]/g," ")
+  .replace(/\s+/g," ").trim();
+}
 function searchAdminModules(query){
  const input=$("adminQuickSearch"),box=$("adminQuickResults");
  if(!input||!box)return;
- const q=String(query||"").trim().toLocaleLowerCase();
+ const q=normalizeAdminSearchText(query);
  if(!q){box.innerHTML="";box.classList.add("hidden");input.setAttribute("aria-expanded","false");return;}
  const tiles=[...document.querySelectorAll("#homeTiles .tile")];
  const matches=tiles.map(tile=>{
@@ -1375,9 +1394,9 @@ function searchAdminModules(query){
   const desc=tile.querySelector("small")?.textContent||"";
   const module=(tile.getAttribute("onclick")||"").match(/openModule\('([^']+)'\)/)?.[1];
   const aliases=ADMIN_SEARCH_ALIASES[module]||[];
-  const hay=[title,desc,...aliases].join(" ").toLocaleLowerCase();
-  const exact=title.toLocaleLowerCase()===q?100:0;
-  const starts=title.toLocaleLowerCase().startsWith(q)?35:0;
+  const hay=normalizeAdminSearchText([title,desc,...aliases].join(" "));
+  const normalizedTitle=normalizeAdminSearchText(title);\n  const exact=normalizedTitle===q?100:0;
+  const starts=normalizedTitle.startsWith(q)?35:0;
   const includes=hay.includes(q)?25:0;
   const words=q.split(/\s+/).filter(Boolean);
   const wordScore=words.reduce((n,w)=>n+(hay.includes(w)?8:0),0);
