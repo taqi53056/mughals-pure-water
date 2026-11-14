@@ -27,9 +27,9 @@ The current main build passes static validation and desktop/mobile browser smoke
 - archive-customer and send-customer-push both require JWTs, check the caller's admin identity, and restrict CORS to the app origin. No service-role secret was found in the browser app files; service-role use is confined to Edge Functions.
 - Both worker wage views have no anon/authenticated SELECT grant and now enforce invoker security.
 - Supabase Health Advisor reports no lints.
-- Security Advisor reports only auth_leaked_password_protection: the project's current Supabase Free plan does not offer this Pro-and-above feature.
+- Security Advisor reports only auth_leaked_password_protection: leaked-password protection remains disabled. The connected project tools do not expose the Auth settings toggle, so it was not changed and must be enabled by the project owner in Supabase Auth settings.
 - Performance Advisor reports 11 unused-index INFO notices. These indexes were not dropped because the business tables are largely empty and there is no representative production workload to justify removal.
-- No edge HTTP 4xx/5xx entries were returned by the queried request-log window.
+- Edge Function HTTP error logs were not conclusively verified in this pass; no clean-log claim is made.
 
 ## Data integrity checks
 
@@ -41,6 +41,10 @@ The current main build passes static validation and desktop/mobile browser smoke
 - For Pakistan date 2026-11-14, today's panel inputs show 2 tanker allocation rows totaling 1.000 tanker / 1,000 litres / Rs 1,200; no customer deliveries, unassigned deliveries/collections, product sales, counter sales, production, raw purchases, finished-goods entries, customer payments, worker-ledger entries, owner withdrawals, cleaning savings, returns, adjustments, business expenses or other income for that date.
 - Finished stock: 1.5L = 10 cartons; 500ml = 0; 6L = 0.
 - The two unassigned-19L receipts are linked to their delivery records and are not counted as independent extra revenue.
+
+- November 1–14 management-dashboard reconciliation: recorded collections Rs. 2,720; recorded outflows Rs. 3,600; net cash movement -Rs. 880; receivables Rs. 1,400; worker payable Rs. 100 (M. Aqib); owner withdrawals Rs. 0. This is movement, not a closing cash/bank balance; opening balances are absent.
+- The November P&L currently reports Rs. 2,336.40 estimated net profit, not a final profit. Counter-water usage/cost are estimated and there are zero expense entries; unentered real expenses would overstate profit.
+- Current 19L cap stock is zero; recorded tape balance is 0.857142857 bundle. Verify and enter physical 19L cap opening stock before recording damaged caps.
 
 ## Admin navigation
 
@@ -58,7 +62,7 @@ The month-end billing and monthly business-report cron jobs remain active. Their
 4. Cash/bank/JazzCash reconciliation: no opening balances or reconciliation records are present. The app must not invent account balances; enter verified opening figures before relying on account-wise cash balances.
 5. Profit accuracy: shop-counter water usage and net profit remain marked estimated where source litres/costs are not exact. Zero expense rows do not prove that no expenses occurred; enter real expenses before relying on net profit or closing a month.
 6. Supabase leaked-password protection: unavailable on the current Free plan; this is an external plan limitation.
-7. Fresh-project rebuild: the repository does not contain the complete original V2/master schema. Its selected migration files are not a standalone fresh-database installer; do not use this repository alone to create a new Supabase project.
+7. Fresh-project rebuild / migration archive: the remote Supabase history lists 245 applied migrations while the repository contains 127 migration SQL files; older history still has missing or version-mismatched files. Recent 2026-11-14 migrations have matching SQL files, but the repository is not a complete fresh-database installer. Do not use it alone to create a new Supabase project.
 
 ## Release verification
 
