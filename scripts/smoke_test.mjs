@@ -57,7 +57,7 @@ if (todayActivityPosition < 0 || monthlyReportPosition < 0 || todayActivityPosit
 for (const required of [
   "async function readTodayRows(",
   'readTodayRows("production","product_type,quantity,labor_amount","production_date",date)',
-  'readTodayRows("raw_material_purchases","material_type,quantity,unit,total_amount","purchase_date",date)',
+  'readTodayRows("raw_material_purchases","material_type,quantity,unit,total_amount,record_type","purchase_date",date)',
   'readTodayRows("customer_payments","amount,payment_type,payment_method","payment_date",date)',
   'readTodayRows("worker_ledger","entry_type,amount,work_category","entry_date",date)',
   'readTodayRows("business_finance_ledger","entry_type,amount,counterparty,payment_method","entry_date",date)',
