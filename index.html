@@ -2148,7 +2148,7 @@ async function recordCustomerPayment(){
   const notice={
    customer_id:customerId,
    title:paymentType==="refund"?"رقم واپس کی گئی":"ادائیگی موصول ہوگئی",
-   message:"السلام علیکم "+(customer?.name||"محترم گاہک")+" صاحب! آپ کے اکاؤنٹ میں "+paymentDate+" کو "+money(amount)+" کی "+(typeLabels[paymentType]||"ادائیگی")+" درج ہوگئی ہے۔\n"+paymentDate.slice(0,7)+" کے بل کا تازہ بقایا: "+money(bill.payable)+"۔\nشکریہ۔",
+   message:"السلام علیکم "+(customer?.name||"محترم گاہک")+" صاحب! آپ کے اکاؤنٹ میں "+paymentDate+" کو "+money(amount)+" کی "+(typeLabels[paymentType]||"ادائیگی")+" درج ہوگئی ہے۔\nادائیگی کا طریقہ: "+paymentMethodLabel(paymentMethod)+"۔\n"+paymentDate.slice(0,7)+" کے بل کا تازہ بقایا: "+money(bill.payable)+"۔\nشکریہ۔",
    notification_type:"payment",
    reference_key:"payment:"+paymentRecord.id
   };
