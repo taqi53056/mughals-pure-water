@@ -3177,7 +3177,7 @@ async function loadTodaySummary(){
  const expenses=sum(expensesR,"amount");
  const income=incomeR.error?null:incomeR.rows.filter(row=>row.category!=="غیر منسلک 19L سپلائی کی وصولی").reduce((n,row)=>n+(Number(row.amount)||0),0);
  const collectionTotal=sum(collectionR,"amount");
- const productionTotals=productionR.error?null:productionR.rows.reduce((o,r)=>{o[r.product_type]=(o[r.product_type]||0)+Number(r.quantity||0);return o;},{});
+ const productionTotals=productionR.error?null:productionR.rows.reduce((o,r)=>{const k=String(r.product_type||"مال")+" "+(r.product_type==="6L"?"بوتلیں":"کارٹن");o[k]=(o[k]||0)+Number(r.quantity||0);return o;},{});
  const rawPurchaseRows=rawPurchaseR.error?null:rawPurchaseR.rows.filter(r=>r.record_type==="purchase");
  const rawPurchaseAmount=rawPurchaseRows===null?null:rawPurchaseRows.reduce((n,r)=>n+Number(r.total_amount||0),0);
  const rawOtherCount=rawPurchaseR.error?null:rawPurchaseR.rows.filter(r=>r.record_type!=="purchase").length;
