@@ -2303,7 +2303,7 @@ async function rawMaterialsModule(){
  ''+
  '<textarea id="rawPurchaseDetails" maxlength="300" placeholder="بل نمبر / تفصیل (اختیاری)"></textarea>'+
  '<button id="rawPurchaseSaveButton" onclick="saveRawMaterialPurchase()">خریداری محفوظ کریں</button></div>'+
- '<div class="card"><h3>خام مال کا باقی اسٹاک اور لاگت</h3><p class="muted">جہاں پیداوار سے استعمال کی مقدار یقینی طور پر معلوم ہے وہاں خودکار کمی ہوگی۔ ٹیپ کا استعمال ابھی قطعی متعین نہیں، اس لیے اسے باقی اسٹاک یا مالیت میں شامل نہیں کیا جائے گا؛ بنڈل کی اصل باقی مقدار الگ جسمانی گنتی کے بعد ہی طے کریں۔ یہ مالیت اسٹاک کی قدر ہے، اسی دن کا خرچ نہیں۔ ابتدائی اسٹاک کی مالیت تخمینی ہو سکتی ہے؛ مفت کلیم صفر اضافی خریداری لاگت پر شمار ہوگا۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div><div id="rawStockValuation">لاگت کا حساب لوڈ ہو رہا ہے...</div></div>';
+ '<div class="card"><h3>خام مال کا باقی اسٹاک اور لاگت</h3><p class="muted">جہاں پیداوار سے استعمال کی مقدار معلوم ہے وہاں خودکار کمی ہوگی۔ ٹیپ کا ایک بنڈل 70 کارٹن کے حساب سے استعمال ہوگا۔ یہ مالیت اسٹاک کی قدر ہے، اسی دن کا خرچ نہیں۔ ابتدائی اسٹاک کی مالیت تخمینی ہو سکتی ہے؛ مفت کلیم صفر اضافی خریداری لاگت پر شمار ہوگا۔</p><div id="rawStockBalance">حساب لوڈ ہو رہا ہے...</div><div id="rawStockValuation">لاگت کا حساب لوڈ ہو رہا ہے...</div></div>';
  await loadRawMaterialPurchases();
 }
 function updateRawStickerPurchaseUI(){
@@ -2398,7 +2398,7 @@ async function loadRawMaterialPurchases(){
  const used={
   bottle_500ml:made("500ml")*24,bottle_1_5l:made("1.5L")*12,bottle_6l:made("6L"),
   carton_500ml:made("500ml"),carton_1_5l:made("1.5L"),
-  tape_bundle:null,
+  tape_bundle:(made("500ml","tape_bundle")+made("1.5L","tape_bundle"))/70,
   sticker:0,
   sticker_500ml:made("500ml","sticker_500ml")*24,
   sticker_1_5l_6l:made("1.5L","sticker_1_5l_6l")*12+made("6L","sticker_1_5l_6l"),
@@ -2412,8 +2412,8 @@ async function loadRawMaterialPurchases(){
   const qty=purchased(k);
   const amount=source.reduce((n,x)=>n+Number(x.total_amount||0),0);
   const average=qty>0?amount/qty:null;
-  const remaining=k==="tape_bundle"?null:purchased(k)-(k==="cap_19l"?capsUsed:used[k]||0);
-  const value=average===null||remaining===null?null:Math.max(0,remaining)*average;
+  const remaining=purchased(k)-(k==="cap_19l"?capsUsed:used[k]||0);
+  const value=average===null?null:Math.max(0,remaining)*average;
   const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"||k.startsWith("sticker_")||k.startsWith("cap_")?"اسٹیکر/عدد":"بوتل";
   return {key:k,label:rawMaterialLabels[k]||k,qty,amount,average,remaining,value,unit};
  });
@@ -2423,14 +2423,14 @@ async function loadRawMaterialPurchases(){
  if(rawStockValuationBox)rawStockValuationBox.innerHTML=
   '<div class="stat">باقی خام مال کی درج شدہ تخمینی مالیت <b>'+money(totalRawStockValue)+'</b><small>صرف موجودہ مثبت مقدار × اوسط درج شدہ فی اکائی لاگت؛ یہ رقم منافع میں دوبارہ خرچ نہیں کی گئی۔</small></div>'+
   '<div class="tablewrap"><table><tr><th>خام مال</th><th>اسٹاک میں شامل مقدار (عدد/اکائی)</th><th>اوسط فی اکائی لاگت</th><th>استعمال</th><th>باقی مقدار</th><th>باقی مالیت</th></tr>'+
-  valuationRows.map(r=>'<tr><td>'+esc(r.label)+'</td><td>'+r.qty.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.average===null?"لاگت درج نہیں":money(r.average))+'</td><td>'+(r.remaining===null?"استعمال نامعلوم":(r.qty-r.remaining).toLocaleString("en-US",{maximumFractionDigits:2})+" "+r.unit)+'</td><td class="'+(r.remaining!==null&&r.remaining<0?"warning":"")+'">'+(r.remaining===null?"موجودہ مقدار غیر متعین":r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+" "+r.unit)+'</td><td>'+(r.value===null?"شامل نہیں":money(r.value))+'</td></tr>').join("")+
+  valuationRows.map(r=>'<tr><td>'+esc(r.label)+'</td><td>'+r.qty.toLocaleString("en-US",{maximumFractionDigits:2})+' '+r.unit+'</td><td>'+(r.average===null?"لاگت درج نہیں":money(r.average))+'</td><td>'+((r.qty-r.remaining).toLocaleString("en-US",{maximumFractionDigits:2})+" "+r.unit)+'</td><td class="'+(r.remaining!==null&&r.remaining<0?"warning":"")+'">'+(r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+" "+r.unit)+'</td><td>'+(r.value===null?"شامل نہیں":money(r.value))+'</td></tr>').join("")+
   '</table></div>'+
   (shortages.length?'<div class="warning">خام مال کے اسٹاک میں کمی/منفی بیلنس: '+shortages.map(r=>esc(r.label)+" ("+r.remaining.toLocaleString("en-US",{maximumFractionDigits:2})+")").join("، ")+'۔ انٹری اور پیداوار دوبارہ چیک کریں۔</div>':"");
 
  $("rawStockBalance").innerHTML='<div class="grid">'+balanceKeys.map(k=>{
   const remaining=purchased(k)-used[k];
   const unit=k==="tape_bundle"?"بنڈل":k.startsWith("carton_")?"کارٹن":k==="sticker"||k.startsWith("sticker_")?"اسٹیکر":k.startsWith("cap_")?"عدد":"بوتل";
-  return k==="tape_bundle"?'<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+purchased(k).toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+' درج شدہ</b><small>استعمال نامعلوم — باقی مقدار کی تصدیق درکار</small></div>':'<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b></div>';
+  return '<div class="stat">'+rawMaterialLabels[k]+'<br><b>'+remaining.toLocaleString("en-US",{maximumFractionDigits:2})+' '+unit+'</b><small>'+(k==="tape_bundle"?"ایک بنڈل = 70 کارٹن":"")+'</small></div>';
  }).join("")+'<div class="stat">19L ڈھکن<br><b>باقی: '+(purchased("cap_19l")-capsUsed)+' عدد</b><small>خریدے: '+purchased("cap_19l")+' — استعمال: '+capsUsed+' (صرف کسٹمر اور بغیر کسٹمر سپلائی کے خراب ڈھکن)</small></div></div>';
  $("moduleTable").innerHTML='<h3>خریداری، ابتدائی اسٹاک اور مفت کلیم کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>خام مال</th><th>مقدار</th><th>کل مالیت</th><th>فی یونٹ / فی کلو ریٹ</th><th>سپلائر</th></tr>'+
  rows.filter(r=>Number(r.quantity)>0||Number(r.total_amount)>0).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+esc(r.record_type==="opening_stock"?"ابتدائی اسٹاک":r.record_type==="free_claim"?"مفت کلیم":"خریداری")+'</td><td>'+esc(rawMaterialLabels[r.material_type]||r.material_type)+'</td><td>'+Number(r.quantity)+' '+esc(r.unit)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.quantity))+'</td><td>'+esc(r.supplier||"—")+'</td></tr>').join("")+
