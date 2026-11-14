@@ -15,6 +15,39 @@ const mime = {
 };
 
 const appSource = await readFile(resolve(ROOT, "index.html"), "utf8");
+const adminHomeStart = appSource.indexOf('<div id="homeTiles"');
+const adminHomeEnd = appSource.indexOf('<div id="dashboard"', adminHomeStart);
+if (adminHomeStart < 0 || adminHomeEnd < 0) {
+  throw new Error("Admin home navigation or dashboard is missing");
+}
+const adminHome = appSource.slice(adminHomeStart, adminHomeEnd);
+const adminTiles = adminHome.match(/class="tile /g) || [];
+if (adminTiles.length !== 20) {
+  throw new Error("Admin home must expose 20 distinct modules after duplicate report shortcut removal; found " + adminTiles.length);
+}
+const reportShortcuts = adminHome.match(/onclick="openModule\('(finance|reports)'\)"/g) || [];
+if (reportShortcuts.length !== 1) {
+  throw new Error("Profit/loss and detailed reports must not appear as duplicate shortcuts");
+}
+const todayActivityPosition = appSource.indexOf('<div class="executive-today">');
+const monthlyReportPosition = appSource.indexOf('<div id="execDashboard">');
+if (todayActivityPosition < 0 || monthlyReportPosition < 0 || todayActivityPosition > monthlyReportPosition) {
+  throw new Error("Today's activity must appear before the longer monthly dashboard report");
+}
+for (const required of [
+  "async function readTodayRows(",
+  'select(columns).eq(dateColumn,date)',
+  'readTodayRows("customer_19l_deliveries","successful_bottles,bottle_difference,delivery_labor"',
+  'readTodayRows("water_tanker_purchases","total_amount"',
+  'const [customerR,unassignedR,salesR,counterR,tankerR,expensesR,incomeR,dashboardR]=await Promise.all(['
+]) {
+  if (!appSource.includes(required)) {
+    throw new Error("Today activity reliability improvement is missing: " + required);
+  }
+}
+if (appSource.includes("#adminPanel #homeTiles .tile:nth-child(1):before")) {
+  throw new Error("Admin tile icons must account for the category navigation element");
+}
 for (const required of [
   'const due=Number(r.bottles_delivered||0)*100+Number(r.damaged_caps||0)*10;',
   'remaining:Number(d.bottles_delivered)*100+Number(d.damaged_caps||0)*10',
