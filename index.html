@@ -40,6 +40,16 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 @media(min-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{min-height:112px;padding:24px;font-size:18px}#adminPanel{display:grid;grid-template-columns:minmax(280px, .8fr) minmax(0,1.7fr);gap:16px;align-items:start}#homeTiles{grid-column:1;grid-row:1 / span 2}#dashboard,#module{grid-column:2;margin-top:0}#adminPanel #module{grid-column:1 / -1}}
 @media(max-width:520px){.wrap{padding:11px}.card{padding:15px;border-radius:15px}.grid{gap:9px}.tile{min-height:82px;padding:14px;font-size:14px}header{padding:18px 14px}input,select,button,textarea{font-size:16px}}
 
+.admin-command-search{grid-column:1/-1;position:relative;background:#f7faf7;border:1px solid #dce6dc;border-radius:16px;padding:13px;z-index:5}
+.admin-command-search label{display:block;font-weight:800;margin-bottom:7px;color:#20372a}
+.admin-command-search input{width:100%;min-height:48px;border:1px solid #aebdaf;border-radius:12px;padding:11px 14px;background:#fff;font-size:16px}
+.admin-command-search small{display:block;color:#637268;margin-top:7px;line-height:1.7}
+.admin-quick-results{position:absolute;top:calc(100% - 2px);right:13px;left:13px;background:#fff;border:1px solid #d7e1d8;border-radius:0 0 13px 13px;box-shadow:0 12px 28px #10231b20;max-height:320px;overflow:auto;padding:6px}
+.admin-quick-results button{display:flex;width:100%;text-align:right;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:0;border-bottom:1px solid #edf1ed;border-radius:8px;background:#fff;color:#1d3024;min-height:46px}
+.admin-quick-results button:last-child{border-bottom:0}
+.admin-quick-results button:focus,.admin-quick-results button:hover{background:#edf4ed;outline:2px solid #7c9a7f}
+.admin-quick-results .quick-hint{font-size:12px;color:#64736a;white-space:nowrap}
+@media(min-width:900px){.admin-command-search{position:sticky;top:8px}}
 /* Premium customer and responsive admin presentation */
 .customer-hero{background:linear-gradient(135deg,#101916,#263a31);color:#fff;border:0;border-radius:22px;padding:22px;box-shadow:0 14px 34px #10231b20}
 .customer-hero h2{color:#fff;font-size:23px;margin-bottom:4px}
@@ -776,6 +786,12 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
  <button class="secondary" type="button" onclick="openModule('customers')">درخواستیں دیکھیں</button>
 </div>
 <div id="homeTiles" class="grid">
+<div class="admin-command-search" role="search">
+ <label for="adminQuickSearch">آپ کیا کرنا چاہتے ہیں؟</label>
+ <input id="adminQuickSearch" type="search" autocomplete="off" placeholder="مثلاً: نیا خرچ، پانی خریدنا، گاہک، ڈلیوری، اسٹاک..." oninput="searchAdminModules(this.value)" onkeydown="handleAdminSearchKey(event)" aria-controls="adminQuickResults" aria-expanded="false">
+ <div id="adminQuickResults" class="admin-quick-results hidden" role="listbox" aria-label="ممکنہ کام"></div>
+ <small>کام کا نام لکھیں؛ متعلقہ حصہ سامنے آ جائے گا۔ اگر ایک سے زیادہ مطلب ہوں تو انتخاب آپ خود کریں گے۔</small>
+</div>
 <nav class="admin-module-filter" role="group" aria-label="انتظامی ماڈیولز کی اقسام">
 <button type="button" class="secondary active" data-filter="operations" onclick="filterAdminModules(this.dataset.filter)">روزمرہ اندراجات</button>
 <button type="button" class="secondary" data-filter="inventory" onclick="filterAdminModules(this.dataset.filter)">اسٹاک</button>
@@ -1326,6 +1342,65 @@ async function logout(){
 }
 
 
+const ADMIN_SEARCH_ALIASES={
+ customers:["نیا گاہک","کسٹمر","customer","گاہک کا اندراج","اکاؤنٹ"],
+ delivery:["ڈلیوری","بوتل بھیجنا","19 لیٹر","انیس لیٹر","delivery"],
+ billing:["بل","بلنگ","مہینے کا بل","گاہک کا بل","invoice"],
+ raw:["خام مال","ڈھکن","بوتل خریدنا","کارٹن","اسٹیکر","ٹیپ","raw material"],
+ finished:["تیار مال","تیار اسٹاک","باقی مال","finished stock"],
+ sales:["سیل","فروخت","کارٹن فروخت","پروڈکٹ بیچنا"],
+ expenses:["خرچ","نیا خرچ","اخراجات","بجلی","کرایہ","مزدوری خرچ"],
+ income:["آمدن","دوسری آمدن","اضافی آمدن"],
+ tanker:["ٹینکر","پانی خریدنا","ٹینکی میں پانی","پانی کا اسٹاک"],
+ counterWater:["کاؤنٹر فروخت","پانی کی فروخت","کاؤنٹر سیل"],
+ unassigned19l:["غیر منسلک سپلائی","بغیر گاہک بوتل","اضافی 19l سپلائی"],
+ returns:["واپسی","خراب بوتل","خراب مال","ریٹرن"],
+ workers:["ورکر","مزدور","اجرت","مزدوری کا حساب","ورکر کی ادائیگی"],
+ labor:["پروڈکشن","صفائی مزدوری","پیداوار"],
+ finance:["منافع","نقصان","منافع نقصان","ماہانہ رپورٹ","مالی رپورٹ"],
+ ownerWithdrawals:["مالک نکاسی","مالک نے رقم لی","ذاتی نکاسی"],
+ monthClose:["مہینہ بند","ماہانہ کلوزنگ","حساب بند"],
+ complaints:["شکایت","گاہک کی شکایت"],
+ audit:["آڈٹ","کس نے تبدیلی کی","تبدیلیوں کا ریکارڈ"],
+ settings:["ترتیبات","ریٹ","قیمت","ریٹ تبدیل","سیٹنگ"]
+};
+function searchAdminModules(query){
+ const input=$("adminQuickSearch"),box=$("adminQuickResults");
+ if(!input||!box)return;
+ const q=String(query||"").trim().toLocaleLowerCase();
+ if(!q){box.innerHTML="";box.classList.add("hidden");input.setAttribute("aria-expanded","false");return;}
+ const tiles=[...document.querySelectorAll("#homeTiles .tile")];
+ const matches=tiles.map(tile=>{
+  const title=tile.querySelector(".tile-title")?.textContent||"";
+  const desc=tile.querySelector("small")?.textContent||"";
+  const module=(tile.getAttribute("onclick")||"").match(/openModule\('([^']+)'\)/)?.[1];
+  const aliases=ADMIN_SEARCH_ALIASES[module]||[];
+  const hay=[title,desc,...aliases].join(" ").toLocaleLowerCase();
+  const exact=title.toLocaleLowerCase()===q?100:0;
+  const starts=title.toLocaleLowerCase().startsWith(q)?35:0;
+  const includes=hay.includes(q)?25:0;
+  const words=q.split(/\s+/).filter(Boolean);
+  const wordScore=words.reduce((n,w)=>n+(hay.includes(w)?8:0),0);
+  return {tile,module,title,score:exact+starts+includes+wordScore};
+ }).filter(x=>x.module&&x.score>0).sort((a,b)=>b.score-a.score);
+ const unique=matches.slice(0,7);
+ if(!unique.length){box.innerHTML='<div class="quick-hint" role="status">یہ کام نہیں ملا۔ کوئی دوسرا لفظ لکھیں، مثلاً خرچ، گاہک یا اسٹاک۔</div>';box.classList.remove("hidden");input.setAttribute("aria-expanded","true");return;}
+ box.innerHTML=unique.map((m,i)=>'<button type="button" role="option" aria-selected="false" data-module="'+esc(m.module)+'" onclick="chooseAdminSearchResult(this.dataset.module)"><span><strong>'+esc(m.title)+'</strong><br><small>'+esc(m.tile.querySelector("small")?.textContent||"")+'</small></span><span class="quick-hint">'+(i===0&&unique.length===1?"کھولیں":"منتخب کریں")+'</span></button>').join("");
+ box.classList.remove("hidden");input.setAttribute("aria-expanded","true");
+}
+function chooseAdminSearchResult(module){
+ const allowed=new Set([...document.querySelectorAll("#homeTiles .tile")].map(tile=>(tile.getAttribute("onclick")||"").match(/openModule\('([^']+)'\)/)?.[1]).filter(Boolean));
+ if(!allowed.has(module))return;
+ $("adminQuickResults")?.classList.add("hidden");
+ $("adminQuickSearch")?.setAttribute("aria-expanded","false");
+ openModule(module);
+}
+function handleAdminSearchKey(event){
+ if(event.key!=="Enter")return;
+ const buttons=[...($("adminQuickResults")?.querySelectorAll("button[data-module]")||[])];
+ if(buttons.length===1){event.preventDefault();chooseAdminSearchResult(buttons[0].dataset.module);}
+ else if(buttons.length>1){event.preventDefault();buttons[0].focus();}
+}
 function filterAdminModules(category){
  const allowed=["operations","inventory","finance","management","all"];
  const selected=allowed.includes(category)?category:"operations";
