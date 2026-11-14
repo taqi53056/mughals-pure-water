@@ -13,9 +13,11 @@ The current main build passes static validation and desktop/mobile browser smoke
 - Today's activity is displayed before the longer monthly dashboard. Its data sources load in parallel; individual read failures are shown rather than hiding the whole panel.
 - Today's activity now reads 17 sources in parallel. Unassigned-19L collections are shown separately and excluded from generic other income to avoid double counting; customer refunds are separated from receipts; finished-goods quantities are grouped by product and unit; opening/free raw-material entries are not counted as purchases.
 - The expanded 17-source panel's table columns and authenticated SELECT permissions were checked. A read-only transaction under the authenticated admin role successfully read all 17 source tables and the daily dashboard RPC with RLS active; the separate browser smoke tests also pass. A fresh post-deploy PostgREST session for every expanded read has not yet been observed in request logs.
+- Empty-day P&L now uses the database's has_pnl_activity flag: on 2026-11-14, a tanker purchase makes has_activity=true while has_pnl_activity=false, so the panel reports no P&L activity instead of presenting Rs. 0 as a profit result; the estimated-profit qualifier is hidden in that state.
 - Worker wage balance views carton_worker_wage_balance and delivery_worker_wage_balance now use security_invoker=true.
 - Removed implicit PUBLIC execution from the admin product-sale and store-credit receipt wrappers. Authenticated execution remains available; the private implementations enforce admin authorization.
-- The service-worker cache is mughals-pure-water-v134-admin-daily-activity.
+- The service-worker cache is mughals-pure-water-v136-pnl-empty-qualifier.
+- Customer-facing app source, PWA manifest and service worker contain no legacy Kiswa branding. The Supabase Dashboard's internal project display name still reads “Kiswa Pure Water”; it is not shown to customers and could not be renamed with the available project-management actions.
 
 ## Security and database verification
 
@@ -60,4 +62,4 @@ The month-end billing and monthly business-report cron jobs remain active. Their
 
 ## Release verification
 
-Latest main commit edb4f0d (2026-11-14) passed App static validation, including desktop/mobile browser smoke tests, and GitHub Pages deployment. A successful build/deploy is not proof of authenticated customer E2E or of every business transaction.
+Latest main commit eb181b2 (2026-11-14) passed App static validation, including desktop/mobile browser smoke tests, and GitHub Pages deployment. A successful build/deploy is not proof of authenticated customer E2E or of every business transaction.
