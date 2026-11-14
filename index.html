@@ -1395,7 +1395,8 @@ function searchAdminModules(query){
   const module=(tile.getAttribute("onclick")||"").match(/openModule\('([^']+)'\)/)?.[1];
   const aliases=ADMIN_SEARCH_ALIASES[module]||[];
   const hay=normalizeAdminSearchText([title,desc,...aliases].join(" "));
-  const normalizedTitle=normalizeAdminSearchText(title);\n  const exact=normalizedTitle===q?100:0;
+  const normalizedTitle=normalizeAdminSearchText(title);
+  const exact=normalizedTitle===q?100:0;
   const starts=normalizedTitle.startsWith(q)?35:0;
   const includes=hay.includes(q)?25:0;
   const words=q.split(/\s+/).filter(Boolean);
