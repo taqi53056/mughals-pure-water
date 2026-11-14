@@ -25,6 +25,15 @@ const adminTiles = adminHome.match(/class="tile /g) || [];
 if (adminTiles.length !== 20) {
   throw new Error("Admin home must expose 20 distinct modules after duplicate report shortcut removal; found " + adminTiles.length);
 }
+const tileCategories = [...adminHome.matchAll(/<div class="tile [^"]*"[^>]*data-category="([^"]+)"/g)].map(match => match[1]);
+const categoryCounts = tileCategories.reduce((counts, category) => {
+  counts[category] = (counts[category] || 0) + 1;
+  return counts;
+}, {});
+if (categoryCounts.operations !== 6 || categoryCounts.inventory !== 4 ||
+    categoryCounts.finance !== 3 || categoryCounts.management !== 7) {
+  throw new Error("Admin modules must be grouped into 6 daily, 4 stock, 3 finance and 7 management actions");
+}
 const reportShortcuts = adminHome.match(/onclick="openModule\('(finance|reports)'\)"/g) || [];
 if (reportShortcuts.length !== 1) {
   throw new Error("Profit/loss and detailed reports must not appear as duplicate shortcuts");
