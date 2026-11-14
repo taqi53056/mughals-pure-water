@@ -50,6 +50,7 @@ if (appSource.includes("#adminPanel #homeTiles .tile:nth-child(1):before")) {
 }
 for (const required of [
   "function paymentMethodLabel(method)",
+  "paymentMethodLabel(paymentMethod)",
   'id="paymentMethod"',
   'payment_method:paymentMethod',
   'id="wlMethod"',
