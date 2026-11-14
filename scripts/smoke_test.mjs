@@ -74,7 +74,6 @@ for (const required of [
   'const previousNet=Number(previous.segments?.net_profit||0)',
   'Number(previous.segments?.finished_goods?.revenue||0)',
   'money(report.segments?.net_profit||0)',
-  'const [customerR,unassignedR,salesR,counterR,tankerR,expensesR,incomeR,dashboardR]=await Promise.all(['
 ]) {
   if (!appSource.includes(required)) {
     throw new Error("Today activity reliability improvement is missing: " + required);
