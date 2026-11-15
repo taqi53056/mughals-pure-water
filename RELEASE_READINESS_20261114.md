@@ -112,3 +112,42 @@ The app release at commit eb181b2 (2026-11-14) passed App static validation, inc
 - Follow-up entry-readiness repair: zero-quantity correction rows are excluded from the one-active-opening-stock-per-material unique index. The private atomic raw-material RPC's two opening-stock `ON CONFLICT` clauses were updated to match the revised partial-index predicate.
 - Verified the actual public atomic RPC as the fixed admin identity with a one-carton test payload inside a rollback-only transaction. It returned a new `primary_id` (192); post-rollback check confirms no test row persisted. Thus the next real opening-stock entry can be inserted without colliding with the zeroed historical row.
 - Second migration: `20261114183955_align_opening_stock_rpc_with_zero_correction_index_20261114`, mirrored in GitHub.
+
+
+## Follow-up audit — 2026-11-15: daily water rule and customer isolation
+
+### User-confirmed operating rule
+- A daily total water-litre entry includes all 19L bottles supplied that day.
+- The system counts customer and unassigned 19L deliveries for that date, multiplies by 19, and subtracts those litres from the daily total. Only the remainder is treated as counter water sold.
+- Counter revenue remains the amount collected for the remaining counter sale; 19L billing/collections remain separate.
+- Example verified from current records: Nov 14 daily total 600L; Waqqar Ahmad received 4 bottles = 76L; remaining counter water = 524L. Existing counter revenue Rs.1,220 and delivery records were preserved.
+
+### Implemented UI and database repairs
+- Reworked the admin daily-water form: it now asks for the full daily total (including 19L deliveries), displays an automatic breakdown of 19L bottles/litres and remaining counter litres, and asks only for counter-sale receipts.
+- Added client-side rejection when daily total is lower than 19L delivery litres, and server-side enforcement in the stock trigger. Save button is disabled during the async save; the daily unique-date upsert and duplicate-date edit check remain.
+- The counter receipt amount can be zero on a day with no counter revenue; its database check now allows zero.
+- Updated the monthly report so 19L water cost and remaining counter-water cost are allocated once, not double-counted. Stock estimates now subtract the daily total once rather than subtracting 19L deliveries again.
+- Aligned all shop-water guards and write paths: operational stock trigger, full-balance source guard, opening-stock guard, tanker-purchase update guard, production RPC, and unassigned-19L delivery RPC. If a daily-total row exists, 19L deliveries are not deducted a second time. A delivery added after a daily total must still fit within that total.
+- Migrations applied and recorded:
+  - `20261115154925_daily_total_water_includes_19l_deliveries_20261115`
+  - `20261115155140_align_shop_water_stock_guards_with_daily_totals_20261115`
+  - `20261115155311_require_daily_total_to_cover_19l_deliveries_20261115`
+- App source commits: `30c7505338d0fd51c8ba069f986f2ca1859b88ed`, `f953a6f19e2c2644694a708b1fa70fda7ea6fb8d`, and `34c1c4674267ac4507161b8aca2d6f55fd1281bc`.
+
+### Verification results
+- November 2026 report after correction: daily total 1,500L; 21 total 19L deliveries (4 customer + 17 unassigned) = 399L; remaining counter litres = 1,101L.
+- Water cost allocation: 19L delivery water Rs.478.80 + remaining counter water Rs.1,321.20 = Rs.1,800.00 total for 1,500L at Rs.1.20/L. Counter revenue remains Rs.3,640.
+- Corrected stock estimate: total water remaining 3,000L; shop-counter pool remaining 1,800L; product-filling pool remaining 1,200L. Shop-pool remainder remains an estimate.
+- Nov 14 record remains 600L / Rs.1,220; Waqqar's single delivery row remains 4 bottles. No business records were rewritten to make the new calculation work.
+- Negative test: attempting to save 50L daily total against 76L of 19L deliveries was rejected by the database. A no-op update with the valid 600L total passed.
+- Rollback-only tests passed for the unassigned-delivery RPC (one simulated bottle and Rs.20 worker labour), an existing unassigned delivery, a customer delivery under the fixed admin identity, and a tanker-rate update. The simulated unassigned row was rolled back; current counts remain 1 customer delivery, 4 unassigned deliveries, and 4 daily-water records.
+- Fresh customer-role RLS simulation: own customer=1, own profile=1, own delivery=1, own bill=1, own notifications=2; customer payments=0 because no payment rows exist. Audit log, workers, worker ledger, expenses, counter water, raw materials, and business finance all returned 0 rows.
+- Static source checks confirm that both portals start hidden; `loadApp()` requires profile role plus the database `is_admin()` allowlist before showing the admin panel; customer sessions show only the customer panel; `openModule()` blocks admin modules when a customer is signed in; admin tiles remain grouped with Operations as the default filter.
+- GitHub Actions for commit `d4a5700716055ff4aeffc8c384cb253331c72ebe` passed static validation, desktop/mobile Playwright smoke tests, and Pages deployment. The subsequent field-label-only commit `34c1c4674267ac4507161b8aca2d6f55fd1281bc` was still running its CI/Pages jobs when this note was prepared; verify those latest runs before claiming that exact commit is deployed.
+
+### Remaining release gates
+- A real customer login on a physical phone/browser is still required to confirm the visible screen. Database RLS simulation and browser smoke tests are not the same as a live customer login.
+- Physical push-notification delivery/display is still unconfirmed; prior HTTP 200 responses prove only that the Edge Function request completed.
+- Month-end billing and report cron jobs are active, but a full real month-end customer billing/notification cycle has not yet been observed.
+- Security Advisor still reports leaked-password protection disabled; the connected Supabase Free plan does not provide that feature. Health Advisor is clear.
+- Do not call the application fully production-verified until the real customer-device login, physical push display, and month-end flow have been tested.
