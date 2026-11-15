@@ -2744,7 +2744,7 @@ async function loadCounterWaterForDate(){
  $("counterMethod").value=data?.payment_method||"cash";
  await updateCounterWaterPreview();
  const saveButton=$("counterSaveButton");
- if(saveButton)saveButton.textContent=data?"روزانہ کا کُل اپڈیٹ کریں":"روزانہ کاؤنٹر فروخت محفوظ کریں";
+ if(saveButton)saveButton.textContent=data?"روزانہ کا کُل اپڈیٹ کریں":"روزانہ پانی کا حساب محفوظ کریں";
  const {data:history}=await db.from("counter_water_sales").select("*").order("sale_date",{ascending:false}).limit(30);
  $("moduleTable").innerHTML='<h3>روزانہ پانی کا ریکارڈ</h3><p class="muted">کسی دن کی تاریخ، لیٹر یا وصولی میں غلطی ہو تو اسی قطار سے "غلطی درست کریں" منتخب کریں۔ تبدیلی اسی روزانہ ریکارڈ میں ہوگی، نئی ڈپلیکیٹ انٹری نہیں بنے گی۔</p><table><tr><th>تاریخ</th><th>کل پانی (19L سمیت)</th><th>باقی کاؤنٹر فروخت کی وصولی</th><th>اصلاح</th></tr>'+
  (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td><button class="secondary" onclick="editCounterWaterSale(\''+esc(r.sale_date)+'\')">غلطی درست کریں</button></td></tr>').join("")+'</table>';
@@ -2759,31 +2759,43 @@ async function editCounterWaterSale(date){
  msg("منتخب دن کا اصل ریکارڈ کھل گیا ہے۔ مطلوبہ غلطی درست کرکے محفوظ کریں؛ ریکارڈ کی تاریخ بھی تبدیل کی جا سکتی ہے۔",true);
 }
 async function saveCounterWaterSale(){
+ const button=$("counterSaveButton");
+ if(button?.disabled)return;
  const sale_date=$("counterDate").value,total_litres=Number($("counterLitres").value),total_amount=Number($("counterAmount").value);
- if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<0){msg("تاریخ، روزانہ کل لیٹر اور کاؤنٹر وصولی درست درج کریں۔");return;}
- const usage=await getDaily19LWaterUsage(sale_date);
- if(total_litres<usage.litres){msg("روزانہ کل پانی "+total_litres+" لیٹر ہے، جبکہ 19L سپلائی میں "+usage.litres+" لیٹر استعمال ہوئے۔ کل پانی درست کریں۔");return;}
- if(!confirmLargeEntry("روزانہ کل پانی (19L سمیت)",total_litres,1000)||!confirmLargeEntry("باقی کاؤنٹر وصولی",total_amount,100000))return;
- const button=$("counterSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<0){
+  msg("تاریخ، روزانہ کل لیٹر اور کاؤنٹر وصولی درست درج کریں۔");return;
+ }
+ if(button)button.disabled=true;
  try{
+  const usage=await getDaily19LWaterUsage(sale_date);
+  if(total_litres<usage.litres){
+   msg("روزانہ کل پانی "+total_litres+" لیٹر ہے، جبکہ 19L سپلائی میں "+usage.litres+" لیٹر استعمال ہوئے۔ کل پانی درست کریں۔");return;
+  }
+  if(!confirmLargeEntry("روزانہ کل پانی (19L سمیت)",total_litres,1000)||!confirmLargeEntry("باقی کاؤنٹر وصولی",total_amount,100000))return;
   const payload={sale_date,total_litres,total_amount,payment_method:$("counterMethod").value,entered_by:user?.id||null};
   let saved;
   if(window.currentCounterWaterRecordId){
    const duplicate=await db.from("counter_water_sales").select("id").eq("sale_date",sale_date).neq("id",window.currentCounterWaterRecordId).maybeSingle();
    if(duplicate.error)throw duplicate.error;
-   if(duplicate.data)throw new Error("اس نئی تاریخ کا کاؤنٹر ریکارڈ پہلے سے موجود ہے۔ پہلے اسی تاریخ کا ریکارڈ کھولیں؛ دو دن کا حساب ایک ریکارڈ میں ضم نہیں کیا گیا۔");
+   if(duplicate.data)throw new Error("اس نئی تاریخ کا روزانہ پانی ریکارڈ پہلے سے موجود ہے۔ اسی تاریخ کا ریکارڈ کھول کر درست کریں؛ ڈپلیکیٹ انٹری نہیں بنائی گئی۔");
    const result=await db.from("counter_water_sales").update(payload).eq("id",window.currentCounterWaterRecordId).select("id").maybeSingle();
-   if(result.error)throw result.error;if(!result.data)throw new Error("اصل کاؤنٹر ریکارڈ اپڈیٹ نہیں ہوا؛ دوبارہ لوڈ کریں۔");saved=result.data;
+   if(result.error)throw result.error;
+   if(!result.data)throw new Error("اصل روزانہ پانی ریکارڈ اپڈیٹ نہیں ہوا؛ دوبارہ لوڈ کریں۔");
+   saved=result.data;
   }else{
    const result=await db.from("counter_water_sales").upsert(payload,{onConflict:"sale_date"}).select("id").maybeSingle();
-   if(result.error)throw result.error;saved=result.data;
+   if(result.error)throw result.error;
+   saved=result.data;
   }
-  if(!saved?.id)throw new Error("کاؤنٹر ریکارڈ محفوظ ہونے کی تصدیق نہیں ہوئی۔");
+  if(!saved?.id)throw new Error("روزانہ پانی ریکارڈ محفوظ ہونے کی تصدیق نہیں ہوئی۔");
   window.currentCounterWaterRecordId=Number(saved.id);
   msg("روزانہ پانی کا کُل حساب محفوظ/اپڈیٹ ہوگیا۔ 19L سپلائی کے لیٹر خود منہا کیے گئے۔",true);
   await loadCounterWaterForDate();await loadTodaySummary();
- }catch(error){msg("کاؤنٹر فروخت محفوظ نہیں ہوئی: "+(error?.message||String(error)));}
- finally{if(button)button.disabled=false;}
+ }catch(error){
+  msg("روزانہ پانی کا حساب محفوظ نہیں ہوا: "+(error?.message||String(error)));
+ }finally{
+  if(button)button.disabled=false;
+ }
 }
 
 async function unassigned19lModule(){
