@@ -2705,16 +2705,34 @@ async function loadTankerPurchases(){
  (rows||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||esc(r.water_use))+' — خریداری</td><td>'+fmtLitres(Number(r.tanker_count)*1000)+'</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td><td>'+({"cash":"نقد","bank":"بینک","jazzcash":"جاز کیش","easypaisa":"ایزی پیسہ","other":"دیگر"}[r.payment_method]||esc(r.payment_method||"—"))+(r.details?" — "+esc(r.details):"") +'</td></tr>').join("")+
  '</table></div>';
 }
+async function getDaily19LWaterUsage(date){
+ const [customers,unassigned]=await Promise.all([
+  db.from("customer_19l_deliveries").select("bottles_delivered").eq("delivery_date",date),
+  db.from("unassigned_19l_deliveries").select("bottles_delivered").eq("delivery_date",date)
+ ]);
+ if(customers.error)throw customers.error;if(unassigned.error)throw unassigned.error;
+ const bottles=[...(customers.data||[]),...(unassigned.data||[])].reduce((n,r)=>n+(Number(r.bottles_delivered)||0),0);
+ return {bottles,litres:bottles*19};
+}
+async function updateCounterWaterPreview(){
+ const date=$("counterDate")?.value,box=$("counterWaterPreview");if(!date||!box)return;
+ const total=Number($("counterLitres")?.value)||0;
+ try{
+  const usage=await getDaily19LWaterUsage(date),remaining=total-usage.litres;
+  box.innerHTML='<b>روزانہ پانی کا خودکار حساب</b><div>19L سپلائی: <b>'+usage.bottles+' بوتلیں = '+usage.litres.toLocaleString("en-PK")+' لیٹر</b></div><div>کل روزانہ پانی: <b>'+total.toLocaleString("en-PK")+' لیٹر</b></div><div>باقی کاؤنٹر فروخت: <b>'+Math.max(remaining,0).toLocaleString("en-PK")+' لیٹر</b></div>'+(remaining<0?'<p class="error">غلطی: کل روزانہ پانی 19L سپلائی کے پانی سے کم ہے۔</p>':'');
+ }catch(e){box.textContent="19L سپلائی کا حساب لوڈ نہیں ہوسکا: "+(e?.message||String(e));}
+}
+
 async function counterWaterModule(){
- setTitle("19L کاؤنٹر فروخت");
+ setTitle("روزانہ پانی کا حساب");
  $("moduleBody").innerHTML=
- '<p class="muted">صرف دکان کی الگ کاؤنٹر فروخت کے کُل لیٹر اور وصول شدہ رقم درج کریں۔ 19L ڈیلیوری کی بوتلیں اور ان کی وصولی یہاں شامل نہ کریں؛ وہ ڈیلیوری ماڈیول میں الگ درج ہوتی ہیں اور پانی کے اسٹاک میں خود شمار ہوتی ہیں۔ کاؤنٹر پر ڈھکنوں کی فروخت کی الگ گنتی ضروری نہیں۔</p>'+
- '<div class="card"><input id="counterDate" type="date" value="'+today()+'">'+
- '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="آج الگ کاؤنٹر سے کتنے لیٹر فروخت ہوئے؟">'+
- '<input id="counterAmount" type="number" min="0.01" step="0.01" placeholder="آج پانی کی کُل وصول شدہ رقم؟">'+
+ '<p class="muted">روزانہ آنے اور استعمال ہونے والے پانی کے کل لیٹر درج کریں؛ اس میں تمام 19L سپلائی بھی شامل ہوگی۔ نظام اسی تاریخ کی کسٹمر اور غیر منسلک سپلائی کی بوتلیں خود گن کر 19 لیٹر فی بوتل منہا کرے گا۔ رقم صرف باقی کاؤنٹر فروخت کی درج کریں۔</p>'+
+ '<div class="card"><label for="counterDate">تاریخ</label><input id="counterDate" type="date" value="'+today()+'"><label for="counterLitres">روزانہ کل پانی (19L سپلائی سمیت، لیٹر)</label>'+
+ '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="مثلاً 800 — پورے دن کا کل پانی">'+
+ '<div id="counterWaterPreview" class="stat">تاریخ کی 19L سپلائی گنتی کے بعد باقی لیٹر خود دکھائے جائیں گے۔</div><label for="counterAmount">باقی کاؤنٹر فروخت کی وصول شدہ رقم (روپے)</label><input id="counterAmount" type="number" min="0" step="0.01" placeholder="صرف باقی پانی کی فروخت کی رقم">'+
  '<select id="counterMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="mixed">مختلف ذرائع</option></select>'+
- '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ کاؤنٹر فروخت محفوظ کریں</button></div>';
- $("counterDate").addEventListener("change",loadCounterWaterForDate);await loadCounterWaterForDate();
+ '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ پانی کا حساب محفوظ کریں</button></div>';
+ $("counterDate").addEventListener("change",loadCounterWaterForDate);$("counterLitres").addEventListener("input",updateCounterWaterPreview);await loadCounterWaterForDate();
 }
 async function loadCounterWaterForDate(){
  const date=$("counterDate").value;
@@ -2724,11 +2742,12 @@ async function loadCounterWaterForDate(){
  $("counterLitres").value=data?.total_litres??"";
  $("counterAmount").value=data?.total_amount??"";
  $("counterMethod").value=data?.payment_method||"cash";
+ await updateCounterWaterPreview();
  const saveButton=$("counterSaveButton");
  if(saveButton)saveButton.textContent=data?"روزانہ کا کُل اپڈیٹ کریں":"روزانہ کاؤنٹر فروخت محفوظ کریں";
  const {data:history}=await db.from("counter_water_sales").select("*").order("sale_date",{ascending:false}).limit(30);
- $("moduleTable").innerHTML='<h3>روزانہ کاؤنٹر پانی کی فروخت</h3><p class="muted">کسی دن کی تاریخ، لیٹر یا وصولی میں غلطی ہو تو اسی قطار سے "غلطی درست کریں" منتخب کریں۔ تبدیلی اسی روزانہ ریکارڈ میں ہوگی، نئی ڈپلیکیٹ انٹری نہیں بنے گی۔</p><table><tr><th>تاریخ</th><th>لیٹر</th><th>پانی کی وصولی</th><th>فی لیٹر اوسط</th><th>اصلاح</th></tr>'+
- (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td>'+money(Number(r.total_amount)/Number(r.total_litres))+'</td><td><button class="secondary" onclick="editCounterWaterSale(\''+esc(r.sale_date)+'\')">غلطی درست کریں</button></td></tr>').join("")+'</table>';
+ $("moduleTable").innerHTML='<h3>روزانہ پانی کا ریکارڈ</h3><p class="muted">کسی دن کی تاریخ، لیٹر یا وصولی میں غلطی ہو تو اسی قطار سے "غلطی درست کریں" منتخب کریں۔ تبدیلی اسی روزانہ ریکارڈ میں ہوگی، نئی ڈپلیکیٹ انٹری نہیں بنے گی۔</p><table><tr><th>تاریخ</th><th>کل پانی (19L سمیت)</th><th>باقی کاؤنٹر فروخت کی وصولی</th><th>اصلاح</th></tr>'+
+ (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td><button class="secondary" onclick="editCounterWaterSale(\''+esc(r.sale_date)+'\')">غلطی درست کریں</button></td></tr>').join("")+'</table>';
 }
 async function editCounterWaterSale(date){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(date||""))){msg("ریکارڈ کی تاریخ درست نہیں۔");return;}
@@ -2741,8 +2760,10 @@ async function editCounterWaterSale(date){
 }
 async function saveCounterWaterSale(){
  const sale_date=$("counterDate").value,total_litres=Number($("counterLitres").value),total_amount=Number($("counterAmount").value);
- if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<=0){msg("تاریخ، پانی کے لیٹر اور پانی کی وصول شدہ رقم درست درج کریں۔");return;}
- if(!confirmLargeEntry("کاؤنٹر فروخت کے لیٹر",total_litres,1000)||!confirmLargeEntry("پانی کی وصول شدہ رقم",total_amount,100000))return;
+ if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<0){msg("تاریخ، روزانہ کل لیٹر اور کاؤنٹر وصولی درست درج کریں۔");return;}
+ const usage=await getDaily19LWaterUsage(sale_date);
+ if(total_litres<usage.litres){msg("روزانہ کل پانی "+total_litres+" لیٹر ہے، جبکہ 19L سپلائی میں "+usage.litres+" لیٹر استعمال ہوئے۔ کل پانی درست کریں۔");return;}
+ if(!confirmLargeEntry("روزانہ کل پانی (19L سمیت)",total_litres,1000)||!confirmLargeEntry("باقی کاؤنٹر وصولی",total_amount,100000))return;
  const button=$("counterSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
   const payload={sale_date,total_litres,total_amount,payment_method:$("counterMethod").value,entered_by:user?.id||null};
@@ -2759,7 +2780,7 @@ async function saveCounterWaterSale(){
   }
   if(!saved?.id)throw new Error("کاؤنٹر ریکارڈ محفوظ ہونے کی تصدیق نہیں ہوئی۔");
   window.currentCounterWaterRecordId=Number(saved.id);
-  msg("روزانہ کاؤنٹر پانی کی فروخت محفوظ/اپڈیٹ ہوگئی۔",true);
+  msg("روزانہ پانی کا کُل حساب محفوظ/اپڈیٹ ہوگیا۔ 19L سپلائی کے لیٹر خود منہا کیے گئے۔",true);
   await loadCounterWaterForDate();await loadTodaySummary();
  }catch(error){msg("کاؤنٹر فروخت محفوظ نہیں ہوئی: "+(error?.message||String(error)));}
  finally{if(button)button.disabled=false;}
