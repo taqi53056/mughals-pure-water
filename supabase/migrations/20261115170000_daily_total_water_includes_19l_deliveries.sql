@@ -27,6 +27,7 @@ begin
 
   v_new := v_def;
 
+  if position('greatest(v_counter_litres-v_used_water,0)*coalesce(v_shop_water_rate,0)' in v_def)=0 then
   v_old := $x$v_counter_litres*coalesce(v_shop_water_rate,0)$x$;
   if (length(v_new)-length(replace(v_new,v_old,'')))/length(v_old) <> 4 then
     raise exception 'Unexpected counter water cost expression count';
@@ -104,6 +105,8 @@ begin
     raise exception 'Monthly report water note not found';
   end if;
   v_new := replace(v_new,v_old,$x$روزانہ کل پانی میں 19L سپلائی بھی شامل ہے؛ رپورٹ 19L کے لیٹر منہا کرکے باقی کاؤنٹر فروخت اور اس کی تخمینی لاگت دکھاتی ہے۔$x$);
+
+  end if;
 
   execute v_new;
 end
