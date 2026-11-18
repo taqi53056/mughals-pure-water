@@ -2447,7 +2447,7 @@ function updateRawStickerPurchaseUI(){
  const isSticker=type==="sticker_500ml"||type==="sticker_1_5l_6l";
  const qty=$("rawPurchaseQty"),amount=$("rawPurchaseAmount"),preview=$("rawStickerCostPreview");
  if(qty){qty.step=isSticker?"0.001":"1";qty.min=isSticker?"0.001":"1";qty.placeholder=isSticker?"وزن کلوگرام (مثلاً 1 یا 0.5) *":"مقدار: بوتل / کارٹن / بنڈل / عدد *";}
- if(amount)amount.placeholder=isSticker?"فی کلو قیمت (روپے) *":"کل ادا شدہ رقم / ابتدائی مالیت (روپے) *";
+ if(amount)amount.placeholder=isSticker?"فی کلو قیمت (موجودہ شرح 1,500 روپے) *":"کل ادا شدہ رقم / ابتدائی مالیت (روپے) *";
  if(preview){
   const kg=Number(qty?.value)||0,rate=Number(amount?.value)||0,kind=$("rawPurchaseKind")?.value||"purchase";
   preview.classList.toggle("hidden",!isSticker||kind==="free_claim"||kg<=0||rate<=0);
