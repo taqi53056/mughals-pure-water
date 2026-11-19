@@ -4334,7 +4334,6 @@ async function settingsModule(){
  ]);
  if(pe||ae||we){$("settingsStatus").textContent="ترتیبات مکمل لوڈ نہیں ہوئیں: "+(pe||ae||we).message;return;}
  const productRows=(products||[]).map(p=>{
-  const floor=p.product_type==="6L"?55:280;
   const carton=p.product_type!=="6L";
   return `<tr>
    <td>${esc(p.product_type)}</td>
