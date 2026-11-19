@@ -3132,12 +3132,12 @@ async function salesModule(){
  <option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
  <select id="saleWorker"><option value="">ورکر مقرر نہیں — بچت شمار نہیں ہوگی</option></select>
  <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview(true,false)">
- <input id="saleUnitPrice" type="number" min="55" step="1" value="${default500}" placeholder="اصل فی کارٹن / بوتل قیمت" oninput="salePricePreview(false,false)">
+ <input id="saleUnitPrice" type="number" min="0.01" step="0.01" value="${default500}" placeholder="اصل فی کارٹن / بوتل قیمت" oninput="salePricePreview(false,false)">
  <select id="salePaymentMethod" onchange="toggleSaleCreditFields()"><option value="cash">نقد وصولی</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option><option value="credit">ادھار — منظور شدہ دکان</option></select><div id="saleCreditFields" class="hidden"><select id="saleCreditStore" required><option value="">منظور شدہ دکان منتخب کریں</option></select><p class="muted">ادھار صرف فعال اور ایڈمن سے منظور شدہ دکان کو دیا جا سکتا ہے؛ کوئی خودکار کریڈٹ حد نہیں۔ وصولی اسی سیل کے کھاتے میں درج ہوگی۔</p></div>
  <div class="stat">فی یونٹ قیمت: <b id="salePrice">Rs. ${default500}</b></div>
  <div class="stat" id="saleSpecialNote">100 یا زیادہ کارٹن پر مقررہ خصوصی قیمت خود منتخب ہوگی۔</div>
  <div class="total">کل رقم: <span id="saleTotal">Rs. 0</span></div>
- <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.270 فی کارٹن ہے؛ عمومی قیمت Rs.280 اور خصوصی قیمت Rs.270 ہے۔ 6L کی کم از کم قیمت Rs.55 فی بوتل ہے؛ اصل فروخت قیمت درج کریں۔</p>
+ <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.270 فی کارٹن ہے؛ عمومی قیمت Rs.280 اور خصوصی قیمت Rs.270 ہے۔ 6L کے لیے صرف بوتلوں کی تعداد اور اصل فی بوتل قیمت درج کریں؛ کل رقم خودکار بنے گی۔</p>
  <button onclick="saveSale()">سیل محفوظ کریں</button>
  <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button><button class="secondary" onclick="storeCreditModule()">منظور شدہ دکانیں / ادھار وصولی</button>`;
  salePricePreview(false,true);
@@ -3161,7 +3161,7 @@ function salePricePreview(autoSpecial=false,resetDefault=false){
  $("saleUnitPrice").disabled=false;
  if(is6){
   const current=Number($("saleUnitPrice").value);
-  if(resetDefault||!Number.isFinite(current)||current<55)$("saleUnitPrice").value="55";
+  if(resetDefault||!Number.isFinite(current)||current<=0)$("saleUnitPrice").value="";
  }else{
   const defaultRate=Number(setting.default_rate)||280;
   if(resetDefault||!Number.isFinite(Number($("saleUnitPrice").value))||Number($("saleUnitPrice").value)<270){
@@ -3179,7 +3179,7 @@ function salePricePreview(autoSpecial=false,resetDefault=false){
  const bulkOrder=Number($("saleQty").value)>=100;
  const specialSelected=!is6&&bulkOrder&&special!==null&&Number($("saleUnitPrice").value)===special;
  $("saleSpecialNote").textContent=is6
-  ?"6L کی کم از کم قیمت Rs.55 فی بوتل ہے؛ اصل قیمت درج کریں۔"
+  ?"6L کی اصل فی بوتل قیمت درج کریں؛ کوئی مقررہ کم از کم ریٹ نہیں۔"
   :bulkOrder&&special!==null
    ?(specialSelected?"100 یا زیادہ کارٹن: خصوصی قیمت "+money(special)+" منتخب ہے۔":"100 یا زیادہ کارٹن: خصوصی قیمت "+money(special)+" دستیاب ہے؛ فی الحال درج شدہ قیمت استعمال ہوگی۔")
    :"100 یا زیادہ کارٹن پر اگر خصوصی قیمت مقرر ہو تو وہ خود منتخب ہوگی۔";
@@ -3188,7 +3188,7 @@ function salePricePreview(autoSpecial=false,resetDefault=false){
 async function saveSale(){
  const c=getSaleCalc(),button=document.querySelector('button[onclick="saveSale()"]');
  if(!Number.isInteger(c.qty)||c.qty<=0){msg("کارٹن یا 6L بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
- if((c.type==="6L"&&(!Number.isFinite(c.price)||c.price<55))||(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<270))){msg(c.type==="6L"?"6L کی قیمت کم از کم 55 روپے فی بوتل ہونی چاہیے۔":"500ml اور 1.5L کی قیمت کم از کم 270 روپے فی کارٹن ہونی چاہیے۔");return}
+ if((c.type==="6L"&&(!Number.isFinite(c.price)||c.price<=0))||(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<270))){msg(c.type==="6L"?"6L کی فی بوتل قیمت صفر سے زیادہ درج کریں۔":"500ml اور 1.5L کی قیمت کم از کم 270 روپے فی کارٹن ہونی چاہیے۔");return}
  if(c.type!=="6L"){
   const setting=saleSettings[c.type]||{};
   const defaultRate=Number(setting.default_rate);
