@@ -2720,15 +2720,27 @@ async function getDaily19LWaterUsage(date){
 async function updateCounterWaterPreview(){
  const date=$("counterDate")?.value,box=$("counterWaterPreview");if(!date||!box)return;
  try{
-  const [usage,receiptsResult]=await Promise.all([
+  const [usage,receiptsResult,deliveriesResult]=await Promise.all([
    getDaily19LWaterUsage(date),
-   db.from("unassigned_19l_delivery_collections").select("amount").eq("received_date",date)
+   db.from("unassigned_19l_delivery_collections").select("amount").eq("received_date",date),
+   db.from("unassigned_19l_deliveries").select("id,bottles_delivered,damaged_caps").eq("delivery_date",date)
   ]);
   if(receiptsResult.error)throw receiptsResult.error;
+  if(deliveriesResult.error)throw deliveriesResult.error;
   const receipts=(receiptsResult.data||[]).reduce((n,r)=>n+(Number(r.amount)||0),0);
+  const deliveries=deliveriesResult.data||[];
+  let unassignedBilled=deliveries.reduce((n,r)=>n+(Number(r.bottles_delivered)||0)*100+(Number(r.damaged_caps)||0)*10,0);
+  let unassignedPaid=0;
+  if(deliveries.length){
+   const linked=await db.from("unassigned_19l_delivery_collections").select("delivery_id,amount").in("delivery_id",deliveries.map(r=>r.id)).lte("received_date",date);
+   if(linked.error)throw linked.error;
+   unassignedPaid=(linked.data||[]).reduce((n,r)=>n+(Number(r.amount)||0),0);
+  }
+  const unassignedDue=Math.max(unassignedBilled-unassignedPaid,0);
   const raw=$("counterAmount")?.value??"",gross=raw.trim()===""?null:Number(raw);
   let html='<b>خودکار حساب</b><div>آج کی 19L سپلائی: <b>'+usage.bottles+' بوتلیں = '+usage.litres.toLocaleString("en-PK")+' لیٹر</b></div>'+
-   '<div>آج وصول شدہ غیر منسلک سپلائی: <b>'+money(receipts)+'</b></div>';
+   '<div>آج وصول شدہ غیر منسلک سپلائی (تمام طریقے): <b>'+money(receipts)+'</b></div>'+
+   '<div>آج کی غیر منسلک سپلائی کا بقایا: <b>'+money(unassignedDue)+'</b></div>';
   if(gross===null||!Number.isFinite(gross)||gross<0){
    html+='<div>کل وصولی درج کریں؛ دوسری مصنوعات کی فروخت اس رقم میں شامل نہ کریں۔</div>';
   }else{
@@ -3351,7 +3363,7 @@ async function loadTodaySummary(){
  const sales=sum(salesR,"total_amount");
  const counterAmount=sum(counterR,"total_amount");
  const dailyWaterSegment=dashboardR?.data?.profit_and_loss?.segments?.["19L"]||{};
- const counterLitres=counterR.error?null:Number(dailyWaterSegment.counter_water_litres||0);
+ const counterLitres=counterR.error||dashboardR?.error?null:Number(dailyWaterSegment.counter_water_litres||0);
  const counterBottles=counterLitres===null?null:Number(dailyWaterSegment.counter_bottles_estimated??(counterLitres/19));
  const hasNewCounterEntry=!counterR.error&&counterR.rows.some(r=>r.reported_total_amount!==null&&r.reported_total_amount!==undefined);
  const counterGross=hasNewCounterEntry?counterR.rows.reduce((n,r)=>n+Number(r.reported_total_amount||0),0):null;
