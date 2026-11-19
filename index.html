@@ -2749,7 +2749,7 @@ async function updateCounterWaterPreview(){
     '<div>غیر منسلک وصولی منہا کرنے کے بعد کاؤنٹر رقم: <b>'+money(counter)+'</b></div>'+
     '<div>19L کاؤنٹر بوتلیں: <b>'+ (counter>=0?bottles.toLocaleString("en-PK",{maximumFractionDigits:2}):"—") +' (تخمینہ)</b></div>'+
     '<div>کاؤنٹر پانی: <b>'+ (counter>=0?litres.toLocaleString("en-PK",{maximumFractionDigits:2}):"—") +' لیٹر (تخمینہ)</b></div>'+
-    '<div>19L سپلائی سمیت کل پانی کا تخمینہ: <b>'+ (counter>=0?total.toLocaleString("en-PK",{maximumFractionDigits:2}):"—") +' لیٹر</b></div>'+
+    '<div>19L سیکشن کا مجموعی پانی (کاؤنٹر + سپلائی): <b>'+ (counter>=0?total.toLocaleString("en-PK",{maximumFractionDigits:2}):"—") +' لیٹر</b></div>'+
     (counter<0?'<p class="error">غلطی: مجموعی وصولی آج کی غیر منسلک سپلائی وصولی سے کم ہے۔ رقم درست کریں۔</p>':"");
   }
   box.innerHTML=html;
