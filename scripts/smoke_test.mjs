@@ -214,7 +214,7 @@ for (const required of [
 for (const required of [
   'sticker_500ml:"kg"',
   'sticker_1_5l_6l:"kg"',
-  "rawMaterialYieldPerKg=Object.freeze({sticker_500ml:1900,sticker_1_5l_6l:1200})",
+  "rawMaterialYieldPerKg=Object.freeze({sticker_500ml:1900,sticker_1_5l_6l:1100})",
   "Number(x.quantity||0)*(rawMaterialYieldPerKg[key]||1)",
   "kg*rawMaterialYieldPerKg[type]",
   "فی کلو قیمت (روپے)"
