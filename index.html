@@ -1471,7 +1471,7 @@ const MPW_FIELD_LABELS = {
  adjDate:"درستگی کی تاریخ", adjType:"پروڈکٹ", adjDirection:"اسٹاک میں تبدیلی", adjQty:"درستگی کی مقدار", adjReason:"درستگی کی وجہ",
  rawPurchaseDate:"اندراج کی تاریخ", rawPurchaseKind:"اندراج کی قسم", rawPurchaseType:"خام مال کی قسم", rawPurchaseQty:"مقدار", rawPurchaseAmount:"کل رقم یا ابتدائی مالیت (روپے)", rawPurchaseMethod:"ادائیگی کا طریقہ", rawPurchaseDetails:"بل نمبر / اضافی تفصیل (اختیاری)",
  waterUse:"پانی کا استعمال", tankEntryKind:"اندراج کی قسم", tankDate:"تاریخ", tankCount:"ٹینکروں کی تعداد", tankRate:"فی 1,000 لیٹر ٹینکر کی قیمت",  tankPaymentMethod:"ادائیگی کا طریقہ", tankOpeningLitres:"ابتدائی پانی (لیٹر)", tankOpeningValue:"ابتدائی پانی کی کل مالیت (روپے)",
- counterDate:"تاریخ", counterLitres:"روزانہ کل پانی (19L سپلائی سمیت، لیٹر)", counterAmount:"باقی کاؤنٹر فروخت کی وصول شدہ رقم (روپے)", counterMethod:"باقی کاؤنٹر فروخت کی وصولی کا طریقہ",
+ counterDate:"تاریخ", counterLitres:"19L کاؤنٹر پانی کا خودکار تخمینہ", counterAmount:"آج کی مجموعی 19L وصولی (روپے)", counterMethod:"تمام ادائیگی طریقے شامل",
  returnDate:"واپسی کی تاریخ", returnType:"پروڈکٹ", returnQty:"خراب بوتلوں کی تعداد", returnReason:"واپسی کی وجہ",
  saleDate:"سیل کی تاریخ", saleType:"پروڈکٹ", saleWorker:"سیل / لوڈنگ ورکر", saleQty:"مقدار", saleUnitPrice:"فی یونٹ فروخت قیمت (روپے)", salePaymentMethod:"وصولی کا طریقہ",
  mDate:"تاریخ", mCategory:"آمدن / خرچ کی مد", mSegment:"خرچ کس شعبے سے متعلق ہے؟", mMethod:"ادائیگی کا طریقہ", mAmount:"رقم (روپے)", mDetails:"تفصیل (اختیاری)",
@@ -2739,7 +2739,7 @@ async function updateCounterWaterPreview(){
   const unassignedDue=Math.max(unassignedBilled-unassignedPaid,0);
   const raw=$("counterAmount")?.value??"",gross=raw.trim()===""?null:Number(raw);
   let html='<b>خودکار حساب</b><div>آج کی 19L سپلائی: <b>'+usage.bottles+' بوتلیں = '+usage.litres.toLocaleString("en-PK")+' لیٹر</b></div>'+
-   '<div>آج وصول شدہ غیر منسلک سپلائی (تمام طریقے): <b>'+money(receipts)+'</b></div>'+
+   '<div>آج وصول شدہ غیر منسلک سپلائی (سپلائی ماڈیول میں درج، تمام طریقے): <b>'+money(receipts)+'</b></div>'+
    '<div>آج کی غیر منسلک سپلائی کا بقایا: <b>'+money(unassignedDue)+'</b></div>';
   if(gross===null||!Number.isFinite(gross)||gross<0){
    html+='<div>کل وصولی درج کریں؛ دوسری مصنوعات کی فروخت اس رقم میں شامل نہ کریں۔</div>';
@@ -2758,7 +2758,7 @@ async function updateCounterWaterPreview(){
 async function counterWaterModule(){
  setTitle("روزانہ 19L کاؤنٹر وصولی");
  $("moduleBody").innerHTML=
-  '<p class="muted">صرف آج کی مجموعی 19L وصولی درج کریں: کاؤنٹر پر فروخت + آج وصول شدہ غیر منسلک سپلائی۔ 500ml، 1.5L اور 6L کی فروخت یہاں شامل نہ کریں۔ غیر منسلک سپلائی کی غیر وصول شدہ رقم خود منہا نہیں ہوگی؛ وہ بقایا رہے گی۔</p>'+
+  '<p class="muted">صرف آج کی مجموعی 19L وصولی درج کریں: کاؤنٹر پر فروخت + سپلائی ماڈیول میں آج درج وصول شدہ غیر منسلک رقم۔ 500ml، 1.5L اور 6L کی فروخت یہاں شامل نہ کریں۔ غیر منسلک سپلائی کی غیر وصول شدہ رقم خود منہا نہیں ہوگی؛ وہ بقایا رہے گی۔</p>'+
   '<div class="card"><label for="counterDate">تاریخ</label><input id="counterDate" type="date" value="'+today()+'">'+
   '<label for="counterAmount">آج کی مجموعی 19L وصولی (روپے)</label><input id="counterAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="مثلاً 1300">'+
   '<div id="counterWaterPreview" class="stat">رقم درج کرنے پر غیر منسلک وصولی منہا کرکے کاؤنٹر بوتلیں اور پانی خود تخمینہ ہوگا۔</div>'+
