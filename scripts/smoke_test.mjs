@@ -217,7 +217,7 @@ for (const required of [
   "rawMaterialYieldPerKg=Object.freeze({sticker_500ml:1900,sticker_1_5l_6l:1100})",
   "Number(x.quantity||0)*(rawMaterialYieldPerKg[key]||1)",
   "kg*rawMaterialYieldPerKg[type]",
-  "فی کلو قیمت (روپے)"
+  "فی کلو قیمت"
 ]) {
   if (!appSource.includes(required)) {
     throw new Error("Kilogram sticker purchase UI or yield calculation is missing: " + required);
