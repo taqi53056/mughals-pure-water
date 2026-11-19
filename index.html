@@ -2671,7 +2671,7 @@ async function loadTankerPurchases(){
    financeFetchAll("water_opening_stock","*","as_of_date",null,null),
    financeFetchAll("production","product_type,quantity,production_date","production_date",null,null),
    financeFetchAll("customer_19l_deliveries","bottles_delivered,delivery_date","delivery_date",null,null),
-   financeFetchAll("counter_water_sales","total_litres,sale_date","sale_date",null,null),
+   financeFetchAll("counter_water_sales","total_litres,counter_water_litres,sale_date","sale_date",null,null),
    financeFetchAll("unassigned_19l_deliveries","bottles_delivered,delivery_date","delivery_date",null,null)
   ]);
  }catch(e){$("moduleTable").textContent="پانی کا ریکارڈ / بیلنس لوڈ نہیں ہوا: "+(e?.message||String(e));return;}
@@ -2685,8 +2685,11 @@ async function loadTankerPurchases(){
  const sum=(list,fn)=>list.reduce((n,r)=>n+Number(fn(r)||0),0);
  const tankerLitres=use=>sum(rows.filter(r=>r.water_use===use),r=>Number(r.tanker_count)*1000);
  const openingLitres=use=>sum(opening.filter(r=>r.water_use===use),r=>r.litres);
+ const deliveryLitresByDate=new Map();
+ [...deliveries,...unassigned].forEach(r=>deliveryLitresByDate.set(r.delivery_date,(deliveryLitresByDate.get(r.delivery_date)||0)+Number(r.bottles_delivered||0)*19));
+ const counterWaterLitres=sum(counterSales,r=>r.counter_water_litres!==null&&r.counter_water_litres!==undefined?r.counter_water_litres:Math.max(Number(r.total_litres||0)-(deliveryLitresByDate.get(r.sale_date)||0),0));
  const shopConsumed=sum(deliveries,r=>Number(r.bottles_delivered)*19)
-  +sum(counterSales,r=>r.total_litres)
+  +counterWaterLitres
   +sum(prod.filter(r=>r.product_type==="6L"),r=>Number(r.quantity)*6)
   +sum(unassigned,r=>Number(r.bottles_delivered)*19);
  const fillingConsumed=sum(prod.filter(r=>r.product_type==="500ml"),r=>Number(r.quantity)*12)
@@ -2716,83 +2719,98 @@ async function getDaily19LWaterUsage(date){
 }
 async function updateCounterWaterPreview(){
  const date=$("counterDate")?.value,box=$("counterWaterPreview");if(!date||!box)return;
- const total=Number($("counterLitres")?.value)||0;
  try{
-  const usage=await getDaily19LWaterUsage(date),remaining=total-usage.litres;
-  box.innerHTML='<b>روزانہ پانی کا خودکار حساب</b><div>19L سپلائی: <b>'+usage.bottles+' بوتلیں = '+usage.litres.toLocaleString("en-PK")+' لیٹر</b></div><div>کل روزانہ پانی: <b>'+total.toLocaleString("en-PK")+' لیٹر</b></div><div>باقی کاؤنٹر فروخت: <b>'+Math.max(remaining,0).toLocaleString("en-PK")+' لیٹر</b></div>'+(remaining<0?'<p class="error">غلطی: کل روزانہ پانی 19L سپلائی کے پانی سے کم ہے۔</p>':'');
- }catch(e){box.textContent="19L سپلائی کا حساب لوڈ نہیں ہوسکا: "+(e?.message||String(e));}
+  const [usage,receiptsResult]=await Promise.all([
+   getDaily19LWaterUsage(date),
+   db.from("unassigned_19l_delivery_collections").select("amount").eq("received_date",date)
+  ]);
+  if(receiptsResult.error)throw receiptsResult.error;
+  const receipts=(receiptsResult.data||[]).reduce((n,r)=>n+(Number(r.amount)||0),0);
+  const raw=$("counterAmount")?.value??"",gross=raw.trim()===""?null:Number(raw);
+  let html='<b>خودکار حساب</b><div>آج کی 19L سپلائی: <b>'+usage.bottles+' بوتلیں = '+usage.litres.toLocaleString("en-PK")+' لیٹر</b></div>'+
+   '<div>آج وصول شدہ غیر منسلک سپلائی: <b>'+money(receipts)+'</b></div>';
+  if(gross===null||!Number.isFinite(gross)||gross<0){
+   html+='<div>کل وصولی درج کریں؛ دوسری مصنوعات کی فروخت اس رقم میں شامل نہ کریں۔</div>';
+  }else{
+   const counter=gross-receipts,bottles=counter/50,litres=bottles*19,total=usage.litres+litres;
+   html+='<div>آپ کی بتائی ہوئی مجموعی وصولی: <b>'+money(gross)+'</b></div>'+
+    '<div>غیر منسلک وصولی منہا کرنے کے بعد کاؤنٹر رقم: <b>'+money(counter)+'</b></div>'+
+    '<div>19L کاؤنٹر بوتلیں: <b>'+ (counter>=0?bottles.toLocaleString("en-PK",{maximumFractionDigits:2}):"—") +' (تخمینہ)</b></div>'+
+    '<div>کاؤنٹر پانی: <b>'+ (counter>=0?litres.toLocaleString("en-PK",{maximumFractionDigits:2}):"—") +' لیٹر (تخمینہ)</b></div>'+
+    '<div>19L سپلائی سمیت کل پانی کا تخمینہ: <b>'+ (counter>=0?total.toLocaleString("en-PK",{maximumFractionDigits:2}):"—") +' لیٹر</b></div>'+
+    (counter<0?'<p class="error">غلطی: مجموعی وصولی آج کی غیر منسلک سپلائی وصولی سے کم ہے۔ رقم درست کریں۔</p>':"");
+  }
+  box.innerHTML=html;
+ }catch(e){box.textContent="خودکار حساب لوڈ نہیں ہوا: "+(e?.message||String(e));}
 }
-
 async function counterWaterModule(){
- setTitle("روزانہ پانی کا حساب");
+ setTitle("روزانہ 19L کاؤنٹر وصولی");
  $("moduleBody").innerHTML=
- '<p class="muted">روزانہ آنے اور استعمال ہونے والے پانی کے کل لیٹر درج کریں؛ اس میں تمام 19L سپلائی بھی شامل ہوگی۔ نظام اسی تاریخ کی کسٹمر اور غیر منسلک سپلائی کی بوتلیں خود گن کر 19 لیٹر فی بوتل منہا کرے گا۔ رقم صرف باقی کاؤنٹر فروخت کی درج کریں۔</p>'+
- '<div class="card"><label for="counterDate">تاریخ</label><input id="counterDate" type="date" value="'+today()+'"><label for="counterLitres">روزانہ کل پانی (19L سپلائی سمیت، لیٹر)</label>'+
- '<input id="counterLitres" type="number" min="0.01" step="0.01" placeholder="مثلاً 800 — پورے دن کا کل پانی">'+
- '<div id="counterWaterPreview" class="stat">تاریخ کی 19L سپلائی گنتی کے بعد باقی لیٹر خود دکھائے جائیں گے۔</div><label for="counterAmount">باقی کاؤنٹر فروخت کی وصول شدہ رقم (روپے)</label><input id="counterAmount" type="number" min="0" step="0.01" placeholder="صرف باقی پانی کی فروخت کی رقم">'+
- '<select id="counterMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="mixed">مختلف ذرائع</option></select>'+
- '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ پانی کا حساب محفوظ کریں</button></div>';
- $("counterDate").addEventListener("change",loadCounterWaterForDate);$("counterLitres").addEventListener("input",updateCounterWaterPreview);await loadCounterWaterForDate();
+  '<p class="muted">صرف آج کی مجموعی 19L وصولی درج کریں: کاؤنٹر پر فروخت + آج وصول شدہ غیر منسلک سپلائی۔ 500ml، 1.5L اور 6L کی فروخت یہاں شامل نہ کریں۔ غیر منسلک سپلائی کی غیر وصول شدہ رقم خود منہا نہیں ہوگی؛ وہ بقایا رہے گی۔</p>'+
+  '<div class="card"><label for="counterDate">تاریخ</label><input id="counterDate" type="date" value="'+today()+'">'+
+  '<label for="counterAmount">آج کی مجموعی 19L وصولی (روپے)</label><input id="counterAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="مثلاً 1300">'+
+  '<div id="counterWaterPreview" class="stat">رقم درج کرنے پر غیر منسلک وصولی منہا کرکے کاؤنٹر بوتلیں اور پانی خود تخمینہ ہوگا۔</div>'+
+  '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ وصولی محفوظ کریں</button></div>';
+ $("counterDate").addEventListener("change",loadCounterWaterForDate);
+ $("counterAmount").addEventListener("input",updateCounterWaterPreview);
+ await loadCounterWaterForDate();
 }
 async function loadCounterWaterForDate(){
  const date=$("counterDate").value;
  const {data,error}=await db.from("counter_water_sales").select("*").eq("sale_date",date).maybeSingle();
- if(error){msg("کاؤنٹر ریکارڈ لوڈ نہیں ہوا: "+error.message);return;}
+ if(error){msg("روزانہ ریکارڈ لوڈ نہیں ہوا: "+error.message);return;}
  window.currentCounterWaterRecordId=data?.id?Number(data.id):null;
- $("counterLitres").value=data?.total_litres??"";
- $("counterAmount").value=data?.total_amount??"";
- $("counterMethod").value=data?.payment_method||"cash";
+ $("counterAmount").value=data?.reported_total_amount??"";
  await updateCounterWaterPreview();
  const saveButton=$("counterSaveButton");
- if(saveButton)saveButton.textContent=data?"روزانہ کا کُل اپڈیٹ کریں":"روزانہ پانی کا حساب محفوظ کریں";
- const {data:history}=await db.from("counter_water_sales").select("*").order("sale_date",{ascending:false}).limit(30);
- $("moduleTable").innerHTML='<h3>روزانہ پانی کا ریکارڈ</h3><p class="muted">کسی دن کی تاریخ، لیٹر یا وصولی میں غلطی ہو تو اسی قطار سے "غلطی درست کریں" منتخب کریں۔ تبدیلی اسی روزانہ ریکارڈ میں ہوگی، نئی ڈپلیکیٹ انٹری نہیں بنے گی۔</p><table><tr><th>تاریخ</th><th>کل پانی (19L سمیت)</th><th>باقی کاؤنٹر فروخت کی وصولی</th><th>اصلاح</th></tr>'+
- (history||[]).map(r=>'<tr><td>'+esc(r.sale_date)+'</td><td>'+Number(r.total_litres)+'</td><td>'+money(r.total_amount)+'</td><td><button class="secondary" onclick="editCounterWaterSale(\''+esc(r.sale_date)+'\')">غلطی درست کریں</button></td></tr>').join("")+'</table>';
+ if(saveButton)saveButton.textContent=data?"روزانہ مجموعی وصولی اپڈیٹ کریں":"روزانہ وصولی محفوظ کریں";
+ const {data:history,error:historyError}=await db.from("counter_water_sales").select("sale_date,total_amount,total_litres,reported_total_amount,unassigned_receipts_included,counter_bottles_estimated,counter_water_litres").order("sale_date",{ascending:false}).limit(30);
+ if(historyError){$("moduleTable").innerHTML='<p class="warning">ہسٹری لوڈ نہیں ہوئی: '+esc(historyError.message)+'</p>';return;}
+ $("moduleTable").innerHTML='<h3>روزانہ 19L وصولی کا ریکارڈ</h3><p class="muted">پرانے ریکارڈ محفوظ ہیں۔ پرانی تاریخ کا نیا خودکار حساب درج کرنے کے لیے تاریخ منتخب کرکے آج کی مجموعی وصولی دوبارہ درج کریں۔</p>'+
+  '<div class="tablewrap"><table><tr><th>تاریخ</th><th>مجموعی وصولی</th><th>غیر منسلک وصولی</th><th>کاؤنٹر رقم</th><th>تخمینی بوتلیں / لیٹر</th><th>اصلاح</th></tr>'+
+  (history||[]).map(r=>{
+   const isLegacy=r.reported_total_amount===null||r.reported_total_amount===undefined;
+   const estimate=isLegacy?"پرانا ریکارڈ — "+Number(r.total_litres||0).toLocaleString("en-PK")+" پرانے کل لیٹر":Number(r.counter_bottles_estimated||0).toLocaleString("en-PK",{maximumFractionDigits:2})+" بوتلیں / "+Number(r.counter_water_litres||0).toLocaleString("en-PK",{maximumFractionDigits:2})+" لیٹر";
+   return '<tr><td>'+esc(r.sale_date)+'</td><td>'+(isLegacy?"پرانا ریکارڈ":money(r.reported_total_amount))+'</td><td>'+(isLegacy?"—":money(r.unassigned_receipts_included))+'</td><td>'+money(r.total_amount)+'</td><td>'+estimate+'</td><td><button class="secondary" onclick="editCounterWaterSale(\''+esc(r.sale_date)+'\')">درست کریں</button></td></tr>';
+  }).join("")+'</table></div>';
 }
 async function editCounterWaterSale(date){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(date||""))){msg("ریکارڈ کی تاریخ درست نہیں۔");return;}
  $("counterDate").value=date;
  await loadCounterWaterForDate();
- $("counterLitres").focus();
- $("counterSaveButton").textContent="درست شدہ روزانہ ریکارڈ محفوظ کریں";
+ $("counterAmount").focus();
+ $("counterSaveButton").textContent="درست شدہ مجموعی وصولی محفوظ کریں";
  $("counterDate").scrollIntoView({behavior:"smooth",block:"center"});
- msg("منتخب دن کا اصل ریکارڈ کھل گیا ہے۔ مطلوبہ غلطی درست کرکے محفوظ کریں؛ ریکارڈ کی تاریخ بھی تبدیل کی جا سکتی ہے۔",true);
+ msg("منتخب دن کھل گیا ہے۔ مجموعی 19L وصولی درست درج کرکے محفوظ کریں؛ پرانا ریکارڈ تبدیل ہونے سے پہلے خودکار حساب دوبارہ بنے گا۔",true);
 }
 async function saveCounterWaterSale(){
  const button=$("counterSaveButton");
  if(button?.disabled)return;
- const sale_date=$("counterDate").value,total_litres=Number($("counterLitres").value),total_amount=Number($("counterAmount").value);
- if(!sale_date||!Number.isFinite(total_litres)||total_litres<=0||!Number.isFinite(total_amount)||total_amount<0){
-  msg("تاریخ، روزانہ کل لیٹر اور کاؤنٹر وصولی درست درج کریں۔");return;
+ const sale_date=$("counterDate").value,raw=$("counterAmount").value,gross=Number(raw);
+ if(!sale_date||raw.trim()===""||!Number.isFinite(gross)||gross<0){
+  msg("تاریخ اور آج کی مجموعی 19L وصولی درست درج کریں۔");return;
  }
  if(button)button.disabled=true;
  try{
-  const usage=await getDaily19LWaterUsage(sale_date);
-  if(total_litres<usage.litres){
-   msg("روزانہ کل پانی "+total_litres+" لیٹر ہے، جبکہ 19L سپلائی میں "+usage.litres+" لیٹر استعمال ہوئے۔ کل پانی درست کریں۔");return;
-  }
-  if(!confirmLargeEntry("روزانہ کل پانی (19L سمیت)",total_litres,1000)||!confirmLargeEntry("باقی کاؤنٹر وصولی",total_amount,100000))return;
-  const payload={sale_date,total_litres,total_amount,payment_method:$("counterMethod").value,entered_by:user?.id||null};
+  if(!confirmLargeEntry("آج کی مجموعی 19L وصولی",gross,100000))return;
+  const payload={sale_date,reported_total_amount:gross,total_litres:0,total_amount:0,payment_method:"mixed",entered_by:user?.id||null};
   let saved;
   if(window.currentCounterWaterRecordId){
-   const duplicate=await db.from("counter_water_sales").select("id").eq("sale_date",sale_date).neq("id",window.currentCounterWaterRecordId).maybeSingle();
-   if(duplicate.error)throw duplicate.error;
-   if(duplicate.data)throw new Error("اس نئی تاریخ کا روزانہ پانی ریکارڈ پہلے سے موجود ہے۔ اسی تاریخ کا ریکارڈ کھول کر درست کریں؛ ڈپلیکیٹ انٹری نہیں بنائی گئی۔");
    const result=await db.from("counter_water_sales").update(payload).eq("id",window.currentCounterWaterRecordId).select("id").maybeSingle();
    if(result.error)throw result.error;
-   if(!result.data)throw new Error("اصل روزانہ پانی ریکارڈ اپڈیٹ نہیں ہوا؛ دوبارہ لوڈ کریں۔");
+   if(!result.data)throw new Error("اصل روزانہ ریکارڈ اپڈیٹ نہیں ہوا؛ دوبارہ لوڈ کریں۔");
    saved=result.data;
   }else{
    const result=await db.from("counter_water_sales").upsert(payload,{onConflict:"sale_date"}).select("id").maybeSingle();
    if(result.error)throw result.error;
    saved=result.data;
   }
-  if(!saved?.id)throw new Error("روزانہ پانی ریکارڈ محفوظ ہونے کی تصدیق نہیں ہوئی۔");
+  if(!saved?.id)throw new Error("روزانہ وصولی محفوظ ہونے کی تصدیق نہیں ہوئی۔");
   window.currentCounterWaterRecordId=Number(saved.id);
-  msg("روزانہ پانی کا کُل حساب محفوظ/اپڈیٹ ہوگیا۔ 19L سپلائی کے لیٹر خود منہا کیے گئے۔",true);
+  msg("مجموعی وصولی محفوظ ہوگئی؛ غیر منسلک وصولی منہا کرکے کاؤنٹر رقم، بوتلوں اور پانی کا تخمینہ خود بن گیا۔",true);
   await loadCounterWaterForDate();await loadTodaySummary();
  }catch(error){
-  msg("روزانہ پانی کا حساب محفوظ نہیں ہوا: "+(error?.message||String(error)));
+  msg("روزانہ وصولی محفوظ نہیں ہوئی: "+(error?.message||String(error)));
  }finally{
   if(button)button.disabled=false;
  }
@@ -3308,7 +3326,7 @@ async function loadTodaySummary(){
   readTodayRows("customer_19l_deliveries","successful_bottles,bottle_difference,delivery_labor","delivery_date",date),
   readTodayRows("unassigned_19l_deliveries","bottles_delivered,labor_amount","delivery_date",date),
   readTodayRows("product_sales","total_amount","sale_date",date),
-  readTodayRows("counter_water_sales","total_amount,total_litres","sale_date",date),
+  readTodayRows("counter_water_sales","total_amount,total_litres,counter_water_litres,reported_total_amount,unassigned_receipts_included","sale_date",date),
   readTodayRows("water_tanker_purchases","tanker_count,total_amount","purchase_date",date),
   readTodayRows("business_expenses","amount","expense_date",date),
   readTodayRows("business_income","amount,category","income_date",date),
@@ -3332,7 +3350,11 @@ async function loadTodaySummary(){
  const unassignedLabor=sum(unassignedR,"labor_amount");
  const sales=sum(salesR,"total_amount");
  const counterAmount=sum(counterR,"total_amount");
- const counterLitres=sum(counterR,"total_litres");
+ const dailyWaterSegment=dashboardR?.data?.profit_and_loss?.segments?.["19L"]||{};
+ const counterLitres=counterR.error?null:Number(dailyWaterSegment.counter_water_litres||0);
+ const counterBottles=counterLitres===null?null:Number(dailyWaterSegment.counter_bottles_estimated??(counterLitres/19));
+ const hasNewCounterEntry=!counterR.error&&counterR.rows.some(r=>r.reported_total_amount!==null&&r.reported_total_amount!==undefined);
+ const counterGross=hasNewCounterEntry?counterR.rows.reduce((n,r)=>n+Number(r.reported_total_amount||0),0):null;
  const tankerQuantity=sum(tankerR,"tanker_count");
  const tankerSpend=sum(tankerR,"total_amount");
  const expenses=sum(expensesR,"amount");
@@ -3394,7 +3416,8 @@ async function loadTodaySummary(){
   '<div class="stat">بغیر گاہک سپلائی: <b>'+(unassignedBottles===null?"ریکارڈ دستیاب نہیں":unassignedBottles+" بوتلیں — مزدوری "+money(unassignedLabor))+'</b></div>'+
   '<div class="stat">19L سپلائی سے وصولی: <b>'+shown(collectionTotal,money)+'</b></div>'+
   '<div class="stat">500ml / 1.5L / 6L فروخت: <b>'+shown(sales,money)+'</b></div>'+
-  '<div class="stat">19L کاؤنٹر فروخت: <b>'+(counterLitres===null?"ریکارڈ دستیاب نہیں":counterLitres+" درج شدہ لیٹر — "+money(counterAmount))+'</b></div>'+
+  '<div class="stat">19L کاؤنٹر فروخت: <b>'+(counterLitres===null?"ریکارڈ دستیاب نہیں":money(counterAmount)+" — "+counterBottles.toLocaleString("en-PK",{maximumFractionDigits:2})+" بوتلیں (تخمینہ)، "+counterLitres.toLocaleString("en-PK",{maximumFractionDigits:2})+" لیٹر پانی (تخمینہ)")+'</b></div>'+
+  '<div class="stat">آج کی مجموعی 19L وصولی (کاؤنٹر + غیر منسلک سپلائی): <b>'+(hasNewCounterEntry?money(counterGross):"نیا مجموعی ریکارڈ ابھی درج نہیں")+'</b></div>'+
   '<div class="stat">آج پانی کی خریداری: <b>'+(tankerQuantity===null?"ریکارڈ دستیاب نہیں":Number(tankerQuantity).toLocaleString("en-PK",{maximumFractionDigits:3})+" ٹینکر — "+(Number(tankerQuantity)*1000).toLocaleString("en-PK")+" لیٹر — "+money(tankerSpend))+'</b></div>'+
   '<div class="stat">پروڈکشن: <b>'+productionDisplay+'</b></div>'+
   '<div class="stat">خام مال کی خریداری: <b>'+(rawPurchaseAmount===null?"ریکارڈ دستیاب نہیں":money(rawPurchaseAmount)+" ("+rawPurchaseRows.length+" خریداری)")+'</b></div>'+
