@@ -3158,6 +3158,7 @@ function getSaleCalc(){
 }
 function salePricePreview(autoSpecial=false,resetDefault=false){
  const type=$("saleType").value,is6=type==="6L",setting=saleSettings[type]||{};
+ $("saleWorker").classList.toggle("hidden",is6);
  $("saleUnitPrice").disabled=false;
  if(is6){
   const current=Number($("saleUnitPrice").value);
