@@ -30,11 +30,17 @@ BEGIN
     FROM public.unassigned_19l_delivery_collections c
     WHERE c.received_date = NEW.sale_date;
 
-    SELECT COALESCE(SUM(ps.total_amount),0)
-      INTO v_product_cash_receipts
-    FROM public.product_sales ps
-    WHERE ps.sale_date = NEW.sale_date
-      AND ps.payment_method = 'cash';
+    -- The all-products gross-receipt method starts on 2026-11-21.
+    -- Preserve the historical 19L-only interpretation for earlier rows.
+    IF NEW.sale_date >= DATE '2026-11-21' THEN
+      SELECT COALESCE(SUM(ps.total_amount),0)
+        INTO v_product_cash_receipts
+      FROM public.product_sales ps
+      WHERE ps.sale_date = NEW.sale_date
+        AND ps.payment_method = 'cash';
+    ELSE
+      v_product_cash_receipts := 0;
+    END IF;
 
     IF NEW.reported_total_amount < v_unassigned_receipts + v_product_cash_receipts THEN
       RAISE EXCEPTION
