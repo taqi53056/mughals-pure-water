@@ -3132,9 +3132,9 @@ async function salesModule(){
  <option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
  <select id="saleWorker"><option value="">ورکر مقرر نہیں — بچت شمار نہیں ہوگی</option></select>
  <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview(false,false)">
- <input id="saleUnitPrice" type="number" min="280" step="0.01" value="${default500}" placeholder="اصل فی کارٹن / بوتل قیمت" oninput="salePricePreview(false,false)">
+ <input id="saleUnitPrice" type="number" min="280" step="0.01" value="" placeholder="اپنی اصل فی کارٹن / بوتل قیمت درج کریں" oninput="salePricePreview(false,false)">
  <select id="salePaymentMethod" onchange="toggleSaleCreditFields()"><option value="cash">نقد وصولی</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option><option value="credit">ادھار — منظور شدہ دکان</option></select><div id="saleCreditFields" class="hidden"><select id="saleCreditStore" required><option value="">منظور شدہ دکان منتخب کریں</option></select><p class="muted">ادھار صرف فعال اور ایڈمن سے منظور شدہ دکان کو دیا جا سکتا ہے؛ کوئی خودکار کریڈٹ حد نہیں۔ وصولی اسی سیل کے کھاتے میں درج ہوگی۔</p></div>
- <div class="stat">فی یونٹ قیمت: <b id="salePrice">Rs. ${default500}</b></div>
+ <div class="stat">فی یونٹ قیمت: <b id="salePrice">—</b></div>
  <div class="stat" id="saleSpecialNote">ہر سیل کی اصل قیمت آپ خود درج کر سکتے ہیں؛ کم از کم Rs.280 فی کارٹن۔</div>
  <div class="total">کل رقم: <span id="saleTotal">Rs. 0</span></div>
  <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.280 فی کارٹن ہے۔ ہر سیل میں Rs.280، Rs.290، Rs.300 یا اس سے زیادہ اصل قیمت درج کی جا سکتی ہے۔ 6L کے لیے صرف بوتلوں کی تعداد اور اصل فی بوتل قیمت درج کریں؛ کل رقم خودکار بنے گی۔</p>
@@ -3161,17 +3161,10 @@ function salePricePreview(autoSpecial=false,resetDefault=false){
  $("saleWorker").classList.toggle("hidden",is6);
  $("saleUnitPrice").disabled=false;
  $("saleUnitPrice").min=is6?"0.01":"280";
- if(is6){
-  const current=Number($("saleUnitPrice").value);
-  if(resetDefault||!Number.isFinite(current)||current<=0)$("saleUnitPrice").value="";
- }else{
-  const defaultRate=Number(setting.default_rate)||280;
-  if(resetDefault||!Number.isFinite(Number($("saleUnitPrice").value))||Number($("saleUnitPrice").value)<280){
-   $("saleUnitPrice").value=String(defaultRate);
-  }
- }
+ if(resetDefault)$("saleUnitPrice").value="";
+ const rawPrice=$("saleUnitPrice").value.trim();
  const c=getSaleCalc();
- $("salePrice").textContent=money(c.price);
+ $("salePrice").textContent=rawPrice===""?"—":money(c.price);
  $("saleTotal").textContent=money(c.total);
  $("saleSpecialNote").textContent=is6
   ?"6L کی اصل فی بوتل قیمت درج کریں؛ کوئی مقررہ کم از کم ریٹ نہیں۔"
