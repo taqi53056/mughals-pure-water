@@ -94,6 +94,7 @@ AFTER INSERT OR UPDATE OR DELETE ON public.product_sales
 FOR EACH ROW
 EXECUTE FUNCTION private.mpw_refresh_counter_water_after_product_sale();
 
+REVOKE ALL ON FUNCTION private.mpw_derive_counter_water_values() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION private.mpw_refresh_counter_water_after_product_sale() FROM PUBLIC, anon, authenticated;
 
 -- Keep monthly report stock estimates aligned with the counter_water_litres
@@ -121,3 +122,32 @@ BEGIN
   EXECUTE v_def;
 END
 $repair$;
+
+
+-- Align monthly report stock estimates with the daily water-tank module:
+-- both customer and unassigned 19L deliveries consume 19 litres per bottle.
+DO $repair_delivery_water$
+DECLARE
+  v_def text;
+  v_old_placeholder text := '        +0';
+  v_new_delivery_terms text := '        +coalesce((select sum(d.bottles_delivered*19) from public.customer_19l_deliveries d where d.delivery_date<=p_month_end),0)' || chr(10) ||
+                               '        +coalesce((select sum(d.bottles_delivered*19) from public.unassigned_19l_deliveries d where d.delivery_date<=p_month_end),0)';
+  v_old_remaining text := '      -0' || chr(10) || '      -0';
+  v_new_remaining text := '      -coalesce((select sum(d.bottles_delivered*19) from public.customer_19l_deliveries d where d.delivery_date<=p_month_end),0)' || chr(10) ||
+                          '      -coalesce((select sum(d.bottles_delivered*19) from public.unassigned_19l_deliveries d where d.delivery_date<=p_month_end),0)';
+  v_count integer;
+BEGIN
+  SELECT pg_get_functiondef('public.build_business_monthly_report(date,date)'::regprocedure)
+    INTO v_def;
+  v_count := (length(v_def)-length(replace(v_def,v_old_placeholder,''))) / length(v_old_placeholder);
+  IF v_count <> 2 THEN
+    RAISE EXCEPTION 'Expected two monthly report delivery placeholders; found %.',v_count;
+  END IF;
+  v_def := replace(v_def,v_old_placeholder,v_new_delivery_terms);
+  IF position(v_old_remaining in v_def)=0 THEN
+    RAISE EXCEPTION 'Expected remaining shop-water delivery placeholders were not found.';
+  END IF;
+  v_def := replace(v_def,v_old_remaining,v_new_remaining);
+  EXECUTE v_def;
+END
+$repair_delivery_water$;
