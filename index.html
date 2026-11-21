@@ -4322,7 +4322,7 @@ async function settingsModule(){
    <td>${esc(p.product_type)}</td>
    <td>${p.units_per_pack} ${esc(p.unit_type)}</td>
    <td>${carton?`<input type="number" min="280" step="1" id="psDefault_${Number(p.id)}" value="${Number(p.default_rate)}" style="max-width:110px">`:money(p.default_rate)}</td>
-   <td>${carton?`<input type="number" min="270" step="1" id="psSpecial_${Number(p.id)}" value="${p.special_100_rate==null?"":Number(p.special_100_rate)}" style="max-width:110px">`:"—"}</td>
+   <td>${carton?`<input type="number" min="280" step="1" id="psSpecial_${Number(p.id)}" value="${p.special_100_rate==null?"":Number(p.special_100_rate)}" style="max-width:110px">`:"—"}</td>
    <td>${money(p.labor_per_unit)}</td>
    <td>${p.is_active?"ہاں":"نہیں"}</td>
    <td>${carton?`<button onclick="saveProductSettings(${Number(p.id)},'${esc(p.product_type)}')">قیمت محفوظ کریں</button>`:"مقررہ"}</td>
