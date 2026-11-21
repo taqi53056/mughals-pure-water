@@ -3131,13 +3131,13 @@ async function salesModule(){
  <select id="saleType" onchange="salePricePreview(false,true)">
  <option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
  <select id="saleWorker"><option value="">ورکر مقرر نہیں — بچت شمار نہیں ہوگی</option></select>
- <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview(true,false)">
- <input id="saleUnitPrice" type="number" min="0.01" step="0.01" value="${default500}" placeholder="اصل فی کارٹن / بوتل قیمت" oninput="salePricePreview(false,false)">
+ <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview(false,false)">
+ <input id="saleUnitPrice" type="number" min="280" step="0.01" value="${default500}" placeholder="اصل فی کارٹن / بوتل قیمت" oninput="salePricePreview(false,false)">
  <select id="salePaymentMethod" onchange="toggleSaleCreditFields()"><option value="cash">نقد وصولی</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option><option value="credit">ادھار — منظور شدہ دکان</option></select><div id="saleCreditFields" class="hidden"><select id="saleCreditStore" required><option value="">منظور شدہ دکان منتخب کریں</option></select><p class="muted">ادھار صرف فعال اور ایڈمن سے منظور شدہ دکان کو دیا جا سکتا ہے؛ کوئی خودکار کریڈٹ حد نہیں۔ وصولی اسی سیل کے کھاتے میں درج ہوگی۔</p></div>
  <div class="stat">فی یونٹ قیمت: <b id="salePrice">Rs. ${default500}</b></div>
- <div class="stat" id="saleSpecialNote">100 یا زیادہ کارٹن پر مقررہ خصوصی قیمت خود منتخب ہوگی۔</div>
+ <div class="stat" id="saleSpecialNote">ہر سیل کی اصل قیمت آپ خود درج کر سکتے ہیں؛ کم از کم Rs.280 فی کارٹن۔</div>
  <div class="total">کل رقم: <span id="saleTotal">Rs. 0</span></div>
- <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.270 فی کارٹن ہے؛ عمومی قیمت Rs.280 اور خصوصی قیمت Rs.270 ہے۔ 6L کے لیے صرف بوتلوں کی تعداد اور اصل فی بوتل قیمت درج کریں؛ کل رقم خودکار بنے گی۔</p>
+ <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.280 فی کارٹن ہے۔ ہر سیل میں Rs.280، Rs.290، Rs.300 یا اس سے زیادہ اصل قیمت درج کی جا سکتی ہے۔ 6L کے لیے صرف بوتلوں کی تعداد اور اصل فی بوتل قیمت درج کریں؛ کل رقم خودکار بنے گی۔</p>
  <button onclick="saveSale()">سیل محفوظ کریں</button>
  <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button><button class="secondary" onclick="storeCreditModule()">منظور شدہ دکانیں / ادھار وصولی</button>`;
  salePricePreview(false,true);
@@ -3160,45 +3160,28 @@ function salePricePreview(autoSpecial=false,resetDefault=false){
  const type=$("saleType").value,is6=type==="6L",setting=saleSettings[type]||{};
  $("saleWorker").classList.toggle("hidden",is6);
  $("saleUnitPrice").disabled=false;
+ $("saleUnitPrice").min=is6?"0.01":"280";
  if(is6){
   const current=Number($("saleUnitPrice").value);
   if(resetDefault||!Number.isFinite(current)||current<=0)$("saleUnitPrice").value="";
  }else{
   const defaultRate=Number(setting.default_rate)||280;
-  if(resetDefault||!Number.isFinite(Number($("saleUnitPrice").value))||Number($("saleUnitPrice").value)<270){
+  if(resetDefault||!Number.isFinite(Number($("saleUnitPrice").value))||Number($("saleUnitPrice").value)<280){
    $("saleUnitPrice").value=String(defaultRate);
-  }
-  const special=setting.special_100_rate==null?null:Number(setting.special_100_rate);
-  if(autoSpecial){
-   $("saleUnitPrice").value=String(Number($("saleQty").value)>=100&&special!==null&&Number.isFinite(special)&&special>=270?special:defaultRate);
   }
  }
  const c=getSaleCalc();
  $("salePrice").textContent=money(c.price);
  $("saleTotal").textContent=money(c.total);
- const special=setting.special_100_rate==null?null:Number(setting.special_100_rate);
- const bulkOrder=Number($("saleQty").value)>=100;
- const specialSelected=!is6&&bulkOrder&&special!==null&&Number($("saleUnitPrice").value)===special;
  $("saleSpecialNote").textContent=is6
   ?"6L کی اصل فی بوتل قیمت درج کریں؛ کوئی مقررہ کم از کم ریٹ نہیں۔"
-  :bulkOrder&&special!==null
-   ?(specialSelected?"100 یا زیادہ کارٹن: خصوصی قیمت "+money(special)+" منتخب ہے۔":"100 یا زیادہ کارٹن: خصوصی قیمت "+money(special)+" دستیاب ہے؛ فی الحال درج شدہ قیمت استعمال ہوگی۔")
-   :"100 یا زیادہ کارٹن پر اگر خصوصی قیمت مقرر ہو تو وہ خود منتخب ہوگی۔";
+  :"کم از کم Rs.280 فی کارٹن؛ اس سے زیادہ اصل قیمت آپ خود درج کریں۔";
 }
 
 async function saveSale(){
  const c=getSaleCalc(),button=document.querySelector('button[onclick="saveSale()"]');
  if(!Number.isInteger(c.qty)||c.qty<=0){msg("کارٹن یا 6L بوتلوں کی مقدار مکمل عدد میں درج کریں۔");return}
- if((c.type==="6L"&&(!Number.isFinite(c.price)||c.price<=0))||(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<270))){msg(c.type==="6L"?"6L کی فی بوتل قیمت صفر سے زیادہ درج کریں۔":"500ml اور 1.5L کی قیمت کم از کم 270 روپے فی کارٹن ہونی چاہیے۔");return}
- if(c.type!=="6L"){
-  const setting=saleSettings[c.type]||{};
-  const defaultRate=Number(setting.default_rate);
-  const specialRate=setting.special_100_rate==null?null:Number(setting.special_100_rate);
-  if(c.price<defaultRate&&(c.qty<100||specialRate===null||c.price!==specialRate)){
-   msg("خصوصی قیمت صرف 100 یا زیادہ کارٹن پر، اور صرف سیٹنگز میں مقرر کردہ خصوصی قیمت پر لاگو ہوگی۔");
-   return;
-  }
- }
+ if((c.type==="6L"&&(!Number.isFinite(c.price)||c.price<=0))||(c.type!=="6L"&&(!Number.isFinite(c.price)||c.price<280))){msg(c.type==="6L"?"6L کی فی بوتل قیمت صفر سے زیادہ درج کریں۔":"500ml اور 1.5L کی قیمت کم از کم 280 روپے فی کارٹن ہونی چاہیے۔");return}
  if(!confirmLargeEntry("فروخت کی مقدار",c.qty,100)||!confirmLargeEntry("فروخت کی کل رقم (روپے)",c.total,1000))return;
  if(button)button.disabled=true;
  try{
@@ -4345,7 +4328,7 @@ async function settingsModule(){
    <td>${carton?`<button onclick="saveProductSettings(${Number(p.id)},'${esc(p.product_type)}')">قیمت محفوظ کریں</button>`:"مقررہ"}</td>
   </tr>`;
  }).join("");
- $("settingsStatus").innerHTML='<h3>مقررہ کاروباری قواعد</h3><div class="stat">19L کامیاب بوتل: <b>Rs. 100</b> + فی بوتل ڈلیوری مزدوری <b>Rs. 20</b></div><div class="stat">خراب ڈھکن: <b>Rs. 10</b> فی عدد</div><div class="stat">500ml اور 1.5L کارٹن کی عمومی قیمت: <b>Rs. 280</b> — خصوصی قیمت: <b>Rs. 270</b> فی کارٹن</div><h3>پروڈکٹ قیمتوں کا کنٹرول</h3><p class="muted">عمومی قیمت کم از کم Rs.280 ہوگی؛ 100 یا زیادہ کارٹن پر خصوصی قیمت Rs.270 یا اس سے زیادہ ہوسکتی ہے، مگر عمومی قیمت سے زیادہ نہیں۔ 6L کی فروخت قیمت ہر سیل میں منتظم خود درج کرے گا؛ صفر سے زیادہ کوئی بھی قیمت قبول ہے۔۔ مزدوری اور پیک سائز کاروباری قواعد کے مطابق مقرر ہیں۔</p><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>پیک</th><th>طے شدہ قیمت</th><th>خصوصی قیمت</th><th>مزدوری</th><th>فعال</th><th>عمل</th></tr>'+productRows+'</table></div><h3>ایڈمن اکاؤنٹس</h3><p>مستقل ایڈمن: <b>'+(admins||[]).length+'</b></p><ul>'+(admins||[]).map(a=>'<li>'+esc(a.full_name||a.id)+'</li>').join("")+'</ul><h3>ورکرز</h3><p>کل: <b>'+(workers||[]).length+'</b> — فعال: <b>'+(workers||[]).filter(w=>w.is_active).length+'</b> — مالک: <b>'+(workers||[]).filter(w=>w.is_owner).length+'</b></p><p class="muted">ایڈمن رول اور مقررہ بنیادی کاروباری قواعد اس اسکرین سے تبدیل نہیں ہوتے۔ قیمت کی ہر تبدیلی تصدیق کے بعد محفوظ اور آڈٹ لاگ میں درج ہوگی۔</p>';
+ $("settingsStatus").innerHTML='<h3>مقررہ کاروباری قواعد</h3><div class="stat">19L کامیاب بوتل: <b>Rs. 100</b> + فی بوتل ڈلیوری مزدوری <b>Rs. 20</b></div><div class="stat">خراب ڈھکن: <b>Rs. 10</b> فی عدد</div><div class="stat">500ml اور 1.5L کارٹن کی کم از کم قیمت: <b>Rs. 280</b> فی کارٹن؛ ہر سیل میں زیادہ قیمت درج ہوسکتی ہے</div><h3>پروڈکٹ قیمتوں کا کنٹرول</h3><p class="muted">عمومی اور خصوصی دونوں کارٹن قیمتیں Rs.280 سے کم نہیں ہوسکتیں۔ ہر سیل میں منتظم Rs.280 یا اس سے زیادہ اصل قیمت درج کرسکتا ہے۔ 6L کی فروخت قیمت ہر سیل میں منتظم خود درج کرے گا؛ صفر سے زیادہ کوئی بھی قیمت قبول ہے۔۔ مزدوری اور پیک سائز کاروباری قواعد کے مطابق مقرر ہیں۔</p><div class="tablewrap"><table><tr><th>پروڈکٹ</th><th>پیک</th><th>طے شدہ قیمت</th><th>خصوصی قیمت</th><th>مزدوری</th><th>فعال</th><th>عمل</th></tr>'+productRows+'</table></div><h3>ایڈمن اکاؤنٹس</h3><p>مستقل ایڈمن: <b>'+(admins||[]).length+'</b></p><ul>'+(admins||[]).map(a=>'<li>'+esc(a.full_name||a.id)+'</li>').join("")+'</ul><h3>ورکرز</h3><p>کل: <b>'+(workers||[]).length+'</b> — فعال: <b>'+(workers||[]).filter(w=>w.is_active).length+'</b> — مالک: <b>'+(workers||[]).filter(w=>w.is_owner).length+'</b></p><p class="muted">ایڈمن رول اور مقررہ بنیادی کاروباری قواعد اس اسکرین سے تبدیل نہیں ہوتے۔ قیمت کی ہر تبدیلی تصدیق کے بعد محفوظ اور آڈٹ لاگ میں درج ہوگی۔</p>';
 }
 
 async function saveProductSettings(id,productType){
@@ -4359,8 +4342,8 @@ async function saveProductSettings(id,productType){
  if(!Number.isFinite(defaultRate)||defaultRate<floor){
   msg(productType+" کی قیمت کم از کم Rs."+floor+" ہونی چاہیے۔");return;
  }
- if(specialRate!==null&&(!Number.isFinite(specialRate)||specialRate<270)){
-  msg("500ml اور 1.5L کی خصوصی قیمت Rs.270 سے کم نہیں ہوسکتی۔");return;
+ if(specialRate!==null&&(!Number.isFinite(specialRate)||specialRate<280)){
+  msg("500ml اور 1.5L کی خصوصی قیمت Rs.280 سے کم نہیں ہوسکتی۔");return;
  }
  if(specialRate!==null&&specialRate>defaultRate){
   msg("100 یا زیادہ کارٹن کی خصوصی قیمت طے شدہ قیمت سے زیادہ نہیں ہوسکتی۔");return;
