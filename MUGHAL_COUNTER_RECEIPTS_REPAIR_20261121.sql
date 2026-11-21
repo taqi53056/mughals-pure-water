@@ -111,15 +111,19 @@ BEGIN
   SELECT pg_get_functiondef('public.build_business_monthly_report(date,date)'::regprocedure)
     INTO v_def;
   v_count := (length(v_def)-length(replace(v_def,v_old,''))) / length(v_old);
-  IF v_count <> 3 THEN
-    RAISE EXCEPTION 'Expected 3 counter-water stock expressions, found %.',v_count;
+  IF v_count = 3 THEN
+    v_def := replace(v_def,v_old,v_new);
+    IF position(v_old_note in v_def)>0 THEN
+      v_def := replace(v_def,v_old_note,v_new_note);
+    ELSIF position(v_new_note in v_def)=0 THEN
+      RAISE EXCEPTION 'Neither old nor repaired report note was found.';
+    END IF;
+    EXECUTE v_def;
+  ELSIF v_count = 0 AND position(v_new_note in v_def)>0 THEN
+    NULL; -- already applied
+  ELSE
+    RAISE EXCEPTION 'Unexpected counter-water stock expression count: %.',v_count;
   END IF;
-  v_def := replace(v_def,v_old,v_new);
-  IF position(v_old_note in v_def)=0 THEN
-    RAISE EXCEPTION 'Expected legacy report note not found.';
-  END IF;
-  v_def := replace(v_def,v_old_note,v_new_note);
-  EXECUTE v_def;
 END
 $repair$;
 
@@ -140,14 +144,19 @@ BEGIN
   SELECT pg_get_functiondef('public.build_business_monthly_report(date,date)'::regprocedure)
     INTO v_def;
   v_count := (length(v_def)-length(replace(v_def,v_old_placeholder,''))) / length(v_old_placeholder);
-  IF v_count <> 2 THEN
-    RAISE EXCEPTION 'Expected two monthly report delivery placeholders; found %.',v_count;
+  IF v_count = 2 THEN
+    IF position(v_old_remaining in v_def)=0 THEN
+      RAISE EXCEPTION 'Expected remaining shop-water delivery placeholders were not found.';
+    END IF;
+    v_def := replace(v_def,v_old_placeholder,v_new_delivery_terms);
+    v_def := replace(v_def,v_old_remaining,v_new_remaining);
+    EXECUTE v_def;
+  ELSIF v_count = 0
+    AND position(v_new_delivery_terms in v_def)>0
+    AND position(v_new_remaining in v_def)>0 THEN
+    NULL; -- already applied
+  ELSE
+    RAISE EXCEPTION 'Unexpected monthly report delivery placeholder count: %.',v_count;
   END IF;
-  v_def := replace(v_def,v_old_placeholder,v_new_delivery_terms);
-  IF position(v_old_remaining in v_def)=0 THEN
-    RAISE EXCEPTION 'Expected remaining shop-water delivery placeholders were not found.';
-  END IF;
-  v_def := replace(v_def,v_old_remaining,v_new_remaining);
-  EXECUTE v_def;
 END
 $repair_delivery_water$;
