@@ -2730,7 +2730,7 @@ async function updateCounterWaterPreview(){
   if(deliveriesResult.error)throw deliveriesResult.error;
   if(productSalesResult.error)throw productSalesResult.error;
   const receipts=(receiptsResult.data||[]).reduce((n,r)=>n+(Number(r.amount)||0),0);
-  const productCash=(productSalesResult.data||[]).filter(r=>r.payment_method==="cash").reduce((n,r)=>n+(Number(r.total_amount)||0),0);
+  const productCash=date>="2026-11-21"?(productSalesResult.data||[]).filter(r=>r.payment_method==="cash").reduce((n,r)=>n+(Number(r.total_amount)||0),0):0;
   const deliveries=deliveriesResult.data||[];
   const unassignedBilled=deliveries.reduce((n,r)=>n+(Number(r.bottles_delivered)||0)*100+(Number(r.damaged_caps)||0)*10,0);
   let unassignedPaid=0;
@@ -2744,7 +2744,7 @@ async function updateCounterWaterPreview(){
   const raw=$("counterAmount")?.value??"",gross=raw.trim()===""?null:Number(raw);
   let html='<b>خودکار حساب</b><div>آج کی 19L سپلائی: <b>'+usage.bottles+' بوتلیں = '+usage.litres.toLocaleString("en-PK")+' لیٹر</b></div>'+
    '<div>آج وصول شدہ غیر منسلک سپلائی: <b>'+money(receipts)+'</b></div>'+
-   '<div>الگ درج نقد مصنوعات کی فروخت: <b>'+money(productCash)+'</b></div>'+
+   '<div>'+(date>="2026-11-21"?"الگ درج نقد مصنوعات کی فروخت":"پرانے ریکارڈ کا سابقہ طریقہ — مصنوعات کی کٹوتی لاگو نہیں")+': <b>'+money(productCash)+'</b></div>'+
    '<div>غیر منسلک سپلائی کا غیر وصول شدہ بقایا: <b>'+money(unassignedDue)+'</b> (آج منہا نہیں ہوگا)</div>';
   if(gross===null||!Number.isFinite(gross)||gross<0){
    html+='<div>صرف آج کی مجموعی کاؤنٹر وصولی درج کریں؛ باقی کٹوتیاں ایپ خود کرے گی۔</div>';
