@@ -2425,7 +2425,7 @@ const rawMaterialYieldPerKg=Object.freeze({sticker_500ml:1900,sticker_1_5l_6l:11
 async function rawMaterialsModule(){
  setTitle("خام مال کی خریداری");
  $("moduleBody").innerHTML=
- '<p class="muted">تاریخ، اندراج کی قسم، خام مال اور مقدار درج کریں۔ اسٹیکر وزن کلوگرام میں درج ہوگا: 500ml کے 1,900 اور مشترکہ 1.5L/6L کے 1,100 اسٹیکر فی کلو (30 گرام میں 33 اسٹیکر)۔ فی کلو قیمت درج کرنے پر کل رقم خود حساب ہوگی۔ ایک رسید میں کئی اشیاء ہوں تو ہر آئٹم الگ درج کریں۔</p>'+
+ '<p class="muted">تاریخ، اندراج کی قسم، خام مال اور مقدار درج کریں۔ اسٹیکر وزن کلوگرام میں درج ہوگا: 500ml کے 1,900 اور مشترکہ 1.5L/6L کے 1,100 اسٹیکر فی کلو (30 گرام میں 33 اسٹیکر)۔ فی کلو قیمت درج کرنے پر کل رقم خود حساب ہوگی۔ ایک رسید میں کئی اشیاء ہوں تو ہر آئٹم الگ درج کریں۔ پہلے سے موجود ابتدائی اسٹاک میں مزید مقدار درج کرنے پر نئی مقدار اور مالیت اسی ریکارڈ میں جمع ہوگی؛ ڈپلیکیٹ ریکارڈ نہیں بنے گا۔ بوتل کے ساتھ متعلقہ ڈھکن بھی خود جمع ہوں گے۔</p>'+
  '<div class="card"><h3>نئی خریداری</h3>'+
  '<input id="rawPurchaseDate" type="date" value="'+today()+'" required>'+
  '<select id="rawPurchaseKind" required onchange="toggleRawPurchaseKind()"><option value="" selected disabled>پہلے اندراج کی قسم منتخب کریں *</option><option value="purchase">نئی خریداری (واقعی خریدا ہوا مال)</option><option value="free_claim">سپلائر سے مفت کلیم / تبدیلی</option><option value="opening_stock">پہلے سے موجود ابتدائی اسٹاک</option></select>'+
