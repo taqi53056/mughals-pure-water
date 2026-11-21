@@ -3772,7 +3772,9 @@ async function runReport(){
   const product=r.products||{},owners=r.owner_withdrawals||{},loans=r.capital_and_loans||{},stock=r.stock_estimate||{};
   const fmt=v=>money(Number(v)||0),net=Number(seg.net_profit)||0;
   const revenue=(Number(water.revenue)||0)+(Number(products.revenue)||0);
-  const status=!r.has_pnl_activity?"منافع و نقصان کی سرگرمی ابھی درج نہیں":!r.complete?"لاگت نامکمل — نتیجہ عارضی":net>=0?"درج شدہ ریکارڈ کے مطابق منافع":"درج شدہ ریکارڈ کے مطابق نقصان";
+  const estimated=Boolean(r.net_profit_is_estimated||r.counter_water_usage_is_estimated);
+  const noExpenses=Boolean(r.expense_entry_confirmation_required)&&Number(r.expense_entry_count||0)===0;
+  const status=!r.has_pnl_activity?"منافع و نقصان کی سرگرمی ابھی درج نہیں":!r.complete?"لاگت نامکمل — نتیجہ عارضی":estimated?(net>=0?"تخمینی منافع — حتمی حساب نہیں":"تخمینی نقصان — حتمی حساب نہیں"):net>=0?"درج شدہ ریکارڈ کے مطابق منافع":"درج شدہ ریکارڈ کے مطابق نقصان";
   const missing=(r.missing_costs||[]).map(x=>"<li>"+esc(x)+"</li>").join("");
   const kpi=(label,value,note="")=>"<div class='exec-kpi'><span>"+label+"</span><strong>"+value+"</strong>"+(note?"<small>"+note+"</small>":"")+"</div>";
   const line=(label,value)=>"<div class='exec-line'><span>"+label+"</span><b>"+value+"</b></div>";
@@ -3804,7 +3806,7 @@ async function runReport(){
     kpi("مالکان کی نکاسی",fmt(owners.total)+" روپے")+
    "</div>"+
    "<div class='exec-panel'><h3>حساب کی حیثیت</h3><p>"+esc(status)+"</p>"+
-    (missing?"<div class='warning'>حتمی حساب سے پہلے یہ لاگتیں درج کریں:<ul>"+missing+"</ul></div>":"<p class='success'>حساب میں استعمال ہونے والی مخصوص لاگتیں دستیاب ہیں۔</p>")+(r.notes?"<div class='warning'><b>اہم حد:</b> "+esc(r.notes)+"</div>":"")+
+    (missing?"<div class='warning'>حتمی حساب سے پہلے یہ لاگتیں درج کریں:<ul>"+missing+"</ul></div>":estimated?"<div class='warning'>درج شدہ مخصوص لاگتیں دستیاب ہیں، لیکن پانی/کاؤنٹر کے استعمال کا تخمینہ موجود ہے؛ اس لیے یہ نتیجہ حتمی نہیں۔</div>":"<p class='success'>حساب میں استعمال ہونے والی مخصوص لاگتیں دستیاب ہیں۔</p>")+(noExpenses?"<div class='warning'>اس مدت میں کوئی کاروباری خرچ درج نہیں ہوا۔ اگر واقعی کوئی خرچ نہیں ہوا تو درست؛ ورنہ حتمی حساب سے پہلے تمام اخراجات درج کریں۔</div>":"")+(r.notes?"<div class='warning'><b>اہم حد:</b> "+esc(r.notes)+"</div>":"")+
     "<p class='muted'>یہ کاروباری انتظامی رپورٹ ہے؛ مکمل ڈبل انٹری جنرل لیجر یا قانونی مالیاتی اسٹیٹمنٹ نہیں۔</p></div>"+
    "<details class='card'><summary><b>تفصیلی آمدن اور اخراجات</b></summary>"+
     "<div class='exec-two-col'><section class='exec-panel'><h3>19L شعبہ</h3>"+
