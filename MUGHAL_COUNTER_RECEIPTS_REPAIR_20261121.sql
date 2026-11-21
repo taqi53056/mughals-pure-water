@@ -17,11 +17,10 @@ SET search_path TO ''
 AS $function$
 DECLARE
   v_unassigned_receipts numeric(14,2) := 0;
-  v_product_cash_receipts numeric(14,2) := 0;
 BEGIN
   IF NEW.reported_total_amount IS NOT NULL THEN
     IF NEW.reported_total_amount < 0 THEN
-      RAISE EXCEPTION 'روزانہ مجموعی کاؤنٹر وصولی منفی نہیں ہو سکتی۔'
+      RAISE EXCEPTION 'روزانہ مجموعی 19L کاؤنٹر وصولی منفی نہیں ہو سکتی۔'
         USING ERRCODE='22023';
     END IF;
 
@@ -30,29 +29,16 @@ BEGIN
     FROM public.unassigned_19l_delivery_collections c
     WHERE c.received_date = NEW.sale_date;
 
-    -- The all-products gross-receipt method starts on 2026-11-21.
-    -- Preserve the historical 19L-only interpretation for earlier rows.
-    IF NEW.sale_date >= DATE '2026-11-21' THEN
-      SELECT COALESCE(SUM(ps.total_amount),0)
-        INTO v_product_cash_receipts
-      FROM public.product_sales ps
-      WHERE ps.sale_date = NEW.sale_date
-        AND ps.payment_method = 'cash';
-    ELSE
-      v_product_cash_receipts := 0;
-    END IF;
-
-    IF NEW.reported_total_amount < v_unassigned_receipts + v_product_cash_receipts THEN
+    IF NEW.reported_total_amount < v_unassigned_receipts THEN
       RAISE EXCEPTION
-        'مجموعی کاؤنٹر وصولی (%)، آج کی غیر منسلک وصولی (%) اور الگ درج نقد مصنوعات کی فروخت (%) کے مجموعے سے کم ہے۔',
-        NEW.reported_total_amount, v_unassigned_receipts, v_product_cash_receipts
+        'مجموعی 19L کاؤنٹر وصولی (%)، آج کی وصول شدہ غیر منسلک سپلائی (%) سے کم ہے۔',
+        NEW.reported_total_amount, v_unassigned_receipts
         USING ERRCODE='23514';
     END IF;
 
     NEW.unassigned_receipts_included := v_unassigned_receipts;
-    NEW.product_sales_receipts_included := v_product_cash_receipts;
-    NEW.total_amount := NEW.reported_total_amount
-      - v_unassigned_receipts - v_product_cash_receipts;
+    NEW.product_sales_receipts_included := 0;
+    NEW.total_amount := NEW.reported_total_amount - v_unassigned_receipts;
     NEW.counter_bottles_estimated := NEW.total_amount / 50;
     NEW.counter_water_litres := NEW.counter_bottles_estimated * 19;
     NEW.total_litres := 0;
@@ -62,37 +48,8 @@ BEGIN
 END;
 $function$;
 
-CREATE OR REPLACE FUNCTION private.mpw_refresh_counter_water_after_product_sale()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO ''
-AS $function$
-BEGIN
-  IF TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD.sale_date IS DISTINCT FROM NEW.sale_date) THEN
-    UPDATE public.counter_water_sales
-       SET reported_total_amount = reported_total_amount
-     WHERE sale_date = OLD.sale_date
-       AND reported_total_amount IS NOT NULL;
-  END IF;
-
-  IF TG_OP <> 'DELETE' THEN
-    UPDATE public.counter_water_sales
-       SET reported_total_amount = reported_total_amount
-     WHERE sale_date = NEW.sale_date
-       AND reported_total_amount IS NOT NULL;
-  END IF;
-
-  RETURN NULL;
-END;
-$function$;
-
 DROP TRIGGER IF EXISTS mpw_refresh_counter_water_after_product_sale
   ON public.product_sales;
-CREATE TRIGGER mpw_refresh_counter_water_after_product_sale
-AFTER INSERT OR UPDATE OR DELETE ON public.product_sales
-FOR EACH ROW
-EXECUTE FUNCTION private.mpw_refresh_counter_water_after_product_sale();
 
 REVOKE ALL ON FUNCTION private.mpw_derive_counter_water_values() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION private.mpw_refresh_counter_water_after_product_sale() FROM PUBLIC, anon, authenticated;
