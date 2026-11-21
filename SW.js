@@ -1,4 +1,4 @@
-const CACHE_NAME = "mughals-pure-water-v146-financial-report-estimate-warnings";
+const CACHE_NAME = "mughals-pure-water-v147-financial-revenue-labels";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./logo.svg"];
 const APP_SHELL_PATHS = new Set(APP_SHELL.map(path => new URL(path, self.location.href).pathname));
 
