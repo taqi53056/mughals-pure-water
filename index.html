@@ -373,6 +373,16 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 #moduleBody .u19-history-item span{font-size:14px;overflow-wrap:break-word;word-break:normal}
 #moduleBody .u19-history-item b{font-size:15px;overflow-wrap:break-word;word-break:normal}
 @media(max-width:520px){#moduleBody .u19-history-item{grid-template-columns:1fr 1fr;padding:10px;gap:6px}#moduleBody .u19-history-item span{font-size:14px}#moduleBody .u19-intro{font-size:15px;line-height:2.05}}
+
+/* Urdu text integrity on mobile: avoid glyph-by-glyph wrapping and cramped lines */
+@media(max-width:699px){
+ #adminPanel #moduleBody p,#adminPanel #moduleBody label,#adminPanel #moduleBody small,
+ #adminPanel #moduleBody h2,#adminPanel #moduleBody h3,
+ #adminPanel #moduleBody button,#adminPanel #moduleBody th,#adminPanel #moduleBody td,
+ #customerPanel p,#customerPanel label,#customerPanel small,#customerPanel button,
+ #customerPanel th,#customerPanel td{word-break:normal!important;overflow-wrap:break-word;letter-spacing:normal;line-height:1.9}
+ #adminPanel #moduleBody button,#customerPanel button{white-space:normal;min-height:44px}
+}
 </style>
 
 <style id="owner-withdrawal-premium">
@@ -2860,7 +2870,7 @@ async function unassigned19lModule(){
   sel.innerHTML='<option value="">مزدور منتخب کریں</option>'+(data||[]).map(w=>'<option value="'+w.id+'">'+esc(w.full_name)+'</option>').join("");
   if(!(data||[]).length)sel.innerHTML='<option value="">کوئی فعال 19L مزدور موجود نہیں</option>';
  }catch(e){sel.innerHTML='<option value="">ورکر لوڈ نہیں ہوا</option>';msg("ورکر لوڈ نہیں ہوئے: "+(e.message||String(e)));return;}
- $("u19Worker").addEventListener("change",()=>{const owner=$("u19Worker").value==="owner";$("u19WorkerPicker").classList.toggle("hidden",owner);$("u19OwnerNote").classList.toggle("hidden",!owner);$("u19WorkerId").required=!owner;});
+ $("u19Worker").addEventListener("change",()=>{const owner=$("u19Worker").value==="owner";$("u19WorkerPicker").classList.toggle("hidden",owner);$("u19WorkerId").required=!owner;});
  $("u19Bottles").addEventListener("input",updateUnassigned19lLabor);
  updateUnassigned19lLabor();
  await loadUnassigned19lHistory();await loadUnassigned19lCollectionOptions();
@@ -2927,7 +2937,7 @@ async function saveUnassigned19lDelivery(){
   if(!data?.id)throw new Error("محفوظ اندراج کی تصدیق موصول نہیں ہوئی۔");
   mpwClearPendingRequestId("unassigned19l");
   msg("غیر منسلک سپلائی محفوظ ہوگئی۔ "+(isOwner?"مالک کی بچائی گئی مزدوری "+money(data.owner_labor_saving)+" درج ہے۔":"ورکر مزدوری "+money(data.labor_amount)+" لیجر میں درج ہوگئی۔"),true);
-  $("u19Worker").value="";$("u19WorkerPicker").classList.add("hidden");$("u19OwnerNote").classList.add("hidden");$("u19WorkerId").required=false;$("u19Bottles").value="";$("u19Empties").value="0";$("u19DamagedCaps").value="0";
+  $("u19Worker").value="";$("u19WorkerPicker").classList.add("hidden");$("u19WorkerId").required=false;$("u19Bottles").value="";$("u19Empties").value="0";$("u19DamagedCaps").value="0";
   updateUnassigned19lLabor();
   await Promise.all([loadUnassigned19lHistory(),loadUnassigned19lCollectionOptions(),loadTankerPurchases(),loadTodaySummary(),runReport()]);
  }catch(e){msg("سپلائی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
