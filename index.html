@@ -3073,10 +3073,8 @@ async function unassigned19lModule(){
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
  '<label for="u19Worker">سپلائی کس نے کی؟ *</label><select id="u19Worker" required><option value="" selected disabled>سپلائی کرنے والا منتخب کریں</option><option value="owner">مالک نے خود سپلائی کی</option><option value="worker">مزدور نے سپلائی کی</option></select><div id="u19WorkerPicker" class="hidden"><label for="u19WorkerId">مزدور منتخب کریں *</label><select id="u19WorkerId" required><option value="">ورکر لوڈ ہو رہا ہے...</option></select></div>'+
  '<label for="u19Bottles">سپلائی کی گئی بھری 19L بوتلیں</label><input id="u19Bottles" type="number" min="1" step="1" inputmode="numeric" value="" placeholder="بوتلوں کی تعداد">'+
- '<label for="u19Empties">واپس آنے والی خالی بوتلیں (اگر ہوں)</label><input id="u19Empties" type="number" min="0" step="1" inputmode="numeric" value="0" oninput="updateUnassigned19lLabor()">'+
+ '<label for="u19Empties">واپس آنے والی خالی بوتلیں (اگر ہوں)</label><input id="u19Empties" type="number" min="0" step="1" inputmode="numeric" value="0">'+
  '<label for="u19DamagedCaps">اس سپلائی میں خراب 19L ڈھکن</label><input id="u19DamagedCaps" type="number" min="0" step="1" inputmode="numeric" value="0">'+
- ''+
- ''+
  '<button id="u19SaveButton" onclick="saveUnassigned19lDelivery()">سپلائی اور مزدوری محفوظ کریں</button></div>'+
  '<div class="card"><h3>غیر منسلک سپلائی کی رقم وصول کریں</h3><p class="muted">متعلقہ سپلائی منتخب کریں، پھر وصولی کی تاریخ اور رقم درج کریں۔ جزوی وصولی بھی ممکن ہے۔</p><label for="u19CollectionDelivery">متعلقہ سپلائی *</label><select id="u19CollectionDelivery" required><option value="">سپلائی منتخب کریں</option></select><label for="u19CollectionDate">وصولی کی تاریخ *</label><input id="u19CollectionDate" type="date" value="'+today()+'"><label for="u19CollectionAmount">وصول شدہ رقم *</label><input id="u19CollectionAmount" type="number" min="0.01" step="0.01"><label for="u19CollectionMethod">طریقہ *</label><select id="u19CollectionMethod" required><option value="">طریقہ منتخب کریں</option><option value="cash">نقد</option><option value="bank">بینک</option><option value="easypaisa">ایزی پیسہ</option><option value="jazzcash">جاز کیش</option></select><button id="u19CollectionSave" onclick="saveUnassigned19lCollection()">وصولی محفوظ کریں</button></div><div id="u19History"></div>';
  const sel=$("u19WorkerId");
@@ -3087,13 +3085,7 @@ async function unassigned19lModule(){
   if(!(data||[]).length)sel.innerHTML='<option value="">کوئی فعال 19L مزدور موجود نہیں</option>';
  }catch(e){sel.innerHTML='<option value="">ورکر لوڈ نہیں ہوا</option>';msg("ورکر لوڈ نہیں ہوئے: "+(e.message||String(e)));return;}
  $("u19Worker").addEventListener("change",()=>{const owner=$("u19Worker").value==="owner";$("u19WorkerPicker").classList.toggle("hidden",owner);$("u19WorkerId").required=!owner;});
- $("u19Bottles").addEventListener("input",updateUnassigned19lLabor);
- updateUnassigned19lLabor();
  await loadUnassigned19lHistory();await loadUnassigned19lCollectionOptions();
-}
-function updateUnassigned19lLabor(){
- const n=Number($("u19Bottles")?.value)||0;
- if($("u19Labor"))$("u19Labor").textContent=money(n*20);
 }
 async function loadUnassigned19lHistory(){
  const box=$("u19History");if(!box)return;
