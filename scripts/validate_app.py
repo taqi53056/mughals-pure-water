@@ -14,6 +14,7 @@ MANIFEST = ROOT / "manifest.webmanifest"
 SW = ROOT / "SW.js"
 LOGO = ROOT / "logo.svg"
 DELIVERY_MIGRATION = ROOT / "supabase/migrations/20261110170207_one_customer_delivery_per_day.sql"
+MONTHLY_ACCOUNT_MIGRATION = ROOT / "supabase/migrations/20261123000100_add_unregistered_monthly_customer_ledger.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
@@ -46,7 +47,7 @@ class AppParser(HTMLParser):
 def fail(message):
     raise SystemExit("FAIL: " + message)
 
-if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION)):
+if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION)):
     fail("required app shell file is missing")
 
 source = HTML.read_text(encoding="utf-8")
@@ -83,6 +84,31 @@ if 'src="./logo.svg"' not in source or 'icon: "./logo.svg"' not in SW.read_text(
     fail("App header or push notification does not use the unified MPW logo")
 if "CREATE UNIQUE INDEX IF NOT EXISTS customer_19l_deliveries_customer_date_uidx" not in DELIVERY_MIGRATION.read_text(encoding="utf-8"):
     fail("One-delivery-per-customer/date database guard is missing")
+
+monthly_migration = MONTHLY_ACCOUNT_MIGRATION.read_text(encoding="utf-8")
+for required in (
+    "unregistered_monthly_customers",
+    "monthly_customer_id",
+    "customer_classification='monthly'",
+    "unregistered_monthly_customers_admin_all",
+    "public.is_admin()",
+    "private.record_monthly_unregistered_delivery",
+    "public.record_unassigned_19l_delivery",
+    "grant select, update on table public.unregistered_monthly_customers to authenticated",
+):
+    if required not in monthly_migration.lower():
+        fail("Monthly unregistered account migration is incomplete: " + required)
+
+for required in (
+    "openModule('monthlyAccounts')",
+    "async function monthlyUnregisteredModule()",
+    "async function saveMonthlyUnregisteredCustomer()",
+    "async function saveMonthlyUnregisteredDelivery()",
+    "async function saveMonthlyUnregisteredCollection()",
+    "customer_classification",
+):
+    if required not in source:
+        fail("Monthly unregistered account UI is incomplete: " + required)
 
 js_files = [(SW.name, SW.read_text(encoding="utf-8"))]
 js_files += [(f"inline-script-{i}.js", code) for i, code in enumerate(parser.inline_scripts) if code.strip()]
