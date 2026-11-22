@@ -383,6 +383,33 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
  #customerPanel th,#customerPanel td{word-break:normal!important;overflow-wrap:break-word;letter-spacing:normal;line-height:1.9}
  #adminPanel #moduleBody button,#customerPanel button{white-space:normal;min-height:44px}
 }
+
+/* Strict portal isolation: presentation fails closed even if a component toggles .hidden. */
+#app.customer-view #adminPanel,
+#app.admin-view #customerPanel{display:none!important}
+#app.customer-view #customerPanel{display:block!important;grid-column:1/-1;min-width:0}
+#app.admin-view #adminPanel{display:grid}
+#app.customer-view .session-bar #role{display:none!important}
+#app.customer-view .session-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#app.customer-view .session-bar #welcome{flex:1;min-width:0}
+#app.customer-view .session-bar button{width:auto;min-width:92px}
+#app.customer-view #customerPanel>*{min-width:0}
+#app.customer-view .customer-details-card details>summary{cursor:pointer;line-height:1.9;padding:4px 0}
+#app.customer-view .customer-info-item{min-width:0;overflow-wrap:anywhere}
+@media(max-width:699px){
+ #app.customer-view .customer-hero{padding:18px;border-radius:17px}
+ #app.customer-view .customer-hero h2{font-size:21px;line-height:1.8}
+ #app.customer-view .customer-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #app.customer-view .customer-stat{min-height:118px;padding:12px}
+ #app.customer-view .customer-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #app.customer-view .customer-record-head{gap:8px;flex-wrap:wrap}
+ #app.customer-view .customer-record{min-width:0}
+}
+@media(min-width:900px){
+ #app.customer-view #customerPanel{max-width:100%;width:100%;margin-inline:auto}
+ #app.customer-view .customer-hero{padding:26px}
+ #app.customer-view .customer-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
 </style>
 
 <style id="owner-withdrawal-premium">
@@ -1033,6 +1060,22 @@ function shareCurrentDeliveryWhatsApp(){shareCurrentDelivery("whatsapp")} functi
 function shareCurrentBill(channel){if(!currentBillSaved){msg("پہلے بل محفوظ کریں، پھر پیغام تیار کریں۔");return}const id=Number(document.getElementById("bCustomer")?.value),month=document.getElementById("bMonth")?.value,c=(customerList||[]).find(x=>Number(x.id)===id);if(!c||!month){msg("پہلے گاہک اور مہینہ منتخب کریں۔");return}const n=Number(document.getElementById("bBottles")?.textContent)||0,k=Number(document.getElementById("bCaps")?.textContent)||0;const message="السلام علیکم "+c.name+" صاحب! MUGHAL’S PURE WATER کا "+month+" کا بل تیار ہے۔ کامیاب 19L بوتلیں: "+n+" (رقم "+document.getElementById("bBottleAmt")?.textContent+")، خراب ڈھکن: "+k+" (رقم "+document.getElementById("bCapAmt")?.textContent+")، پچھلا بقایا: "+document.getElementById("bPrev")?.textContent+"، استعمال شدہ ایڈوانس: "+document.getElementById("bAdvance")?.textContent+"، ادائیگیاں: "+document.getElementById("bPaid")?.textContent+"، باقی قابل ادائیگی: "+document.getElementById("bDue")?.textContent+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
 function shareCurrentDelivery(channel){if(!currentDeliverySaved){msg("پہلے ڈلیوری محفوظ کریں، پھر پیغام تیار کریں۔");return}const id=Number(document.getElementById("dCustomer")?.value),c=(customerList||[]).find(x=>Number(x.id)===id);if(!c){msg("پہلے گاہک منتخب کریں۔");return}const date=document.getElementById("dDate")?.value||"",n=Number(document.getElementById("dSuccess")?.textContent)||0,k=Number(document.getElementById("dCaps")?.value)||0;const message="السلام علیکم "+c.name+" صاحب! "+date+" کو "+n+" کامیاب 19L بوتلوں کی ڈلیوری درج ہوئی۔ خراب ڈھکن: "+k+"۔ شکریہ۔";shareCustomerMessage(c.mobile,message,channel)}
 let user=null, myCustomer=null, customerList=[], currentModule="", editingId=null, currentDeliverySaved=false, currentBillSaved=false;
+function setPortalMode(mode){
+ const app=$("app"),admin=$("adminPanel"),customer=$("customerPanel");
+ if(!app||!admin||!customer)return;
+ const valid=mode==="admin"||mode==="customer"?mode:"none";
+ app.dataset.portal=valid;
+ app.classList.toggle("customer-view",valid==="customer");
+ app.classList.toggle("admin-view",valid==="admin");
+ admin.classList.toggle("hidden",valid!=="admin");
+ customer.classList.toggle("hidden",valid!=="customer");
+ admin.setAttribute("aria-hidden",String(valid!=="admin"));
+ customer.setAttribute("aria-hidden",String(valid!=="customer"));
+ admin.inert=valid!=="admin";
+ customer.inert=valid!=="customer";
+ if(valid==="none"){app.classList.add("hidden");}
+}
+
 let adminCustomerRealtimeChannel=null;
 function setBillSavedState(saved){currentBillSaved=!!saved;const a=document.getElementById("billWhatsAppButton"),b=document.getElementById("billSMSButton");if(a)a.disabled=!currentBillSaved;if(b)b.disabled=!currentBillSaved;}
 function markBillDirty(){setBillSavedState(false);}
@@ -1292,9 +1335,8 @@ async function loadApp(){
  if(error||!data.user)return;
  user=data.user;
  myCustomer=null;
- // ہر نئے سیشن پر دونوں پورٹلز پہلے بند رکھیں؛ کسی سابقہ سیشن کا پینل ظاہر نہ ہو۔
- $("adminPanel").classList.add("hidden");
- $("customerPanel").classList.add("hidden");
+ // ہر سیشن کی ابتدا مکمل بند حالت سے؛ پچھلے صارف کا کوئی پینل ظاہر نہیں ہوگا۔
+ setPortalMode("none");
  $("app").classList.add("hidden");
  // پروفائل رول کے ساتھ ڈیٹابیس کی allowlist پر مبنی is_admin() بھی لازماً تصدیق کرے۔
  const p=await db.from("profiles").select("role,full_name").eq("id",user.id).maybeSingle();
@@ -1334,12 +1376,12 @@ async function loadApp(){
  if(myCustomer){
   $("welcome").textContent="السلام علیکم، "+myCustomer.name+" صاحب";
   $("role").textContent=" | گاہک";
-  $("adminPanel").classList.add("hidden");$("customerPanel").classList.remove("hidden");
+  setPortalMode("customer");
   await loadCustomerPanel();
  }else{
   $("welcome").textContent="السلام علیکم، "+(p.data?.full_name||"ایڈمن")+" صاحب";
   $("role").textContent=" | منتظم";
-  $("customerPanel").classList.add("hidden");$("adminPanel").classList.remove("hidden");
+  setPortalMode("admin");
    filterAdminModules("operations");
   startAdminCustomerRealtime();
   await Promise.all([loadTodaySummary(),loadExecutiveDashboard(),refreshAdminSignupNotice()]);
@@ -1536,7 +1578,7 @@ function enhanceModuleControls(root=$("moduleBody")){
 
 async function openModule(name){
  // Admin modules must never open from a customer session, even if called manually.
- if(!user||myCustomer){console.warn("Blocked admin module access outside an admin session.");return;}
+ if(!user||myCustomer||$("app")?.dataset.portal!=="admin"){console.warn("Blocked admin module access outside an admin session.");return;}
  currentModule=name;editingId=null;
  $("adminPanel").classList.add("module-open");$("dashboard").classList.add("hidden");$("module").classList.remove("hidden");
  setTitle("");
@@ -4382,6 +4424,7 @@ async function saveProductSettings(id,productType){
 
 /* گاہک کو صرف اس کا اپنا اکاؤنٹ دکھائیں */
 async function loadCustomerPanel(){
+ if(!myCustomer||$("app")?.dataset.portal!=="customer")return;
  updateCustomerPushStatus();
  const monthStart=monthNow();
  const [billResult,paymentResult,deliveryResult]=await Promise.all([
