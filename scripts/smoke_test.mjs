@@ -1154,6 +1154,122 @@ try {
       failures.push("6L sale must accept an explicit positive per-bottle price without a fixed default floor");
     }
 
+    const monthlyAccountResult = await page.evaluate(async () => {
+      const originalDb = window.db;
+      const originalConfirm = window.confirm;
+      const originalLoadTodaySummary = window.loadTodaySummary;
+      const originalRunReport = window.runReport;
+      const tables = {
+        workers: [{ id: 2, full_name: "Monthly Worker" }],
+        unregistered_monthly_customers: [
+          { id: 5, name: "Monthly Account Test", mobile: "03001234567", address: "Test address", is_active: true, created_at: "2026-11-01T00:00:00Z" }
+        ],
+        unassigned_19l_deliveries: [
+          { id: 11, monthly_customer_id: 5, delivery_date: "2026-11-20", bottles_delivered: 3, damaged_caps: 1 }
+        ],
+        unassigned_19l_delivery_collections: [
+          { id: 1, delivery_id: 11, received_date: "2026-11-21", amount: 100, payment_method: "cash" }
+        ]
+      };
+      const rpcCalls = [];
+      window.db = {
+        from(table) {
+          const chain = {
+            select() { return chain; },
+            eq() { return chain; },
+            order() { return chain; },
+            contains() { return chain; },
+            range(from, to) { chain.rangeValues = [from, to]; return chain; },
+            in() { return chain; },
+            update() { return chain; },
+            then(resolve, reject) {
+              let data = tables[table] || [];
+              if (chain.rangeValues) data = data.slice(chain.rangeValues[0], chain.rangeValues[1] + 1);
+              return Promise.resolve({ data, error: null }).then(resolve, reject);
+            }
+          };
+          return chain;
+        },
+        async rpc(name, args) {
+          rpcCalls.push({ name, args });
+          if (name === "create_unregistered_monthly_customer") {
+            tables.unregistered_monthly_customers.push({
+              id: 6, name: args.p_name, mobile: args.p_mobile, address: args.p_address,
+              is_active: true, created_at: "2026-11-22T00:00:00Z"
+            });
+            return { data: { id: 6, already_saved: false }, error: null };
+          }
+          if (name === "record_monthly_unregistered_delivery") {
+            tables.unassigned_19l_deliveries.push({
+              id: 12, monthly_customer_id: args.p_customer_id, delivery_date: args.p_delivery_date,
+              bottles_delivered: args.p_bottles_delivered, damaged_caps: args.p_damaged_caps
+            });
+            return { data: { id: 12, already_saved: false }, error: null };
+          }
+          if (name === "record_unassigned_19l_collection") {
+            tables.unassigned_19l_delivery_collections.push({
+              id: 2, delivery_id: args.p_delivery_id, received_date: args.p_received_date,
+              amount: args.p_amount, payment_method: args.p_payment_method
+            });
+            return { data: { id: 2, remaining_due: 160 }, error: null };
+          }
+          return { data: null, error: { message: "Unexpected RPC: " + name } };
+        }
+      };
+      window.confirm = () => true;
+      window.loadTodaySummary = async () => {};
+      window.runReport = async () => {};
+      try {
+        await window.monthlyUnregisteredModule();
+        const initialAccountVisible = document.querySelector("#umLedger").textContent.includes("Monthly Account Test");
+        const initialPaymentOption = document.querySelector("#umCollectionDelivery").querySelector('option[value="11"]') !== null;
+
+        document.querySelector("#umName").value = "Second Monthly Account";
+        document.querySelector("#umMobile").value = "03001234568";
+        document.querySelector("#umAddress").value = "Second address";
+        await window.saveMonthlyUnregisteredCustomer();
+        const customerCreated = rpcCalls.some(call => call.name === "create_unregistered_monthly_customer" &&
+          call.args.p_name === "Second Monthly Account");
+
+        document.querySelector("#umDeliveryCustomer").value = "5";
+        document.querySelector("#umDeliveryDate").value = "2026-11-22";
+        document.querySelector("#umWorker").value = "owner";
+        document.querySelector("#umBottles").value = "2";
+        document.querySelector("#umEmpties").value = "0";
+        document.querySelector("#umCaps").value = "0";
+        await window.saveMonthlyUnregisteredDelivery();
+        const deliveryCall = rpcCalls.find(call => call.name === "record_monthly_unregistered_delivery");
+
+        document.querySelector("#umCollectionDelivery").value = "11";
+        document.querySelector("#umCollectionDate").value = "2026-11-22";
+        document.querySelector("#umCollectionAmount").value = "50";
+        document.querySelector("#umCollectionMethod").value = "cash";
+        await window.saveMonthlyUnregisteredCollection();
+        const collectionCall = rpcCalls.find(call => call.name === "record_unassigned_19l_collection");
+        return {
+          initialAccountVisible,
+          initialPaymentOption,
+          customerCreated,
+          deliveryLinkedToMonthlyCustomer: deliveryCall?.args?.p_customer_id === 5 &&
+            deliveryCall?.args?.p_bottles_delivered === 2 && deliveryCall?.args?.p_performed_by_owner === true,
+          collectionUsesActualDateAndMethod: collectionCall?.args?.p_received_date === "2026-11-22" &&
+            collectionCall?.args?.p_payment_method === "cash",
+          monthlyCollectionsStayInSeparateModule: document.querySelector("#umLedger").textContent.includes("Monthly Account Test")
+        };
+      } finally {
+        window.db = originalDb;
+        window.confirm = originalConfirm;
+        window.loadTodaySummary = originalLoadTodaySummary;
+        window.runReport = originalRunReport;
+      }
+    });
+    if (!monthlyAccountResult.initialAccountVisible || !monthlyAccountResult.initialPaymentOption ||
+        !monthlyAccountResult.customerCreated || !monthlyAccountResult.deliveryLinkedToMonthlyCustomer ||
+        !monthlyAccountResult.collectionUsesActualDateAndMethod ||
+        !monthlyAccountResult.monthlyCollectionsStayInSeparateModule) {
+      failures.push("Monthly unregistered account, delivery, or collection workflow is not functioning correctly");
+    }
+
     const labelResult = await page.evaluate(() => {
       const body = document.querySelector("#moduleBody");
       body.innerHTML = '<div><input id="rawPurchaseQty" type="number" placeholder="مقدار"></div>' +
