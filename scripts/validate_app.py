@@ -14,7 +14,7 @@ MANIFEST = ROOT / "manifest.webmanifest"
 SW = ROOT / "SW.js"
 LOGO = ROOT / "logo.svg"
 DELIVERY_MIGRATION = ROOT / "supabase/migrations/20261110170207_one_customer_delivery_per_day.sql"
-MONTHLY_ACCOUNT_MIGRATION = ROOT / "supabase/migrations/20261123000100_add_unregistered_monthly_customer_ledger.sql"
+MONTHLY_ACCOUNT_MIGRATION = ROOT / "supabase/migrations/20261122211931_add_unregistered_monthly_customer_ledger.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
