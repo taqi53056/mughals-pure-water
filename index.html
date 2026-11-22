@@ -388,7 +388,6 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 #app.customer-view #adminPanel,
 #app.admin-view #customerPanel{display:none!important}
 #app.customer-view #customerPanel{display:block!important;grid-column:1/-1;min-width:0}
-#app.admin-view #adminPanel{display:grid}
 #app.customer-view .session-bar #role{display:none!important}
 #app.customer-view .session-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #app.customer-view .session-bar #welcome{flex:1;min-width:0}
@@ -406,6 +405,7 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
  #app.customer-view .customer-record{min-width:0}
 }
 @media(min-width:900px){
+ #app.admin-view #adminPanel{display:grid}
  #app.customer-view #customerPanel{max-width:100%;width:100%;margin-inline:auto}
  #app.customer-view .customer-hero{padding:26px}
  #app.customer-view .customer-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
