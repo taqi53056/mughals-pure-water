@@ -146,6 +146,7 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
  #todaySummary .stat{min-height:106px;padding:18px}
  #todaySummary .stat b{font-size:24px}
 }
+#adminPanel #homeTiles .tile[aria-label="ماہانہ غیر رجسٹرڈ کھاتے"]:before{content:"▤"}
 @media(max-width:699px){
  #adminPanel #homeTiles{grid-template-columns:repeat(2,minmax(0,1fr))}
  #adminPanel.module-open #homeTiles{display:none}
@@ -2930,19 +2931,26 @@ async function monthlyUnregisteredModule(){
  await loadMonthlyUnregisteredLedger();
 }
 
+async function mpwFetchAllPages(makeQuery,pageSize=500){
+ const rows=[];
+ for(let offset=0;;offset+=pageSize){
+  const {data,error}=await makeQuery().range(offset,offset+pageSize-1);
+  if(error)throw error;
+  const page=data||[];rows.push(...page);
+  if(page.length<pageSize)break;
+ }
+ return rows;
+}
+
 async function loadMonthlyUnregisteredLedger(){
  const box=$("umLedger");if(!box)return;
  box.textContent="ماہانہ کھاتے لوڈ ہو رہے ہیں...";
  try{
-  const [customersResult,deliveriesResult,collectionsResult]=await Promise.all([
-   db.from("unregistered_monthly_customers").select("id,name,mobile,address,is_active,created_at").order("name"),
-   db.from("unassigned_19l_deliveries").select("id,monthly_customer_id,delivery_date,bottles_delivered,damaged_caps").eq("customer_classification","monthly").order("delivery_date",{ascending:false}).limit(500),
-   db.from("unassigned_19l_delivery_collections").select("delivery_id,received_date,amount,payment_method").order("received_date",{ascending:false}).limit(1000)
+  const [customers,deliveries,collections]=await Promise.all([
+   mpwFetchAllPages(()=>db.from("unregistered_monthly_customers").select("id,name,mobile,address,is_active,created_at").order("name")),
+   mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,monthly_customer_id,delivery_date,bottles_delivered,damaged_caps").eq("customer_classification","monthly").order("delivery_date",{ascending:false})),
+   mpwFetchAllPages(()=>db.from("unassigned_19l_delivery_collections").select("delivery_id,received_date,amount,payment_method").order("received_date",{ascending:false}))
   ]);
-  if(customersResult.error)throw customersResult.error;
-  if(deliveriesResult.error)throw deliveriesResult.error;
-  if(collectionsResult.error)throw collectionsResult.error;
-  const customers=customersResult.data||[],deliveries=deliveriesResult.data||[],collections=collectionsResult.data||[];
   const customerById=new Map(customers.map(c=>[Number(c.id),c]));
   const deliveryById=new Map(deliveries.map(d=>[Number(d.id),d]));
   const collectedByDelivery=new Map();
