@@ -1,4 +1,4 @@
-const CACHE_NAME = "mughals-pure-water-v159-owner-withdrawal-cleanup";
+const CACHE_NAME = "mughals-pure-water-v160-monthly-ledger";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./logo.svg"];
 const APP_SHELL_PATHS = new Set(APP_SHELL.map(path => new URL(path, self.location.href).pathname));
 
