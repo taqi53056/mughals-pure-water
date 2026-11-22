@@ -2722,7 +2722,7 @@ async function updateCounterWaterPreview(){
  try{
   const [usage,receiptsResult,deliveriesResult]=await Promise.all([
    getDaily19LWaterUsage(date),
-   db.from("unassigned_19l_delivery_collections").select("amount").eq("received_date",date),
+   db.from("unassigned_19l_delivery_collections").select("amount,unassigned_19l_deliveries!inner(customer_classification)").eq("received_date",date).eq("unassigned_19l_deliveries.customer_classification","one_time"),
    db.from("unassigned_19l_deliveries").select("id,bottles_delivered,damaged_caps").eq("delivery_date",date)
   ]);
   if(receiptsResult.error)throw receiptsResult.error;
@@ -2760,10 +2760,10 @@ async function updateCounterWaterPreview(){
 async function counterWaterModule(){
  setTitle("روزانہ کاؤنٹر وصولی");
  $("moduleBody").innerHTML=
-  '<p class="muted">صرف ایک رقم درج کریں: آج کاؤنٹر پر حقیقتاً وصول شدہ مجموعی رقم، جس میں 19L اور دوسری مصنوعات کی وصولیاں شامل ہیں۔ الگ درج نقد مصنوعات کی فروخت اور آج وصول شدہ غیر منسلک سپلائی کی رقم ایپ خود منہا کرے گی۔ غیر وصول شدہ سپلائی بقایا رہے گی، آج کی وصولی سے منہا نہیں ہوگی۔</p>'+
+  '<p class="muted">صرف آج کی مجموعی 19L کاؤنٹر وصولی درج کریں۔ 500ml، 1.5L اور 6L کی الگ فروخت اس رقم سے منہا نہیں ہوگی۔ صرف ایک وقتی غیر منسلک سپلائی کی وہ وصولی منہا ہوگی جو اس رقم میں شامل ہو۔ ماہانہ کھاتے کی وصولی کاؤنٹر سے کبھی منہا نہیں ہوگی۔</p>'+
   '<div class="card"><label for="counterDate">تاریخ</label><input id="counterDate" type="date" value="'+today()+'">'+
-  '<label for="counterAmount">آج کی مجموعی کاؤنٹر وصولی (تمام مصنوعات سمیت، روپے)</label><input id="counterAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="مثلاً 1300">'+
-  '<div id="counterWaterPreview" class="stat">رقم درج کرنے پر غیر منسلک وصولی منہا کرکے کاؤنٹر بوتلیں اور پانی خود تخمینہ ہوگا۔</div>'+
+  '<label for="counterAmount">آج کی مجموعی 19L کاؤنٹر وصولی (دکان کی فروخت + ایک وقتی وصول شدہ سپلائی، روپے)</label><input id="counterAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="مثلاً 1300">'+
+  '<div id="counterWaterPreview" class="stat">رقم درج کرنے پر صرف ایک وقتی سپلائی کی وصولی منہا کرکے کاؤنٹر بوتلیں اور پانی خود تخمینہ ہوگا۔</div>'+
   '<button id="counterSaveButton" onclick="saveCounterWaterSale()">روزانہ وصولی محفوظ کریں</button></div>';
  $("counterDate").addEventListener("change",loadCounterWaterForDate);
  $("counterAmount").addEventListener("input",updateCounterWaterPreview);
@@ -2833,7 +2833,7 @@ async function saveCounterWaterSale(){
 async function unassigned19lModule(){
  setTitle("بغیر گاہک 19L سپلائی");
  $("moduleBody").innerHTML=
- '<p class="muted">یہ اندراج صرف اس سپلائی کے لیے ہے جس کا ابھی کوئی کسٹمر اکاؤنٹ موجود نہیں۔ اس سے کسٹمر، کسٹمر بل یا کسٹمر ہسٹری نہیں بنے گی۔ ہر بھری بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔ اس اندراج سے 19L آمدن منافع میں شمار ہوگی۔ رقم حقیقتاً ملنے پر نیچے اسی سپلائی کے ساتھ وصولی درج کریں؛ وصولی منافع میں دوبارہ شامل نہیں ہوگی۔</p>'+
+ '<p class="muted">یہ حصہ صرف غیر رجسٹرڈ ایک وقتی گاہکوں کے لیے ہے، جو عموماً اگلے دن یا چند دن میں ادائیگی کرتے ہیں۔ ماہانہ ادائیگی والے گاہک یہاں نئی سپلائی کے طور پر درج نہ کریں۔ پرانے ریکارڈ جن کی قسم واضح نہیں، زیرِ جائزہ رہیں گے اور بعد میں درست درجہ بند کیے جائیں گے۔ اس سے کسٹمر اکاؤنٹ یا ماہانہ بل نہیں بنے گا۔ ہر بھری بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔ رقم حقیقتاً ملنے پر اسی سپلائی سے منسلک کریں۔</p>'+
  '<div class="card"><h3>نئی غیر منسلک سپلائی</h3>'+
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
  '<label for="u19Worker">سپلائی کس نے کی؟ *</label><select id="u19Worker" required><option value="" selected disabled>سپلائی کرنے والا منتخب کریں</option><option value="owner">مالک نے خود سپلائی کی</option><option value="worker">مزدور نے سپلائی کی</option></select><div id="u19WorkerPicker" class="hidden"><label for="u19WorkerId">مزدور منتخب کریں *</label><select id="u19WorkerId" required><option value="">ورکر لوڈ ہو رہا ہے...</option></select></div><div id="u19OwnerNote" class="muted hidden">مالک کی اپنی محنت پر ورکر لیجر میں مزدوری نہیں بنے گی؛ بچائی گئی مزدوری الگ دکھائی جائے گی۔</div>'+
@@ -2863,7 +2863,7 @@ function updateUnassigned19lLabor(){
 async function loadUnassigned19lHistory(){
  const box=$("u19History");if(!box)return;
  try{
-  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,worker_id,performed_by_owner,owner_labor_saving,bottles_delivered,empty_bottles_returned,damaged_caps,labor_amount,details").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
+  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,worker_id,performed_by_owner,owner_labor_saving,bottles_delivered,empty_bottles_returned,damaged_caps,labor_amount,details,customer_classification").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
   if(error)throw error;
   const {data:workers,error:we}=await db.from("workers").select("id,full_name");
   if(we)throw we;
@@ -2872,11 +2872,11 @@ async function loadUnassigned19lHistory(){
   const map=new Map((workers||[]).map(w=>[Number(w.id),w.full_name]));
   const collected=new Map();
   (receipts||[]).forEach(x=>collected.set(Number(x.delivery_id),(collected.get(Number(x.delivery_id))||0)+Number(x.amount)));
-  box.innerHTML='<h3>غیر منسلک سپلائی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>سپلائی کس نے کی</th><th>بھری بوتلیں</th><th>خالی واپس</th><th>خراب ڈھکن</th><th>وصول شدہ رقم</th><th>باقی رقم</th><th>ورکر مزدوری</th><th>مالک کی بچائی مزدوری</th><th>تفصیل</th></tr>'+
+  box.innerHTML='<h3>غیر منسلک سپلائی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>قسم</th><th>سپلائی کس نے کی</th><th>بھری بوتلیں</th><th>خالی واپس</th><th>خراب ڈھکن</th><th>وصول شدہ رقم</th><th>باقی رقم</th><th>ورکر مزدوری</th><th>مالک کی بچائی مزدوری</th><th>تفصیل</th></tr>'+
    (data||[]).map(r=>{
     const received=collected.get(Number(r.id))||0;
     const due=Number(r.bottles_delivered||0)*100+Number(r.damaged_caps||0)*10;
-    return '<tr><td>'+esc(r.delivery_date)+'</td><td>'+esc(r.performed_by_owner?"مالک":map.get(Number(r.worker_id))||"ورکر")+'</td><td>'+Number(r.bottles_delivered)+'</td><td>'+Number(r.empty_bottles_returned)+'</td><td>'+Number(r.damaged_caps||0)+'</td><td>'+money(received)+'</td><td>'+money(Math.max(due-received,0))+'</td><td>'+money(r.labor_amount)+'</td><td>'+money(r.owner_labor_saving)+'</td><td>'+esc(r.details||"—")+'</td></tr>';
+    return '<tr><td>'+esc(r.delivery_date)+'</td><td>'+esc(r.customer_classification==="one_time"?"ایک وقتی":r.customer_classification==="monthly"?"ماہانہ":"قسم کی تصدیق باقی")+'</td><td>'+esc(r.performed_by_owner?"مالک":map.get(Number(r.worker_id))||"ورکر")+'</td><td>'+Number(r.bottles_delivered)+'</td><td>'+Number(r.empty_bottles_returned)+'</td><td>'+Number(r.damaged_caps||0)+'</td><td>'+money(received)+'</td><td>'+money(Math.max(due-received,0))+'</td><td>'+money(r.labor_amount)+'</td><td>'+money(r.owner_labor_saving)+'</td><td>'+esc(r.details||"—")+'</td></tr>';
    }).join("")+
    '</table></div>';
  }catch(e){box.textContent="سپلائی ہسٹری لوڈ نہیں ہوئی: "+(e.message||String(e));}
