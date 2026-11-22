@@ -364,6 +364,15 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
 #moduleTable .customer-record-actions button{width:100%;min-width:0;min-height:43px;margin:0;padding:8px;font-size:13px;line-height:1.5;white-space:normal}
 #moduleTable .customer-record-empty{padding:18px;border:1px dashed #cbd8cb;border-radius:14px;text-align:center;color:#617267;background:#f8faf8}
 @media(max-width:420px){#moduleTable .customer-record-details{grid-template-columns:1fr}#moduleTable .customer-record-card{padding:12px}#moduleTable .customer-record-actions button{font-size:12px;padding:7px 5px}}
+
+/* Compact 19L one-time supply module; preserve Urdu shaping on narrow screens */
+#moduleBody .u19-intro{font-size:15px;line-height:2;word-break:normal;overflow-wrap:break-word}
+#moduleBody .u19-history-list{display:grid;gap:9px}
+#moduleBody .u19-history-item{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border:1px solid #dce5dc;border-radius:12px;background:#fbfdfb;line-height:1.9}
+#moduleBody .u19-history-item>div{display:grid;gap:2px;min-width:0}
+#moduleBody .u19-history-item span{font-size:14px;overflow-wrap:break-word;word-break:normal}
+#moduleBody .u19-history-item b{font-size:15px;overflow-wrap:break-word;word-break:normal}
+@media(max-width:520px){#moduleBody .u19-history-item{grid-template-columns:1fr 1fr;padding:10px;gap:6px}#moduleBody .u19-history-item span{font-size:14px}#moduleBody .u19-intro{font-size:15px;line-height:2.05}}
 </style>
 
 <style id="owner-withdrawal-premium">
@@ -2833,17 +2842,17 @@ async function saveCounterWaterSale(){
 async function unassigned19lModule(){
  setTitle("بغیر گاہک 19L سپلائی");
  $("moduleBody").innerHTML=
- '<p class="muted">یہ حصہ صرف غیر رجسٹرڈ ایک وقتی گاہکوں کے لیے ہے، جو عموماً اگلے دن یا چند دن میں ادائیگی کرتے ہیں۔ ماہانہ ادائیگی والے گاہک یہاں نئی سپلائی کے طور پر درج نہ کریں۔ پرانے ریکارڈ جن کی قسم واضح نہیں، زیرِ جائزہ رہیں گے اور بعد میں درست درجہ بند کیے جائیں گے۔ اس سے کسٹمر اکاؤنٹ یا ماہانہ بل نہیں بنے گا۔ ہر بھری بوتل پر Rs.20 مزدوری خود ورکر لیجر میں درج ہوگی اور پانی دکان والی ٹنکی سے منہا ہوگا۔ رقم حقیقتاً ملنے پر اسی سپلائی سے منسلک کریں۔</p>'+
+ '<p class="muted u19-intro">یہ حصہ صرف ایک وقتی، غیر رجسٹرڈ سپلائی کے لیے ہے۔ ماہانہ کھاتے والی سپلائی یہاں درج نہ کریں۔ رقم ملنے پر نیچے وصولی درج کریں۔</p>'+
  '<div class="card"><h3>نئی غیر منسلک سپلائی</h3>'+
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
- '<label for="u19Worker">سپلائی کس نے کی؟ *</label><select id="u19Worker" required><option value="" selected disabled>سپلائی کرنے والا منتخب کریں</option><option value="owner">مالک نے خود سپلائی کی</option><option value="worker">مزدور نے سپلائی کی</option></select><div id="u19WorkerPicker" class="hidden"><label for="u19WorkerId">مزدور منتخب کریں *</label><select id="u19WorkerId" required><option value="">ورکر لوڈ ہو رہا ہے...</option></select></div><div id="u19OwnerNote" class="muted hidden">مالک کی اپنی محنت پر ورکر لیجر میں مزدوری نہیں بنے گی؛ بچائی گئی مزدوری الگ دکھائی جائے گی۔</div>'+
+ '<label for="u19Worker">سپلائی کس نے کی؟ *</label><select id="u19Worker" required><option value="" selected disabled>سپلائی کرنے والا منتخب کریں</option><option value="owner">مالک نے خود سپلائی کی</option><option value="worker">مزدور نے سپلائی کی</option></select><div id="u19WorkerPicker" class="hidden"><label for="u19WorkerId">مزدور منتخب کریں *</label><select id="u19WorkerId" required><option value="">ورکر لوڈ ہو رہا ہے...</option></select></div>'+
  '<label for="u19Bottles">سپلائی کی گئی بھری 19L بوتلیں</label><input id="u19Bottles" type="number" min="1" step="1" inputmode="numeric" value="" placeholder="بوتلوں کی تعداد">'+
  '<label for="u19Empties">واپس آنے والی خالی بوتلیں (اگر ہوں)</label><input id="u19Empties" type="number" min="0" step="1" inputmode="numeric" value="0" oninput="updateUnassigned19lLabor()">'+
  '<label for="u19DamagedCaps">اس سپلائی میں خراب 19L ڈھکن</label><input id="u19DamagedCaps" type="number" min="0" step="1" inputmode="numeric" value="0">'+
- '<label for="u19Details">تفصیل (اختیاری)</label><input id="u19Details" maxlength="300" placeholder="مثلاً عارضی سپلائی">'+
- '<div class="stat">مزدوری: <b id="u19Labor">Rs. 0</b> — فی بھری بوتل Rs.20</div>'+
+ ''+
+ ''+
  '<button id="u19SaveButton" onclick="saveUnassigned19lDelivery()">سپلائی اور مزدوری محفوظ کریں</button></div>'+
- '<div class="card"><h3>غیر منسلک سپلائی کی رقم وصول کریں</h3><p class="muted">وصولی اصل سپلائی سے منسلک ہوگی؛ منافع میں دوبارہ شامل نہیں ہوگی۔ جزوی وصولی بھی درج ہو سکتی ہے۔</p><label for="u19CollectionDelivery">متعلقہ سپلائی *</label><select id="u19CollectionDelivery" required><option value="">سپلائی منتخب کریں</option></select><label for="u19CollectionDate">وصولی کی تاریخ *</label><input id="u19CollectionDate" type="date" value="'+today()+'"><label for="u19CollectionAmount">وصول شدہ رقم *</label><input id="u19CollectionAmount" type="number" min="0.01" step="0.01"><label for="u19CollectionMethod">طریقہ *</label><select id="u19CollectionMethod" required><option value="">طریقہ منتخب کریں</option><option value="cash">نقد</option><option value="bank">بینک</option><option value="easypaisa">ایزی پیسہ</option><option value="jazzcash">جاز کیش</option></select><button id="u19CollectionSave" onclick="saveUnassigned19lCollection()">وصولی محفوظ کریں</button></div><div id="u19History"></div>';
+ '<div class="card"><h3>غیر منسلک سپلائی کی رقم وصول کریں</h3><p class="muted">متعلقہ سپلائی منتخب کریں، پھر وصولی کی تاریخ اور رقم درج کریں۔ جزوی وصولی بھی ممکن ہے۔</p><label for="u19CollectionDelivery">متعلقہ سپلائی *</label><select id="u19CollectionDelivery" required><option value="">سپلائی منتخب کریں</option></select><label for="u19CollectionDate">وصولی کی تاریخ *</label><input id="u19CollectionDate" type="date" value="'+today()+'"><label for="u19CollectionAmount">وصول شدہ رقم *</label><input id="u19CollectionAmount" type="number" min="0.01" step="0.01"><label for="u19CollectionMethod">طریقہ *</label><select id="u19CollectionMethod" required><option value="">طریقہ منتخب کریں</option><option value="cash">نقد</option><option value="bank">بینک</option><option value="easypaisa">ایزی پیسہ</option><option value="jazzcash">جاز کیش</option></select><button id="u19CollectionSave" onclick="saveUnassigned19lCollection()">وصولی محفوظ کریں</button></div><div id="u19History"></div>';
  const sel=$("u19WorkerId");
  try{
   const {data,error}=await db.from("workers").select("id,full_name").eq("is_active",true).eq("is_owner",false).contains("work_categories",["19L delivery"]).order("full_name");
@@ -2863,27 +2872,34 @@ function updateUnassigned19lLabor(){
 async function loadUnassigned19lHistory(){
  const box=$("u19History");if(!box)return;
  try{
-  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,worker_id,performed_by_owner,owner_labor_saving,bottles_delivered,empty_bottles_returned,damaged_caps,labor_amount,details,customer_classification").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
+  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
   if(error)throw error;
-  const {data:workers,error:we}=await db.from("workers").select("id,full_name");
-  if(we)throw we;
   const {data:receipts,error:re}=await db.from("unassigned_19l_delivery_collections").select("delivery_id,amount");
   if(re)throw re;
-  const map=new Map((workers||[]).map(w=>[Number(w.id),w.full_name]));
   const collected=new Map();
   (receipts||[]).forEach(x=>collected.set(Number(x.delivery_id),(collected.get(Number(x.delivery_id))||0)+Number(x.amount)));
-  box.innerHTML='<h3>غیر منسلک سپلائی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>قسم</th><th>سپلائی کس نے کی</th><th>بھری بوتلیں</th><th>خالی واپس</th><th>خراب ڈھکن</th><th>وصول شدہ رقم</th><th>باقی رقم</th><th>ورکر مزدوری</th><th>مالک کی بچائی مزدوری</th><th>تفصیل</th></tr>'+
+  box.innerHTML='<h3>حالیہ سپلائیاں</h3><div class="u19-history-list">'+
    (data||[]).map(r=>{
     const received=collected.get(Number(r.id))||0;
     const due=Number(r.bottles_delivered||0)*100+Number(r.damaged_caps||0)*10;
-    return '<tr><td>'+esc(r.delivery_date)+'</td><td>'+esc(r.customer_classification==="one_time"?"ایک وقتی":r.customer_classification==="monthly"?"ماہانہ":"قسم کی تصدیق باقی")+'</td><td>'+esc(r.performed_by_owner?"مالک":map.get(Number(r.worker_id))||"ورکر")+'</td><td>'+Number(r.bottles_delivered)+'</td><td>'+Number(r.empty_bottles_returned)+'</td><td>'+Number(r.damaged_caps||0)+'</td><td>'+money(received)+'</td><td>'+money(Math.max(due-received,0))+'</td><td>'+money(r.labor_amount)+'</td><td>'+money(r.owner_labor_saving)+'</td><td>'+esc(r.details||"—")+'</td></tr>';
+    const remaining=Math.max(due-received,0);
+    return '<div class="u19-history-item"><div><b>'+esc(r.delivery_date)+'</b><span>'+Number(r.bottles_delivered)+' بھری بوتلیں</span></div><div><span>وصولی: '+money(received)+'</span><b>بقایا: '+money(remaining)+'</b></div></div>';
    }).join("")+
-   '</table></div>';
+   ((data||[]).length?'':'<p class="muted">ابھی کوئی سپلائی درج نہیں ہوئی۔</p>')+
+   '</div>';
  }catch(e){box.textContent="سپلائی ہسٹری لوڈ نہیں ہوئی: "+(e.message||String(e));}
 }
 async function loadUnassigned19lCollectionOptions(){
  const sel=$("u19CollectionDelivery");if(!sel)return;
- try{const {data:deliveries,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps");if(error)throw error;const {data:receipts,error:re}=await db.from("unassigned_19l_delivery_collections").select("delivery_id,amount");if(re)throw re;const totals=new Map();(receipts||[]).forEach(r=>totals.set(Number(r.delivery_id),(totals.get(Number(r.delivery_id))||0)+Number(r.amount)));const pending=(deliveries||[]).map(d=>({d,remaining:Number(d.bottles_delivered)*100+Number(d.damaged_caps||0)*10-(totals.get(Number(d.id))||0)})).filter(x=>x.remaining>0);sel.innerHTML='<option value="">سپلائی منتخب کریں</option>'+pending.map(x=>'<option value="'+x.d.id+'">#'+x.d.id+' — '+esc(x.d.delivery_date)+' — بقایا '+money(x.remaining)+'</option>').join("");}catch(e){sel.innerHTML='<option value="">وصولی فہرست لوڈ نہیں ہوئی</option>';msg("وصولی کی فہرست لوڈ نہیں ہوئی: "+(e.message||String(e)));}
+ try{
+  const {data:deliveries,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").eq("customer_classification","one_time").order("delivery_date",{ascending:false});
+  if(error)throw error;
+  const {data:receipts,error:re}=await db.from("unassigned_19l_delivery_collections").select("delivery_id,amount");
+  if(re)throw re;
+  const totals=new Map();(receipts||[]).forEach(r=>totals.set(Number(r.delivery_id),(totals.get(Number(r.delivery_id))||0)+Number(r.amount)));
+  const pending=(deliveries||[]).map(d=>({d,remaining:Number(d.bottles_delivered)*100+Number(d.damaged_caps||0)*10-(totals.get(Number(d.id))||0)})).filter(x=>x.remaining>0);
+  sel.innerHTML='<option value="">سپلائی منتخب کریں</option>'+pending.map(x=>'<option value="'+x.d.id+'">'+esc(x.d.delivery_date)+' — '+Number(x.d.bottles_delivered)+' بوتلیں — بقایا '+money(x.remaining)+'</option>').join("");
+ }catch(e){sel.innerHTML='<option value="">وصولی فہرست لوڈ نہیں ہوئی</option>';msg("وصولی کی فہرست لوڈ نہیں ہوئی: "+(e.message||String(e)));}
 }
 async function saveUnassigned19lCollection(){
  const deliveryId=Number($("u19CollectionDelivery").value),receivedDate=$("u19CollectionDate").value,amount=Number($("u19CollectionAmount").value),method=$("u19CollectionMethod").value;
@@ -2894,24 +2910,24 @@ async function saveUnassigned19lCollection(){
 }
 
 async function saveUnassigned19lDelivery(){
- const date=$("u19Date").value,actor=$("u19Worker").value,isOwner=actor==="owner",worker=isOwner?null:Number($("u19WorkerId").value),bottles=Number($("u19Bottles").value),empties=Number($("u19Empties").value||0),damagedCaps=Number($("u19DamagedCaps").value||0),details=$("u19Details").value.trim();
+ const date=$("u19Date").value,actor=$("u19Worker").value,isOwner=actor==="owner",worker=isOwner?null:Number($("u19WorkerId").value),bottles=Number($("u19Bottles").value),empties=Number($("u19Empties").value||0),damagedCaps=Number($("u19DamagedCaps").value||0);
  if(!date||!["owner","worker"].includes(actor)||(!isOwner&&(!Number.isInteger(worker)||worker<=0))||!Number.isInteger(bottles)||bottles<=0||!Number.isInteger(empties)||empties<0||empties>bottles||!Number.isInteger(damagedCaps)||damagedCaps<0){msg("سپلائی کرنے والا، مزدور (اگر لاگو ہو)، تاریخ اور مقدار درست منتخب/درج کریں۔");return;}
  if(date>today()){msg("مستقبل کی تاریخ پر سپلائی درج نہیں ہو سکتی۔");return;}
  const labor=isOwner?0:bottles*20,ownerSaving=isOwner?bottles*20:0;
  if(!confirm("تصدیق کریں:\nتاریخ: "+date+"\nسپلائی: "+(isOwner?"مالک نے خود":"مزدور")+"\nبوتلیں: "+bottles+"\nورکر مزدوری: "+money(labor)+"\nمالک کی بچائی گئی مزدوری: "+money(ownerSaving)+"\nیہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
  const button=$("u19SaveButton");if(button?.disabled)return;if(button)button.disabled=true;
- const signature=[date,actor,worker,bottles,empties,damagedCaps,details].join("|");
+ const signature=[date,actor,worker,bottles,empties,damagedCaps].join("|");
  const requestId=mpwPendingRequestId("unassigned19l",signature);
  try{
   const {data,error}=await db.rpc("record_unassigned_19l_delivery",{
    p_delivery_date:date,p_worker_id:worker,p_bottles_delivered:bottles,
-   p_empty_bottles_returned:empties,p_details:details||null,p_request_id:requestId,p_damaged_caps:damagedCaps,p_performed_by_owner:isOwner
+   p_empty_bottles_returned:empties,p_details:null,p_request_id:requestId,p_damaged_caps:damagedCaps,p_performed_by_owner:isOwner
   });
   if(error)throw error;
   if(!data?.id)throw new Error("محفوظ اندراج کی تصدیق موصول نہیں ہوئی۔");
   mpwClearPendingRequestId("unassigned19l");
   msg("غیر منسلک سپلائی محفوظ ہوگئی۔ "+(isOwner?"مالک کی بچائی گئی مزدوری "+money(data.owner_labor_saving)+" درج ہے۔":"ورکر مزدوری "+money(data.labor_amount)+" لیجر میں درج ہوگئی۔"),true);
-  $("u19Worker").value="";$("u19WorkerPicker").classList.add("hidden");$("u19OwnerNote").classList.add("hidden");$("u19WorkerId").required=false;$("u19Bottles").value="";$("u19Empties").value="0";$("u19DamagedCaps").value="0";$("u19Details").value="";
+  $("u19Worker").value="";$("u19WorkerPicker").classList.add("hidden");$("u19OwnerNote").classList.add("hidden");$("u19WorkerId").required=false;$("u19Bottles").value="";$("u19Empties").value="0";$("u19DamagedCaps").value="0";
   updateUnassigned19lLabor();
   await Promise.all([loadUnassigned19lHistory(),loadUnassigned19lCollectionOptions(),loadTankerPurchases(),loadTodaySummary(),runReport()]);
  }catch(e){msg("سپلائی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
