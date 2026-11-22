@@ -979,6 +979,10 @@ try {
       if (!panel || !tiles || !dashboard || !module || typeof window.openModule !== "function") {
         return { missing: true };
       }
+      user = { id: "smoke-test-admin" };
+      myCustomer = null;
+      document.querySelector("#app").classList.remove("hidden");
+      setPortalMode("admin");
       panel.classList.remove("hidden");
       tiles.classList.remove("hidden");
       dashboard.classList.remove("hidden");
@@ -1096,23 +1100,27 @@ try {
       mockData.product_settings[0].default_rate = 300;
       mockData.product_settings[0].special_100_rate = 290;
       await window.salesModule();
+
+      const initialPrice = document.querySelector("#saleUnitPrice").value;
       document.querySelector("#saleQty").value = "100";
-      window.salePricePreview(true, false);
-      const bulkPrice = document.querySelector("#saleUnitPrice").value;
+      document.querySelector("#saleUnitPrice").value = "290";
+      window.salePricePreview(false);
+      const enteredPrice = document.querySelector("#saleUnitPrice").value;
       document.querySelector("#saleQty").value = "99";
-      window.salePricePreview(true, false);
-      const normalPrice = document.querySelector("#saleUnitPrice").value;
+      window.salePricePreview(false);
+      const retainedPriceAfterQuantityChange = document.querySelector("#saleUnitPrice").value;
+
       document.querySelector("#saleType").value = "6L";
-      window.salePricePreview(false, true);
-      const sixLiterMinimumPrice = document.querySelector("#saleUnitPrice").value;
+      window.salePricePreview(true);
+      const sixLiterPriceStartsBlank = document.querySelector("#saleUnitPrice").value === "";
       const sixLiterDisabled = document.querySelector("#saleUnitPrice").disabled;
       const sixLiterMinAttribute = document.querySelector("#saleUnitPrice").min;
       document.querySelector("#saleUnitPrice").value = "60";
-      window.salePricePreview(false, false);
+      window.salePricePreview(false);
       const sixLiterCustomPrice = document.querySelector("#saleUnitPrice").value;
-      document.querySelector("#saleUnitPrice").value = "49";
-      window.salePricePreview(false, false);
-      const sixLiterBelowFloorReset = document.querySelector("#saleUnitPrice").value;
+      document.querySelector("#saleUnitPrice").value = "0.01";
+      window.salePricePreview(false);
+      const sixLiterSmallPositivePrice = document.querySelector("#saleUnitPrice").value;
       return {
         rendered,
         belowFloorBlocked,
@@ -1120,13 +1128,14 @@ try {
         saved: updates.length === 1 && updates[0].table === "product_settings",
         savedDefault: updates[0]?.values?.default_rate,
         savedSpecial: updates[0]?.values?.special_100_rate,
-        bulkPrice,
-        normalPrice,
-        sixLiterMinimumPrice,
+        initialPrice,
+        enteredPrice,
+        retainedPriceAfterQuantityChange,
+        sixLiterPriceStartsBlank,
         sixLiterDisabled,
         sixLiterMinAttribute,
         sixLiterCustomPrice,
-        sixLiterBelowFloorReset
+        sixLiterSmallPositivePrice
       };
     });
     if (!settingsResult.rendered) failures.push("Admin settings price controls did not render");
@@ -1135,12 +1144,14 @@ try {
     if (!settingsResult.saved || settingsResult.savedDefault !== 300 || settingsResult.savedSpecial !== 290) {
       failures.push("Admin settings did not save valid price changes correctly");
     }
-    if (settingsResult.bulkPrice !== "290") failures.push("100+ carton special price was not applied");
-    if (settingsResult.normalPrice !== "300") failures.push("Default carton price was not restored below 100 units");
-    if (settingsResult.sixLiterMinimumPrice !== "55" || settingsResult.sixLiterDisabled ||
-        settingsResult.sixLiterMinAttribute !== "55" || settingsResult.sixLiterCustomPrice !== "60" ||
-        settingsResult.sixLiterBelowFloorReset !== "55") {
-      failures.push("6L minimum and editable sale price rules are incorrect");
+    if (settingsResult.initialPrice !== "") failures.push("Sale price must start blank so the admin enters the actual transaction price");
+    if (settingsResult.enteredPrice !== "290" || settingsResult.retainedPriceAfterQuantityChange !== "290") {
+      failures.push("Changing carton quantity must not overwrite the manually entered sale price");
+    }
+    if (!settingsResult.sixLiterPriceStartsBlank || settingsResult.sixLiterDisabled ||
+        settingsResult.sixLiterMinAttribute !== "0.01" || settingsResult.sixLiterCustomPrice !== "60" ||
+        settingsResult.sixLiterSmallPositivePrice !== "0.01") {
+      failures.push("6L sale must accept an explicit positive per-bottle price without a fixed default floor");
     }
 
     const labelResult = await page.evaluate(() => {
