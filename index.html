@@ -3364,11 +3364,11 @@ async function salesModule(){
  const default500=Number(saleSettings["500ml"].default_rate);
  $("moduleBody").innerHTML=`
  <input id="saleDate" type="date" value="${today()}">
- <select id="saleType" onchange="salePricePreview(false,true)">
+ <select id="saleType" onchange="salePricePreview(true)">
  <option value="500ml">500ml کارٹن</option><option value="1.5L">1.5L کارٹن</option><option value="6L">6L بوتل</option></select>
  <select id="saleWorker"><option value="">ورکر مقرر نہیں — بچت شمار نہیں ہوگی</option></select>
- <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview(false,false)">
- <input id="saleUnitPrice" type="number" min="280" step="0.01" value="" placeholder="اپنی اصل فی کارٹن / بوتل قیمت درج کریں" oninput="salePricePreview(false,false)">
+ <input id="saleQty" type="number" min="1" step="1" placeholder="مقدار" oninput="salePricePreview(false)">
+ <input id="saleUnitPrice" type="number" min="280" step="0.01" value="" placeholder="اپنی اصل فی کارٹن / بوتل قیمت درج کریں" oninput="salePricePreview(false)">
  <select id="salePaymentMethod" onchange="toggleSaleCreditFields()"><option value="cash">نقد وصولی</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option><option value="credit">ادھار — منظور شدہ دکان</option></select><div id="saleCreditFields" class="hidden"><select id="saleCreditStore" required><option value="">منظور شدہ دکان منتخب کریں</option></select><p class="muted">ادھار صرف فعال اور ایڈمن سے منظور شدہ دکان کو دیا جا سکتا ہے؛ کوئی خودکار کریڈٹ حد نہیں۔ وصولی اسی سیل کے کھاتے میں درج ہوگی۔</p></div>
  <div class="stat">فی یونٹ قیمت: <b id="salePrice">—</b></div>
  <div class="stat" id="saleSpecialNote">ہر سیل کی اصل قیمت آپ خود درج کر سکتے ہیں؛ کم از کم Rs.280 فی کارٹن۔</div>
@@ -3376,7 +3376,7 @@ async function salesModule(){
  <p class="muted">500ml: 24 بوتلیں فی کارٹن؛ 1.5L: 12 بوتلیں فی کارٹن۔ دونوں کی کم از کم قیمت Rs.280 فی کارٹن ہے۔ ہر سیل میں Rs.280، Rs.290، Rs.300 یا اس سے زیادہ اصل قیمت درج کی جا سکتی ہے۔ 6L کے لیے صرف بوتلوں کی تعداد اور اصل فی بوتل قیمت درج کریں؛ کل رقم خودکار بنے گی۔</p>
  <button onclick="saveSale()">سیل محفوظ کریں</button>
  <button class="secondary" onclick="loadSales()">سیل ریکارڈ تازہ کریں</button><button class="secondary" onclick="storeCreditModule()">منظور شدہ دکانیں / ادھار وصولی</button>`;
- salePricePreview(false,true);
+ salePricePreview(true);
  await loadSales();
  await loadApprovedCreditStores();
  toggleSaleCreditFields();
@@ -3392,8 +3392,8 @@ function getSaleCalc(){
  const price=Number($("saleUnitPrice").value)||0;
  return {type,qty,price,total:qty*price,unit:type==="6L"?"bottle":"carton"};
 }
-function salePricePreview(autoSpecial=false,resetDefault=false){
- const type=$("saleType").value,is6=type==="6L",setting=saleSettings[type]||{};
+function salePricePreview(resetDefault=false){
+ const type=$("saleType").value,is6=type==="6L";
  $("saleWorker").classList.toggle("hidden",is6);
  $("saleUnitPrice").disabled=false;
  $("saleUnitPrice").min=is6?"0.01":"280";
