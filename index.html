@@ -2303,11 +2303,12 @@ async function saveBill(){
 }
 
 async function recordCustomerPayment(){
- setBillSavedState(false);
  const customerId=Number($("bCustomer").value),amount=Number($("paymentAmount").value),paymentDate=$("paymentDate").value,paymentType=$("paymentType").value,paymentMethod=$("paymentMethod").value;
  if(!customerId||!paymentDate||!Number.isFinite(amount)||amount<=0){msg("گاہک، تاریخ اور صفر سے زیادہ رقم درج کریں۔");return}
  if(!confirmLargeEntry("ادائیگی کی رقم (روپے)",amount,1000))return;
- const button=$("paymentSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ const button=$("paymentSaveButton");if(button?.disabled)return;
+ setBillSavedState(false);
+ if(button)button.disabled=true;
  let paymentSaved=false;
  try{
   const requestSignature=[customerId,paymentDate,amount,paymentType,paymentMethod].join("|");
