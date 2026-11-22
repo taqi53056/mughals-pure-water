@@ -33,11 +33,11 @@ for (const required of adminQuickSearchChecks) {
   if (!appSource.includes(required)) throw new Error("Admin quick search is missing: " + required);
 }
 const adminTiles = adminHome.match(/class="tile /g) || [];
-if (adminTiles.length !== 20) {
-  throw new Error("Admin home must expose 20 distinct modules after duplicate report shortcut removal; found " + adminTiles.length);
+if (adminTiles.length !== 21) {
+  throw new Error("Admin home must expose 21 distinct modules after adding monthly unregistered accounts; found " + adminTiles.length);
 }
 const tileElements = [...adminHome.matchAll(/<div class="tile [^"]*"[^>]*>/g)].map(match => match[0]);
-if (tileElements.length !== 20 || tileElements.some(tile => !tile.includes('role="button"') || !tile.includes("onkeydown="))) {
+if (tileElements.length !== 21 || tileElements.some(tile => !tile.includes('role="button"') || !tile.includes("onkeydown="))) {
   throw new Error("Every admin module tile must support keyboard activation");
 }
 const loadAppStart = appSource.indexOf("async function loadApp()");
@@ -53,7 +53,7 @@ const categoryCounts = tileCategories.reduce((counts, category) => {
   return counts;
 }, {});
 if (categoryCounts.operations !== 5 || categoryCounts.inventory !== 4 ||
-    categoryCounts.finance !== 4 || categoryCounts.management !== 7) {
+    categoryCounts.finance !== 4 || categoryCounts.management !== 8) {
   throw new Error("Admin modules must be grouped into 5 daily, 4 stock, 4 finance and 7 management actions");
 }
 const reportShortcuts = adminHome.match(/onclick="openModule\('(finance|reports)'\)"/g) || [];
