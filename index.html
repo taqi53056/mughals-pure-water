@@ -883,6 +883,7 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 <div class="tile teal" role="button" tabindex="0" aria-label="ترتیبات / کنٹرول سینٹر" title="قیمتیں اور بنیادی سیٹنگز" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('settings')" data-category="management"><span class="tile-title">ترتیبات</span><small>قیمتیں اور بنیادی سیٹنگز</small></div>
 <div class="tile gold" role="button" tabindex="0" aria-label="مالک کی ذاتی نکاسی" title="مالک نے کتنی رقم لی؟" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('ownerWithdrawals')" data-category="finance"><span class="tile-title">مالک نکاسی</span><small>مالک نے کتنی رقم لی؟</small></div>
 <div class="tile green" role="button" tabindex="0" aria-label="ماہانہ کلوزنگ" title="حساب کی جانچ، رپورٹ اور مہینہ بند کریں" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('monthClose')" data-category="management"><span class="tile-title">ماہانہ کلوزنگ</span><small>حساب کی جانچ، رپورٹ اور مہینہ بند کریں</small></div>
+<div class="tile gray" role="button" tabindex="0" aria-label="ماہانہ غیر رجسٹرڈ کھاتے" title="ایسے ماہانہ گاہک جن کا ایپ اکاؤنٹ نہیں" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openModule('monthlyAccounts')" data-category="management"><span class="tile-title">ماہانہ غیر رجسٹرڈ کھاتے</span><small>نام، ڈلیوری، وصولی اور بقایا</small></div>
 </div>
 
 <div id="dashboard" class="card executive-dashboard">
@@ -1589,6 +1590,7 @@ async function openModule(name){
  if(name==="tanker")return tankerPurchaseModule();
  if(name==="counterWater")return counterWaterModule();
  if(name==="unassigned19l")return unassigned19lModule();
+ if(name==="monthlyAccounts")return monthlyUnregisteredModule();
  if(name==="returns")return productReturnsModule();
  if(name==="finished")return stockModule("finished");
  if(name==="sales")return salesModule();
@@ -2890,6 +2892,169 @@ async function saveCounterWaterSale(){
  }finally{
   if(button)button.disabled=false;
  }
+}
+
+let monthlyUnregisteredCustomerEditingId=null;
+
+async function monthlyUnregisteredModule(){
+ setTitle("ماہانہ غیر رجسٹرڈ کھاتے");
+ monthlyUnregisteredCustomerEditingId=null;
+ $("moduleBody").innerHTML=
+ '<p class="muted">یہ ان ماہانہ گاہکوں کا الگ کھاتہ ہے جن کا ایپ لاگ اِن اکاؤنٹ نہیں۔ ڈلیوری اور وصولی کی تاریخ الگ محفوظ ہوگی؛ ان کی ماہانہ وصولیاں روزانہ کاؤنٹر کیش سے منہا نہیں ہوں گی۔</p>'+
+ '<div class="card"><h3 id="umCustomerFormTitle">نیا ماہانہ گاہک</h3>'+
+ '<label for="umName">گاہک کا نام *</label><input id="umName" maxlength="120" placeholder="پورا نام">'+
+ '<label for="umMobile">موبائل نمبر</label><input id="umMobile" maxlength="30" inputmode="tel" placeholder="مثلاً 03001234567">'+
+ '<label for="umAddress">پتہ</label><input id="umAddress" maxlength="300" placeholder="علاقہ یا مکمل پتہ">'+
+ '<button id="umCustomerSave" onclick="saveMonthlyUnregisteredCustomer()">گاہک محفوظ کریں</button>'+
+ '<button id="umCustomerCancel" class="secondary hidden" onclick="cancelMonthlyUnregisteredCustomerEdit()">منسوخ کریں</button></div>'+
+ '<div class="card"><h3>ماہانہ گاہک کی نئی ڈلیوری</h3>'+
+ '<label for="umDeliveryCustomer">ماہانہ گاہک *</label><select id="umDeliveryCustomer"><option value="">گاہک منتخب کریں</option></select>'+
+ '<label for="umDeliveryDate">ڈلیوری کی تاریخ *</label><input id="umDeliveryDate" type="date" value="'+today()+'">'+
+ '<label for="umWorker">ڈلیوری کس نے کی؟ *</label><select id="umWorker"><option value="owner">مالک نے خود</option><option value="worker">مزدور نے</option></select>'+
+ '<div id="umWorkerPicker" class="hidden"><label for="umWorkerId">مزدور منتخب کریں *</label><select id="umWorkerId"><option value="">مزدور منتخب کریں</option></select></div>'+
+ '<label for="umBottles">بھری 19L بوتلیں *</label><input id="umBottles" type="number" min="1" step="1" inputmode="numeric" placeholder="بوتلوں کی تعداد">'+
+ '<label for="umEmpties">واپس آنے والی خالی بوتلیں</label><input id="umEmpties" type="number" min="0" step="1" inputmode="numeric" value="0">'+
+ '<label for="umCaps">خراب ڈھکن</label><input id="umCaps" type="number" min="0" step="1" inputmode="numeric" value="0">'+
+ '<button id="umDeliverySave" onclick="saveMonthlyUnregisteredDelivery()">ماہانہ ڈلیوری محفوظ کریں</button></div>'+
+ '<div class="card"><h3>ماہانہ کھاتے کی وصولی</h3><p class="muted">جزوی یا مکمل رقم درج کریں۔ وصولی اسی اصل تاریخ پر آمدن میں شامل ہوگی؛ روزانہ کاؤنٹر کیش میں شامل نہیں ہوگی۔</p>'+
+ '<label for="umCollectionDelivery">متعلقہ ڈلیوری *</label><select id="umCollectionDelivery"><option value="">بقایا ڈلیوری منتخب کریں</option></select>'+
+ '<label for="umCollectionDate">وصولی کی تاریخ *</label><input id="umCollectionDate" type="date" value="'+today()+'">'+
+ '<label for="umCollectionAmount">وصول شدہ رقم (روپے) *</label><input id="umCollectionAmount" type="number" min="0.01" step="0.01" inputmode="decimal">'+
+ '<label for="umCollectionMethod">وصولی کا طریقہ *</label><select id="umCollectionMethod"><option value="">طریقہ منتخب کریں</option><option value="cash">نقد</option><option value="bank">بینک</option><option value="easypaisa">ایزی پیسہ</option><option value="jazzcash">جاز کیش</option></select>'+
+ '<button id="umCollectionSave" onclick="saveMonthlyUnregisteredCollection()">وصولی محفوظ کریں</button></div>'+
+ '<div id="umLedger"></div>';
+ $("umWorker").addEventListener("change",()=>{$("umWorkerPicker").classList.toggle("hidden",$("umWorker").value!=="worker");});
+ const {data:workers,error}=await db.from("workers").select("id,full_name").eq("is_active",true).eq("is_owner",false).contains("work_categories",["19L delivery"]).order("full_name");
+ if(error){msg("مزدوروں کی فہرست لوڈ نہیں ہوئی: "+error.message);return;}
+ $("umWorkerId").innerHTML='<option value="">مزدور منتخب کریں</option>'+(workers||[]).map(w=>'<option value="'+Number(w.id)+'">'+esc(w.full_name)+'</option>').join("");
+ await loadMonthlyUnregisteredLedger();
+}
+
+async function loadMonthlyUnregisteredLedger(){
+ const box=$("umLedger");if(!box)return;
+ box.textContent="ماہانہ کھاتے لوڈ ہو رہے ہیں...";
+ try{
+  const [customersResult,deliveriesResult,collectionsResult]=await Promise.all([
+   db.from("unregistered_monthly_customers").select("id,name,mobile,address,is_active,created_at").order("name"),
+   db.from("unassigned_19l_deliveries").select("id,monthly_customer_id,delivery_date,bottles_delivered,damaged_caps").eq("customer_classification","monthly").order("delivery_date",{ascending:false}).limit(500),
+   db.from("unassigned_19l_delivery_collections").select("delivery_id,received_date,amount,payment_method").order("received_date",{ascending:false}).limit(1000)
+  ]);
+  if(customersResult.error)throw customersResult.error;
+  if(deliveriesResult.error)throw deliveriesResult.error;
+  if(collectionsResult.error)throw collectionsResult.error;
+  const customers=customersResult.data||[],deliveries=deliveriesResult.data||[],collections=collectionsResult.data||[];
+  const customerById=new Map(customers.map(c=>[Number(c.id),c]));
+  const deliveryById=new Map(deliveries.map(d=>[Number(d.id),d]));
+  const collectedByDelivery=new Map();
+  collections.forEach(r=>{if(deliveryById.has(Number(r.delivery_id)))collectedByDelivery.set(Number(r.delivery_id),(collectedByDelivery.get(Number(r.delivery_id))||0)+Number(r.amount||0));});
+  $("umDeliveryCustomer").innerHTML='<option value="">گاہک منتخب کریں</option>'+customers.filter(c=>c.is_active).map(c=>'<option value="'+Number(c.id)+'">'+esc(c.name)+'</option>').join("");
+  const pending=deliveries.map(d=>({d,customer:customerById.get(Number(d.monthly_customer_id)),due:Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,collected:collectedByDelivery.get(Number(d.id))||0})).filter(x=>x.customer&&x.due>x.collected);
+  $("umCollectionDelivery").innerHTML='<option value="">بقایا ڈلیوری منتخب کریں</option>'+pending.map(x=>'<option value="'+Number(x.d.id)+'">'+esc(x.customer.name)+' — '+esc(x.d.delivery_date)+' — بقایا '+money(x.due-x.collected)+'</option>').join("");
+  const grouped=new Map();
+  deliveries.forEach(d=>{
+   const id=Number(d.monthly_customer_id);if(!grouped.has(id))grouped.set(id,{bottles:0,caps:0,due:0,collected:0,count:0,latest:d.delivery_date});
+   const g=grouped.get(id);g.bottles+=Number(d.bottles_delivered||0);g.caps+=Number(d.damaged_caps||0);g.due+=Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10;g.collected+=collectedByDelivery.get(Number(d.id))||0;g.count++;
+   if(d.delivery_date>g.latest)g.latest=d.delivery_date;
+  });
+  box.innerHTML='<div class="card"><h3>ماہانہ کھاتوں کی فہرست</h3>'+
+   (customers.length?'<div class="tablewrap"><table><tr><th>گاہک</th><th>ڈلیوریاں</th><th>بوتلیں</th><th>کل چارجز</th><th>وصولی</th><th>بقایا</th><th>حالت</th><th>عمل</th></tr>'+
+    customers.map(c=>{const g=grouped.get(Number(c.id))||{bottles:0,caps:0,due:0,collected:0,count:0};return '<tr><td><b>'+esc(c.name)+'</b><br><small>'+esc(c.mobile||"")+'</small></td><td>'+g.count+'</td><td>'+g.bottles+'</td><td>'+money(g.due)+'</td><td>'+money(g.collected)+'</td><td><b>'+money(Math.max(g.due-g.collected,0))+'</b></td><td>'+(c.is_active?"فعال":"غیر فعال")+'</td><td><button class="secondary" onclick="editMonthlyUnregisteredCustomer('+Number(c.id)+')">ترمیم</button><button class="secondary" onclick="setMonthlyUnregisteredCustomerActive('+Number(c.id)+','+(!c.is_active)+')">'+(c.is_active?"غیر فعال کریں":"فعال کریں")+'</button></td></tr>';}).join("")+
+   '</table></div>':'<div class="customer-empty">ابھی کوئی ماہانہ کھاتہ موجود نہیں۔</div>')+'</div>'+
+   '<div class="card"><h3>حالیہ ماہانہ ڈلیوریاں</h3>'+
+   (deliveries.length?deliveries.slice(0,100).map(d=>{const c=customerById.get(Number(d.monthly_customer_id));const collected=collectedByDelivery.get(Number(d.id))||0;const due=Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10;return '<div class="u19-history-item"><div><b>'+esc(c?.name||"نامعلوم کھاتہ")+'</b><span>'+esc(d.delivery_date)+' · '+Number(d.bottles_delivered)+' بوتلیں</span></div><div><span>وصولی: '+money(collected)+'</span><b>بقایا: '+money(Math.max(due-collected,0))+'</b></div></div>';}).join(""):'<div class="customer-empty">ابھی کوئی ماہانہ ڈلیوری درج نہیں۔</div>')+'</div>';
+ }catch(e){box.textContent="ماہانہ کھاتے لوڈ نہیں ہوئے: "+(e.message||String(e));}
+}
+
+async function saveMonthlyUnregisteredCustomer(){
+ const name=$("umName").value.trim(),mobile=$("umMobile").value.trim(),address=$("umAddress").value.trim();
+ if(name.length<2){msg("گاہک کا نام کم از کم دو حروف میں درج کریں۔");return;}
+ if(mobile&&!normalizePkMobile(mobile)){msg("موبائل نمبر درست درج کریں۔");return;}
+ const button=$("umCustomerSave");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  if(monthlyUnregisteredCustomerEditingId){
+   const {error}=await db.from("unregistered_monthly_customers").update({name,mobile:mobile?normalizePkMobile(mobile):null,address:address||null}).eq("id",monthlyUnregisteredCustomerEditingId);
+   if(error)throw error;
+   monthlyUnregisteredCustomerEditingId=null;
+   $("umCustomerFormTitle").textContent="نیا ماہانہ گاہک";$("umCustomerSave").textContent="گاہک محفوظ کریں";$("umCustomerCancel").classList.add("hidden");
+  }else{
+   const signature=[name,mobile?normalizePkMobile(mobile):"",address].join("|");
+   const requestId=mpwPendingRequestId("unregistered-monthly-customer",signature);
+   const {data,error}=await db.rpc("create_unregistered_monthly_customer",{p_name:name,p_mobile:mobile?normalizePkMobile(mobile):null,p_address:address||null,p_request_id:requestId});
+   if(error)throw error;if(!data?.id)throw new Error("گاہک محفوظ ہونے کی تصدیق نہیں ہوئی۔");
+   mpwClearPendingRequestId("unregistered-monthly-customer");
+  }
+  $("umName").value="";$("umMobile").value="";$("umAddress").value="";
+  msg("ماہانہ گاہک کا کھاتہ محفوظ ہوگیا۔",true);await loadMonthlyUnregisteredLedger();
+ }catch(e){msg("ماہانہ گاہک محفوظ نہیں ہوا: "+(e.message||String(e)));}
+ finally{if(button)button.disabled=false;}
+}
+
+async function editMonthlyUnregisteredCustomer(id){
+ const {data,error}=await db.from("unregistered_monthly_customers").select("id,name,mobile,address").eq("id",id).single();
+ if(error){msg("گاہک کی معلومات لوڈ نہیں ہوئیں: "+error.message);return;}
+ monthlyUnregisteredCustomerEditingId=Number(data.id);
+ $("umName").value=data.name||"";$("umMobile").value=data.mobile||"";$("umAddress").value=data.address||"";
+ $("umCustomerFormTitle").textContent="ماہانہ گاہک کی معلومات درست کریں";
+ $("umCustomerSave").textContent="تبدیلیاں محفوظ کریں";$("umCustomerCancel").classList.remove("hidden");
+ $("umName").focus();
+}
+
+function cancelMonthlyUnregisteredCustomerEdit(){
+ monthlyUnregisteredCustomerEditingId=null;
+ $("umName").value="";$("umMobile").value="";$("umAddress").value="";
+ $("umCustomerFormTitle").textContent="نیا ماہانہ گاہک";$("umCustomerSave").textContent="گاہک محفوظ کریں";$("umCustomerCancel").classList.add("hidden");
+}
+
+async function setMonthlyUnregisteredCustomerActive(id,active){
+ const verb=active?"فعال":"غیر فعال";
+ if(!confirm("اس ماہانہ کھاتے کو "+verb+" کرنا ہے؟"))return;
+ const {error}=await db.from("unregistered_monthly_customers").update({is_active:active}).eq("id",id);
+ if(error){msg("حیثیت تبدیل نہیں ہوئی: "+error.message);return;}
+ msg("ماہانہ کھاتے کی حیثیت تبدیل ہوگئی۔",true);await loadMonthlyUnregisteredLedger();
+}
+
+async function saveMonthlyUnregisteredDelivery(){
+ const customerId=Number($("umDeliveryCustomer").value),date=$("umDeliveryDate").value,owner=$("umWorker").value==="owner",workerId=$("umWorkerId").value;
+ const bottles=Number($("umBottles").value),empties=Number($("umEmpties").value),caps=Number($("umCaps").value);
+ if(!customerId||!date){msg("ماہانہ گاہک اور ڈلیوری کی تاریخ منتخب کریں۔");return;}
+ if(!Number.isInteger(bottles)||bottles<=0||!Number.isInteger(empties)||empties<0||!Number.isInteger(caps)||caps<0){msg("بوتلوں، خالی بوتلوں اور خراب ڈھکنوں کی درست مکمل تعداد درج کریں۔");return;}
+ if(!owner&&!workerId){msg("ڈلیوری کرنے والا مزدور منتخب کریں۔");return;}
+ if(date>today()){msg("مستقبل کی تاریخ پر ڈلیوری درج نہیں ہو سکتی۔");return;}
+ if(!confirm("ماہانہ کھاتے میں "+bottles+" بھری بوتلیں اور "+caps+" خراب ڈھکن درج ہوں گے۔ فی بوتل Rs.100 اور فی خراب ڈھکن Rs.10 کے مطابق چارج ہوگا۔ کیا محفوظ کریں؟"))return;
+ const button=$("umDeliverySave");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const signature=[customerId,date,owner?"owner":workerId,bottles,empties,caps].join("|");
+  const requestId=mpwPendingRequestId("monthly-unregistered-delivery",signature);
+  const {data,error}=await db.rpc("record_monthly_unregistered_delivery",{
+   p_customer_id:customerId,p_delivery_date:date,p_worker_id:owner?null:Number(workerId),
+   p_bottles_delivered:bottles,p_empty_bottles_returned:empties,p_damaged_caps:caps,
+   p_performed_by_owner:owner,p_request_id:requestId
+  });
+  if(error)throw error;if(!data?.id)throw new Error("ڈلیوری محفوظ ہونے کی تصدیق نہیں ہوئی۔");
+  mpwClearPendingRequestId("monthly-unregistered-delivery");
+  $("umBottles").value="";$("umEmpties").value="0";$("umCaps").value="0";
+  msg("ماہانہ گاہک کی ڈلیوری محفوظ ہوگئی۔",true);
+  await Promise.all([loadMonthlyUnregisteredLedger(),loadTodaySummary(),runReport()]);
+ }catch(e){msg("ماہانہ ڈلیوری محفوظ نہیں ہوئی: "+(e.message||String(e)));}
+ finally{if(button)button.disabled=false;}
+}
+
+async function saveMonthlyUnregisteredCollection(){
+ const deliveryId=Number($("umCollectionDelivery").value),date=$("umCollectionDate").value,amount=Number($("umCollectionAmount").value),method=$("umCollectionMethod").value;
+ if(!Number.isInteger(deliveryId)||deliveryId<=0||!date||!Number.isFinite(amount)||amount<=0||!["cash","bank","easypaisa","jazzcash"].includes(method)){msg("ڈلیوری، تاریخ، درست رقم اور طریقہ منتخب کریں۔");return;}
+ if(date>today()){msg("مستقبل کی تاریخ پر وصولی درج نہیں ہو سکتی۔");return;}
+ if(!confirm("ماہانہ کھاتے کی ڈلیوری #"+deliveryId+" کے لیے "+money(amount)+" وصولی درج ہوگی۔ یہ رقم روزانہ کاؤنٹر کیش میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
+ const button=$("umCollectionSave");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const signature=[deliveryId,date,amount,method].join("|"),requestId=mpwPendingRequestId("monthly-unregistered-collection",signature);
+  const {data,error}=await db.rpc("record_unassigned_19l_collection",{p_delivery_id:deliveryId,p_received_date:date,p_amount:amount,p_payment_method:method,p_request_id:requestId});
+  if(error)throw error;if(!data?.id)throw new Error("وصولی محفوظ ہونے کی تصدیق نہیں ہوئی۔");
+  mpwClearPendingRequestId("monthly-unregistered-collection");
+  $("umCollectionAmount").value="";
+  msg("ماہانہ کھاتے کی وصولی محفوظ ہوگئی۔ بقایا: "+money(data.remaining_due??0),true);
+  await Promise.all([loadMonthlyUnregisteredLedger(),loadTodaySummary(),runReport()]);
+ }catch(e){msg("وصولی محفوظ نہیں ہوئی: "+(e.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
 
 async function unassigned19lModule(){
