@@ -3090,7 +3090,7 @@ function updateUnassigned19lLabor(){
 async function loadUnassigned19lHistory(){
  const box=$("u19History");if(!box)return;
  try{
-  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
+  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
   if(error)throw error;
   const {data:receipts,error:re}=await db.from("unassigned_19l_delivery_collections").select("delivery_id,amount");
   if(re)throw re;
@@ -3110,7 +3110,7 @@ async function loadUnassigned19lHistory(){
 async function loadUnassigned19lCollectionOptions(){
  const sel=$("u19CollectionDelivery");if(!sel)return;
  try{
-  const {data:deliveries,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").order("delivery_date",{ascending:false});
+  const {data:deliveries,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").neq("customer_classification","monthly").order("delivery_date",{ascending:false});
   if(error)throw error;
   const {data:receipts,error:re}=await db.from("unassigned_19l_delivery_collections").select("delivery_id,amount");
   if(re)throw re;
