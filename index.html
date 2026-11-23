@@ -1620,7 +1620,7 @@ async function customersModule(){
    <label for="newMonthlyName">گاہک کا نام *</label><input id="newMonthlyName" maxlength="120" placeholder="پورا نام">
    <label for="newMonthlyMobile">موبائل نمبر</label><input id="newMonthlyMobile" maxlength="30" inputmode="tel" placeholder="مثلاً 03001234567">
    <label for="newMonthlyAddress">پتہ</label><input id="newMonthlyAddress" maxlength="300" placeholder="علاقہ یا مکمل پتہ">
-   <label for="newMonthlyStartDate">ماہانہ کھاتے کے آغاز کی تاریخ *</label><input id="newMonthlyStartDate" type="date" value="2026-11-01" required>
+   <label for="newMonthlyStartDate">ماہانہ کھاتے کے آغاز کی تاریخ *</label><input id="newMonthlyStartDate" type="date" value="${today()}" required>
    <small class="muted">اس تاریخ سے پہلے کی سپلائی اس ماہانہ کھاتے میں شامل نہیں ہوگی۔</small>
    <button id="newMonthlyCreateButton" onclick="createMonthlyCustomerFromCustomerModule()">ماہانہ کھاتہ بنائیں</button>
   </div>
