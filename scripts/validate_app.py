@@ -127,6 +127,13 @@ if "unregistered_monthly_customers_entered_by_idx" not in creator_index_migratio
     fail("Monthly customer creator foreign key index is missing.")
 
 for required in (
+    'id="customerAccountType"',
+    "function handleCustomerAccountTypeChange()",
+    "async function createMonthlyCustomerFromCustomerModule()",
+    'id="monthlyAccountCreateFields"',
+    'id="registeredAccountInfo"',
+    'id="umCustomerEditCard" class="card hidden"',
+    "نیا ماہانہ کھاتہ بنانے کے لیے گاہکوں کے مرکزی صفحے",
     "openModule('monthlyAccounts')",
     "async function monthlyUnregisteredModule()",
     "async function saveMonthlyUnregisteredCustomer()",
@@ -182,6 +189,10 @@ for required in (
         fail("Unified 19L delivery path is incomplete: " + required)
 if 'onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھولیں' not in source:
     fail("Legacy 19L account pages must route new entries to the unified delivery center")
+if 'id="customerAccountType"' not in source or 'id="newMonthlyCreateButton"' not in source:
+    fail("Customer creation must offer registered vs monthly account classification.")
+if 'if(!monthlyUnregisteredCustomerEditingId){msg("نیا ماہانہ کھاتہ گاہکوں کے مرکزی صفحے سے بنائیں۔");return;}' not in source:
+    fail("Monthly account creation must be centralized in the customer module.")
 if "counterCapsSold" in source or "caps_sold:" in source:
     fail("Counter cap sales must not require a daily count or manual entry")
 if "const capsUsed=customerCapsUsed+unassignedCapsUsed;" not in source:
