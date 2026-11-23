@@ -3056,42 +3056,23 @@ async function saveCounterWaterSale(){
 let monthlyUnregisteredCustomerEditingId=null;
 let monthlyUnregisteredSelectedMonth=today().slice(0,7);
 
+let monthlyUnregisteredSelectedCustomerId=null;
+let monthlyUnregisteredCurrentDue=0;
 async function monthlyUnregisteredModule(){
- setTitle("ماہانہ غیر رجسٹرڈ کھاتے");
- monthlyUnregisteredCustomerEditingId=null;
+ setTitle("ماہانہ غیر رجسٹرڈ کھاتے");monthlyUnregisteredCustomerEditingId=null;monthlyUnregisteredSelectedCustomerId=null;monthlyUnregisteredCurrentDue=0;
  $("moduleBody").innerHTML=
- '<p class="muted">یہ ان ماہانہ گاہکوں کا الگ کھاتہ ہے جن کا ایپ لاگ اِن اکاؤنٹ نہیں۔ ڈلیوری اور وصولی کی تاریخ الگ محفوظ ہوگی؛ ان کی ماہانہ وصولیاں روزانہ کاؤنٹر کیش سے منہا نہیں ہوں گی۔</p>'+
- '<div class="card"><p class="muted">نیا ماہانہ کھاتہ بنانے کے لیے گاہکوں کے مرکزی صفحے میں اکاؤنٹ کی قسم منتخب کریں۔ یہاں صرف موجودہ ماہانہ کھاتے کی معلومات درست کی جائیں گی۔</p><button class="secondary" onclick="openModule(\'customers\')">گاہکوں کے مرکزی صفحے پر جائیں</button></div>'+
- '<div id="umCustomerEditCard" class="card hidden"><h3 id="umCustomerFormTitle">ماہانہ گاہک کی معلومات درست کریں</h3>'+
- '<label for="umName">گاہک کا نام *</label><input id="umName" maxlength="120" placeholder="پورا نام">'+
- '<label for="umMobile">موبائل نمبر</label><input id="umMobile" maxlength="30" inputmode="tel" placeholder="مثلاً 03001234567">'+
- '<label for="umAddress">پتہ</label><input id="umAddress" maxlength="300" placeholder="علاقہ یا مکمل پتہ">'+
- '<button id="umCustomerSave" onclick="saveMonthlyUnregisteredCustomer()">گاہک محفوظ کریں</button>'+
- '<button id="umCustomerCancel" class="secondary hidden" onclick="cancelMonthlyUnregisteredCustomerEdit()">منسوخ کریں</button></div>'+
- '<div class="card"><p class="muted">نئی روزانہ ڈلیوری مشترکہ 19L ڈلیوری سینٹر سے درج کریں۔ یہاں ماہانہ کھاتے، وصولیاں اور اسٹیٹمنٹ برقرار رہیں گے۔</p></div>'+
- '<div class="card hidden"><h3>ماہانہ گاہک کی نئی ڈلیوری</h3>'+
- '<label for="umDeliveryCustomer">ماہانہ گاہک *</label><select id="umDeliveryCustomer"><option value="">گاہک منتخب کریں</option></select>'+
- '<label for="umDeliveryDate">ڈلیوری کی تاریخ *</label><input id="umDeliveryDate" type="date" value="'+today()+'">'+
- '<label for="umWorker">ڈلیوری کس نے کی؟ *</label><select id="umWorker"><option value="owner">مالک نے خود</option><option value="worker">مزدور نے</option></select>'+
- '<div id="umWorkerPicker" class="hidden"><label for="umWorkerId">مزدور منتخب کریں *</label><select id="umWorkerId"><option value="">مزدور منتخب کریں</option></select></div>'+
- '<label for="umBottles">بھری 19L بوتلیں *</label><input id="umBottles" type="number" min="1" step="1" inputmode="numeric" placeholder="بوتلوں کی تعداد">'+
- '<label for="umEmpties">واپس آنے والی خالی بوتلیں</label><input id="umEmpties" type="number" min="0" step="1" inputmode="numeric" value="0">'+
- '<label for="umCaps">خراب ڈھکن</label><input id="umCaps" type="number" min="0" step="1" inputmode="numeric" value="0">'+
- '<button id="umDeliverySave" onclick="saveMonthlyUnregisteredDelivery()">ماہانہ ڈلیوری محفوظ کریں</button></div>'+
- '<div class="card"><h3>ماہانہ کھاتے کی وصولی</h3><p class="muted">جزوی یا مکمل رقم درج کریں۔ وصولی اسی اصل تاریخ پر آمدن میں شامل ہوگی؛ روزانہ کاؤنٹر کیش میں شامل نہیں ہوگی۔</p>'+
- '<label for="umCollectionDelivery">متعلقہ ڈلیوری *</label><select id="umCollectionDelivery"><option value="">بقایا ڈلیوری منتخب کریں</option></select>'+
- '<label for="umCollectionDate">وصولی کی تاریخ *</label><input id="umCollectionDate" type="date" value="'+today()+'">'+
- '<label for="umCollectionAmount">وصول شدہ رقم (روپے) *</label><input id="umCollectionAmount" type="number" min="0.01" step="0.01" inputmode="decimal">'+
- '<label for="umCollectionMethod">وصولی کا طریقہ *</label><select id="umCollectionMethod"><option value="">طریقہ منتخب کریں</option><option value="cash">نقد</option><option value="bank">بینک</option><option value="easypaisa">ایزی پیسہ</option><option value="jazzcash">جاز کیش</option></select>'+
- '<button id="umCollectionSave" onclick="saveMonthlyUnregisteredCollection()">وصولی محفوظ کریں</button></div>'+
- '<div class="card"><h3>کس مہینے کا حساب دیکھنا ہے؟</h3><label for="umStatementMonth">مہینہ منتخب کریں</label><input id="umStatementMonth" type="month" value="'+monthlyUnregisteredSelectedMonth+'"></div><div id="umLedger"></div>';
- $("umWorker").addEventListener("change",()=>{$("umWorkerPicker").classList.toggle("hidden",$("umWorker").value!=="worker");});
+ '<p class="muted">یہ ماہانہ گاہکوں کے الگ کھاتے ہیں جن کا ایپ لاگ اِن اکاؤنٹ نہیں۔ پہلے گاہک منتخب کریں؛ اس کے بعد صرف اسی کا حساب، ڈلیوریاں اور وصولیاں ظاہر ہوں گی۔</p>'+
+ '<div class="card"><h3>ماہانہ گاہک منتخب کریں</h3><label for="umCustomerSelect">گاہک کا نام *</label><select id="umCustomerSelect"><option value="">گاہک منتخب کریں</option></select><p class="muted">کسی گاہک کو منتخب کرنے سے پہلے اس کی ذاتی تفصیل یا مالی ریکارڈ ظاہر نہیں ہوگا۔</p></div>'+
+ '<div id="umCustomerEditCard" class="card hidden"><h3 id="umCustomerFormTitle">ماہانہ گاہک کی معلومات درست کریں</h3><label for="umName">گاہک کا نام *</label><input id="umName" maxlength="120" placeholder="پورا نام"><label for="umMobile">موبائل نمبر</label><input id="umMobile" maxlength="30" inputmode="tel" placeholder="مثلاً 03001234567"><label for="umAddress">پتہ</label><input id="umAddress" maxlength="300" placeholder="علاقہ یا مکمل پتہ"><button id="umCustomerSave" onclick="saveMonthlyUnregisteredCustomer()">گاہک محفوظ کریں</button><button id="umCustomerCancel" class="secondary hidden" onclick="cancelMonthlyUnregisteredCustomerEdit()">منسوخ کریں</button></div>'+
+ '<div id="umStatementCard" class="card hidden"><h3>حساب کا مہینہ</h3><label for="umStatementMonth">مہینہ منتخب کریں</label><input id="umStatementMonth" type="month" value="'+monthlyUnregisteredSelectedMonth+'"></div>'+
+ '<div id="umCollectionCard" class="card hidden"><h3>منتخب گاہک کی وصولی</h3><p class="muted">بوتلوں کی تعداد لکھنے سے ہر بوتل کے Rs.100 کے حساب سے رقم خود بھر جائے گی؛ ضرورت ہو تو رقم درست کر سکتے ہیں۔ جو رقم باقی رہ جائے وہ اگلے مہینے میں بقایا رہے گی۔</p><div class="stat" id="umCurrentDueHint">موجودہ بقایا: Rs.0</div><label for="umCollectionDate">وصولی کی تاریخ *</label><input id="umCollectionDate" type="date" value="'+today()+'"><label for="umCollectionBottles">کتنی بوتلوں کے برابر رقم وصول ہوئی؟</label><input id="umCollectionBottles" type="number" min="0" step="1" inputmode="numeric" placeholder="مثلاً 35"><label for="umCollectionAmount">وصول شدہ رقم (روپے) *</label><input id="umCollectionAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="مثلاً 3500"><button class="secondary" type="button" onclick="fillMonthlyUnregisteredFullDue()">پورا موجودہ بقایا رقم میں بھریں</button><label for="umCollectionMethod">وصولی کا طریقہ *</label><select id="umCollectionMethod"><option value="">طریقہ منتخب کریں</option><option value="cash">نقد</option><option value="bank">بینک</option><option value="easypaisa">ایزی پیسہ</option><option value="jazzcash">جاز کیش</option></select><button id="umCollectionSave" onclick="saveMonthlyUnregisteredCollection()">وصولی محفوظ کریں</button></div>'+
+ '<div id="umLedger"><div class="customer-empty">تفصیل دیکھنے کے لیے اوپر گاہک منتخب کریں۔</div></div>';
+ $("umCustomerSelect").addEventListener("change",()=>{const id=Number($("umCustomerSelect").value);monthlyUnregisteredSelectedCustomerId=Number.isSafeInteger(id)&&id>0?id:null;$("umCustomerEditCard").classList.add("hidden");loadMonthlyUnregisteredLedger();});
  $("umStatementMonth").addEventListener("change",()=>{if(/^\d{4}-\d{2}$/.test($("umStatementMonth").value)){monthlyUnregisteredSelectedMonth=$("umStatementMonth").value;loadMonthlyUnregisteredLedger();}});
- const {data:workers,error}=await db.from("workers").select("id,full_name").eq("is_active",true).eq("is_owner",false).contains("work_categories",["19L delivery"]).order("full_name");
- if(error){msg("مزدوروں کی فہرست لوڈ نہیں ہوئی: "+error.message);return;}
- $("umWorkerId").innerHTML='<option value="">مزدور منتخب کریں</option>'+(workers||[]).map(w=>'<option value="'+Number(w.id)+'">'+esc(w.full_name)+'</option>').join("");
+ $("umCollectionBottles").addEventListener("input",()=>{const raw=$("umCollectionBottles").value;if(raw.trim()==="")return;const count=Number(raw);if(Number.isInteger(count)&&count>=0)$("umCollectionAmount").value=(count*100).toFixed(2);});
  await loadMonthlyUnregisteredLedger();
 }
+function fillMonthlyUnregisteredFullDue(){if(!monthlyUnregisteredSelectedCustomerId||monthlyUnregisteredCurrentDue<=0){msg("اس گاہک کا کوئی بقایا موجود نہیں۔");return;} $("umCollectionAmount").value=monthlyUnregisteredCurrentDue.toFixed(2);$("umCollectionBottles").value="";}
 
 async function mpwFetchAllPages(makeQuery,pageSize=500){
  const rows=[];
@@ -3114,93 +3095,41 @@ async function mpwFetchByIdBatches(ids,makeQuery,batchSize=100){
 }
 
 async function loadMonthlyUnregisteredLedger(){
- const box=$("umLedger");if(!box)return;
- box.textContent="ماہانہ کھاتے لوڈ ہو رہے ہیں...";
+ const box=$("umLedger");if(!box)return;box.textContent="ماہانہ کھاتے لوڈ ہو رہے ہیں...";
  try{
   const [customers,deliveries,bills]=await Promise.all([
    mpwFetchAllPages(()=>db.from("unregistered_monthly_customers").select("id,name,mobile,address,start_date,is_active,created_at").order("name").order("id")),
-   mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,monthly_customer_id,delivery_date,bottles_delivered,damaged_caps").eq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false})),
+   mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,monthly_customer_id,delivery_date,bottles_delivered,empty_bottles_returned,damaged_caps,performed_by_owner,worker_id,details").eq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false})),
    mpwFetchAllPages(()=>db.from("unregistered_monthly_bills").select("customer_id,bill_month,bottles_19l,bottle_amount,damaged_caps,cap_amount,previous_balance,payments,advance_used,current_due,closing_advance").order("bill_month",{ascending:false}).order("customer_id"))
   ]);
-  const monthlyDeliveryIds=deliveries.map(d=>Number(d.id));
-  const collections=await mpwFetchByIdBatches(monthlyDeliveryIds,batch=>
-   db.from("unassigned_19l_delivery_collections").select("delivery_id,received_date,amount,payment_method").in("delivery_id",batch).order("received_date",{ascending:false}).order("id"));
-  const customerById=new Map(customers.map(c=>[Number(c.id),c]));
-  const deliveryById=new Map(deliveries.map(d=>[Number(d.id),d]));
-  const collectedByDelivery=new Map();
-  collections.forEach(r=>{if(deliveryById.has(Number(r.delivery_id)))collectedByDelivery.set(Number(r.delivery_id),(collectedByDelivery.get(Number(r.delivery_id))||0)+Number(r.amount||0));});
-  $("umDeliveryCustomer").innerHTML='<option value="">گاہک منتخب کریں</option>'+customers.filter(c=>c.is_active).map(c=>'<option value="'+Number(c.id)+'">'+esc(c.name)+'</option>').join("");
-  const pending=deliveries.map(d=>({d,customer:customerById.get(Number(d.monthly_customer_id)),due:Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,collected:collectedByDelivery.get(Number(d.id))||0})).filter(x=>x.customer&&x.due>x.collected);
-  $("umCollectionDelivery").innerHTML='<option value="">بقایا ڈلیوری منتخب کریں</option>'+pending.map(x=>'<option value="'+Number(x.d.id)+'">'+esc(x.customer.name)+' — '+esc(x.d.delivery_date)+' — بقایا '+money(x.due-x.collected)+'</option>').join("");
-  const selectedMonth=monthlyUnregisteredSelectedMonth||today().slice(0,7);
-  const monthStart=selectedMonth+"-01";
-  const nextMonthDate=new Date(Number(selectedMonth.slice(0,4)),Number(selectedMonth.slice(5,7)),1);
-  const nextMonth=nextMonthDate.getFullYear()+"-"+String(nextMonthDate.getMonth()+1).padStart(2,"0")+"-01";
-  const grouped=new Map();
-  deliveries.forEach(d=>{
-   const id=Number(d.monthly_customer_id);
-   if(d.delivery_date>=monthStart&&d.delivery_date<nextMonth){
-    if(!grouped.has(id))grouped.set(id,{bottles:0,caps:0,charges:0,count:0});
-    const g=grouped.get(id);g.bottles+=Number(d.bottles_delivered||0);g.caps+=Number(d.damaged_caps||0);
-    g.charges+=Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10;g.count++;
-   }
-  });
-  const receivedByCustomer=new Map();
-  collections.forEach(r=>{
-   const d=deliveryById.get(Number(r.delivery_id));if(!d)return;
-   const id=Number(d.monthly_customer_id);
-   if(r.received_date>=monthStart&&r.received_date<nextMonth)
-    receivedByCustomer.set(id,(receivedByCustomer.get(id)||0)+Number(r.amount||0));
-  });
-  const billByCustomer=new Map(),priorBillByCustomer=new Map();
-  bills.forEach(b=>{
-   const id=Number(b.customer_id);
-   if(b.bill_month===monthStart)billByCustomer.set(id,b);
-   else if(b.bill_month<monthStart&&(!priorBillByCustomer.has(id)||b.bill_month>priorBillByCustomer.get(id).bill_month))
-    priorBillByCustomer.set(id,b);
-  });
-  const moneyRows=customers.map(c=>{
-   const id=Number(c.id),g=grouped.get(id)||{bottles:0,caps:0,charges:0,count:0};
-   const received=receivedByCustomer.get(id)||0,bill=billByCustomer.get(id),prior=priorBillByCustomer.get(id);
-   let previousBalance=prior?Number(prior.current_due||0):0;
-   let previousAdvance=prior?Number(prior.closing_advance||0):0;
-   if(prior){
-    const priorMonthNextDate=new Date(Number(prior.bill_month.slice(0,4)),Number(prior.bill_month.slice(5,7)),1);
-    priorMonthNextDate.setMonth(priorMonthNextDate.getMonth()+1);
-    const priorMonthNext=priorMonthNextDate.getFullYear()+"-"+String(priorMonthNextDate.getMonth()+1).padStart(2,"0")+"-01";
-    const laterCharges=deliveries.filter(d=>Number(d.monthly_customer_id)===id&&d.delivery_date>=priorMonthNext&&d.delivery_date<monthStart)
-     .reduce((sum,d)=>sum+Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,0);
-    const laterPayments=collections.filter(r=>{const d=deliveryById.get(Number(r.delivery_id));return d&&Number(d.monthly_customer_id)===id&&r.received_date>=priorMonthNext&&r.received_date<monthStart;})
-     .reduce((sum,r)=>sum+Number(r.amount||0),0);
-    const priorDue=previousBalance,priorAdvance=previousAdvance;
-    previousBalance=Math.max(priorDue+laterCharges-priorAdvance-laterPayments,0);
-    previousAdvance=Math.max(priorAdvance+laterPayments-priorDue-laterCharges,0);
-   }else{
-    const pastCharges=deliveries.filter(d=>Number(d.monthly_customer_id)===id&&d.delivery_date<monthStart)
-     .reduce((sum,d)=>sum+Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,0);
-    const pastPayments=collections.filter(r=>{const d=deliveryById.get(Number(r.delivery_id));return d&&Number(d.monthly_customer_id)===id&&r.received_date<monthStart;})
-     .reduce((sum,r)=>sum+Number(r.amount||0),0);
-    previousBalance=Math.max(pastCharges-pastPayments,0);previousAdvance=Math.max(pastPayments-pastCharges,0);
-   }
-   const charges=bill?Number(bill.bottle_amount||0)+Number(bill.cap_amount||0):g.charges;
-   const payments=bill?Number(bill.payments||0):received;
-   const advanceUsed=bill?Number(bill.advance_used||0):Math.min(previousAdvance,previousBalance+charges);
-   const due=bill?Number(bill.current_due||0):Math.max(previousBalance+charges-previousAdvance-payments,0);
-   const closingAdvance=bill?Number(bill.closing_advance||0):Math.max(previousAdvance+payments-previousBalance-charges,0);
-   const totalPayable=bill?Number(bill.previous_balance||0)+charges-Number(bill.advance_used||0):previousBalance+charges-advanceUsed;
-   return {c,g,charges,payments,previousBalance,advanceUsed,due,closingAdvance,totalPayable,bill};
-  });
-  $("umStatementMonth").value=selectedMonth;
-  box.innerHTML='<div class="card"><h3>'+esc(selectedMonth)+' — ماہانہ مکمل حساب</h3>'+
-   '<p class="muted">ہر ماہانہ غیر رجسٹرڈ گاہک کا حساب نام کے تحت یکجا ہے۔ بل بننے سے پہلے موجودہ مہینے کا حساب عبوری ہے؛ مہینہ بند ہونے پر محفوظ شدہ بل کا حتمی حساب دکھے گا۔</p>'+
-   (moneyRows.length?'<div class="tablewrap"><table><tr><th>گاہک</th><th>ڈلیوریاں / بوتلیں</th><th>ماہانہ چارجز</th><th>سابقہ بقایا</th><th>کل قابلِ ادائیگی</th><th>اس ماہ وصولی</th><th>اختتامی بقایا</th><th>ایڈوانس</th><th>بل</th><th>عمل</th></tr>'+
-    moneyRows.map(x=>'<tr><td><b>'+esc(x.c.name)+'</b><br><small>'+esc(x.c.mobile||"")+'</small><br><small>آغاز: '+esc(x.c.start_date||"—")+'</small></td><td>'+x.g.count+' / '+x.g.bottles+'<br><small>خراب ڈھکن: '+x.g.caps+'</small></td><td>'+money(x.charges)+'</td><td>'+money(x.previousBalance)+'</td><td>'+money(x.totalPayable)+'</td><td>'+money(x.payments)+'</td><td><b>'+money(x.due)+'</b></td><td>'+money(x.closingAdvance)+'</td><td>'+(x.bill?'<span class="badge success">حتمی بل</span>':'<span class="muted">عبوری</span>')+'</td><td><button class="secondary" onclick="editMonthlyUnregisteredCustomer('+Number(x.c.id)+')">ترمیم</button><button id="umActive-'+Number(x.c.id)+'" class="secondary" onclick="setMonthlyUnregisteredCustomerActive('+Number(x.c.id)+','+(!x.c.is_active)+')">'+(x.c.is_active?"غیر فعال کریں":"فعال کریں")+'</button></td></tr>').join("")+
-   '</table></div>':'<div class="customer-empty">ابھی کوئی ماہانہ کھاتہ موجود نہیں۔</div>')+
-   '<p><b>کل ماہانہ چارجز:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.charges,0))+' &nbsp; <b>کل وصولی:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.payments,0))+' &nbsp; <b>کل اختتامی بقایا:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.due,0))+'</p></div>'+
-   '<div class="card"><h3>حالیہ وصولیاں</h3>'+
-   (collections.length?collections.slice(0,100).map(r=>{const d=deliveryById.get(Number(r.delivery_id));const c=d?customerById.get(Number(d.monthly_customer_id)):null;const methods={cash:"نقد",bank:"بینک",easypaisa:"ایزی پیسہ",jazzcash:"جاز کیش"};return '<div class="u19-history-item"><div><b>'+esc(c?.name||"نامعلوم کھاتہ")+'</b><span>وصولی کی تاریخ: '+esc(r.received_date)+'</span></div><div><b>'+money(r.amount)+'</b><span>'+esc(methods[r.payment_method]||r.payment_method||"")+'</span></div></div>';}).join(""):'<div class="customer-empty">ابھی کوئی وصولی درج نہیں۔</div>')+'</div>'+
-   '<div class="card"><h3>حالیہ ماہانہ ڈلیوریاں</h3>'+
-   (deliveries.length?deliveries.slice(0,100).map(d=>{const c=customerById.get(Number(d.monthly_customer_id));const collected=collectedByDelivery.get(Number(d.id))||0;const due=Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10;return '<div class="u19-history-item"><div><b>'+esc(c?.name||"نامعلوم کھاتہ")+'</b><span>'+esc(d.delivery_date)+' · '+Number(d.bottles_delivered)+' بوتلیں</span></div><div><span>وصولی: '+money(collected)+'</span><b>بقایا: '+money(Math.max(due-collected,0))+'</b></div></div>';}).join(""):'<div class="customer-empty">ابھی کوئی ماہانہ ڈلیوری درج نہیں۔</div>')+'</div>';
+  const ids=deliveries.map(d=>Number(d.id));
+  const collections=await mpwFetchByIdBatches(ids,batch=>db.from("unassigned_19l_delivery_collections").select("id,delivery_id,received_date,amount,payment_method").in("delivery_id",batch).order("received_date",{ascending:false}).order("id"));
+  const customerById=new Map(customers.map(x=>[Number(x.id),x])),deliveryById=new Map(deliveries.map(x=>[Number(x.id),x])),paidByDelivery=new Map();
+  collections.forEach(r=>paidByDelivery.set(Number(r.delivery_id),(paidByDelivery.get(Number(r.delivery_id))||0)+Number(r.amount||0)));
+  const select=$("umCustomerSelect"),prior=monthlyUnregisteredSelectedCustomerId;
+  select.innerHTML='<option value="">گاہک منتخب کریں</option>'+customers.map(x=>'<option value="'+Number(x.id)+'">'+esc(x.name)+(x.is_active?"":" (غیر فعال)")+'</option>').join("");
+  if(prior&&customerById.has(prior))select.value=String(prior);else{monthlyUnregisteredSelectedCustomerId=null;select.value="";}
+  $("umStatementCard")?.classList.toggle("hidden",!monthlyUnregisteredSelectedCustomerId);$("umCollectionCard")?.classList.toggle("hidden",!monthlyUnregisteredSelectedCustomerId);
+  if(!monthlyUnregisteredSelectedCustomerId){$("umCustomerEditCard")?.classList.add("hidden");monthlyUnregisteredCurrentDue=0;box.innerHTML='<div class="customer-empty">تفصیل دیکھنے کے لیے اوپر گاہک منتخب کریں۔</div>';return;}
+  const customer=customerById.get(Number(monthlyUnregisteredSelectedCustomerId));
+  if(!customer){monthlyUnregisteredSelectedCustomerId=null;select.value="";$("umStatementCard")?.classList.add("hidden");$("umCollectionCard")?.classList.add("hidden");box.innerHTML='<div class="customer-empty">منتخب گاہک نہیں ملا؛ فہرست دوبارہ منتخب کریں۔</div>';return;}
+  const ds=deliveries.filter(d=>Number(d.monthly_customer_id)===Number(customer.id)),did=new Set(ds.map(d=>Number(d.id))),rs=collections.filter(r=>did.has(Number(r.delivery_id)));
+  const month=monthlyUnregisteredSelectedMonth||today().slice(0,7),start=month+"-01",nd=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),1),end=nd.getFullYear()+"-"+String(nd.getMonth()+1).padStart(2,"0")+"-01";
+  const md=ds.filter(d=>d.delivery_date>=start&&d.delivery_date<end),mr=rs.filter(r=>r.received_date>=start&&r.received_date<end);
+  const bottles=md.reduce((n,d)=>n+Number(d.bottles_delivered||0),0),caps=md.reduce((n,d)=>n+Number(d.damaged_caps||0),0),chargesMonth=md.reduce((n,d)=>n+Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,0),paidMonth=mr.reduce((n,r)=>n+Number(r.amount||0),0);
+  const bill=bills.find(x=>Number(x.customer_id)===Number(customer.id)&&x.bill_month===start)||null,priorBill=bills.filter(x=>Number(x.customer_id)===Number(customer.id)&&x.bill_month<start).sort((a,b)=>b.bill_month.localeCompare(a.bill_month))[0]||null;
+  let prev=priorBill?Number(priorBill.current_due||0):0,advance=priorBill?Number(priorBill.closing_advance||0):0;
+  if(priorBill){const pd=new Date(Number(priorBill.bill_month.slice(0,4)),Number(priorBill.bill_month.slice(5,7)),1);pd.setMonth(pd.getMonth()+1);const priorEnd=pd.getFullYear()+"-"+String(pd.getMonth()+1).padStart(2,"0")+"-01";const laterC=ds.filter(d=>d.delivery_date>=priorEnd&&d.delivery_date<start).reduce((n,d)=>n+Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,0),laterP=rs.filter(r=>r.received_date>=priorEnd&&r.received_date<start).reduce((n,r)=>n+Number(r.amount||0),0),old=prev,oldA=advance;prev=Math.max(old+laterC-oldA-laterP,0);advance=Math.max(oldA+laterP-old-laterC,0);}
+  else{const pc=ds.filter(d=>d.delivery_date<start).reduce((n,d)=>n+Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,0),pp=rs.filter(r=>r.received_date<start).reduce((n,r)=>n+Number(r.amount||0),0);prev=Math.max(pc-pp,0);advance=Math.max(pp-pc,0);}
+  const monthCharges=bill?Number(bill.bottle_amount||0)+Number(bill.cap_amount||0):chargesMonth,monthPayments=bill?Number(bill.payments||0):paidMonth,advanceUsed=bill?Number(bill.advance_used||0):Math.min(advance,prev+monthCharges),due=bill?Number(bill.current_due||0):Math.max(prev+monthCharges-advance-monthPayments,0),closingAdvance=bill?Number(bill.closing_advance||0):Math.max(advance+monthPayments-prev-monthCharges,0),totalPayable=bill?Number(bill.previous_balance||0)+monthCharges-Number(bill.advance_used||0):prev+monthCharges-advanceUsed;
+  const allCharges=ds.reduce((n,d)=>n+Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,0),allPaid=rs.reduce((n,r)=>n+Number(r.amount||0),0);
+  monthlyUnregisteredCurrentDue=Math.max(allCharges-allPaid,0);$("umCurrentDueHint").textContent="اس گاہک کا مجموعی بقایا: "+money(monthlyUnregisteredCurrentDue);$("umStatementMonth").value=month;
+  const methods={cash:"نقد",bank:"بینک",easypaisa:"ایزی پیسہ",jazzcash:"جاز کیش"};
+  const deliveryRows=ds.map(d=>{const paid=paidByDelivery.get(Number(d.id))||0,charge=Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,remaining=Math.max(charge-paid,0),actor=d.performed_by_owner?"مالک":(d.worker_id?"ورکر #"+Number(d.worker_id):"—");return '<div class="u19-history-item"><div><b>'+esc(d.delivery_date)+' · '+Number(d.bottles_delivered||0)+' بوتلیں</b><span>خراب ڈھکن: '+Number(d.damaged_caps||0)+' · خالی واپس: '+Number(d.empty_bottles_returned||0)+' · '+esc(actor)+'</span></div><div><span>چارج: '+money(charge)+'</span><span>وصول: '+money(paid)+'</span><b>بقایا: '+money(remaining)+'</b></div></div>';}).join("");
+  const collectionRows=rs.map(r=>{const d=deliveryById.get(Number(r.delivery_id));return '<div class="u19-history-item"><div><b>وصولی: '+esc(r.received_date)+'</b><span>متعلقہ سپلائی: '+(d?esc(d.delivery_date)+' · #'+Number(d.id):"—")+'</span></div><div><b>'+money(r.amount)+'</b><span>'+esc(methods[r.payment_method]||r.payment_method||"")+'</span></div></div>';}).join("");
+  box.innerHTML='<div class="card"><h3>'+esc(customer.name)+' — مکمل کھاتہ</h3><p class="muted">موبائل: '+esc(customer.mobile||"درج نہیں")+' · پتہ: '+esc(customer.address||"درج نہیں")+' · آغاز: '+esc(customer.start_date||"—")+'</p><p class="muted">حیثیت: '+(customer.is_active?"فعال":"غیر فعال")+'</p><button class="secondary" onclick="editMonthlyUnregisteredCustomer('+Number(customer.id)+')">گاہک کی معلومات درست کریں</button><button id="umActive-'+Number(customer.id)+'" class="secondary" onclick="setMonthlyUnregisteredCustomerActive('+Number(customer.id)+','+(!customer.is_active)+')">'+(customer.is_active?"کھاتہ غیر فعال کریں":"کھاتہ دوبارہ فعال کریں")+'</button></div>'+
+  '<div class="card"><h3>'+esc(month)+' — منتخب گاہک کا حساب</h3><div class="grid stats-grid"><div class="stat"><span>اس ماہ ڈلیوری</span><b>'+md.length+'</b></div><div class="stat"><span>بوتلیں</span><b>'+bottles+'</b></div><div class="stat"><span>خراب ڈھکن</span><b>'+caps+'</b></div><div class="stat"><span>ماہانہ چارجز</span><b>'+money(monthCharges)+'</b></div><div class="stat"><span>سابقہ بقایا</span><b>'+money(prev)+'</b></div><div class="stat"><span>کل قابل ادائیگی</span><b>'+money(totalPayable)+'</b></div><div class="stat"><span>اس ماہ وصولی</span><b>'+money(monthPayments)+'</b></div><div class="stat"><span>اختتامی بقایا</span><b>'+money(due)+'</b></div><div class="stat"><span>ایڈوانس</span><b>'+money(closingAdvance)+'</b></div></div><p class="muted">'+(bill?"یہ محفوظ شدہ حتمی بل ہے۔":"یہ عبوری حساب ہے؛ مہینہ بند ہونے پر حتمی بل محفوظ ہوگا۔")+'</p></div>'+
+  '<div class="card"><h3>اسی گاہک کی تاریخ وار سپلائیاں</h3>'+(deliveryRows||'<p class="muted">ابھی کوئی سپلائی درج نہیں۔</p>')+'</div><div class="card"><h3>اسی گاہک کی تمام وصولیاں</h3>'+(collectionRows||'<p class="muted">ابھی کوئی وصولی درج نہیں۔</p>')+'</div><div class="card"><h3>مجموعی حساب</h3><p>کل سپلائی چارجز: <b>'+money(allCharges)+'</b></p><p>کل وصولیاں: <b>'+money(allPaid)+'</b></p><p>موجودہ بقایا: <b>'+money(monthlyUnregisteredCurrentDue)+'</b></p></div>';
  }catch(e){box.textContent="ماہانہ کھاتے لوڈ نہیں ہوئے: "+(e.message||String(e));}
 }
 
@@ -3284,21 +3213,14 @@ async function saveMonthlyUnregisteredDelivery(){
 }
 
 async function saveMonthlyUnregisteredCollection(){
- const deliveryId=Number($("umCollectionDelivery").value),date=$("umCollectionDate").value,amount=Number($("umCollectionAmount").value),method=$("umCollectionMethod").value;
- if(!Number.isInteger(deliveryId)||deliveryId<=0||!date||!Number.isFinite(amount)||amount<=0||!["cash","bank","easypaisa","jazzcash"].includes(method)){msg("ڈلیوری، تاریخ، درست رقم اور طریقہ منتخب کریں۔");return;}
+ const customerId=Number(monthlyUnregisteredSelectedCustomerId),date=$("umCollectionDate").value,amount=Number($("umCollectionAmount").value),method=$("umCollectionMethod").value;
+ if(!Number.isSafeInteger(customerId)||customerId<=0||!date||!Number.isFinite(amount)||amount<=0||!["cash","bank","easypaisa","jazzcash"].includes(method)){msg("پہلے گاہک منتخب کریں، پھر تاریخ، درست وصولی رقم اور طریقہ درج کریں۔");return;}
  if(date>today()){msg("مستقبل کی تاریخ پر وصولی درج نہیں ہو سکتی۔");return;}
- if(!confirm("ماہانہ کھاتے کی ڈلیوری #"+deliveryId+" کے لیے "+money(amount)+" وصولی درج ہوگی۔ یہ رقم روزانہ کاؤنٹر کیش میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
+ if(amount>monthlyUnregisteredCurrentDue){msg("وصولی موجودہ بقایا سے زیادہ نہیں ہو سکتی۔");return;}
+ if(!confirm("منتخب گاہک کے کھاتے میں "+money(amount)+" وصولی درج ہوگی۔ رقم پرانی واجب الادا سپلائیوں میں تاریخ وار خود تقسیم ہوگی؛ کوئی نئی سپلائی نہیں بنے گی۔ کیا محفوظ کریں؟"))return;
  const button=$("umCollectionSave");if(button?.disabled)return;if(button)button.disabled=true;
- try{
-  const signature=[deliveryId,date,amount,method].join("|"),requestId=mpwPendingRequestId("monthly-unregistered-collection",signature);
-  const {data,error}=await db.rpc("record_unassigned_19l_collection",{p_delivery_id:deliveryId,p_received_date:date,p_amount:amount,p_payment_method:method,p_request_id:requestId});
-  if(error)throw error;if(!data?.id)throw new Error("وصولی محفوظ ہونے کی تصدیق نہیں ہوئی۔");
-  mpwClearPendingRequestId("monthly-unregistered-collection");
-  $("umCollectionAmount").value="";
-  msg("ماہانہ کھاتے کی وصولی محفوظ ہوگئی۔ بقایا: "+money(data.remaining_due??0),true);
-  await Promise.all([loadMonthlyUnregisteredLedger(),loadTodaySummary(),runReport()]);
- }catch(e){msg("وصولی محفوظ نہیں ہوئی: "+(e.message||String(e)));}
- finally{if(button)button.disabled=false;}
+ try{const signature=[customerId,date,amount,method].join("|"),requestId=mpwPendingRequestId("monthly-unregistered-customer-collection",signature);const {data,error}=await db.rpc("record_unregistered_monthly_customer_collection",{p_customer_id:customerId,p_received_date:date,p_amount:amount,p_payment_method:method,p_request_id:requestId});if(error)throw error;if(!data?.id)throw new Error("وصولی محفوظ ہونے کی تصدیق نہیں ہوئی۔");mpwClearPendingRequestId("monthly-unregistered-customer-collection");$("umCollectionBottles").value="";$("umCollectionAmount").value="";msg("وصولی محفوظ ہوگئی اور پرانی واجب الادا سپلائیوں میں تاریخ وار تقسیم ہوگئی۔ باقی بقایا: "+money(data.remaining_due??0),true);await Promise.all([loadMonthlyUnregisteredLedger(),loadTodaySummary(),runReport()]);}
+ catch(e){msg("ماہانہ گاہک کی وصولی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}finally{if(button)button.disabled=false;}
 }
 
 async function unassigned19lModule(){
@@ -3378,7 +3300,7 @@ async function linkPendingMonthlyDelivery(deliveryId){
 async function loadUnassigned19lHistory(){
  const box=$("u19History");if(!box)return;
  try{
-  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
+  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details").eq("customer_classification","one_time").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
   if(error)throw error;
   const ids=(data||[]).map(r=>Number(r.id));
   const receipts=await mpwFetchByIdBatches(ids,batch=>
@@ -3399,7 +3321,7 @@ async function loadUnassigned19lHistory(){
 async function loadUnassigned19lCollectionOptions(){
  const sel=$("u19CollectionDelivery");if(!sel)return;
  try{
-  const deliveries=await mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}));
+  const deliveries=await mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details").eq("customer_classification","one_time").order("delivery_date",{ascending:false}).order("id",{ascending:false}));
   const ids=deliveries.map(d=>Number(d.id));
   const receipts=await mpwFetchByIdBatches(ids,batch=>
    db.from("unassigned_19l_delivery_collections").select("delivery_id,amount").in("delivery_id",batch).order("id"));
