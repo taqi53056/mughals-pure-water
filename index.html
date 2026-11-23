@@ -2246,6 +2246,7 @@ async function saveUnifiedTemporaryDelivery(){
 
 async function loadUnifiedNonRegisteredHistory(){
  const host=$("moduleTable");if(!host)return;
+ host.querySelector("#unifiedNonRegisteredHistory")?.remove();
  try{
   const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details,customer_classification,monthly_customer_id,performed_by_owner,worker_id").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(100);
   if(error)throw error;
@@ -2260,8 +2261,8 @@ async function loadUnifiedNonRegisteredHistory(){
    const label=monthly?(names.get(Number(x.monthly_customer_id))||"ماہانہ کھاتہ"):(x.details||"وقتی سپلائی");
    return '<tr><td>'+esc(x.delivery_date)+'</td><td>'+esc(monthly?"ماہانہ": "عارضی ادھار / وقتی")+'</td><td>'+esc(label)+'</td><td>'+Number(x.bottles_delivered||0)+'</td><td>'+Number(x.damaged_caps||0)+'</td><td>'+money(Number(x.bottles_delivered||0)*100+Number(x.damaged_caps||0)*10)+'</td></tr>';
   }).join("");
-  host.insertAdjacentHTML("beforeend",'<div class="card"><h3>ماہانہ اور عارضی سپلائی کی حالیہ ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>قسم</th><th>گاہک / نام</th><th>بوتلیں</th><th>خراب ڈھکن</th><th>چارج</th></tr>'+(rows||'<tr><td colspan="6">ابھی کوئی ریکارڈ نہیں۔</td></tr>')+'</table></div></div>');
- }catch(e){host.insertAdjacentHTML("beforeend",'<p class="error">ماہانہ / عارضی ہسٹری لوڈ نہیں ہوئی: '+esc(e?.message||String(e))+'</p>');}
+  host.insertAdjacentHTML("beforeend",'<div id="unifiedNonRegisteredHistory" class="card"><h3>ماہانہ اور عارضی سپلائی کی حالیہ ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>قسم</th><th>گاہک / نام</th><th>بوتلیں</th><th>خراب ڈھکن</th><th>چارج</th></tr>'+(rows||'<tr><td colspan="6">ابھی کوئی ریکارڈ نہیں۔</td></tr>')+'</table></div></div>');
+ }catch(e){host.insertAdjacentHTML("beforeend",'<p id="unifiedNonRegisteredHistory" class="error">ماہانہ / عارضی ہسٹری لوڈ نہیں ہوئی: '+esc(e?.message||String(e))+'</p>');}
 }
 
 /* ماہانہ بل */
