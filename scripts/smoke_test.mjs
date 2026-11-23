@@ -20,7 +20,7 @@ if (appSource.includes("updateUnassigned19lLabor") ||
     !appSource.includes('id="u19SaveButton" onclick="saveUnassigned19lDelivery()">سپلائی محفوظ کریں</button>')) {
   throw new Error("One-time supply entry still exposes obsolete labor UI or stale callbacks");
 }
-if (!appSource.includes("const totalPayable=bill?") ||
+if (!appSource.includes("totalPayable=bill?") ||
     !appSource.includes("money(totalPayable)") || !appSource.includes("money(due)") ||
     !appSource.includes("monthlyUnregisteredSelectedMonth") || !appSource.includes("اس ماہ وصولی") ||
     !appSource.includes('id="umCustomerSelect"') || !appSource.includes('id="umCollectionBottles"')) {
