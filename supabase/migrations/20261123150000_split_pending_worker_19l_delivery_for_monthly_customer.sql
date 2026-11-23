@@ -1,4 +1,4 @@
-create or replace function public.split_pending_unassigned_19l_delivery_to_monthly_customer(
+create or replace function private.split_pending_unassigned_19l_delivery_to_monthly_customer(
   p_delivery_id bigint,
   p_customer_id bigint,
   p_monthly_bottles integer
@@ -192,6 +192,24 @@ begin
   );
 end;
 $function$;
+
+revoke all on function private.split_pending_unassigned_19l_delivery_to_monthly_customer(bigint,bigint,integer) from public, anon;
+grant execute on function private.split_pending_unassigned_19l_delivery_to_monthly_customer(bigint,bigint,integer) to authenticated;
+
+create or replace function public.split_pending_unassigned_19l_delivery_to_monthly_customer(
+  p_delivery_id bigint,
+  p_customer_id bigint,
+  p_monthly_bottles integer
+)
+returns jsonb
+language sql
+security invoker
+set search_path = ''
+as $wrapper$
+  select private.split_pending_unassigned_19l_delivery_to_monthly_customer(
+    p_delivery_id, p_customer_id, p_monthly_bottles
+  );
+$wrapper$;
 
 revoke all on function public.split_pending_unassigned_19l_delivery_to_monthly_customer(bigint,bigint,integer) from public, anon;
 grant execute on function public.split_pending_unassigned_19l_delivery_to_monthly_customer(bigint,bigint,integer) to authenticated;
