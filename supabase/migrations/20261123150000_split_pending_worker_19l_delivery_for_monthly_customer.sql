@@ -55,7 +55,12 @@ begin
        and v_existing.bottles_delivered = p_monthly_bottles
        and v_existing.empty_bottles_returned = p_monthly_bottles
        and v_existing.damaged_caps = 0
-       and v_parent.bottles_delivered = v_parent.bottles_delivered
+       and v_existing.worker_id = v_parent.worker_id
+       and v_existing.delivery_date = v_parent.delivery_date
+       and v_parent.bottles_delivered > 0
+       and v_parent.empty_bottles_returned = v_parent.bottles_delivered
+       and v_parent.labor_amount = v_parent.bottles_delivered::numeric * 20
+       and v_parent.details like '%تقسیم شدہ اصل سپلائی%'
        and v_parent.customer_classification = 'monthly_pending_review'
        and v_parent.monthly_customer_id is null then
       return jsonb_build_object(
@@ -131,7 +136,9 @@ begin
   update public.unassigned_19l_deliveries
      set bottles_delivered = v_parent.bottles_delivered - p_monthly_bottles,
          empty_bottles_returned = v_parent.empty_bottles_returned - p_monthly_bottles,
-         labor_amount = (v_parent.bottles_delivered - p_monthly_bottles) * v_parent.labor_rate
+         labor_amount = (v_parent.bottles_delivered - p_monthly_bottles) * v_parent.labor_rate,
+         details = concat_ws(E'\\n', nullif(btrim(v_parent.details), ''),
+           'تقسیم شدہ اصل سپلائی — ماہانہ حصہ #' || p_monthly_bottles::text)
    where id = v_parent.id;
 
   -- Create only the accounting split row. This is not a second physical delivery:
