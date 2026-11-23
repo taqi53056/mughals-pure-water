@@ -18,6 +18,7 @@ MONTHLY_ACCOUNT_MIGRATION = ROOT / "supabase/migrations/20261122211931_add_unreg
 MONTHLY_BILL_MIGRATION = ROOT / "supabase/migrations/20261123051000_add_monthly_statements_for_unregistered_accounts.sql"
 MONTHLY_HISTORY_MIGRATION = ROOT / "supabase/migrations/20261123052000_include_inactive_monthly_accounts_with_history.sql"
 MONTHLY_CREATOR_INDEX_MIGRATION = ROOT / "supabase/migrations/20261123050000_index_unregistered_monthly_customer_creator.sql"
+MONTHLY_BILL_AUDIT_MIGRATION = ROOT / "supabase/migrations/20261123053000_audit_unregistered_monthly_bills.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
@@ -50,7 +51,7 @@ class AppParser(HTMLParser):
 def fail(message):
     raise SystemExit("FAIL: " + message)
 
-if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION)):
+if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION)):
     fail("required app shell file is missing")
 
 source = HTML.read_text(encoding="utf-8")
@@ -116,6 +117,10 @@ for required in (
 monthly_history_migration = MONTHLY_HISTORY_MIGRATION.read_text(encoding="utf-8")
 if "d.delivery_date<v_next" not in monthly_history_migration:
     fail("Inactive monthly accounts with historical deliveries must remain in billing.")
+
+bill_audit_migration = MONTHLY_BILL_AUDIT_MIGRATION.read_text(encoding="utf-8")
+if "unregistered_monthly_bills_audit_trigger" not in bill_audit_migration or "public.log_changes()" not in bill_audit_migration:
+    fail("Monthly statement audit trigger is missing.")
 
 creator_index_migration = MONTHLY_CREATOR_INDEX_MIGRATION.read_text(encoding="utf-8")
 if "unregistered_monthly_customers_entered_by_idx" not in creator_index_migration:
