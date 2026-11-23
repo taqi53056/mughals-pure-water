@@ -1302,10 +1302,9 @@ try {
             return { data: { id: 6, already_saved: false }, error: null };
           }
           if (name === "record_unregistered_monthly_customer_collection") {
-            tables.unassigned_19l_delivery_collections.push({ id: 2, delivery_id: 11,
-              received_date: args.p_received_date, amount: args.p_amount, payment_method: args.p_payment_method });
-            receiptRows.push({ id: 1, received_date: args.p_received_date, amount: args.p_amount, payment_method: args.p_payment_method });
-            return { data: { id: 1, remaining_due: 500, allocations: [{ delivery_id: 11, amount: args.p_amount }] }, error: null };
+            receiptRows.push({ id: 1, received_date: args.p_received_date, amount: args.p_amount,
+              payment_method: args.p_payment_method, receipt_label: "رسید نمبر: #1", receipt_type: "monthly" });
+            return { data: { id: 1, receipt_amount: args.p_amount, remaining_due: 500, already_saved: false }, error: null };
           }
           if (name === "list_unregistered_monthly_customer_receipts") {
             return { data: args.p_customer_id === 5 ? receiptRows.slice() : [], error: null };
@@ -1345,10 +1344,10 @@ try {
         const selectedCustomerIsolation = !document.querySelector("#umLedger").textContent.includes("Second Monthly Account");
         const monthlyDeliveryQueries = queryLog.filter(q => q.table === "unassigned_19l_deliveries" && q.filters.some(([key,value]) => key === "customer_classification" && value === "monthly"));
         const monthlyBillQueries = queryLog.filter(q => q.table === "unregistered_monthly_bills");
-        const monthlyCollectionQueries = queryLog.filter(q => q.table === "unassigned_19l_delivery_collections");
+        const noPerDeliveryCollectionQuery = !queryLog.some(q => q.table === "unassigned_19l_delivery_collections");
         const selectedCustomerDataScoped = monthlyDeliveryQueries.length > 0 && monthlyDeliveryQueries.every(q => q.filters.some(([key,value]) => key === "monthly_customer_id" && value === 5)) &&
           monthlyBillQueries.length > 0 && monthlyBillQueries.every(q => q.filters.some(([key,value]) => key === "customer_id" && value === 5)) &&
-          monthlyCollectionQueries.every(q => q.inFilter?.[0] === "delivery_id" && q.inFilter[1].every(id => id === 11)) &&
+          noPerDeliveryCollectionQuery &&
           rpcCalls.some(call => call.name === "list_unregistered_monthly_customer_receipts" && call.args.p_customer_id === 5);
         const collectionCardVisible = !document.querySelector("#umCollectionCard").classList.contains("hidden") &&
           document.querySelector("#umCollectionAmount") !== null && document.querySelector("#umCollectionBottles") === null;
@@ -1373,7 +1372,8 @@ try {
         const remainingBalanceShown = document.querySelector("#umLedger").textContent.includes("500");
         const oneTotalReceiptShown = document.querySelector("#umLedger").textContent.includes("Rs. 1,500") &&
           document.querySelector("#umLedger").textContent.includes("رسید نمبر: #1") &&
-          !document.querySelector("#umLedger").textContent.includes("متعلقہ سپلائی");
+          !document.querySelector("#umLedger").textContent.includes("متعلقہ سپلائی") &&
+          !document.querySelector("#umLedger").textContent.includes("وصول: Rs.");
         return {
           initialAccountHidden, newAccountCreationRedirect, registeredSignupExplained, monthlyFieldsShown, customerCreated,
           selectedAccountVisible, selectedCustomerIsolation, selectedCustomerDataScoped, collectionCardVisible, monthlyBillVisible, monthlyAccountActionVisible,
@@ -1382,7 +1382,7 @@ try {
           collectionUsesCustomerAndActualDate: collectionCall?.args?.p_customer_id === 5 &&
             collectionCall?.args?.p_received_date === "2026-11-22" && collectionCall?.args?.p_amount === 1500 &&
             collectionCall?.args?.p_payment_method === "cash",
-          remainingBalanceShown, oneTotalReceiptShown,
+          remainingBalanceShown, oneTotalReceiptShown, noPerDeliveryCollectionQuery,
           monthlyCollectionsStayInSelectedAccount: document.querySelector("#umLedger").textContent.includes("Monthly Account Test") &&
             !document.querySelector("#umLedger").textContent.includes("Second Monthly Account")
         };
@@ -1398,7 +1398,7 @@ try {
         !monthlyAccountResult.selectedCustomerIsolation || !monthlyAccountResult.selectedCustomerDataScoped || !monthlyAccountResult.collectionCardVisible ||
         !monthlyAccountResult.monthlyBillVisible || !monthlyAccountResult.monthlyAccountActionVisible ||
         !monthlyAccountResult.fullDuePrefilled || !monthlyAccountResult.partialTotalAmountEntered ||
-        !monthlyAccountResult.collectionUsesCustomerAndActualDate || !monthlyAccountResult.remainingBalanceShown || !monthlyAccountResult.oneTotalReceiptShown ||
+        !monthlyAccountResult.collectionUsesCustomerAndActualDate || !monthlyAccountResult.remainingBalanceShown || !monthlyAccountResult.oneTotalReceiptShown || !monthlyAccountResult.noPerDeliveryCollectionQuery ||
         !monthlyAccountResult.monthlyCollectionsStayInSelectedAccount || !monthlyAccountResult.unifiedHistoryTemporaryOnly) {
       failures.push("Monthly customer-first statement or total-amount partial receipt workflow is not functioning correctly");
     }

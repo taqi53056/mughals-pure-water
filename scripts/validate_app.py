@@ -21,6 +21,8 @@ MONTHLY_CREATOR_INDEX_MIGRATION = ROOT / "supabase/migrations/20261123050000_ind
 MONTHLY_BILL_AUDIT_MIGRATION = ROOT / "supabase/migrations/20261123053000_audit_unregistered_monthly_bills.sql"
 MONTHLY_LINK_SECURITY_MIGRATION = ROOT / "supabase/migrations/20261123181628_scope_monthly_link_rpc_security.sql"
 MONTHLY_RECEIPT_HISTORY_MIGRATION = ROOT / "supabase/migrations/20261123182959_expose_admin_monthly_receipt_history.sql"
+MONTHLY_TOTAL_RECEIPT_MIGRATION = ROOT / "supabase/migrations/20261123183502_customer_level_monthly_receipts_without_delivery_allocations.sql"
+MONTHLY_RECEIPT_RECALC_MIGRATION = ROOT / "supabase/migrations/20261123183742_recalculate_monthly_bills_and_audit_customer_receipts.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
@@ -53,7 +55,7 @@ class AppParser(HTMLParser):
 def fail(message):
     raise SystemExit("FAIL: " + message)
 
-if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION, MONTHLY_LINK_SECURITY_MIGRATION, MONTHLY_RECEIPT_HISTORY_MIGRATION)):
+if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION, MONTHLY_LINK_SECURITY_MIGRATION, MONTHLY_RECEIPT_HISTORY_MIGRATION, MONTHLY_TOTAL_RECEIPT_MIGRATION, MONTHLY_RECEIPT_RECALC_MIGRATION)):
     fail("required app shell file is missing")
 
 source = HTML.read_text(encoding="utf-8")
@@ -152,6 +154,31 @@ for required in (
     if required not in monthly_receipt_history.lower():
         fail("Monthly receipt history security migration is incomplete: " + required)
 
+monthly_total_receipt_migration = MONTHLY_TOTAL_RECEIPT_MIGRATION.read_text(encoding="utf-8")
+for required in (
+    "private.unregistered_monthly_customer_paid_before",
+    "private.record_unregistered_monthly_customer_collection",
+    "private.list_unregistered_monthly_customer_receipts",
+    "private.generate_unregistered_monthly_bills",
+    "auth.uid() is null or not public.is_admin()",
+    "allocations",
+    "entered_by",
+    "'[]'::jsonb",
+):
+    if required not in monthly_total_receipt_migration.lower():
+        fail("Customer-level monthly receipt migration is incomplete: " + required)
+if "private.record_unassigned_19l_collection" in monthly_total_receipt_migration:
+    fail("Monthly customer receipts must not be allocated into individual delivery collection rows.")
+
+monthly_receipt_recalc = MONTHLY_RECEIPT_RECALC_MIGRATION.read_text(encoding="utf-8")
+for required in (
+    "private.recalculate_unregistered_monthly_bills_after_receipt",
+    "after insert on private.unregistered_monthly_customer_receipts",
+    "public.log_changes()",
+):
+    if required not in monthly_receipt_recalc.lower():
+        fail("Monthly receipt recalculation or audit trigger migration is incomplete: " + required)
+
 creator_index_migration = MONTHLY_CREATOR_INDEX_MIGRATION.read_text(encoding="utf-8")
 if "unregistered_monthly_customers_entered_by_idx" not in creator_index_migration:
     fail("Monthly customer creator foreign key index is missing.")
@@ -211,6 +238,14 @@ for route in tile_routes:
         fail("Admin home tile points to an unregistered module: " + route)
 if "async function readBillSummary(" not in source:
     fail("read-only bill summary helper is missing")
+
+monthly_ledger_start = source.find("async function loadMonthlyUnregisteredLedger")
+monthly_ledger_end = source.find("\nconst monthlyCustomerProfileSaveInFlight", monthly_ledger_start)
+monthly_ledger_body = source[monthly_ledger_start:monthly_ledger_end if monthly_ledger_end > monthly_ledger_start else monthly_ledger_start + 12000]
+if 'db.from("unassigned_19l_delivery_collections")' in monthly_ledger_body or "paidByDelivery" in monthly_ledger_body:
+    fail("Monthly account UI must show customer-level receipts, not delivery-level collection allocation.")
+if "receipt_label" not in monthly_ledger_body:
+    fail("Monthly account receipt history must show a customer-level receipt label.")
 
 for field_id in ("dRecipient", "dDate", "dOut", "dBack", "dCaps"):
     if f'<label for="{field_id}">' not in source:
