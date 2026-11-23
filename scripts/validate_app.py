@@ -62,7 +62,13 @@ if len(parser.ids) != len(set(parser.ids)):
     duplicates = sorted({x for x in parser.ids if parser.ids.count(x) > 1})
     fail("duplicate HTML IDs: " + ", ".join(duplicates))
 
-declared = set(re.findall(r"\bfunction\s+([A-Za-z_$][\w$]*)\s*\(", source))
+function_names = re.findall(r"\bfunction\s+([A-Za-z_$][\w$]*)\s*\(", source)
+function_counts = {name: function_names.count(name) for name in set(function_names)}
+duplicate_functions = sorted(name for name, count in function_counts.items() if count > 1)
+if duplicate_functions:
+    fail("duplicate JavaScript function declarations: " + ", ".join(duplicate_functions))
+
+declared = set(function_names)
 for handler in parser.onclick:
     match = re.match(r"\s*([A-Za-z_$][\w$]*)\s*\(", handler)
     if match and match.group(1) not in declared and match.group(1) not in {"alert", "confirm", "prompt"}:
