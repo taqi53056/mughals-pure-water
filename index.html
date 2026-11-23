@@ -3321,7 +3321,41 @@ async function unassigned19lModule(){
   if(!(data||[]).length)sel.innerHTML='<option value="">کوئی فعال 19L مزدور موجود نہیں</option>';
  }catch(e){sel.innerHTML='<option value="">ورکر لوڈ نہیں ہوا</option>';msg("ورکر لوڈ نہیں ہوئے: "+(e.message||String(e)));return;}
  $("u19Worker").addEventListener("change",()=>{const owner=$("u19Worker").value==="owner";$("u19WorkerPicker").classList.toggle("hidden",owner);$("u19WorkerId").required=!owner;});
- await loadUnassigned19lHistory();await loadUnassigned19lCollectionOptions();
+ await loadUnassigned19lHistory();await loadUnassigned19lCollectionOptions();await loadPendingMonthlyDeliveryLinks();
+}
+async function loadPendingMonthlyDeliveryLinks(){
+ const host=$("u19History");if(!host)return;
+ try{
+  const [pendingResult,customersResult]=await Promise.all([
+   db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,empty_bottles_returned,damaged_caps,worker_id,performed_by_owner,labor_amount,owner_labor_saving,customer_classification,monthly_customer_id").eq("customer_classification","monthly_pending_review").is("monthly_customer_id",null).order("delivery_date",{ascending:false}).order("id",{ascending:false}),
+   db.from("unregistered_monthly_customers").select("id,name,start_date").eq("is_active",true).order("name").order("id")
+  ]);
+  if(pendingResult.error)throw pendingResult.error;if(customersResult.error)throw customersResult.error;
+  const pending=pendingResult.data||[],customers=customersResult.data||[];
+  const options=customers.map(c=>'<option value="'+Number(c.id)+'" data-start="'+esc(c.start_date)+'">'+esc(c.name)+' — آغاز '+esc(c.start_date)+'</option>').join("");
+  const rows=pending.map(r=>{
+   const performer=r.performed_by_owner?"مالک":("ورکر #"+Number(r.worker_id||0));
+   const choices=customers.filter(c=>r.delivery_date>=c.start_date);
+   const select=choices.length?'<select id="u19MonthlyCustomer_'+Number(r.id)+'"><option value="">ماہانہ کھاتہ منتخب کریں</option>'+choices.map(c=>'<option value="'+Number(c.id)+'">'+esc(c.name)+'</option>').join("")+'</select><button class="secondary" id="u19Link_'+Number(r.id)+'" onclick="linkPendingMonthlyDelivery('+Number(r.id)+')">ماہانہ کھاتے میں منتقل کریں</button>':'<span class="muted">اس تاریخ کے لیے موزوں فعال ماہانہ کھاتہ نہیں</span>';
+   return '<tr><td>#'+Number(r.id)+'<br>'+esc(r.delivery_date)+'</td><td>'+Number(r.bottles_delivered||0)+' بھری<br>'+Number(r.empty_bottles_returned||0)+' خالی</td><td>'+Number(r.damaged_caps||0)+'</td><td>'+esc(performer)+'</td><td>'+select+'</td></tr>';
+  }).join("");
+  host.insertAdjacentHTML("afterbegin",'<div class="card" id="u19PendingMonthlyReview"><h3>ماہانہ کھاتے سے منسلک ہونے والی سپلائیاں</h3><p class="muted">درست گاہک منتخب کرکے اسی پرانی سپلائی کو ماہانہ کھاتے میں منتقل کریں۔ نئی سپلائی یا نئی وصولی نہیں بنے گی؛ اصل مالک/ورکر، بوتلیں، خالی بوتلیں اور مزدوری کا ریکارڈ برقرار رہے گا۔ منتقل شدہ ریکارڈ اس فہرست سے خود ہٹ جائے گا۔</p><div class="tablewrap"><table><tr><th>سپلائی</th><th>بوتلیں</th><th>ڈھکن</th><th>کس نے پہنچائیں</th><th>ماہانہ کھاتہ</th></tr>'+rows+'</table></div>'+(pending.length?'':'<p class="muted">اس وقت کوئی زیرِ جائزہ غیر منسلک سپلائی موجود نہیں۔</p>')+'</div>');
+ }catch(e){host.insertAdjacentHTML("afterbegin",'<div class="card warning">ماہانہ منتقلی کی فہرست لوڈ نہیں ہوئی: '+esc(e.message||String(e))+'</div>');}
+}
+async function linkPendingMonthlyDelivery(deliveryId){
+ const select=$("u19MonthlyCustomer_"+Number(deliveryId)),button=$("u19Link_"+Number(deliveryId));
+ const customerId=Number(select?.value);
+ if(!Number.isInteger(deliveryId)||deliveryId<=0||!Number.isInteger(customerId)||customerId<=0){msg("پہلے درست ماہانہ کھاتہ منتخب کریں۔");return;}
+ const customerName=select.options[select.selectedIndex]?.textContent||"منتخب گاہک";
+ if(!confirm("سپلائی #"+deliveryId+" کو "+customerName+" کے کھاتے میں منتقل کیا جائے؟ اصل سپلائی، وصولی اور مالک/ورکر کا حساب تبدیل نہیں ہوگا۔"))return;
+ if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const {data,error}=await db.rpc("link_pending_unassigned_19l_delivery_to_monthly_customer",{p_delivery_id:deliveryId,p_customer_id:customerId});
+  if(error)throw error;if(!data||!["linked","already_linked"].includes(data.status))throw new Error("منتقلی کی تصدیق موصول نہیں ہوئی۔");
+  msg("سپلائی #"+deliveryId+" ماہانہ کھاتے میں منتقل ہوگئی۔",true);
+  await Promise.all([loadUnassigned19lHistory(),loadUnassigned19lCollectionOptions(),loadPendingMonthlyDeliveryLinks(),loadMonthlyUnregisteredLedger(),loadTodaySummary(),runReport()]);
+ }catch(e){msg("سپلائی منتقل نہیں ہوئی: "+(e.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
 async function loadUnassigned19lHistory(){
  const box=$("u19History");if(!box)return;
