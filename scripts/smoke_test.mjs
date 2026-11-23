@@ -1380,6 +1380,18 @@ try {
         !monthlyAccountResult.customerCreated || !monthlyAccountResult.selectedAccountVisible ||
         !monthlyAccountResult.selectedCustomerIsolation || !monthlyAccountResult.collectionCardVisible ||
         !monthlyAccountResult.monthlyBillVisible || !monthlyAccountResult.monthlyAccountActionVisible ||
+        !monthlyAccountResult.fullDuePrefilled || !monthlyAccountResult.bottleAmountCalculated ||
+        !monthlyAccountResult.collectionUsesCustomerAndActualDate || !monthlyAccountResult.remainingBalanceShown ||
+        !monthlyAccountResult.monthlyCollectionsStayInSelectedAccount || !monthlyAccountResult.unifiedHistoryTemporaryOnly) {
+      console.error("Monthly customer-first test details:", JSON.stringify(monthlyAccountResult));
+      failures.push("Monthly customer-first statement or partial bottle-based receipt workflow is not functioning correctly");
+    }
+    /* previous assertion block removed */
+    if (false && (!monthlyAccountResult.initialAccountHidden || !monthlyAccountResult.newAccountCreationRedirect ||
+        !monthlyAccountResult.registeredSignupExplained || !monthlyAccountResult.monthlyFieldsShown ||
+        !monthlyAccountResult.customerCreated || !monthlyAccountResult.selectedAccountVisible ||
+        !monthlyAccountResult.selectedCustomerIsolation || !monthlyAccountResult.collectionCardVisible ||
+        !monthlyAccountResult.monthlyBillVisible || !monthlyAccountResult.monthlyAccountActionVisible ||
         !monthlyAccountResult.unifiedHistoryTemporaryOnly ||
         !monthlyAccountResult.fullDuePrefilled || !monthlyAccountResult.bottleAmountCalculated ||
         !monthlyAccountResult.collectionUsesCustomerAndActualDate || !monthlyAccountResult.remainingBalanceShown ||
