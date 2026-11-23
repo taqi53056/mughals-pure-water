@@ -1723,15 +1723,22 @@ async function approveCustomer(id,button){
 }
 
 
-async function toggleCustomerStatus(id){
- const c=customerList.find(x=>Number(x.id)===Number(id));if(!c)return;
+const customerStatusInFlight=new Set();
+async function toggleCustomerStatus(id,button){
+ const customerId=Number(id);if(customerStatusInFlight.has(customerId))return;
+ const c=customerList.find(x=>Number(x.id)===customerId);if(!c)return;
  if(c.is_active!==true&&!c.approved_at){msg("نئے گاہک کی منظوری کے لیے منظوری والا عمل استعمال کریں۔");return;}
  const next=!c.is_active;
  const action=next?"دوبارہ فعال":"غیر فعال";
  if(!confirm("کیا "+(c.name||"اس کسٹمر")+" کا اکاؤنٹ "+action+" کرنا ہے؟ "+(next?"گاہک دوبارہ لاگ اِن کرسکے گا۔":"گاہک لاگ اِن نہیں کرسکے گا؛ پرانا مالی ریکارڈ محفوظ رہے گا۔")))return;
- const {error}=await db.from("customers").update({is_active:next}).eq("id",id);
- if(error){msg("اکاؤنٹ کی حیثیت تبدیل نہیں ہوئی: "+error.message);return;}
- msg("کسٹمر اکاؤنٹ "+(next?"فعال":"غیر فعال")+" ہوگیا۔",true);await Promise.all([loadCustomers(),refreshAdminSignupNotice()]);
+ customerStatusInFlight.add(customerId);if(button)button.disabled=true;
+ try{
+  const {data:updated,error}=await db.from("customers").update({is_active:next}).eq("id",customerId).select("id,is_active").maybeSingle();
+  if(error)throw error;
+  if(!updated||updated.is_active!==next)throw new Error("ڈیٹابیس نے تبدیلی کی تصدیق نہیں کی۔");
+  msg("کسٹمر اکاؤنٹ "+(next?"فعال":"غیر فعال")+" ہوگیا؛ سابقہ ریکارڈ محفوظ ہے۔",true);await Promise.all([loadCustomers(),refreshAdminSignupNotice()]);
+ }catch(e){msg("اکاؤنٹ کی حیثیت تبدیل نہیں ہوئی: "+(e?.message||String(e)));}
+ finally{customerStatusInFlight.delete(customerId);if(button)button.disabled=false;}
 }
 
 function renderCustomers(){
@@ -1752,7 +1759,7 @@ function renderCustomers(){
    <div class="customer-record-actions">
     <button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button>
     <button onclick="editCustomer(${Number(c.id)})">معلومات درست کریں</button>
-    <button class="secondary" onclick="${accessHandler}(${Number(c.id)})">${accessAction}</button>
+    <button class="secondary" onclick="${accessHandler}(${Number(c.id)},this)">${accessAction}</button>
     <button class="danger-button" type="button" disabled title="مستقل آرکائیو فی الحال محفوظ ریکارڈ پالیسی کے تحت بند ہے">آرکائیو / مستقل حذف (فی الحال بند)</button>
    </div>
   </article>`;
@@ -3228,9 +3235,10 @@ async function setMonthlyUnregisteredCustomerActive(id,active){
  if(!confirm("اس ماہانہ کھاتے کو "+verb+" کرنا ہے؟"))return;
  if(button)button.disabled=true;
  try{
-  const {error}=await db.from("unregistered_monthly_customers").update({is_active:active}).eq("id",id);
+  const {data:updated,error}=await db.from("unregistered_monthly_customers").update({is_active:active}).eq("id",id).select("id,is_active").maybeSingle();
   if(error)throw error;
-  msg("ماہانہ کھاتے کی حیثیت تبدیل ہوگئی۔",true);await loadMonthlyUnregisteredLedger();
+  if(!updated||updated.is_active!==active)throw new Error("ڈیٹابیس نے تبدیلی کی تصدیق نہیں کی۔");
+  msg("ماہانہ کھاتے کی حیثیت تبدیل ہوگئی؛ سابقہ بل اور ادائیگیاں محفوظ ہیں۔",true);await loadMonthlyUnregisteredLedger();
  }catch(e){msg("حیثیت تبدیل نہیں ہوئی: "+(e.message||String(e)));}
  finally{if(button)button.disabled=false;}
 }
@@ -4389,21 +4397,27 @@ async function loadWorkers(){
  const wageWorkers=(data||[]).filter(w=>!w.is_owner);const ids=wageWorkers.map(w=>w.id);let entries=[];const month=$("wlMonth")?.value||today().slice(0,7);const start=month+"-01";const endDate=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),1);const end=endDate.getFullYear()+"-"+String(endDate.getMonth()+1).padStart(2,"0")+"-01";if(ids.length){let offset=0;while(true){const r=await db.from("worker_ledger").select("id,worker_id,entry_type,amount,entry_date,work_category,note,payment_method").in("worker_id",ids).lt("entry_date",end).order("entry_date",{ascending:true}).order("id",{ascending:true}).range(offset,offset+999);if(r.error){msg("لیجر لوڈ نہیں ہوا: "+r.error.message);return;}const page=r.data||[];entries.push(...page);if(page.length<1000)break;offset+=1000;}}
  const catLabels={"19L delivery":"19L ڈیلیوری","carton loading/unloading":"کارٹن","cleaning":"صفائی","production":"پروڈکشن","bottle washing":"بوتل دھلائی"};
  const typeLabels={earning:"کمائی",payment:"ادائیگی",advance:"ایڈوانس",deduction:"کٹوتی",adjustment:"درستگی"};
- const rows=wageWorkers.map(w=>{const es=entries.filter(e=>e.worker_id===w.id);const before=es.filter(e=>e.entry_date<start);const current=es.filter(e=>e.entry_date>=start);const opening=before.reduce((n,e)=>n+(e.entry_type==="earning"?Number(e.amount):(["payment","advance","deduction"].includes(e.entry_type)?-Number(e.amount):0)),0);const earned=current.filter(e=>e.entry_type==="earning").reduce((n,e)=>n+Number(e.amount),0);const paid=current.filter(e=>e.entry_type==="payment").reduce((n,e)=>n+Number(e.amount),0);const advances=current.filter(e=>e.entry_type==="advance").reduce((n,e)=>n+Number(e.amount),0);const deductions=current.filter(e=>e.entry_type==="deduction").reduce((n,e)=>n+Number(e.amount),0);const balance=opening+earned-paid-advances-deductions;const status=workerStatusLabel(w);const action=workerStatusActionLabel(w);return '<article class="worker-summary-card"><h3>'+esc(w.full_name)+'</h3><p class="muted">حیثیت: '+status+' — '+esc((w.work_categories||[]).map(c=>catLabels[c]||c).join("، "))+'</p><div class="worker-summary-grid"><div><small>پچھلا بقایا</small><b>'+money(opening)+'</b></div><div><small>اس ماہ کمائی</small><b>'+money(earned)+'</b></div><div><small>اس ماہ ادائیگی</small><b>'+money(paid)+'</b></div><div><small>اس ماہ ایڈوانس</small><b>'+money(advances)+'</b></div><div><small>اس ماہ کٹوتی</small><b>'+money(deductions)+'</b></div><div class="worker-balance"><small>اب تک بقایا</small><b>'+money(balance)+'</b></div></div><button class="secondary" onclick="toggleWorkerStatus('+Number(w.id)+')">'+action+'</button></article>'}).join("");
+ const rows=wageWorkers.map(w=>{const es=entries.filter(e=>e.worker_id===w.id);const before=es.filter(e=>e.entry_date<start);const current=es.filter(e=>e.entry_date>=start);const opening=before.reduce((n,e)=>n+(e.entry_type==="earning"?Number(e.amount):(["payment","advance","deduction"].includes(e.entry_type)?-Number(e.amount):0)),0);const earned=current.filter(e=>e.entry_type==="earning").reduce((n,e)=>n+Number(e.amount),0);const paid=current.filter(e=>e.entry_type==="payment").reduce((n,e)=>n+Number(e.amount),0);const advances=current.filter(e=>e.entry_type==="advance").reduce((n,e)=>n+Number(e.amount),0);const deductions=current.filter(e=>e.entry_type==="deduction").reduce((n,e)=>n+Number(e.amount),0);const balance=opening+earned-paid-advances-deductions;const status=workerStatusLabel(w);const action=workerStatusActionLabel(w);return '<article class="worker-summary-card"><h3>'+esc(w.full_name)+'</h3><p class="muted">حیثیت: '+status+' — '+esc((w.work_categories||[]).map(c=>catLabels[c]||c).join("، "))+'</p><div class="worker-summary-grid"><div><small>پچھلا بقایا</small><b>'+money(opening)+'</b></div><div><small>اس ماہ کمائی</small><b>'+money(earned)+'</b></div><div><small>اس ماہ ادائیگی</small><b>'+money(paid)+'</b></div><div><small>اس ماہ ایڈوانس</small><b>'+money(advances)+'</b></div><div><small>اس ماہ کٹوتی</small><b>'+money(deductions)+'</b></div><div class="worker-balance"><small>اب تک بقایا</small><b>'+money(balance)+'</b></div></div><button class="secondary" onclick="toggleWorkerStatus('+Number(w.id)+',this)">'+action+'</button></article>'}).join("");
  const details=entries.filter(e=>e.entry_date>=start).map(e=>'<article class="worker-entry-card"><div><b>'+esc((data||[]).find(w=>w.id===e.worker_id)?.full_name||"ورکر")+'</b><span>'+esc(e.entry_date)+'</span></div><p>'+esc(catLabels[e.work_category]||e.work_category)+' — '+esc(typeLabels[e.entry_type]||e.entry_type)+'</p><strong>'+money(e.amount)+'</strong>'+(e.payment_method?'<small>طریقہ: '+paymentMethodLabel(e.payment_method)+'</small>':"")+(e.note?'<small>'+esc(e.note)+'</small>':"")+'</article>').join("");
  $("moduleTable").innerHTML='<h3>'+esc(month)+' کا ورکر حساب</h3><p class="muted">ہر ورکر کا حساب الگ اور آسان انداز میں دکھایا گیا ہے۔</p><div class="worker-summary-list">'+(rows||'<p class="muted">ابھی کوئی ورکر ریکارڈ موجود نہیں۔</p>')+'</div><h3>اس ماہ کی انٹریاں</h3><div class="worker-entry-list">'+(details||'<p class="muted">اس ماہ کوئی انٹری نہیں۔</p>')+'</div>';
 }
-async function toggleWorkerStatus(workerId){
- const {data:worker,error:lookupError}=await db.from("workers").select("id,full_name,is_active,is_owner").eq("id",workerId).maybeSingle();
+const workerStatusInFlight=new Set();
+async function toggleWorkerStatus(workerId,button){
+ const id=Number(workerId);if(workerStatusInFlight.has(id))return;
+ workerStatusInFlight.add(id);if(button)button.disabled=true;
+ try{
+ const {data:worker,error:lookupError}=await db.from("workers").select("id,full_name,is_active,is_owner").eq("id",id).maybeSingle();
  if(lookupError||!worker){msg("ورکر کا ریکارڈ نہیں ملا: "+(lookupError?.message||""));return;}
  if(worker.is_owner){msg("مالک کا ریکارڈ غیر فعال نہیں کیا جا سکتا۔");return;}
  const next=!worker.is_active;
  if(!confirm("کیا "+worker.full_name+" کو "+(next?"دوبارہ فعال":"غیر فعال")+" کرنا ہے؟ پرانا لیجر اور بقایا محفوظ رہے گا۔ "+(next?"دوبارہ کام کے لیے منتخب ہو سکے گا۔":"نئے کام کے لیے منتخب نہیں ہوگا، مگر ادائیگی اور پرانا حساب جاری رہے گا۔")))return;
- const {data:updated,error}=await db.from("workers").update({is_active:next}).eq("id",workerId).eq("is_owner",false).select("id,is_active").maybeSingle();
+ const {data:updated,error}=await db.from("workers").update({is_active:next}).eq("id",id).eq("is_owner",false).select("id,is_active").maybeSingle();
  if(error){msg("ورکر کی حیثیت تبدیل نہیں ہوئی: "+error.message);return;}
  if(!updated){msg("ورکر کی حیثیت تبدیل نہیں ہوئی؛ ریکارڈ میں کوئی تبدیلی نہیں ہوئی۔");return;}
  msg("ورکر "+(next?"دوبارہ فعال":"غیر فعال")+" ہوگیا؛ سابقہ لیجر محفوظ ہے۔",true);
  await loadWorkers();
+ }catch(e){msg("ورکر کی حیثیت تبدیل نہیں ہوئی: "+(e?.message||String(e)));}
+ finally{workerStatusInFlight.delete(id);if(button)button.disabled=false;}
 }
 
 async function saveWorker(){

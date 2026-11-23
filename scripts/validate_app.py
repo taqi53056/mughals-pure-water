@@ -207,6 +207,12 @@ if 'آرکائیو / مستقل حذف (فی الحال بند)</button>' not in
     fail("Disabled permanent customer archive control is missing.")
 if 'async function archiveCustomer(id){\n msg("مستقل کسٹمر آرکائیو فی الحال بند ہے' not in source:
     fail("Permanent customer archive handler must fail closed before any destructive request.")
+if "const customerStatusInFlight=new Set();" not in source or "customerStatusInFlight.delete(customerId)" not in source:
+    fail("Registered customer status changes must prevent overlapping requests.")
+if "const workerStatusInFlight=new Set();" not in source or "workerStatusInFlight.delete(id)" not in source:
+    fail("Worker status changes must prevent overlapping requests.")
+if '.select("id,is_active").maybeSingle()' not in source:
+    fail("Account status updates must confirm the affected row.")
 if "counterCapsSold" in source or "caps_sold:" in source:
     fail("Counter cap sales must not require a daily count or manual entry")
 if "const capsUsed=customerCapsUsed+unassignedCapsUsed;" not in source:
