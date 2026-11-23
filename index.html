@@ -2876,6 +2876,7 @@ async function saveCounterWaterSale(){
 }
 
 let monthlyUnregisteredCustomerEditingId=null;
+let monthlyUnregisteredSelectedMonth=today().slice(0,7);
 
 async function monthlyUnregisteredModule(){
  setTitle("ماہانہ غیر رجسٹرڈ کھاتے");
@@ -2903,8 +2904,9 @@ async function monthlyUnregisteredModule(){
  '<label for="umCollectionAmount">وصول شدہ رقم (روپے) *</label><input id="umCollectionAmount" type="number" min="0.01" step="0.01" inputmode="decimal">'+
  '<label for="umCollectionMethod">وصولی کا طریقہ *</label><select id="umCollectionMethod"><option value="">طریقہ منتخب کریں</option><option value="cash">نقد</option><option value="bank">بینک</option><option value="easypaisa">ایزی پیسہ</option><option value="jazzcash">جاز کیش</option></select>'+
  '<button id="umCollectionSave" onclick="saveMonthlyUnregisteredCollection()">وصولی محفوظ کریں</button></div>'+
- '<div id="umLedger"></div>';
+ '<div class="card"><h3>کس مہینے کا حساب دیکھنا ہے؟</h3><label for="umStatementMonth">مہینہ منتخب کریں</label><input id="umStatementMonth" type="month" value="'+monthlyUnregisteredSelectedMonth+'"></div><div id="umLedger"></div>';
  $("umWorker").addEventListener("change",()=>{$("umWorkerPicker").classList.toggle("hidden",$("umWorker").value!=="worker");});
+ $("umStatementMonth").addEventListener("change",()=>{if(/^\d{4}-\d{2}$/.test($("umStatementMonth").value)){monthlyUnregisteredSelectedMonth=$("umStatementMonth").value;loadMonthlyUnregisteredLedger();}});
  const {data:workers,error}=await db.from("workers").select("id,full_name").eq("is_active",true).eq("is_owner",false).contains("work_categories",["19L delivery"]).order("full_name");
  if(error){msg("مزدوروں کی فہرست لوڈ نہیں ہوئی: "+error.message);return;}
  $("umWorkerId").innerHTML='<option value="">مزدور منتخب کریں</option>'+(workers||[]).map(w=>'<option value="'+Number(w.id)+'">'+esc(w.full_name)+'</option>').join("");
@@ -2950,18 +2952,59 @@ async function loadMonthlyUnregisteredLedger(){
   $("umDeliveryCustomer").innerHTML='<option value="">گاہک منتخب کریں</option>'+customers.filter(c=>c.is_active).map(c=>'<option value="'+Number(c.id)+'">'+esc(c.name)+'</option>').join("");
   const pending=deliveries.map(d=>({d,customer:customerById.get(Number(d.monthly_customer_id)),due:Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,collected:collectedByDelivery.get(Number(d.id))||0})).filter(x=>x.customer&&x.due>x.collected);
   $("umCollectionDelivery").innerHTML='<option value="">بقایا ڈلیوری منتخب کریں</option>'+pending.map(x=>'<option value="'+Number(x.d.id)+'">'+esc(x.customer.name)+' — '+esc(x.d.delivery_date)+' — بقایا '+money(x.due-x.collected)+'</option>').join("");
+  const selectedMonth=monthlyUnregisteredSelectedMonth||today().slice(0,7);
+  const monthStart=selectedMonth+"-01";
+  const nextMonthDate=new Date(Number(selectedMonth.slice(0,4)),Number(selectedMonth.slice(5,7)),1);
+  const nextMonth=nextMonthDate.getFullYear()+"-"+String(nextMonthDate.getMonth()+1).padStart(2,"0")+"-01";
   const grouped=new Map();
   deliveries.forEach(d=>{
-   const id=Number(d.monthly_customer_id);if(!grouped.has(id))grouped.set(id,{bottles:0,caps:0,due:0,collected:0,count:0,latest:d.delivery_date});
-   const g=grouped.get(id);g.bottles+=Number(d.bottles_delivered||0);g.caps+=Number(d.damaged_caps||0);g.due+=Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10;g.collected+=collectedByDelivery.get(Number(d.id))||0;g.count++;
-   if(d.delivery_date>g.latest)g.latest=d.delivery_date;
+   const id=Number(d.monthly_customer_id);
+   if(d.delivery_date>=monthStart&&d.delivery_date<nextMonth){
+    if(!grouped.has(id))grouped.set(id,{bottles:0,caps:0,charges:0,count:0});
+    const g=grouped.get(id);g.bottles+=Number(d.bottles_delivered||0);g.caps+=Number(d.damaged_caps||0);
+    g.charges+=Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10;g.count++;
+   }
   });
-  box.innerHTML='<div class="card"><h3>ماہانہ کھاتوں کی فہرست</h3>'+
-   (customers.length?'<div class="tablewrap"><table><tr><th>گاہک</th><th>ڈلیوریاں</th><th>بوتلیں</th><th>کل چارجز</th><th>وصولی</th><th>بقایا</th><th>حالت</th><th>عمل</th></tr>'+
-    customers.map(c=>{const g=grouped.get(Number(c.id))||{bottles:0,caps:0,due:0,collected:0,count:0};return '<tr><td><b>'+esc(c.name)+'</b><br><small>'+esc(c.mobile||"")+'</small></td><td>'+g.count+'</td><td>'+g.bottles+'</td><td>'+money(g.due)+'</td><td>'+money(g.collected)+'</td><td><b>'+money(Math.max(g.due-g.collected,0))+'</b></td><td>'+(c.is_active?"فعال":"غیر فعال")+'</td><td><button class="secondary" onclick="editMonthlyUnregisteredCustomer('+Number(c.id)+')">ترمیم</button><button id="umActive-'+Number(c.id)+'" class="secondary" onclick="setMonthlyUnregisteredCustomerActive('+Number(c.id)+','+(!c.is_active)+')">'+(c.is_active?"غیر فعال کریں":"فعال کریں")+'</button></td></tr>';}).join("")+
-   '</table></div>':'<div class="customer-empty">ابھی کوئی ماہانہ کھاتہ موجود نہیں۔</div>')+'</div>'+
-   '<div class="card"><h3>ماہانہ بل اور بقایا</h3>'+
-   (bills.length?bills.slice(0,100).map(b=>{const c=customerById.get(Number(b.customer_id));const charges=Number(b.bottle_amount)+Number(b.cap_amount);const totalPayable=Number(b.previous_balance)+charges-Number(b.advance_used);return '<div class="u19-history-item"><div><b>'+esc(c?.name||"نامعلوم کھاتہ")+'</b><span>بل: '+esc(b.bill_month)+' · '+Number(b.bottles_19l)+' بوتلیں · خراب ڈھکن '+Number(b.damaged_caps)+'</span></div><div><span>سابقہ بقایا: '+money(b.previous_balance)+' · ماہانہ چارجز: '+money(charges)+' · ایڈوانس استعمال: '+money(b.advance_used)+'</span><span>کل قابلِ ادائیگی: '+money(totalPayable)+' · اس ماہ وصولی: '+money(b.payments)+'</span><b>باقی بقایا: '+money(b.current_due)+(Number(b.closing_advance)>0?' · اگلے ماہ کا ایڈوانس: '+money(b.closing_advance):'')+'</b></div></div>';}).join(""):'<div class="customer-empty">ابھی ماہانہ بل تیار نہیں ہوئے۔ مہینہ مکمل ہونے پر خودکار بلنگ ہوگی۔</div>')+'</div>'+
+  const receivedByCustomer=new Map();
+  collections.forEach(r=>{
+   const d=deliveryById.get(Number(r.delivery_id));if(!d)return;
+   const id=Number(d.monthly_customer_id);
+   if(r.received_date>=monthStart&&r.received_date<nextMonth)
+    receivedByCustomer.set(id,(receivedByCustomer.get(id)||0)+Number(r.amount||0));
+  });
+  const billByCustomer=new Map(),priorBillByCustomer=new Map();
+  bills.forEach(b=>{
+   const id=Number(b.customer_id);
+   if(b.bill_month===monthStart)billByCustomer.set(id,b);
+   else if(b.bill_month<monthStart&&(!priorBillByCustomer.has(id)||b.bill_month>priorBillByCustomer.get(id).bill_month))
+    priorBillByCustomer.set(id,b);
+  });
+  const moneyRows=customers.map(c=>{
+   const id=Number(c.id),g=grouped.get(id)||{bottles:0,caps:0,charges:0,count:0};
+   const received=receivedByCustomer.get(id)||0,bill=billByCustomer.get(id),prior=priorBillByCustomer.get(id);
+   let previousBalance=prior?Number(prior.current_due||0):0;
+   let previousAdvance=prior?Number(prior.closing_advance||0):0;
+   if(!prior){
+    const pastCharges=deliveries.filter(d=>Number(d.monthly_customer_id)===id&&d.delivery_date<monthStart)
+     .reduce((sum,d)=>sum+Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,0);
+    const pastPayments=collections.filter(r=>{const d=deliveryById.get(Number(r.delivery_id));return d&&Number(d.monthly_customer_id)===id&&r.received_date<monthStart;})
+     .reduce((sum,r)=>sum+Number(r.amount||0),0);
+    previousBalance=Math.max(pastCharges-pastPayments,0);previousAdvance=Math.max(pastPayments-pastCharges,0);
+   }
+   const charges=bill?Number(bill.bottle_amount||0)+Number(bill.cap_amount||0):g.charges;
+   const payments=bill?Number(bill.payments||0):received;
+   const advanceUsed=bill?Number(bill.advance_used||0):Math.min(previousAdvance,previousBalance+charges);
+   const due=bill?Number(bill.current_due||0):Math.max(previousBalance+charges-previousAdvance-payments,0);
+   const closingAdvance=bill?Number(bill.closing_advance||0):Math.max(previousAdvance+payments-previousBalance-charges,0);
+   return {c,g,charges,payments,previousBalance,advanceUsed,due,closingAdvance,bill};
+  });
+  $("umStatementMonth").value=selectedMonth;
+  box.innerHTML='<div class="card"><h3>'+esc(selectedMonth)+' — ماہانہ مکمل حساب</h3>'+
+   '<p class="muted">ہر ماہانہ غیر رجسٹرڈ گاہک کا حساب نام کے تحت یکجا ہے۔ بل بننے سے پہلے موجودہ مہینے کا حساب عبوری ہے؛ مہینہ بند ہونے پر محفوظ شدہ بل کا حتمی حساب دکھے گا۔</p>'+
+   (moneyRows.length?'<div class="tablewrap"><table><tr><th>گاہک</th><th>ڈلیوریاں / بوتلیں</th><th>ماہانہ چارجز</th><th>سابقہ بقایا</th><th>اس ماہ وصولی</th><th>اختتامی بقایا</th><th>ایڈوانس</th><th>بل</th><th>عمل</th></tr>'+
+    moneyRows.map(x=>'<tr><td><b>'+esc(x.c.name)+'</b><br><small>'+esc(x.c.mobile||"")+'</small></td><td>'+x.g.count+' / '+x.g.bottles+'<br><small>خراب ڈھکن: '+x.g.caps+'</small></td><td>'+money(x.charges)+'</td><td>'+money(x.previousBalance)+'</td><td>'+money(x.payments)+'</td><td><b>'+money(x.due)+'</b></td><td>'+money(x.closingAdvance)+'</td><td>'+(x.bill?'<span class="badge success">حتمی بل</span>':'<span class="muted">عبوری</span>')+'</td><td><button class="secondary" onclick="editMonthlyUnregisteredCustomer('+Number(x.c.id)+')">ترمیم</button><button id="umActive-'+Number(x.c.id)+'" class="secondary" onclick="setMonthlyUnregisteredCustomerActive('+Number(x.c.id)+','+(!x.c.is_active)+')">'+(x.c.is_active?"غیر فعال کریں":"فعال کریں")+'</button></td></tr>').join("")+
+   '</table></div>':'<div class="customer-empty">ابھی کوئی ماہانہ کھاتہ موجود نہیں۔</div>')+
+   '<p><b>کل ماہانہ چارجز:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.charges,0))+' &nbsp; <b>کل وصولی:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.payments,0))+' &nbsp; <b>کل اختتامی بقایا:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.due,0))+'</p></div>'+
    '<div class="card"><h3>حالیہ وصولیاں</h3>'+
    (collections.length?collections.slice(0,100).map(r=>{const d=deliveryById.get(Number(r.delivery_id));const c=d?customerById.get(Number(d.monthly_customer_id)):null;const methods={cash:"نقد",bank:"بینک",easypaisa:"ایزی پیسہ",jazzcash:"جاز کیش"};return '<div class="u19-history-item"><div><b>'+esc(c?.name||"نامعلوم کھاتہ")+'</b><span>وصولی کی تاریخ: '+esc(r.received_date)+'</span></div><div><b>'+money(r.amount)+'</b><span>'+esc(methods[r.payment_method]||r.payment_method||"")+'</span></div></div>';}).join(""):'<div class="customer-empty">ابھی کوئی وصولی درج نہیں۔</div>')+'</div>'+
    '<div class="card"><h3>حالیہ ماہانہ ڈلیوریاں</h3>'+
