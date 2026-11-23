@@ -3336,11 +3336,29 @@ async function loadPendingMonthlyDeliveryLinks(){
   const rows=pending.map(r=>{
    const performer=r.performed_by_owner?"مالک":("ورکر #"+Number(r.worker_id||0));
    const choices=customers.filter(c=>r.delivery_date>=c.start_date);
-   const select=choices.length?'<select id="u19MonthlyCustomer_'+Number(r.id)+'"><option value="">ماہانہ کھاتہ منتخب کریں</option>'+choices.map(c=>'<option value="'+Number(c.id)+'">'+esc(c.name)+'</option>').join("")+'</select><button class="secondary" id="u19Link_'+Number(r.id)+'" onclick="linkPendingMonthlyDelivery('+Number(r.id)+')">ماہانہ کھاتے میں منتقل کریں</button>':'<span class="muted">اس تاریخ کے لیے موزوں فعال ماہانہ کھاتہ نہیں</span>';
+   const splitAllowed=!r.performed_by_owner&&Number(r.worker_id)>0&&Number(r.bottles_delivered)>1&&Number(r.empty_bottles_returned)===Number(r.bottles_delivered);
+   const splitControls=splitAllowed?'<div class="muted">جزوی تقسیم: خراب ڈھکن باقی غیر منسلک حصے میں رہیں گے۔</div><input type="number" min="1" max="'+(Number(r.bottles_delivered)-1)+'" step="1" value="4" id="u19SplitQty_'+Number(r.id)+'" aria-label="ماہانہ کھاتے کے لیے بوتلیں"><button id="u19Split_'+Number(r.id)+'" onclick="splitPendingMonthlyDelivery('+Number(r.id)+')">منتخب بوتلیں ماہانہ کھاتے میں تقسیم کریں</button>':'';
+   const select=choices.length?'<select id="u19MonthlyCustomer_'+Number(r.id)+'"><option value="">ماہانہ کھاتہ منتخب کریں</option>'+choices.map(c=>'<option value="'+Number(c.id)+'">'+esc(c.name)+'</option>').join("")+'</select><button class="secondary" id="u19Link_'+Number(r.id)+'" onclick="linkPendingMonthlyDelivery('+Number(r.id)+')">پوری سپلائی ماہانہ کھاتے میں منتقل کریں</button>'+splitControls:'<span class="muted">اس تاریخ کے لیے موزوں فعال ماہانہ کھاتہ نہیں</span>';
    return '<tr><td>#'+Number(r.id)+'<br>'+esc(r.delivery_date)+'</td><td>'+Number(r.bottles_delivered||0)+' بھری<br>'+Number(r.empty_bottles_returned||0)+' خالی</td><td>'+Number(r.damaged_caps||0)+'</td><td>'+esc(performer)+'</td><td>'+select+'</td></tr>';
   }).join("");
   host.insertAdjacentHTML("afterbegin",'<div class="card" id="u19PendingMonthlyReview"><h3>ماہانہ کھاتے سے منسلک ہونے والی سپلائیاں</h3><p class="muted">درست گاہک منتخب کرکے اسی پرانی سپلائی کو ماہانہ کھاتے میں منتقل کریں۔ نئی سپلائی یا نئی وصولی نہیں بنے گی؛ اصل مالک/ورکر، بوتلیں، خالی بوتلیں اور مزدوری کا ریکارڈ برقرار رہے گا۔ منتقل شدہ ریکارڈ اس فہرست سے خود ہٹ جائے گا۔</p><div class="tablewrap"><table><tr><th>سپلائی</th><th>بوتلیں</th><th>ڈھکن</th><th>کس نے پہنچائیں</th><th>ماہانہ کھاتہ</th></tr>'+rows+'</table></div>'+(pending.length?'':'<p class="muted">اس وقت کوئی زیرِ جائزہ غیر منسلک سپلائی موجود نہیں۔</p>')+'</div>');
  }catch(e){host.insertAdjacentHTML("afterbegin",'<div class="card warning">ماہانہ منتقلی کی فہرست لوڈ نہیں ہوئی: '+esc(e.message||String(e))+'</div>');}
+}
+async function splitPendingMonthlyDelivery(deliveryId){
+ const select=$("u19MonthlyCustomer_"+Number(deliveryId)),qtyInput=$("u19SplitQty_"+Number(deliveryId)),button=$("u19Split_"+Number(deliveryId));
+ const customerId=Number(select?.value),monthlyBottles=Number(qtyInput?.value);
+ if(!Number.isInteger(deliveryId)||deliveryId<=0||!Number.isInteger(customerId)||customerId<=0){msg("پہلے ماہانہ کھاتہ منتخب کریں۔");return;}
+ if(!Number.isInteger(monthlyBottles)||monthlyBottles<=0||monthlyBottles>=Number(qtyInput?.max)){msg("ماہانہ حصے کی بوتلوں کی تعداد درست درج کریں۔");return;}
+ const customerName=select.options[select.selectedIndex]?.textContent||"منتخب گاہک";
+ if(!confirm("اصل سپلائی #"+deliveryId+" میں سے "+monthlyBottles+" بوتلیں "+customerName+" کے ماہانہ کھاتے میں منتقل ہوں گی۔ باقی بوتلیں غیر منسلک رہیں گی اور تمام خراب ڈھکن باقی حصے میں رہیں گے۔ مزدور کی کل اجرت دوبارہ درست تقسیم ہوگی؛ نئی وصولی نہیں بنے گی۔ کیا جاری رکھیں؟"))return;
+ if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const {data,error}=await db.rpc("split_pending_unassigned_19l_delivery_to_monthly_customer",{p_delivery_id:deliveryId,p_customer_id:customerId,p_monthly_bottles:monthlyBottles});
+  if(error)throw error;if(!data||!["split","already_split"].includes(data.status))throw new Error("تقسیم کی تصدیق موصول نہیں ہوئی۔");
+  msg("سپلائی تقسیم ہوگئی: ماہانہ "+data.monthly_bottles+"، باقی "+data.remaining_bottles+"، مزدور کی کل اجرت Rs."+data.total_labor_amount,true);
+  await Promise.all([loadUnassigned19lHistory(),loadUnassigned19lCollectionOptions(),loadPendingMonthlyDeliveryLinks(),loadMonthlyUnregisteredLedger(),loadTodaySummary(),runReport()]);
+ }catch(e){msg("سپلائی تقسیم نہیں ہوئی: "+(e.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
 async function linkPendingMonthlyDelivery(deliveryId){
  const select=$("u19MonthlyCustomer_"+Number(deliveryId)),button=$("u19Link_"+Number(deliveryId));
