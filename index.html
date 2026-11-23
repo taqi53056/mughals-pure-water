@@ -3058,10 +3058,12 @@ let monthlyUnregisteredSelectedMonth=today().slice(0,7);
 
 let monthlyUnregisteredSelectedCustomerId=null;
 let monthlyUnregisteredCurrentDue=0;
+// نئی ڈلیوری روزانہ کے مشترکہ 19L ڈلیوری سینٹر سے درج کریں۔
 async function monthlyUnregisteredModule(){
  setTitle("ماہانہ غیر رجسٹرڈ کھاتے");monthlyUnregisteredCustomerEditingId=null;monthlyUnregisteredSelectedCustomerId=null;monthlyUnregisteredCurrentDue=0;
  $("moduleBody").innerHTML=
- '<p class="muted">یہ ماہانہ گاہکوں کے الگ کھاتے ہیں جن کا ایپ لاگ اِن اکاؤنٹ نہیں۔ نیا ماہانہ کھاتہ بنانے کے لیے گاہکوں کے مرکزی صفحے میں اکاؤنٹ کی قسم منتخب کریں۔ پہلے گاہک منتخب کریں؛ اس کے بعد صرف اسی کا حساب، ڈلیوریاں اور وصولیاں ظاہر ہوں گی۔</p>'+
+ '<p class="muted">یہ ماہانہ گاہکوں کے الگ کھاتے ہیں جن کا ایپ لاگ اِن اکاؤنٹ نہیں۔ پہلے گاہک منتخب کریں؛ اس کے بعد صرف اسی کا حساب، ڈلیوریاں اور وصولیاں ظاہر ہوں گی۔</p>'+
+ '<div class="card"><p class="muted">نیا ماہانہ کھاتہ بنانے کے لیے گاہکوں کے مرکزی صفحے میں اکاؤنٹ کی قسم منتخب کریں۔ نئی روزانہ ڈلیوری مشترکہ 19L ڈلیوری سینٹر سے درج کریں۔</p><button class="secondary" onclick="openModule(&quot;customers&quot;)">گاہکوں کے مرکزی صفحے پر جائیں</button></div>'+
  '<div class="card"><h3>ماہانہ گاہک منتخب کریں</h3><label for="umCustomerSelect">گاہک کا نام *</label><select id="umCustomerSelect"><option value="">گاہک منتخب کریں</option></select><p class="muted">کسی گاہک کو منتخب کرنے سے پہلے اس کی ذاتی تفصیل یا مالی ریکارڈ ظاہر نہیں ہوگا۔</p></div>'+
  '<div id="umCustomerEditCard" class="card hidden"><h3 id="umCustomerFormTitle">ماہانہ گاہک کی معلومات درست کریں</h3><label for="umName">گاہک کا نام *</label><input id="umName" maxlength="120" placeholder="پورا نام"><label for="umMobile">موبائل نمبر</label><input id="umMobile" maxlength="30" inputmode="tel" placeholder="مثلاً 03001234567"><label for="umAddress">پتہ</label><input id="umAddress" maxlength="300" placeholder="علاقہ یا مکمل پتہ"><button id="umCustomerSave" onclick="saveMonthlyUnregisteredCustomer()">گاہک محفوظ کریں</button><button id="umCustomerCancel" class="secondary hidden" onclick="cancelMonthlyUnregisteredCustomerEdit()">منسوخ کریں</button></div>'+
  '<div id="umStatementCard" class="card hidden"><h3>حساب کا مہینہ</h3><label for="umStatementMonth">مہینہ منتخب کریں</label><input id="umStatementMonth" type="month" value="'+monthlyUnregisteredSelectedMonth+'"></div>'+
