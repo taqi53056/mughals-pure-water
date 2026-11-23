@@ -1295,7 +1295,7 @@ try {
           if (name === "create_unregistered_monthly_customer") {
             tables.unregistered_monthly_customers.push({
               id: 6, name: args.p_name, mobile: args.p_mobile, address: args.p_address,
-              is_active: true, created_at: "2026-11-22T00:00:00Z"
+              start_date: args.p_start_date, is_active: true, created_at: "2026-11-22T00:00:00Z"
             });
             return { data: { id: 6, already_saved: false }, error: null };
           }
@@ -1323,7 +1323,7 @@ try {
         document.querySelector("#moduleBody").insertAdjacentHTML("beforeend",
           '<select id="customerAccountType"><option value="registered">رجسٹرڈ</option><option value="monthly">ماہانہ</option></select>' +
           '<div id="registeredAccountInfo"></div><div id="monthlyAccountCreateFields" class="hidden">' +
-          '<input id="newMonthlyName"><input id="newMonthlyMobile"><input id="newMonthlyAddress"><button id="newMonthlyCreateButton"></button></div>');
+          '<input id="newMonthlyName"><input id="newMonthlyMobile"><input id="newMonthlyAddress"><input id="newMonthlyStartDate" type="date"><button id="newMonthlyCreateButton"></button></div>');
         window.handleCustomerAccountTypeChange();
         const registeredSignupExplained = !document.querySelector("#registeredAccountInfo").classList.contains("hidden") &&
           document.querySelector("#monthlyAccountCreateFields").classList.contains("hidden");
@@ -1334,9 +1334,10 @@ try {
         document.querySelector("#newMonthlyName").value = "Second Monthly Account";
         document.querySelector("#newMonthlyMobile").value = "03001234568";
         document.querySelector("#newMonthlyAddress").value = "Second address";
+        document.querySelector("#newMonthlyStartDate").value = "2026-11-01";
         await window.createMonthlyCustomerFromCustomerModule();
         const customerCreated = rpcCalls.some(call => call.name === "create_unregistered_monthly_customer" &&
-          call.args.p_name === "Second Monthly Account");
+          call.args.p_name === "Second Monthly Account" && call.args.p_start_date === "2026-11-01");
         await window.monthlyUnregisteredModule();
         const newAccountCreationRedirect = document.querySelector("#umCustomerEditCard")?.classList.contains("hidden") &&
           document.querySelector("#moduleBody").textContent.includes("گاہکوں کے مرکزی صفحے");
