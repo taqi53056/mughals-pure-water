@@ -15,6 +15,9 @@ SW = ROOT / "SW.js"
 LOGO = ROOT / "logo.svg"
 DELIVERY_MIGRATION = ROOT / "supabase/migrations/20261110170207_one_customer_delivery_per_day.sql"
 MONTHLY_ACCOUNT_MIGRATION = ROOT / "supabase/migrations/20261122211931_add_unregistered_monthly_customer_ledger.sql"
+MONTHLY_BILL_MIGRATION = ROOT / "supabase/migrations/20261123051000_add_monthly_statements_for_unregistered_accounts.sql"
+MONTHLY_HISTORY_MIGRATION = ROOT / "supabase/migrations/20261123052000_include_inactive_monthly_accounts_with_history.sql"
+MONTHLY_CREATOR_INDEX_MIGRATION = ROOT / "supabase/migrations/20261123050000_index_unregistered_monthly_customer_creator.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
@@ -47,7 +50,7 @@ class AppParser(HTMLParser):
 def fail(message):
     raise SystemExit("FAIL: " + message)
 
-if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION)):
+if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION)):
     fail("required app shell file is missing")
 
 source = HTML.read_text(encoding="utf-8")
@@ -99,12 +102,33 @@ for required in (
     if required not in monthly_migration.lower():
         fail("Monthly unregistered account migration is incomplete: " + required)
 
+monthly_bill_migration = MONTHLY_BILL_MIGRATION.read_text(encoding="utf-8")
+for required in (
+    "unregistered_monthly_bills",
+    "private.generate_unregistered_monthly_bills",
+    "public.generate_month_end_customer_bills()",
+    "private.close_business_month(date,boolean)",
+    "unregistered_monthly_bills_admin_read",
+):
+    if required not in monthly_bill_migration:
+        fail("Monthly unregistered billing migration is incomplete: " + required)
+
+monthly_history_migration = MONTHLY_HISTORY_MIGRATION.read_text(encoding="utf-8")
+if "d.delivery_date<v_next" not in monthly_history_migration:
+    fail("Inactive monthly accounts with historical deliveries must remain in billing.")
+
+creator_index_migration = MONTHLY_CREATOR_INDEX_MIGRATION.read_text(encoding="utf-8")
+if "unregistered_monthly_customers_entered_by_idx" not in creator_index_migration:
+    fail("Monthly customer creator foreign key index is missing.")
+
 for required in (
     "openModule('monthlyAccounts')",
     "async function monthlyUnregisteredModule()",
     "async function saveMonthlyUnregisteredCustomer()",
     "async function saveMonthlyUnregisteredDelivery()",
     "async function saveMonthlyUnregisteredCollection()",
+    'db.from("unregistered_monthly_bills")',
+    "ماہانہ بل اور بقایا",
     "customer_classification",
 ):
     if required not in source:
