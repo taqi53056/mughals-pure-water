@@ -1239,19 +1239,31 @@ try {
       window.loadTodaySummary = async () => {};
       window.runReport = async () => {};
       try {
+        document.querySelector("#moduleBody").insertAdjacentHTML("beforeend",
+          '<select id="customerAccountType"><option value="registered">رجسٹرڈ</option><option value="monthly">ماہانہ</option></select>' +
+          '<div id="registeredAccountInfo"></div><div id="monthlyAccountCreateFields" class="hidden">' +
+          '<input id="newMonthlyName"><input id="newMonthlyMobile"><input id="newMonthlyAddress"><button id="newMonthlyCreateButton"></button></div>');
+        window.handleCustomerAccountTypeChange();
+        const registeredSignupExplained = !document.querySelector("#registeredAccountInfo").classList.contains("hidden") &&
+          document.querySelector("#monthlyAccountCreateFields").classList.contains("hidden");
+        document.querySelector("#customerAccountType").value = "monthly";
+        window.handleCustomerAccountTypeChange();
+        const monthlyFieldsShown = !document.querySelector("#monthlyAccountCreateFields").classList.contains("hidden") &&
+          document.querySelector("#registeredAccountInfo").classList.contains("hidden");
+        document.querySelector("#newMonthlyName").value = "Second Monthly Account";
+        document.querySelector("#newMonthlyMobile").value = "03001234568";
+        document.querySelector("#newMonthlyAddress").value = "Second address";
+        await window.createMonthlyCustomerFromCustomerModule();
+        const customerCreated = rpcCalls.some(call => call.name === "create_unregistered_monthly_customer" &&
+          call.args.p_name === "Second Monthly Account");
         await window.monthlyUnregisteredModule();
+        const newAccountCreationRedirect = document.querySelector("#umCustomerEditCard")?.classList.contains("hidden") &&
+          document.querySelector("#moduleBody").textContent.includes("گاہکوں کے مرکزی صفحے");
         const initialAccountVisible = document.querySelector("#umLedger").textContent.includes("Monthly Account Test");
         const initialPaymentOption = document.querySelector("#umCollectionDelivery").querySelector('option[value="11"]') !== null;
         const monthlyBillVisible = document.querySelector("#umLedger").textContent.includes("کل قابلِ ادائیگی") &&
           document.querySelector("#umLedger").textContent.includes("اختتامی بقایا") &&
           document.querySelector("#umStatementMonth")?.value === "2026-11";
-
-        document.querySelector("#umName").value = "Second Monthly Account";
-        document.querySelector("#umMobile").value = "03001234568";
-        document.querySelector("#umAddress").value = "Second address";
-        await window.saveMonthlyUnregisteredCustomer();
-        const customerCreated = rpcCalls.some(call => call.name === "create_unregistered_monthly_customer" &&
-          call.args.p_name === "Second Monthly Account");
 
         document.querySelector("#umDeliveryCustomer").value = "5";
         document.querySelector("#umDeliveryDate").value = "2026-11-22";
@@ -1277,7 +1289,10 @@ try {
           initialAccountVisible,
           initialPaymentOption,
           monthlyBillVisible,
+          registeredSignupExplained,
+          monthlyFieldsShown,
           customerCreated,
+          newAccountCreationRedirect,
           invalidBottleExchangeBlocked,
           monthlyAccountActionVisible,
           deliveryLinkedToMonthlyCustomer: deliveryCall?.args?.p_customer_id === 5 &&
@@ -1294,8 +1309,9 @@ try {
       }
     });
     if (!monthlyAccountResult.initialAccountVisible || !monthlyAccountResult.initialPaymentOption ||
-        !monthlyAccountResult.monthlyBillVisible || !monthlyAccountResult.customerCreated ||
-        !monthlyAccountResult.invalidBottleExchangeBlocked || !monthlyAccountResult.monthlyAccountActionVisible ||
+        !monthlyAccountResult.monthlyBillVisible || !monthlyAccountResult.registeredSignupExplained ||
+        !monthlyAccountResult.monthlyFieldsShown || !monthlyAccountResult.customerCreated ||
+        !monthlyAccountResult.newAccountCreationRedirect || !monthlyAccountResult.invalidBottleExchangeBlocked || !monthlyAccountResult.monthlyAccountActionVisible ||
         !monthlyAccountResult.deliveryLinkedToMonthlyCustomer ||
         !monthlyAccountResult.collectionUsesActualDateAndMethod ||
         !monthlyAccountResult.monthlyCollectionsStayInSeparateModule) {
