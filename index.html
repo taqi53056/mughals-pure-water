@@ -2942,6 +2942,15 @@ async function mpwFetchAllPages(makeQuery,pageSize=500){
  return rows;
 }
 
+async function mpwFetchByIdBatches(ids,makeQuery,batchSize=100){
+ const rows=[];
+ for(let offset=0;offset<ids.length;offset+=batchSize){
+  const batch=ids.slice(offset,offset+batchSize);
+  rows.push(...await mpwFetchAllPages(()=>makeQuery(batch)));
+ }
+ return rows;
+}
+
 async function loadMonthlyUnregisteredLedger(){
  const box=$("umLedger");if(!box)return;
  box.textContent="ماہانہ کھاتے لوڈ ہو رہے ہیں...";
@@ -2952,9 +2961,8 @@ async function loadMonthlyUnregisteredLedger(){
    mpwFetchAllPages(()=>db.from("unregistered_monthly_bills").select("customer_id,bill_month,bottles_19l,bottle_amount,damaged_caps,cap_amount,previous_balance,payments,advance_used,current_due,closing_advance").order("bill_month",{ascending:false}).order("customer_id"))
   ]);
   const monthlyDeliveryIds=deliveries.map(d=>Number(d.id));
-  const collections=monthlyDeliveryIds.length
-   ?await mpwFetchAllPages(()=>db.from("unassigned_19l_delivery_collections").select("delivery_id,received_date,amount,payment_method").in("delivery_id",monthlyDeliveryIds).order("received_date",{ascending:false}).order("id"))
-   :[];
+  const collections=await mpwFetchByIdBatches(monthlyDeliveryIds,batch=>
+   db.from("unassigned_19l_delivery_collections").select("delivery_id,received_date,amount,payment_method").in("delivery_id",batch).order("received_date",{ascending:false}).order("id"));
   const customerById=new Map(customers.map(c=>[Number(c.id),c]));
   const deliveryById=new Map(deliveries.map(d=>[Number(d.id),d]));
   const collectedByDelivery=new Map();
@@ -3101,7 +3109,8 @@ async function loadUnassigned19lHistory(){
   const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
   if(error)throw error;
   const ids=(data||[]).map(r=>Number(r.id));
-  const receipts=ids.length?await mpwFetchAllPages(()=>db.from("unassigned_19l_delivery_collections").select("delivery_id,amount").in("delivery_id",ids).order("id")):[];
+  const receipts=await mpwFetchByIdBatches(ids,batch=>
+   db.from("unassigned_19l_delivery_collections").select("delivery_id,amount").in("delivery_id",batch).order("id"));
   const collected=new Map();
   receipts.forEach(x=>collected.set(Number(x.delivery_id),(collected.get(Number(x.delivery_id))||0)+Number(x.amount)));
   box.innerHTML='<h3>حالیہ سپلائیاں</h3><div class="u19-history-list">'+
@@ -3120,7 +3129,8 @@ async function loadUnassigned19lCollectionOptions(){
  try{
   const deliveries=await mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}));
   const ids=deliveries.map(d=>Number(d.id));
-  const receipts=ids.length?await mpwFetchAllPages(()=>db.from("unassigned_19l_delivery_collections").select("delivery_id,amount").in("delivery_id",ids).order("id")):[];
+  const receipts=await mpwFetchByIdBatches(ids,batch=>
+   db.from("unassigned_19l_delivery_collections").select("delivery_id,amount").in("delivery_id",batch).order("id"));
   const totals=new Map();receipts.forEach(r=>totals.set(Number(r.delivery_id),(totals.get(Number(r.delivery_id))||0)+Number(r.amount)));
   const pending=(deliveries||[]).map(d=>({d,remaining:Number(d.bottles_delivered)*100+Number(d.damaged_caps||0)*10-(totals.get(Number(d.id))||0)})).filter(x=>x.remaining>0);
   sel.innerHTML='<option value="">سپلائی منتخب کریں</option>'+pending.map(x=>'<option value="'+x.d.id+'">'+esc(x.d.delivery_date)+' — '+Number(x.d.bottles_delivered)+' بوتلیں — بقایا '+money(x.remaining)+'</option>').join("");
