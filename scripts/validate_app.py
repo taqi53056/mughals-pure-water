@@ -205,7 +205,7 @@ if 'onclick="archiveCustomer(' in source or 'آرکائیو / مستقل حذف<
     fail("Permanent customer archive must remain disabled until explicit data-retention approval.")
 if 'آرکائیو / مستقل حذف (فی الحال بند)</button>' not in source:
     fail("Disabled permanent customer archive control is missing.")
-if 'async function archiveCustomer(id){\\n msg("مستقل کسٹمر آرکائیو فی الحال بند ہے' not in source:
+if 'async function archiveCustomer(id){\n msg("مستقل کسٹمر آرکائیو فی الحال بند ہے' not in source:
     fail("Permanent customer archive handler must fail closed before any destructive request.")
 if "counterCapsSold" in source or "caps_sold:" in source:
     fail("Counter cap sales must not require a daily count or manual entry")
