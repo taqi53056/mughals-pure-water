@@ -20,9 +20,10 @@ if (appSource.includes("updateUnassigned19lLabor") ||
     !appSource.includes('id="u19SaveButton" onclick="saveUnassigned19lDelivery()">سپلائی محفوظ کریں</button>')) {
   throw new Error("One-time supply entry still exposes obsolete labor UI or stale callbacks");
 }
-if (!appSource.includes("کل قابلِ ادائیگی: '+money(totalPayable)") ||
-    !appSource.includes("باقی بقایا: '+money(b.current_due)")) {
-  throw new Error("Monthly unregistered statements must show total payable and remaining balance");
+if (!appSource.includes("const totalPayable=bill?") ||
+    !appSource.includes("money(x.totalPayable)") || !appSource.includes("money(x.due)") ||
+    !appSource.includes("monthlyUnregisteredSelectedMonth") || !appSource.includes("اس ماہ وصولی")) {
+  throw new Error("Monthly unregistered statements must show the selected month, total payable, receipts and closing balance");
 }
 
 const adminHomeStart = appSource.indexOf('<div id="homeTiles"');
@@ -1242,7 +1243,8 @@ try {
         const initialAccountVisible = document.querySelector("#umLedger").textContent.includes("Monthly Account Test");
         const initialPaymentOption = document.querySelector("#umCollectionDelivery").querySelector('option[value="11"]') !== null;
         const monthlyBillVisible = document.querySelector("#umLedger").textContent.includes("کل قابلِ ادائیگی") &&
-          document.querySelector("#umLedger").textContent.includes("باقی بقایا");
+          document.querySelector("#umLedger").textContent.includes("اختتامی بقایا") &&
+          document.querySelector("#umStatementMonth")?.value === "2026-11";
 
         document.querySelector("#umName").value = "Second Monthly Account";
         document.querySelector("#umMobile").value = "03001234568";
