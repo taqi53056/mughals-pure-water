@@ -232,3 +232,6 @@ if "const monthlyCustomerProfileSaveInFlight=new Set();" not in source or "month
     fail("Monthly customer profile edits must prevent overlapping requests and release their guard.")
 if '.update(payload).eq("id",customerId).select("id").maybeSingle()' not in source or '.update({name,mobile:mobile?normalizePkMobile(mobile):null,address:address||null}).eq("id",customerId).select("id").maybeSingle()' not in source:
     fail("Customer profile edits must verify that the target row was updated.")
+
+if 'id="customerSaveButton"' not in source:
+    fail("Registered customer save button must be available for in-flight disabling.")
