@@ -1500,6 +1500,7 @@ try {
       return result;
     });
     if (feedbackResult.nativeAlertCount !== 0) failures.push("Business feedback still opens blocking native alerts");
+    if (!feedbackResult.testOnlyContactActionsRemoved) failures.push("Test-only customer contact actions are still exposed");
     if (!feedbackResult.moduleMessage.includes("پہلے ڈلیوری محفوظ کریں")) failures.push("Delivery validation feedback is not shown in the app");
     if (!feedbackResult.toast.includes("Chrome مینو") && !feedbackResult.toast.includes("انسٹال")) failures.push("PWA install guidance toast is missing");
     if (!feedbackResult.toastAccessible) failures.push("PWA install toast is not announced accessibly");
