@@ -3042,7 +3042,7 @@ async function monthlyUnregisteredModule(){
  '<label for="umAddress">پتہ</label><input id="umAddress" maxlength="300" placeholder="علاقہ یا مکمل پتہ">'+
  '<button id="umCustomerSave" onclick="saveMonthlyUnregisteredCustomer()">گاہک محفوظ کریں</button>'+
  '<button id="umCustomerCancel" class="secondary hidden" onclick="cancelMonthlyUnregisteredCustomerEdit()">منسوخ کریں</button></div>'+
- '<div class="card"><p class="muted">نئی روزانہ ڈلیوری مشترکہ 19L ڈلیوری سینٹر سے درج کریں۔ یہاں ماہانہ کھاتے، وصولیاں اور اسٹیٹمنٹ برقرار رہیں گے۔</p><button class="secondary" onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھولیں</button></div>'+
+ '<div class="card"><p class="muted">نئی روزانہ ڈلیوری مشترکہ 19L ڈلیوری سینٹر سے درج کریں۔ یہاں ماہانہ کھاتے، وصولیاں اور اسٹیٹمنٹ برقرار رہیں گے۔</p></div>'+
  '<div class="card hidden"><h3>ماہانہ گاہک کی نئی ڈلیوری</h3>'+
  '<label for="umDeliveryCustomer">ماہانہ گاہک *</label><select id="umDeliveryCustomer"><option value="">گاہک منتخب کریں</option></select>'+
  '<label for="umDeliveryDate">ڈلیوری کی تاریخ *</label><input id="umDeliveryDate" type="date" value="'+today()+'">'+
@@ -3273,7 +3273,7 @@ async function saveMonthlyUnregisteredCollection(){
 async function unassigned19lModule(){
  setTitle("بغیر گاہک 19L سپلائی");
  $("moduleBody").innerHTML=
- '<p class="muted u19-intro">یہ صفحہ عارضی سپلائی کی وصولیوں اور ہسٹری کے لیے ہے۔ نئی ڈلیوری روزانہ کے مشترکہ 19L ڈلیوری سینٹر سے درج کریں۔</p><button class="secondary" onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھولیں</button>'+
+ '<p class="muted u19-intro">یہ صفحہ عارضی سپلائی کی وصولیوں اور ہسٹری کے لیے ہے۔ نئی ڈلیوری روزانہ کے مشترکہ 19L ڈلیوری سینٹر سے درج کریں۔</p>'+
  '<div class="card hidden"><h3>نئی غیر منسلک سپلائی</h3>'+
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
  '<label for="u19Worker">سپلائی کس نے کی؟ *</label><select id="u19Worker" required><option value="" selected disabled>سپلائی کرنے والا منتخب کریں</option><option value="owner">مالک نے خود سپلائی کی</option><option value="worker">مزدور نے سپلائی کی</option></select><div id="u19WorkerPicker" class="hidden"><label for="u19WorkerId">مزدور منتخب کریں *</label><select id="u19WorkerId" required><option value="">ورکر لوڈ ہو رہا ہے...</option></select></div>'+
