@@ -4140,7 +4140,7 @@ async function deleteOwnerWithdrawal(id){
  if(!confirm("کیا یہ نکاسی کا ریکارڈ حذف کرنا ہے؟ ماہانہ حساب بھی دوبارہ بنے گا۔"))return;
  const {error}=await db.from("business_finance_ledger").delete().eq("id",id).eq("entry_type","owner_withdrawal");
  if(error){msg("ریکارڈ حذف نہیں ہوا: "+error.message);return;}
- msg("نکاسی کا ریکارڈ حذف ہوگیا۔",true);await loadOwnerWithdrawals();
+ msg("نکاسی کا ریکارڈ حذف ہوگیا۔",true);await Promise.all([loadOwnerWithdrawals(),loadTodaySummary(),runReport()]);
 }
 
 function workerStatusLabel(worker){return worker?.is_active===true?"فعال":"غیر فعال";}
