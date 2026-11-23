@@ -54,7 +54,7 @@ const categoryCounts = tileCategories.reduce((counts, category) => {
 }, {});
 if (categoryCounts.operations !== 5 || categoryCounts.inventory !== 4 ||
     categoryCounts.finance !== 4 || categoryCounts.management !== 8) {
-  throw new Error("Admin modules must be grouped into 5 daily, 4 stock, 4 finance and 7 management actions");
+  throw new Error("Admin modules must be grouped into 5 daily, 4 stock, 4 finance and 8 management actions");
 }
 const reportShortcuts = adminHome.match(/onclick="openModule\('(finance|reports)'\)"/g) || [];
 if (reportShortcuts.length !== 1) {
