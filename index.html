@@ -1685,29 +1685,41 @@ async function renderPendingCustomers(){
  const pending=customerList.filter(c=>c.is_active!==true&&!c.approved_at);
  if(!pending.length){box.textContent="اس وقت کوئی نیا منتظر گاہک نہیں۔";return;}
  box.innerHTML="<div class=\"tablewrap\"><table><tr><th>نام</th><th>Customer ID</th><th>موبائل</th><th>منظوری</th></tr>"+
- pending.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code||"ابھی نہیں")}</td><td>${esc(c.mobile||"")}</td><td><button onclick=\"approveCustomer(${Number(c.id)})\">منظور کریں</button></td></tr>`).join("")+"</table></div>";
+ pending.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.customer_code||"ابھی نہیں")}</td><td>${esc(c.mobile||"")}</td><td><button onclick=\"approveCustomer(${Number(c.id)},this)\">منظور کریں</button></td></tr>`).join("")+"</table></div>";
 }
-async function approveCustomer(id){
- const c=customerList.find(x=>Number(x.id)===Number(id));if(!c||c.is_active===true||c.approved_at)return;
+const customerApprovalInFlight=new Set();
+async function approveCustomer(id,button){
+ const customerId=Number(id);
+ const c=customerList.find(x=>Number(x.id)===customerId);
+ if(!c||c.is_active===true||c.approved_at||customerApprovalInFlight.has(customerId))return;
  if(!confirm("کیا "+(c.name||"اس گاہک")+" کو اکاؤنٹ استعمال کرنے کی منظوری دینی ہے؟"))return;
- const {data:approved,error}=await db.from("customers").update({is_active:true}).eq("id",id).select("id,is_active,auth_user_id").maybeSingle();
- if(error){msg("منظوری محفوظ نہیں ہوئی: "+error.message);return;}
- if(!approved||approved.is_active!==true){msg("منظوری محفوظ نہیں ہوئی: گاہک کا ریکارڈ اپ ڈیٹ نہیں ہوا۔");return;}
- let noticeStatus="کسٹمر کی منظوری محفوظ ہوگئی۔";
- if(approved.auth_user_id){
-  const approvalTitle="آپ کا اکاؤنٹ منظور ہوگیا";
-  const approvalMessage="السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔";
-  const approvalNotice=await db.from("customer_notifications").insert({customer_id:id,title:approvalTitle,message:approvalMessage,notification_type:"account",reference_key:"account-approved"});
-  if(approvalNotice.error){
-   noticeStatus+=" مگر ایپ کے اندر منظوری کی اطلاع محفوظ نہیں ہوسکی: "+approvalNotice.error.message;
-  }else{
-   const pushResult=await notifyCustomerPush(id,approvalTitle,approvalMessage);
-   if(pushResult?.error||Number(pushResult?.sent||0)<1){const pushIssue=String(pushResult?.error||pushResult?.reason||"");noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہے، لیکن اس گاہک کے موبائل پر Push فعال نہیں۔ گاہک اپنے فون میں لاگ اِن کرکے ‘موبائل پر اطلاعات فعال کریں’ دبائے۔"+(/no active device subscription/i.test(pushIssue)?" (ابھی کوئی فعال موبائل سبسکرپشن موجود نہیں۔)":"");}
-   else noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہوگئی اور موبائل Push بھی بھیج دی گئی۔";
+ customerApprovalInFlight.add(customerId);
+ if(button)button.disabled=true;
+ try{
+  const {data:approved,error}=await db.from("customers").update({is_active:true}).eq("id",customerId).select("id,is_active,auth_user_id").maybeSingle();
+  if(error){msg("منظوری محفوظ نہیں ہوئی: "+error.message);return;}
+  if(!approved||approved.is_active!==true){msg("منظوری محفوظ نہیں ہوئی: گاہک کا ریکارڈ اپ ڈیٹ نہیں ہوا۔");return;}
+  let noticeStatus="کسٹمر کی منظوری محفوظ ہوگئی۔";
+  if(approved.auth_user_id){
+   const approvalTitle="آپ کا اکاؤنٹ منظور ہوگیا";
+   const approvalMessage="السلام علیکم! آپ کا MUGHAL'S PURE WATER اکاؤنٹ منظور ہوگیا ہے۔ اب آپ لاگ اِن کرکے اپنا بل اور ڈیلیوری دیکھ سکتے ہیں۔";
+   const approvalNotice=await db.from("customer_notifications").insert({customer_id:customerId,title:approvalTitle,message:approvalMessage,notification_type:"account",reference_key:"account-approved"});
+   if(approvalNotice.error){
+    noticeStatus+=" مگر ایپ کے اندر منظوری کی اطلاع محفوظ نہیں ہوسکی: "+approvalNotice.error.message;
+   }else{
+    const pushResult=await notifyCustomerPush(customerId,approvalTitle,approvalMessage);
+    if(pushResult?.error||Number(pushResult?.sent||0)<1){const pushIssue=String(pushResult?.error||pushResult?.reason||"");noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہے، لیکن اس گاہک کے موبائل پر Push فعال نہیں۔ گاہک اپنے فون میں لاگ اِن کرکے ‘موبائل پر اطلاعات فعال کریں’ دبائے۔"+(/no active device subscription/i.test(pushIssue)?" (ابھی کوئی فعال موبائل سبسکرپشن موجود نہیں۔)":"");}
+    else noticeStatus+=" ایپ کے اندر اطلاع محفوظ ہوگئی اور موبائل Push بھی بھیج دی گئی۔";
+   }
   }
+  msg(noticeStatus,!noticeStatus.includes("مگر")&&!noticeStatus.includes("نہیں پہنچی"));
+  await Promise.all([loadCustomers(),refreshAdminSignupNotice()]);
+ }catch(e){
+  msg("منظوری کا عمل مکمل نہیں ہوا: "+(e?.message||String(e)));
+ }finally{
+  customerApprovalInFlight.delete(customerId);
+  if(button)button.disabled=false;
  }
- msg(noticeStatus,!noticeStatus.includes("مگر")&&!noticeStatus.includes("نہیں پہنچی"));
- await Promise.all([loadCustomers(),refreshAdminSignupNotice()]);
 }
 
 
