@@ -187,8 +187,10 @@ for required in (
 ):
     if required not in source:
         fail("Unified 19L delivery path is incomplete: " + required)
-if 'onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھولیں' not in source:
-    fail("Legacy 19L account pages must route new entries to the unified delivery center")
+if "نئی روزانہ ڈلیوری مشترکہ 19L ڈلیوری سینٹر سے درج کریں" not in source or "نئی ڈلیوری روزانہ کے مشترکہ 19L ڈلیوری سینٹر سے درج کریں" not in source:
+    fail("Legacy 19L account pages must explain that new deliveries use the unified center")
+if 'onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھولیں' in source:
+    fail("Redundant delivery-center navigation buttons should not be repeated on legacy account pages")
 if 'id="customerAccountType"' not in source or 'id="newMonthlyCreateButton"' not in source:
     fail("Customer creation must offer registered vs monthly account classification.")
 if 'if(!monthlyUnregisteredCustomerEditingId){msg("نیا ماہانہ کھاتہ گاہکوں کے مرکزی صفحے سے بنائیں۔");return;}' not in source:
