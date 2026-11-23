@@ -27,6 +27,15 @@ if (!appSource.includes("totalPayable=bill?") ||
   throw new Error("Monthly unregistered customer-first statement and bottle-based receipt controls are incomplete");
 }
 
+const unifiedHistoryStart = appSource.indexOf("async function loadUnifiedNonRegisteredHistory()");
+const unifiedHistoryEnd = appSource.indexOf("\n}", unifiedHistoryStart);
+const unifiedHistorySource = unifiedHistoryStart >= 0 && unifiedHistoryEnd > unifiedHistoryStart
+  ? appSource.slice(unifiedHistoryStart, unifiedHistoryEnd) : "";
+if (!unifiedHistorySource.includes('.eq("customer_classification","one_time")') ||
+    unifiedHistorySource.includes('customer_classification==="monthly"') ||
+    !appSource.includes('.eq("customer_classification","one_time")')) {
+  throw new Error("Unassigned history must show only one-time supplies, never linked monthly deliveries");
+}
 const adminHomeStart = appSource.indexOf('<div id="homeTiles"');
 const adminHomeEnd = appSource.indexOf('<div id="dashboard"', adminHomeStart);
 if (adminHomeStart < 0 || adminHomeEnd < 0) {
@@ -1259,7 +1268,9 @@ try {
           { id: 5, name: "Monthly Account Test", mobile: "03001234567", address: "Test address", start_date: "2026-11-01", is_active: true, created_at: "2026-11-01T00:00:00Z" }
         ],
         unassigned_19l_deliveries: [
-          { id: 11, monthly_customer_id: 5, customer_classification: "monthly", delivery_date: "2026-11-20", bottles_delivered: 40, empty_bottles_returned: 40, damaged_caps: 0, performed_by_owner: true, worker_id: null, details: "Smoke test monthly delivery" }
+          { id: 11, monthly_customer_id: 5, customer_classification: "monthly", delivery_date: "2026-11-20", bottles_delivered: 40, empty_bottles_returned: 40, damaged_caps: 0, performed_by_owner: true, worker_id: null, details: "Smoke test monthly delivery" },
+          { id: 12, monthly_customer_id: null, customer_classification: "one_time", delivery_date: "2026-11-21", bottles_delivered: 2, empty_bottles_returned: 0, damaged_caps: 0, performed_by_owner: true, worker_id: null, details: "Temporary Only" },
+          { id: 13, monthly_customer_id: null, customer_classification: "monthly_pending_review", delivery_date: "2026-11-22", bottles_delivered: 1, empty_bottles_returned: 0, damaged_caps: 0, performed_by_owner: true, worker_id: null, details: "Pending Review" }
         ],
         unassigned_19l_delivery_collections: [],
         unregistered_monthly_bills: []
@@ -1268,12 +1279,13 @@ try {
       window.db = {
         from(table) {
           const chain = {
-            rangeValues: null,
-            select() { return chain; }, eq() { return chain; }, order() { return chain; },
+            rangeValues: null, filters: [],
+            select() { return chain; }, eq(key, value) { chain.filters.push([key, value]); return chain; }, order() { return chain; },
             contains() { return chain; }, range(from, to) { chain.rangeValues = [from, to]; return chain; },
             in() { return chain; }, update() { return chain; },
             then(resolve, reject) {
               let data = tables[table] || [];
+              if (chain.filters.length) data = data.filter(row => chain.filters.every(([key, value]) => row[key] === value));
               if (chain.rangeValues) data = data.slice(chain.rangeValues[0], chain.rangeValues[1] + 1);
               return Promise.resolve({ data, error: null }).then(resolve, reject);
             }
@@ -1331,6 +1343,11 @@ try {
           document.querySelector("#umLedger").textContent.includes("اختتامی بقایا") &&
           document.querySelector("#umStatementMonth")?.value === "2026-11";
         const monthlyAccountActionVisible = document.querySelector("#umActive-5") !== null;
+        document.querySelector("#moduleTable").innerHTML = "";
+        await window.loadUnifiedNonRegisteredHistory();
+        const unifiedHistoryText = document.querySelector("#unifiedNonRegisteredHistory")?.textContent || "";
+        const unifiedHistoryTemporaryOnly = unifiedHistoryText.includes("Temporary Only") &&
+          !unifiedHistoryText.includes("Monthly Account Test") && !unifiedHistoryText.includes("Pending Review");
         window.fillMonthlyUnregisteredFullDue();
         const fullDuePrefilled = document.querySelector("#umCollectionAmount").value === "4000.00";
         document.querySelector("#umCollectionBottles").value = "35";
@@ -1344,6 +1361,7 @@ try {
         return {
           initialAccountHidden, newAccountCreationRedirect, registeredSignupExplained, monthlyFieldsShown, customerCreated,
           selectedAccountVisible, selectedCustomerIsolation, collectionCardVisible, monthlyBillVisible, monthlyAccountActionVisible,
+          unifiedHistoryTemporaryOnly,
           fullDuePrefilled, bottleAmountCalculated,
           collectionUsesCustomerAndActualDate: collectionCall?.args?.p_customer_id === 5 &&
             collectionCall?.args?.p_received_date === "2026-11-22" && collectionCall?.args?.p_amount === 3500 &&
@@ -1362,6 +1380,7 @@ try {
         !monthlyAccountResult.customerCreated || !monthlyAccountResult.selectedAccountVisible ||
         !monthlyAccountResult.selectedCustomerIsolation || !monthlyAccountResult.collectionCardVisible ||
         !monthlyAccountResult.monthlyBillVisible || !monthlyAccountResult.monthlyAccountActionVisible ||
+        !monthlyAccountResult.unifiedHistoryTemporaryOnly ||
         !monthlyAccountResult.fullDuePrefilled || !monthlyAccountResult.bottleAmountCalculated ||
         !monthlyAccountResult.collectionUsesCustomerAndActualDate || !monthlyAccountResult.remainingBalanceShown ||
         !monthlyAccountResult.monthlyCollectionsStayInSelectedAccount) {
