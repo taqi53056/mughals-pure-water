@@ -19,6 +19,8 @@ MONTHLY_BILL_MIGRATION = ROOT / "supabase/migrations/20261123051000_add_monthly_
 MONTHLY_HISTORY_MIGRATION = ROOT / "supabase/migrations/20261123052000_include_inactive_monthly_accounts_with_history.sql"
 MONTHLY_CREATOR_INDEX_MIGRATION = ROOT / "supabase/migrations/20261123050000_index_unregistered_monthly_customer_creator.sql"
 MONTHLY_BILL_AUDIT_MIGRATION = ROOT / "supabase/migrations/20261123053000_audit_unregistered_monthly_bills.sql"
+MONTHLY_LINK_SECURITY_MIGRATION = ROOT / "supabase/migrations/20261123181628_scope_monthly_link_rpc_security.sql"
+MONTHLY_RECEIPT_HISTORY_MIGRATION = ROOT / "supabase/migrations/20261123182959_expose_admin_monthly_receipt_history.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
@@ -51,7 +53,7 @@ class AppParser(HTMLParser):
 def fail(message):
     raise SystemExit("FAIL: " + message)
 
-if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION)):
+if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION, MONTHLY_LINK_SECURITY_MIGRATION, MONTHLY_RECEIPT_HISTORY_MIGRATION)):
     fail("required app shell file is missing")
 
 source = HTML.read_text(encoding="utf-8")
@@ -128,6 +130,28 @@ bill_audit_migration = MONTHLY_BILL_AUDIT_MIGRATION.read_text(encoding="utf-8")
 if "unregistered_monthly_bills_audit_trigger" not in bill_audit_migration or "public.log_changes()" not in bill_audit_migration:
     fail("Monthly statement audit trigger is missing.")
 
+monthly_link_security = MONTHLY_LINK_SECURITY_MIGRATION.read_text(encoding="utf-8")
+for required in (
+    "private.link_pending_unassigned_19l_delivery_to_monthly_customer",
+    "auth.uid() is null or not public.is_admin()",
+    "revoke all on function private.link_pending_unassigned_19l_delivery_to_monthly_customer",
+    "security invoker",
+    "grant execute on function public.link_pending_unassigned_19l_delivery_to_monthly_customer",
+):
+    if required not in monthly_link_security.lower():
+        fail("Monthly pending-delivery link RPC security migration is incomplete: " + required)
+
+monthly_receipt_history = MONTHLY_RECEIPT_HISTORY_MIGRATION.read_text(encoding="utf-8")
+for required in (
+    "private.list_unregistered_monthly_customer_receipts",
+    "auth.uid() is null or not public.is_admin()",
+    "revoke all on function private.list_unregistered_monthly_customer_receipts",
+    "security invoker",
+    "grant execute on function public.list_unregistered_monthly_customer_receipts",
+):
+    if required not in monthly_receipt_history.lower():
+        fail("Monthly receipt history security migration is incomplete: " + required)
+
 creator_index_migration = MONTHLY_CREATOR_INDEX_MIGRATION.read_text(encoding="utf-8")
 if "unregistered_monthly_customers_entered_by_idx" not in creator_index_migration:
     fail("Monthly customer creator foreign key index is missing.")
@@ -175,6 +199,16 @@ if "ایک ہی دن میں ایک گاہک کی متعدد ڈلیوریاں" in
     fail("delivery UI still permits multiple daily entries for one customer")
 if "async function loadSelectedDelivery()" not in source or "window.currentDeliveryRecordId" not in source:
     fail("delivery edit-in-place guard is missing")
+
+tile_routes = re.findall(r'<div class="tile\\b[^>]*onclick="openModule\\(\\'([A-Za-z]+)\\'\\)"', source)
+if not tile_routes or len(tile_routes) != len(set(tile_routes)):
+    fail("Admin home tiles contain missing or duplicate module routes.")
+open_module_start = source.find("function openModule(name)")
+open_module_end = source.find("\\n}", open_module_start)
+open_module_body = source[open_module_start:open_module_end if open_module_end > open_module_start else open_module_start + 5000]
+for route in tile_routes:
+    if f'name=="{route}"' not in open_module_body and not (route == "finance" and 'name==="finance"' in open_module_body):
+        fail("Admin home tile points to an unregistered module: " + route)
 if "async function readBillSummary(" not in source:
     fail("read-only bill summary helper is missing")
 
