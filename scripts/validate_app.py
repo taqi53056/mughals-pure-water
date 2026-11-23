@@ -235,3 +235,12 @@ if '.update(payload).eq("id",customerId).select("id").maybeSingle()' not in sour
 
 if 'id="customerSaveButton"' not in source:
     fail("Registered customer save button must be available for in-flight disabling.")
+
+if 'id="newMonthlyStartDate" type="date" value="${today()}"' not in source:
+    fail("Monthly unregistered customer creation must capture an effective start date.")
+if "p_start_date:startDate" not in source or "address,startDate" not in source:
+    fail("Monthly account creation request identity and RPC must include the effective start date.")
+if 'select("id,name,mobile,address,start_date,is_active,created_at")' not in source:
+    fail("Monthly account ledger must load the effective start date.")
+if "آغاز: " not in source:
+    fail("Monthly account statement must display the effective start date.")
