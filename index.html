@@ -1620,6 +1620,8 @@ async function customersModule(){
    <label for="newMonthlyName">گاہک کا نام *</label><input id="newMonthlyName" maxlength="120" placeholder="پورا نام">
    <label for="newMonthlyMobile">موبائل نمبر</label><input id="newMonthlyMobile" maxlength="30" inputmode="tel" placeholder="مثلاً 03001234567">
    <label for="newMonthlyAddress">پتہ</label><input id="newMonthlyAddress" maxlength="300" placeholder="علاقہ یا مکمل پتہ">
+   <label for="newMonthlyStartDate">ماہانہ کھاتے کے آغاز کی تاریخ *</label><input id="newMonthlyStartDate" type="date" value="2026-11-01" required>
+   <small class="muted">اس تاریخ سے پہلے کی سپلائی اس ماہانہ کھاتے میں شامل نہیں ہوگی۔</small>
    <button id="newMonthlyCreateButton" onclick="createMonthlyCustomerFromCustomerModule()">ماہانہ کھاتہ بنائیں</button>
   </div>
  </div>
@@ -1655,20 +1657,22 @@ async function createMonthlyCustomerFromCustomerModule(){
  const name=$("newMonthlyName")?.value.trim()||"";
  const mobileInput=$("newMonthlyMobile")?.value.trim()||"";
  const address=$("newMonthlyAddress")?.value.trim()||"";
+ const startDate=$("newMonthlyStartDate")?.value||"";
  if($("customerAccountType")?.value!=="monthly"){msg("پہلے ماہانہ غیر رجسٹرڈ اکاؤنٹ منتخب کریں۔");return;}
  if(name.length<2||name.length>120){msg("گاہک کا نام کم از کم دو حروف اور زیادہ سے زیادہ 120 حروف میں درج کریں۔");$("newMonthlyName")?.focus();return;}
  const mobile=mobileInput?normalizePkMobile(mobileInput):null;
  if(mobileInput&&!mobile){msg("موبائل نمبر درست درج کریں۔");$("newMonthlyMobile")?.focus();return;}
  if(address.length>300){msg("پتہ 300 حروف سے زیادہ نہیں ہو سکتا۔");return;}
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(startDate)||startDate>today()){msg("ماہانہ کھاتے کی آغاز کی تاریخ درست درج کریں؛ مستقبل کی تاریخ قابلِ قبول نہیں۔");$("newMonthlyStartDate")?.focus();return;}
  const button=$("newMonthlyCreateButton");if(button?.disabled)return;if(button)button.disabled=true;
  try{
-  const signature=[name,mobile||"",address].join("|");
+  const signature=[name,mobile||"",address,startDate].join("|");
   const requestId=mpwPendingRequestId("unregistered-monthly-customer",signature);
-  const {data,error}=await db.rpc("create_unregistered_monthly_customer",{p_name:name,p_mobile:mobile,p_address:address||null,p_request_id:requestId});
+  const {data,error}=await db.rpc("create_unregistered_monthly_customer",{p_name:name,p_mobile:mobile,p_address:address||null,p_start_date:startDate,p_request_id:requestId});
   if(error)throw error;
   if(!data?.id)throw new Error("ماہانہ کھاتہ محفوظ ہونے کی تصدیق نہیں ہوئی۔");
   mpwClearPendingRequestId("unregistered-monthly-customer");
-  $("newMonthlyName").value="";$("newMonthlyMobile").value="";$("newMonthlyAddress").value="";
+  $("newMonthlyName").value="";$("newMonthlyMobile").value="";$("newMonthlyAddress").value="";$("newMonthlyStartDate").value=today();
   msg("ماہانہ غیر رجسٹرڈ کھاتہ بن گیا۔ اب یہ مشترکہ 19L ڈلیوری سینٹر میں دستیاب ہوگا۔",true);
  }catch(e){msg("ماہانہ کھاتہ نہیں بنا: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
@@ -3114,7 +3118,7 @@ async function loadMonthlyUnregisteredLedger(){
  box.textContent="ماہانہ کھاتے لوڈ ہو رہے ہیں...";
  try{
   const [customers,deliveries,bills]=await Promise.all([
-   mpwFetchAllPages(()=>db.from("unregistered_monthly_customers").select("id,name,mobile,address,is_active,created_at").order("name").order("id")),
+   mpwFetchAllPages(()=>db.from("unregistered_monthly_customers").select("id,name,mobile,address,start_date,is_active,created_at").order("name").order("id")),
    mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,monthly_customer_id,delivery_date,bottles_delivered,damaged_caps").eq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false})),
    mpwFetchAllPages(()=>db.from("unregistered_monthly_bills").select("customer_id,bill_month,bottles_19l,bottle_amount,damaged_caps,cap_amount,previous_balance,payments,advance_used,current_due,closing_advance").order("bill_month",{ascending:false}).order("customer_id"))
   ]);
@@ -3190,7 +3194,7 @@ async function loadMonthlyUnregisteredLedger(){
   box.innerHTML='<div class="card"><h3>'+esc(selectedMonth)+' — ماہانہ مکمل حساب</h3>'+
    '<p class="muted">ہر ماہانہ غیر رجسٹرڈ گاہک کا حساب نام کے تحت یکجا ہے۔ بل بننے سے پہلے موجودہ مہینے کا حساب عبوری ہے؛ مہینہ بند ہونے پر محفوظ شدہ بل کا حتمی حساب دکھے گا۔</p>'+
    (moneyRows.length?'<div class="tablewrap"><table><tr><th>گاہک</th><th>ڈلیوریاں / بوتلیں</th><th>ماہانہ چارجز</th><th>سابقہ بقایا</th><th>کل قابلِ ادائیگی</th><th>اس ماہ وصولی</th><th>اختتامی بقایا</th><th>ایڈوانس</th><th>بل</th><th>عمل</th></tr>'+
-    moneyRows.map(x=>'<tr><td><b>'+esc(x.c.name)+'</b><br><small>'+esc(x.c.mobile||"")+'</small></td><td>'+x.g.count+' / '+x.g.bottles+'<br><small>خراب ڈھکن: '+x.g.caps+'</small></td><td>'+money(x.charges)+'</td><td>'+money(x.previousBalance)+'</td><td>'+money(x.totalPayable)+'</td><td>'+money(x.payments)+'</td><td><b>'+money(x.due)+'</b></td><td>'+money(x.closingAdvance)+'</td><td>'+(x.bill?'<span class="badge success">حتمی بل</span>':'<span class="muted">عبوری</span>')+'</td><td><button class="secondary" onclick="editMonthlyUnregisteredCustomer('+Number(x.c.id)+')">ترمیم</button><button id="umActive-'+Number(x.c.id)+'" class="secondary" onclick="setMonthlyUnregisteredCustomerActive('+Number(x.c.id)+','+(!x.c.is_active)+')">'+(x.c.is_active?"غیر فعال کریں":"فعال کریں")+'</button></td></tr>').join("")+
+    moneyRows.map(x=>'<tr><td><b>'+esc(x.c.name)+'</b><br><small>'+esc(x.c.mobile||"")+'</small><br><small>آغاز: '+esc(x.c.start_date||"—")+'</small></td><td>'+x.g.count+' / '+x.g.bottles+'<br><small>خراب ڈھکن: '+x.g.caps+'</small></td><td>'+money(x.charges)+'</td><td>'+money(x.previousBalance)+'</td><td>'+money(x.totalPayable)+'</td><td>'+money(x.payments)+'</td><td><b>'+money(x.due)+'</b></td><td>'+money(x.closingAdvance)+'</td><td>'+(x.bill?'<span class="badge success">حتمی بل</span>':'<span class="muted">عبوری</span>')+'</td><td><button class="secondary" onclick="editMonthlyUnregisteredCustomer('+Number(x.c.id)+')">ترمیم</button><button id="umActive-'+Number(x.c.id)+'" class="secondary" onclick="setMonthlyUnregisteredCustomerActive('+Number(x.c.id)+','+(!x.c.is_active)+')">'+(x.c.is_active?"غیر فعال کریں":"فعال کریں")+'</button></td></tr>').join("")+
    '</table></div>':'<div class="customer-empty">ابھی کوئی ماہانہ کھاتہ موجود نہیں۔</div>')+
    '<p><b>کل ماہانہ چارجز:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.charges,0))+' &nbsp; <b>کل وصولی:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.payments,0))+' &nbsp; <b>کل اختتامی بقایا:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.due,0))+'</p></div>'+
    '<div class="card"><h3>حالیہ وصولیاں</h3>'+
