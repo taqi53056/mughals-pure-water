@@ -3096,23 +3096,25 @@ async function mpwFetchByIdBatches(ids,makeQuery,batchSize=100){
 async function loadMonthlyUnregisteredLedger(){
  const box=$("umLedger");if(!box)return;box.textContent="ماہانہ کھاتے لوڈ ہو رہے ہیں...";
  try{
-  const [customers,deliveries,bills]=await Promise.all([
-   mpwFetchAllPages(()=>db.from("unregistered_monthly_customers").select("id,name,mobile,address,start_date,is_active,created_at").order("name").order("id")),
-   mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,monthly_customer_id,delivery_date,bottles_delivered,empty_bottles_returned,damaged_caps,performed_by_owner,worker_id,details").eq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false})),
-   mpwFetchAllPages(()=>db.from("unregistered_monthly_bills").select("customer_id,bill_month,bottles_19l,bottle_amount,damaged_caps,cap_amount,previous_balance,payments,advance_used,current_due,closing_advance").order("bill_month",{ascending:false}).order("customer_id"))
-  ]);
-  const ids=deliveries.map(d=>Number(d.id));
-  const collections=await mpwFetchByIdBatches(ids,batch=>db.from("unassigned_19l_delivery_collections").select("id,delivery_id,received_date,amount,payment_method").in("delivery_id",batch).order("received_date",{ascending:false}).order("id"));
-  const customerById=new Map(customers.map(x=>[Number(x.id),x])),deliveryById=new Map(deliveries.map(x=>[Number(x.id),x])),paidByDelivery=new Map();
-  collections.forEach(r=>paidByDelivery.set(Number(r.delivery_id),(paidByDelivery.get(Number(r.delivery_id))||0)+Number(r.amount||0)));
+  const customers=await mpwFetchAllPages(()=>db.from("unregistered_monthly_customers").select("id,name,is_active").order("name").order("id"));
   const select=$("umCustomerSelect"),prior=monthlyUnregisteredSelectedCustomerId;
   select.innerHTML='<option value="">گاہک منتخب کریں</option>'+customers.map(x=>'<option value="'+Number(x.id)+'">'+esc(x.name)+(x.is_active?"":" (غیر فعال)")+'</option>').join("");
-  if(prior&&customerById.has(prior))select.value=String(prior);else{monthlyUnregisteredSelectedCustomerId=null;select.value="";}
+  if(prior&&customers.some(x=>Number(x.id)===Number(prior)))select.value=String(prior);else{monthlyUnregisteredSelectedCustomerId=null;select.value="";}
   $("umStatementCard")?.classList.toggle("hidden",!monthlyUnregisteredSelectedCustomerId);$("umCollectionCard")?.classList.toggle("hidden",!monthlyUnregisteredSelectedCustomerId);
   if(!monthlyUnregisteredSelectedCustomerId){$("umCustomerEditCard")?.classList.add("hidden");monthlyUnregisteredCurrentDue=0;box.innerHTML='<div class="customer-empty">تفصیل دیکھنے کے لیے اوپر گاہک منتخب کریں۔</div>';return;}
-  const customer=customerById.get(Number(monthlyUnregisteredSelectedCustomerId));
+  const selectedId=Number(monthlyUnregisteredSelectedCustomerId);
+  const [selectedCustomers,deliveries,bills]=await Promise.all([
+   mpwFetchAllPages(()=>db.from("unregistered_monthly_customers").select("id,name,mobile,address,start_date,is_active,created_at").eq("id",selectedId)),
+   mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,monthly_customer_id,delivery_date,bottles_delivered,empty_bottles_returned,damaged_caps,performed_by_owner,worker_id,details").eq("customer_classification","monthly").eq("monthly_customer_id",selectedId).order("delivery_date",{ascending:false}).order("id",{ascending:false})),
+   mpwFetchAllPages(()=>db.from("unregistered_monthly_bills").select("customer_id,bill_month,bottles_19l,bottle_amount,damaged_caps,cap_amount,previous_balance,payments,advance_used,current_due,closing_advance").eq("customer_id",selectedId).order("bill_month",{ascending:false}))
+  ]);
+  const customer=selectedCustomers[0];
   if(!customer){monthlyUnregisteredSelectedCustomerId=null;select.value="";$("umStatementCard")?.classList.add("hidden");$("umCollectionCard")?.classList.add("hidden");box.innerHTML='<div class="customer-empty">منتخب گاہک نہیں ملا؛ فہرست دوبارہ منتخب کریں۔</div>';return;}
-  const ds=deliveries.filter(d=>Number(d.monthly_customer_id)===Number(customer.id)),did=new Set(ds.map(d=>Number(d.id))),rs=collections.filter(r=>did.has(Number(r.delivery_id)));
+  const ids=deliveries.map(d=>Number(d.id));
+  const collections=await mpwFetchByIdBatches(ids,batch=>db.from("unassigned_19l_delivery_collections").select("id,delivery_id,received_date,amount,payment_method").in("delivery_id",batch).order("received_date",{ascending:false}).order("id"));
+  const deliveryById=new Map(deliveries.map(x=>[Number(x.id),x])),paidByDelivery=new Map();
+  collections.forEach(r=>paidByDelivery.set(Number(r.delivery_id),(paidByDelivery.get(Number(r.delivery_id))||0)+Number(r.amount||0)));
+  const ds=deliveries,rs=collections;
   const month=monthlyUnregisteredSelectedMonth||today().slice(0,7),start=month+"-01",nd=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),1),end=nd.getFullYear()+"-"+String(nd.getMonth()+1).padStart(2,"0")+"-01";
   const md=ds.filter(d=>d.delivery_date>=start&&d.delivery_date<end),mr=rs.filter(r=>r.received_date>=start&&r.received_date<end);
   const bottles=md.reduce((n,d)=>n+Number(d.bottles_delivered||0),0),caps=md.reduce((n,d)=>n+Number(d.damaged_caps||0),0),chargesMonth=md.reduce((n,d)=>n+Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,0),paidMonth=mr.reduce((n,r)=>n+Number(r.amount||0),0);
