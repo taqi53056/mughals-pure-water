@@ -2019,41 +2019,20 @@ function calcDelivery(){
 }
 
 async function loadSelectedDelivery(){
+ // A customer may receive multiple deliveries on the same date.
+ // Never silently load the latest row for editing: editing must be explicit
+ // through the exact record's "غلطی درست کریں" action in the delivery list.
  setDeliverySavedState(false);
- const customerId=Number($("dCustomer")?.value),date=$("dDate")?.value;
- const button=$("deliverySaveButton");
  window.currentDeliveryRecordId=null;
- if(!customerId||!date){
-  $("dOut").value="";$("dOwn").value="0";$("dBack").value="0";$("dCaps").value="0";
-  if($("dWorker"))$("dWorker").value=String(window.deliveryOwnerId||"");
-  if(button)button.textContent="ڈلیوری محفوظ کریں";
-  calcDelivery();return;
- }
- try{
-  const {data,error}=await db.from("customer_19l_deliveries")
-   .select("id,bottles_delivered,customer_owned_bottles,empty_bottles_returned,damaged_caps,worker_id,owner_labor_saving")
-   .eq("customer_id",customerId).eq("delivery_date",date).order("id",{ascending:false}).limit(1).maybeSingle();
-  if(error)throw error;
-  if(data){
-   window.currentDeliveryRecordId=Number(data.id);
-   $("dOut").value=String(data.bottles_delivered);
-   $("dOwn").value=String(data.customer_owned_bottles||0);
-   $("dBack").value=String(data.empty_bottles_returned);
-   $("dCaps").value=String(data.damaged_caps);
-   if($("dWorker"))$("dWorker").value=data.worker_id?String(data.worker_id):(Number(data.owner_labor_saving)>0?String(window.deliveryOwnerId||""):"");
-   if(button)button.textContent="موجودہ ڈلیوری میں ترمیم محفوظ کریں";
-   msg("اس تاریخ کا ریکارڈ پہلے سے موجود ہے؛ نیا ریکارڈ نہیں بنے گا، اسی میں ترمیم ہوگی۔",true);
-  }else{
-   $("dOut").value="";$("dOwn").value="0";$("dBack").value="0";$("dCaps").value="0";
-   if($("dWorker"))$("dWorker").value=String(window.deliveryOwnerId||"");
-   if(button)button.textContent="ڈلیوری محفوظ کریں";
-  }
-  calcDelivery();
- }catch(error){
-  msg("موجودہ ڈلیوری چیک نہیں ہوسکی؛ محفوظ کرنے سے پہلے دوبارہ کوشش کریں: "+(error?.message||String(error)));
- }
+ const button=$("deliverySaveButton");
+ $("dOut").value="";
+ $("dOwn").value="0";
+ $("dBack").value="0";
+ $("dCaps").value="0";
+ if($("dWorker"))$("dWorker").value=String(window.deliveryOwnerId||"");
+ if(button)button.textContent="نئی ڈلیوری محفوظ کریں";
+ calcDelivery();
 }
-
 function startNewDeliveryEntry(){
  window.currentDeliveryRecordId=null;
  $("dOut").value="";$("dOwn").value="0";$("dBack").value="0";$("dCaps").value="0";
