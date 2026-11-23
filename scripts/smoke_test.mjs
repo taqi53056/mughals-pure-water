@@ -36,6 +36,16 @@ if (!unifiedHistorySource.includes('.eq("customer_classification","one_time")') 
     !appSource.includes('.eq("customer_classification","one_time")')) {
   throw new Error("Unassigned history must show only one-time supplies, never linked monthly deliveries");
 }
+const pendingReviewStart = appSource.indexOf("async function loadPendingMonthlyDeliveryLinks()");
+const pendingReviewEnd = appSource.indexOf("\n}\nasync function splitPendingMonthlyDelivery", pendingReviewStart);
+const pendingReviewSource = pendingReviewStart >= 0 && pendingReviewEnd > pendingReviewStart
+  ? appSource.slice(pendingReviewStart, pendingReviewEnd) : "";
+if (!pendingReviewSource.includes('unassigned_19l_delivery_collections') ||
+    !pendingReviewSource.includes("pendingCollectionTotals") ||
+    !pendingReviewSource.includes("splitControls=splitEligible?(received>0?") ||
+    !pendingReviewSource.includes("مکمل منتقلی کریں، پرانی وصولی برقرار رہے گی۔")) {
+  throw new Error("Pending monthly deliveries with prior receipts must not expose the unsafe partial-split action");
+}
 const adminHomeStart = appSource.indexOf('<div id="homeTiles"');
 const adminHomeEnd = appSource.indexOf('<div id="dashboard"', adminHomeStart);
 if (adminHomeStart < 0 || adminHomeEnd < 0) {
