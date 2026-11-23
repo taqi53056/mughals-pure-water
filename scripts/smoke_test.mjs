@@ -15,6 +15,16 @@ const mime = {
 };
 
 const appSource = await readFile(resolve(ROOT, "index.html"), "utf8");
+if (appSource.includes("updateUnassigned19lLabor") ||
+    appSource.includes("مالک کی بچائی گئی مزدوری") ||
+    !appSource.includes('id="u19SaveButton" onclick="saveUnassigned19lDelivery()">سپلائی محفوظ کریں</button>')) {
+  throw new Error("One-time supply entry still exposes obsolete labor UI or stale callbacks");
+}
+if (!appSource.includes("کل قابلِ ادائیگی: '+money(totalPayable)") ||
+    !appSource.includes("باقی بقایا: '+money(b.current_due)")) {
+  throw new Error("Monthly unregistered statements must show total payable and remaining balance");
+}
+
 const adminHomeStart = appSource.indexOf('<div id="homeTiles"');
 const adminHomeEnd = appSource.indexOf('<div id="dashboard"', adminHomeStart);
 if (adminHomeStart < 0 || adminHomeEnd < 0) {
@@ -1169,6 +1179,10 @@ try {
         ],
         unassigned_19l_delivery_collections: [
           { id: 1, delivery_id: 11, received_date: "2026-11-21", amount: 100, payment_method: "cash" }
+        ],
+        unregistered_monthly_bills: [
+          { customer_id: 5, bill_month: "2026-10-01", bottles_19l: 3, bottle_amount: 300, damaged_caps: 1,
+            cap_amount: 10, previous_balance: 50, payments: 100, advance_used: 0, current_due: 260, closing_advance: 0 }
         ]
       };
       const rpcCalls = [];
@@ -1223,6 +1237,8 @@ try {
         await window.monthlyUnregisteredModule();
         const initialAccountVisible = document.querySelector("#umLedger").textContent.includes("Monthly Account Test");
         const initialPaymentOption = document.querySelector("#umCollectionDelivery").querySelector('option[value="11"]') !== null;
+        const monthlyBillVisible = document.querySelector("#umLedger").textContent.includes("کل قابلِ ادائیگی") &&
+          document.querySelector("#umLedger").textContent.includes("باقی بقایا");
 
         document.querySelector("#umName").value = "Second Monthly Account";
         document.querySelector("#umMobile").value = "03001234568";
@@ -1249,6 +1265,7 @@ try {
         return {
           initialAccountVisible,
           initialPaymentOption,
+          monthlyBillVisible,
           customerCreated,
           deliveryLinkedToMonthlyCustomer: deliveryCall?.args?.p_customer_id === 5 &&
             deliveryCall?.args?.p_bottles_delivered === 2 && deliveryCall?.args?.p_performed_by_owner === true,
@@ -1264,7 +1281,7 @@ try {
       }
     });
     if (!monthlyAccountResult.initialAccountVisible || !monthlyAccountResult.initialPaymentOption ||
-        !monthlyAccountResult.customerCreated || !monthlyAccountResult.deliveryLinkedToMonthlyCustomer ||
+        !monthlyAccountResult.monthlyBillVisible || !monthlyAccountResult.customerCreated || !monthlyAccountResult.deliveryLinkedToMonthlyCustomer ||
         !monthlyAccountResult.collectionUsesActualDateAndMethod ||
         !monthlyAccountResult.monthlyCollectionsStayInSeparateModule) {
       failures.push("Monthly unregistered account, delivery, or collection workflow is not functioning correctly");
