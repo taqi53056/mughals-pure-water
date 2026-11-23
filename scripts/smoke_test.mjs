@@ -699,6 +699,40 @@ try {
     await page.goto("http://localhost:4173/index.html", { waitUntil: "load" });
     await page.locator("#loginForm").waitFor({ state: "visible" });
 
+    const navigationFilterResult = await page.evaluate(() => {
+      const tiles = [...document.querySelectorAll("#homeTiles .tile")];
+      const filters = [...document.querySelectorAll("#homeTiles .admin-module-filter [data-filter]")].map(button => button.dataset.filter);
+      filterAdminModules("operations");
+      const operations = tiles.filter(tile => tile.style.display !== "none");
+      const operationsCorrect = operations.length === 6 && operations.every(tile => tile.dataset.category === "operations");
+      filterAdminModules("inventory");
+      const inventory = tiles.filter(tile => tile.style.display !== "none");
+      const inventoryCorrect = inventory.length === 4 && inventory.every(tile => tile.dataset.category === "inventory");
+      filterAdminModules("finance");
+      const finance = tiles.filter(tile => tile.style.display !== "none");
+      const financeCorrect = finance.length === 4 && finance.every(tile => tile.dataset.category === "finance");
+      filterAdminModules("management");
+      const management = tiles.filter(tile => tile.style.display !== "none");
+      const managementCorrect = management.length === 7 && management.every(tile => tile.dataset.category === "management");
+      filterAdminModules("all");
+      const all = tiles.filter(tile => tile.style.display !== "none");
+      return {
+        filters: filters.join(","),
+        operationsCorrect,
+        inventoryCorrect,
+        financeCorrect,
+        managementCorrect,
+        allVisible: all.length,
+        allRestored: all.every(tile => tile.getAttribute("aria-hidden") === "false")
+      };
+    });
+    if (navigationFilterResult.filters !== "operations,inventory,finance,management,all" ||
+        !navigationFilterResult.operationsCorrect || !navigationFilterResult.inventoryCorrect ||
+        !navigationFilterResult.financeCorrect || !navigationFilterResult.managementCorrect ||
+        navigationFilterResult.allVisible !== 21 || !navigationFilterResult.allRestored) {
+      failures.push(`Admin navigation filters do not correctly show all category modules: ${JSON.stringify(navigationFilterResult)}`);
+    }
+
     const state = await page.evaluate(() => ({
       title: document.title,
       direction: document.documentElement.dir,
