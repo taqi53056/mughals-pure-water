@@ -4133,13 +4133,27 @@ async function loadFinanceLedger(){
  const {data,error}=await db.from("business_finance_ledger").select("id,entry_date,entry_type,amount,category,item_name,counterparty,details").order("entry_date",{ascending:false}).order("id",{ascending:false}).limit(40);
  if(error){el.textContent="اندراجات لوڈ نہیں ہوئے: "+error.message;return}
  const labels={capital_in:"سرمایہ",owner_withdrawal:"مالک کی نکالی رقم",loan_received:"قرض وصول",loan_repaid:"قرض واپس",loan_given:"قرض دیا",loan_collected:"قرض وصولی",inventory_purchase:"اسٹاک خرید",fixed_asset_purchase:"اثاثہ خریدا",fixed_asset_sale:"اثاثہ فروخت",inventory_loss:"اسٹاک کا نقصان",depreciation_expense:"اثاثے کی فرسودگی",interest_expense:"مالی لاگت",interest_income:"مالی آمدن"};
- el.innerHTML=(data||[]).length?"<table><tr><th>تاریخ</th><th>اندراج</th><th>رقم</th><th>تفصیل</th><th>عمل</th></tr>"+(data||[]).map(r=>"<tr><td>"+esc(r.entry_date)+"</td><td>"+esc(labels[r.entry_type]||r.entry_type)+"</td><td>"+money(r.amount)+"</td><td>"+esc([r.category,r.item_name,r.counterparty,r.details].filter(Boolean).join(" — "))+"</td><td><button class='secondary' onclick='deleteFinanceEntry("+Number(r.id)+")'>حذف</button></td></tr>").join("")+"</table>":"ابھی کوئی مالی اندراج موجود نہیں۔";
+ el.innerHTML=(data||[]).length?"<table><tr><th>تاریخ</th><th>اندراج</th><th>رقم</th><th>تفصیل</th><th>عمل</th></tr>"+(data||[]).map(r=>"<tr><td>"+esc(r.entry_date)+"</td><td>"+esc(labels[r.entry_type]||r.entry_type)+"</td><td>"+money(r.amount)+"</td><td>"+esc([r.category,r.item_name,r.counterparty,r.details].filter(Boolean).join(" — "))+"</td><td><button class='secondary' onclick='deleteFinanceEntry("+Number(r.id)+",this)'>حذف</button></td></tr>").join("")+"</table>":"ابھی کوئی مالی اندراج موجود نہیں۔";
 }
-async function deleteFinanceEntry(id){
- if(!confirm("کیا یہ مالی اندراج حذف کرنا ہے؟ رپورٹ دوبارہ حساب ہوگی۔"))return;
- const {error}=await db.from("business_finance_ledger").delete().eq("id",id);
- if(error){msg("اندراج حذف نہیں ہوا: "+error.message);return}
- msg("اندراج حذف ہوگیا۔",true);await loadFinanceLedger();await runReport();
+const financeLedgerDeleteInFlight=new Set();
+async function deleteFinanceEntry(id,button){
+ const recordId=Number(id);
+ if(!Number.isSafeInteger(recordId)||recordId<=0||financeLedgerDeleteInFlight.has(recordId))return;
+ financeLedgerDeleteInFlight.add(recordId);
+ if(button)button.disabled=true;
+ try{
+  if(!confirm("کیا یہ مالی اندراج حذف کرنا ہے؟ رپورٹ دوبارہ حساب ہوگی۔"))return;
+  const {data:deleted,error}=await db.from("business_finance_ledger").delete().eq("id",recordId).select("id").maybeSingle();
+  if(error)throw error;
+  if(!deleted){msg("مالی اندراج حذف نہیں ہوا؛ ریکارڈ پہلے ہی ختم ہو سکتا ہے یا اجازت موجود نہیں۔ فہرست تازہ کریں۔");return;}
+  msg("مالی اندراج حذف ہوگیا۔",true);
+  await Promise.all([loadFinanceLedger(),runReport()]);
+ }catch(e){
+  msg("مالی اندراج حذف نہیں ہوا: "+(e?.message||String(e)));
+ }finally{
+  financeLedgerDeleteInFlight.delete(recordId);
+  if(button)button.disabled=false;
+ }
 }
 function toggleOwnerWithdrawalField(){const el=$("finOwner");if(!el)return;el.classList.toggle("hidden",$("finType").value!=="owner_withdrawal");}
 const FINANCE_CASHFLOW_TYPES=new Set(["capital_in","owner_withdrawal","loan_received","loan_repaid","loan_given","loan_collected","inventory_purchase","fixed_asset_purchase","fixed_asset_sale","interest_expense","interest_income"]);
@@ -4329,13 +4343,27 @@ async function loadOwnerWithdrawals(){
  '<div class="owner-total-panel"><small>اس مہینے کی مجموعی نکاسی</small><strong>'+money(grand)+'</strong><span>'+rows.length+' اندراجات</span></div>'+
  '<div class="worker-summary-grid"><div><small>کاؤنٹر کی نقد دراز</small><b>'+money(counterTotal)+'</b></div><div><small>500ml + 1.5L مشترکہ سیل</small><b>'+money(salesTotal)+'</b></div><div><small>ماخذ درج نہیں</small><b>'+money(unclassified)+'</b></div><div><small>تین مالکان کے علاوہ پرانا ریکارڈ</small><b>'+money(legacyRecipientTotal)+'</b></div></div>'+
  '<div class="owner-recipient-grid">'+recipients.map((name,i)=>'<div class="owner-recipient-card"><div class="owner-recipient-top"><span class="owner-recipient-icon">'+(i+1)+'</span><b>'+esc(name)+'</b></div><strong>'+money(totals[name])+'</strong><div class="owner-bar"><i style="width:'+Math.round(totals[name]/max*100)+'%"></i></div><small>'+(OWNER_WITHDRAWAL_RECIPIENTS.includes(name)?"ماہانہ نکاسی":"پرانا ہسٹری ریکارڈ")+'</small></div>').join("")+'</div>';
- if($("ownerWithdrawalHistory"))$("ownerWithdrawalHistory").innerHTML=rows.length?'<div class="owner-history-list">'+rows.map(r=>'<article class="owner-history-row"><div class="owner-history-date"><b>'+esc(r.entry_date)+'</b><small>'+esc(r.payment_method||"")+(r.withdrawal_source?' · '+(r.withdrawal_source==="counter_cash"?"کاؤنٹر کیش":"پروڈکٹ سیل"):' · ماخذ درج نہیں')+'</small></div><div class="owner-history-main"><b>'+esc(r.counterparty||"نام درج نہیں")+'</b><small>'+esc(r.category||"وجہ درج نہیں")+(r.details?' · '+esc(r.details):"")+'</small></div><strong>'+money(r.amount)+'</strong><button class="secondary" onclick="deleteOwnerWithdrawal('+Number(r.id)+')">حذف</button></article>').join("")+'</div>':'<div class="owner-empty">اس مہینے کوئی نکاسی درج نہیں ہوئی۔</div>';
+ if($("ownerWithdrawalHistory"))$("ownerWithdrawalHistory").innerHTML=rows.length?'<div class="owner-history-list">'+rows.map(r=>'<article class="owner-history-row"><div class="owner-history-date"><b>'+esc(r.entry_date)+'</b><small>'+esc(r.payment_method||"")+(r.withdrawal_source?' · '+(r.withdrawal_source==="counter_cash"?"کاؤنٹر کیش":"پروڈکٹ سیل"):' · ماخذ درج نہیں')+'</small></div><div class="owner-history-main"><b>'+esc(r.counterparty||"نام درج نہیں")+'</b><small>'+esc(r.category||"وجہ درج نہیں")+(r.details?' · '+esc(r.details):"")+'</small></div><strong>'+money(r.amount)+'</strong><button class="secondary" onclick="deleteOwnerWithdrawal('+Number(r.id)+',this)">حذف</button></article>').join("")+'</div>':'<div class="owner-empty">اس مہینے کوئی نکاسی درج نہیں ہوئی۔</div>';
 }
-async function deleteOwnerWithdrawal(id){
- if(!confirm("کیا یہ نکاسی کا ریکارڈ حذف کرنا ہے؟ ماہانہ حساب بھی دوبارہ بنے گا۔"))return;
- const {error}=await db.from("business_finance_ledger").delete().eq("id",id).eq("entry_type","owner_withdrawal");
- if(error){msg("ریکارڈ حذف نہیں ہوا: "+error.message);return;}
- msg("نکاسی کا ریکارڈ حذف ہوگیا۔",true);await Promise.all([loadOwnerWithdrawals(),loadTodaySummary(),runReport()]);
+const ownerWithdrawalDeleteInFlight=new Set();
+async function deleteOwnerWithdrawal(id,button){
+ const recordId=Number(id);
+ if(!Number.isSafeInteger(recordId)||recordId<=0||ownerWithdrawalDeleteInFlight.has(recordId))return;
+ ownerWithdrawalDeleteInFlight.add(recordId);
+ if(button)button.disabled=true;
+ try{
+  if(!confirm("کیا یہ نکاسی کا ریکارڈ حذف کرنا ہے؟ ماہانہ حساب بھی دوبارہ بنے گا۔"))return;
+  const {data:deleted,error}=await db.from("business_finance_ledger").delete().eq("id",recordId).eq("entry_type","owner_withdrawal").select("id").maybeSingle();
+  if(error)throw error;
+  if(!deleted){msg("نکاسی کا ریکارڈ حذف نہیں ہوا؛ ریکارڈ پہلے ہی ختم ہو سکتا ہے یا اجازت موجود نہیں۔ فہرست تازہ کریں۔");return;}
+  msg("نکاسی کا ریکارڈ حذف ہوگیا۔",true);
+  await Promise.all([loadOwnerWithdrawals(),loadTodaySummary(),runReport()]);
+ }catch(e){
+  msg("نکاسی کا ریکارڈ حذف نہیں ہوا: "+(e?.message||String(e)));
+ }finally{
+  ownerWithdrawalDeleteInFlight.delete(recordId);
+  if(button)button.disabled=false;
+ }
 }
 
 function workerStatusLabel(worker){return worker?.is_active===true?"فعال":"غیر فعال";}
