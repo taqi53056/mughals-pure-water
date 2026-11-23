@@ -67,6 +67,38 @@ if (categoryCounts.operations !== 6 || categoryCounts.inventory !== 4 ||
     categoryCounts.finance !== 4 || categoryCounts.management !== 7) {
   throw new Error("Admin modules must be grouped into 6 daily, 4 stock, 4 finance and 7 management actions");
 }
+const expectedModulesByCategory = {
+  operations: ["delivery", "monthlyAccounts", "sales", "labor", "counterWater", "unassigned19l"],
+  inventory: ["raw", "finished", "tanker", "returns"],
+  finance: ["finance", "expenses", "income", "ownerWithdrawals"],
+  management: ["customers", "billing", "workers", "complaints", "audit", "settings", "monthClose"]
+};
+const tileModulePairs = [...adminHome.matchAll(/<div class="tile [^"]*"[^>]*onclick="openModule\\('([^']+)'\\)"[^>]*data-category="([^"]+)"/g)];
+const actualModulesByCategory = Object.fromEntries(Object.keys(expectedModulesByCategory).map(category => [
+  category, tileModulePairs.filter(([, module, tileCategory]) => tileCategory === category).map(([, module]) => module).sort()
+]));
+for (const [category, expected] of Object.entries(expectedModulesByCategory)) {
+  const actual = actualModulesByCategory[category] || [];
+  if (JSON.stringify(actual) !== JSON.stringify([...expected].sort())) {
+    throw new Error("Admin " + category + " navigation is missing or misclassifying a module: " + actual.join(", "));
+  }
+}
+const filterNav = adminHome.match(/<nav class="admin-module-filter"[\\s\\S]*?<\\/nav>/)?.[0] || "";
+const filterValues = [...filterNav.matchAll(/data-filter="([^"]+)"/g)].map(([, value]) => value);
+if (JSON.stringify(filterValues) !== JSON.stringify(["operations", "inventory", "finance", "management", "all"])) {
+  throw new Error("Admin navigation must provide daily, stock, finance, management and all filters in order");
+}
+const openModuleStart = appSource.indexOf("function openModule(name)");
+const openModuleEnd = appSource.indexOf("/* گاہک */", openModuleStart);
+const openModuleSource = openModuleStart >= 0 && openModuleEnd > openModuleStart
+  ? appSource.slice(openModuleStart, openModuleEnd) : "";
+for (const modules of Object.values(expectedModulesByCategory)) {
+  for (const module of modules) {
+    if (!openModuleSource.includes('name==="' + module + '"')) {
+      throw new Error("Admin tile has no matching module handler: " + module);
+    }
+  }
+}
 const monthlyUnregisteredTile = adminHome.match(/<div class="tile [^"]*"[^>]*aria-label="ماہانہ غیر رجسٹرڈ کھاتے"[^>]*data-category="([^"]+)"/);
 if (!monthlyUnregisteredTile || monthlyUnregisteredTile[1] !== "operations") {
   throw new Error("Unregistered monthly accounts must appear in daily operations");
