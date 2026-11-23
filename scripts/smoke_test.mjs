@@ -1482,13 +1482,16 @@ try {
       const originalAlert = window.alert;
       window.alert = () => { nativeAlertCount++; };
       window.shareCustomerMessage("invalid", "test", "sms");
-      window.shareCustomerTestWhatsApp(999999);
-      window.shareCustomerTestSMS(999999);
+      const testOnlyContactActionsRemoved =
+        typeof window.shareCustomerTestWhatsApp === "undefined" &&
+        typeof window.shareCustomerTestSMS === "undefined" &&
+        !document.querySelector("#customerFullAccount button[onclick*='shareCustomerTest']");
       window.shareCurrentBill("sms");
       window.shareCurrentDelivery("sms");
       await window.installMughalApp();
       const result = {
         nativeAlertCount,
+        testOnlyContactActionsRemoved,
         moduleMessage: document.querySelector("#moduleMsg")?.textContent || "",
         toast: document.querySelector("#appToast")?.textContent || "",
         toastAccessible: document.querySelector("#appToast")?.getAttribute("aria-live") === "polite"
