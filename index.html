@@ -1638,7 +1638,7 @@ async function customersModule(){
   <label>نام</label><input id="cName" maxlength="120" placeholder="گاہک کا نام">
   <label for="cMobile">موبائل نمبر</label><input id="cMobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="03XXXXXXXXX یا +923XXXXXXXXX">
   <label>مکمل پتہ</label><input id="cAddress" maxlength="300" placeholder="پتہ">
-  <button onclick="saveCustomer()">تبدیلیاں محفوظ کریں</button>
+  <button id="customerSaveButton" onclick="saveCustomer()">تبدیلیاں محفوظ کریں</button>
   <button class="secondary" onclick="cancelCustomerEdit()">منسوخ کریں</button>
  </div>`;
  await loadCustomers();
