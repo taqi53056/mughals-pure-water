@@ -1275,7 +1275,7 @@ try {
         unassigned_19l_delivery_collections: [],
         unregistered_monthly_bills: []
       };
-      const rpcCalls = [], queryLog = [];
+      const rpcCalls = [], queryLog = [], receiptRows = [];
       window.db = {
         from(table) {
           const chain = {
@@ -1304,7 +1304,11 @@ try {
           if (name === "record_unregistered_monthly_customer_collection") {
             tables.unassigned_19l_delivery_collections.push({ id: 2, delivery_id: 11,
               received_date: args.p_received_date, amount: args.p_amount, payment_method: args.p_payment_method });
+            receiptRows.push({ id: 1, received_date: args.p_received_date, amount: args.p_amount, payment_method: args.p_payment_method });
             return { data: { id: 1, remaining_due: 500, allocations: [{ delivery_id: 11, amount: args.p_amount }] }, error: null };
+          }
+          if (name === "list_unregistered_monthly_customer_receipts") {
+            return { data: args.p_customer_id === 5 ? receiptRows.slice() : [], error: null };
           }
           return { data: null, error: { message: "Unexpected RPC: " + name } };
         }
@@ -1344,7 +1348,8 @@ try {
         const monthlyCollectionQueries = queryLog.filter(q => q.table === "unassigned_19l_delivery_collections");
         const selectedCustomerDataScoped = monthlyDeliveryQueries.length > 0 && monthlyDeliveryQueries.every(q => q.filters.some(([key,value]) => key === "monthly_customer_id" && value === 5)) &&
           monthlyBillQueries.length > 0 && monthlyBillQueries.every(q => q.filters.some(([key,value]) => key === "customer_id" && value === 5)) &&
-          monthlyCollectionQueries.every(q => q.inFilter?.[0] === "delivery_id" && q.inFilter[1].every(id => id === 11));
+          monthlyCollectionQueries.every(q => q.inFilter?.[0] === "delivery_id" && q.inFilter[1].every(id => id === 11)) &&
+          rpcCalls.some(call => call.name === "list_unregistered_monthly_customer_receipts" && call.args.p_customer_id === 5);
         const collectionCardVisible = !document.querySelector("#umCollectionCard").classList.contains("hidden") &&
           document.querySelector("#umCollectionAmount") !== null && document.querySelector("#umCollectionBottles") === null;
         const monthlyBillVisible = document.querySelector("#umLedger").textContent.includes("کل قابل ادائیگی") &&
@@ -1366,6 +1371,9 @@ try {
         await window.saveMonthlyUnregisteredCollection();
         const collectionCall = rpcCalls.find(call => call.name === "record_unregistered_monthly_customer_collection");
         const remainingBalanceShown = document.querySelector("#umLedger").textContent.includes("500");
+        const oneTotalReceiptShown = document.querySelector("#umLedger").textContent.includes("Rs. 1,500") &&
+          document.querySelector("#umLedger").textContent.includes("رسید نمبر: #1") &&
+          !document.querySelector("#umLedger").textContent.includes("متعلقہ سپلائی");
         return {
           initialAccountHidden, newAccountCreationRedirect, registeredSignupExplained, monthlyFieldsShown, customerCreated,
           selectedAccountVisible, selectedCustomerIsolation, selectedCustomerDataScoped, collectionCardVisible, monthlyBillVisible, monthlyAccountActionVisible,
@@ -1374,7 +1382,7 @@ try {
           collectionUsesCustomerAndActualDate: collectionCall?.args?.p_customer_id === 5 &&
             collectionCall?.args?.p_received_date === "2026-11-22" && collectionCall?.args?.p_amount === 1500 &&
             collectionCall?.args?.p_payment_method === "cash",
-          remainingBalanceShown,
+          remainingBalanceShown, oneTotalReceiptShown,
           monthlyCollectionsStayInSelectedAccount: document.querySelector("#umLedger").textContent.includes("Monthly Account Test") &&
             !document.querySelector("#umLedger").textContent.includes("Second Monthly Account")
         };
@@ -1390,7 +1398,7 @@ try {
         !monthlyAccountResult.selectedCustomerIsolation || !monthlyAccountResult.selectedCustomerDataScoped || !monthlyAccountResult.collectionCardVisible ||
         !monthlyAccountResult.monthlyBillVisible || !monthlyAccountResult.monthlyAccountActionVisible ||
         !monthlyAccountResult.fullDuePrefilled || !monthlyAccountResult.partialTotalAmountEntered ||
-        !monthlyAccountResult.collectionUsesCustomerAndActualDate || !monthlyAccountResult.remainingBalanceShown ||
+        !monthlyAccountResult.collectionUsesCustomerAndActualDate || !monthlyAccountResult.remainingBalanceShown || !monthlyAccountResult.oneTotalReceiptShown ||
         !monthlyAccountResult.monthlyCollectionsStayInSelectedAccount || !monthlyAccountResult.unifiedHistoryTemporaryOnly) {
       failures.push("Monthly customer-first statement or total-amount partial receipt workflow is not functioning correctly");
     }
