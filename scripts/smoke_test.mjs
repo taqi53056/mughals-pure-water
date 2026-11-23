@@ -37,7 +37,7 @@ if (!unifiedHistorySource.includes('.eq("customer_classification","one_time")') 
   throw new Error("Unassigned history must show only one-time supplies, never linked monthly deliveries");
 }
 const pendingReviewStart = appSource.indexOf("async function loadPendingMonthlyDeliveryLinks()");
-const pendingReviewEnd = appSource.indexOf("\\n}\\nasync function splitPendingMonthlyDelivery", pendingReviewStart);
+const pendingReviewEnd = appSource.indexOf("\n}\nasync function splitPendingMonthlyDelivery", pendingReviewStart);
 const pendingReviewSource = pendingReviewStart >= 0 && pendingReviewEnd > pendingReviewStart
   ? appSource.slice(pendingReviewStart, pendingReviewEnd) : "";
 if (!pendingReviewSource.includes('unassigned_19l_delivery_collections') ||
