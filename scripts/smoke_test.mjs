@@ -1282,7 +1282,7 @@ try {
             rangeValues: null, filters: [],
             select() { return chain; }, eq(key, value) { chain.filters.push([key, value]); return chain; }, order() { return chain; },
             contains() { return chain; }, range(from, to) { chain.rangeValues = [from, to]; return chain; },
-            in() { return chain; }, update() { return chain; },
+            in() { return chain; }, limit() { return chain; }, update() { return chain; },
             then(resolve, reject) {
               let data = tables[table] || [];
               if (chain.filters.length) data = data.filter(row => chain.filters.every(([key, value]) => row[key] === value));
@@ -1383,7 +1383,6 @@ try {
         !monthlyAccountResult.fullDuePrefilled || !monthlyAccountResult.bottleAmountCalculated ||
         !monthlyAccountResult.collectionUsesCustomerAndActualDate || !monthlyAccountResult.remainingBalanceShown ||
         !monthlyAccountResult.monthlyCollectionsStayInSelectedAccount || !monthlyAccountResult.unifiedHistoryTemporaryOnly) {
-      console.error("Monthly customer-first test details:", JSON.stringify(monthlyAccountResult));
       failures.push("Monthly customer-first statement or partial bottle-based receipt workflow is not functioning correctly");
     }
     const ownerWithdrawalResult = await page.evaluate(async () => {
