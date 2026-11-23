@@ -23,8 +23,8 @@ if (appSource.includes("updateUnassigned19lLabor") ||
 if (!appSource.includes("totalPayable=bill?") ||
     !appSource.includes("money(totalPayable)") || !appSource.includes("money(due)") ||
     !appSource.includes("monthlyUnregisteredSelectedMonth") || !appSource.includes("اس ماہ وصولی") ||
-    !appSource.includes('id="umCustomerSelect"') || !appSource.includes('id="umCollectionBottles"')) {
-  throw new Error("Monthly unregistered customer-first statement and bottle-based receipt controls are incomplete");
+    !appSource.includes('id="umCustomerSelect"') || !appSource.includes('id="umCollectionAmount"') || appSource.includes('id="umCollectionBottles"')) {
+  throw new Error("Monthly unregistered customer-first statement and total-amount receipt controls are incomplete");
 }
 
 const unifiedHistoryStart = appSource.indexOf("async function loadUnifiedNonRegisteredHistory()");
