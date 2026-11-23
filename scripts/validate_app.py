@@ -213,6 +213,10 @@ if "const workerStatusInFlight=new Set();" not in source or "workerStatusInFligh
     fail("Worker status changes must prevent overlapping requests.")
 if '.select("id,is_active").maybeSingle()' not in source:
     fail("Account status updates must confirm the affected row.")
+if "const moneyRecordDeleteInFlight=new Set();" not in source or "moneyRecordDeleteInFlight.delete(key)" not in source:
+    fail("General financial record deletion must prevent overlapping requests and release its guard.")
+if 'deleteMoneyRecord(\\\""+type+"\\\","+r.id+",this)' not in source or '.select("id").maybeSingle()' not in source:
+    fail("General financial record deletion must pass the clicked control and confirm the deleted row.")
 if "counterCapsSold" in source or "caps_sold:" in source:
     fail("Counter cap sales must not require a daily count or manual entry")
 if "const capsUsed=customerCapsUsed+unassignedCapsUsed;" not in source:
