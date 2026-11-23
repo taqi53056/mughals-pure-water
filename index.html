@@ -2946,9 +2946,10 @@ async function loadMonthlyUnregisteredLedger(){
  const box=$("umLedger");if(!box)return;
  box.textContent="ماہانہ کھاتے لوڈ ہو رہے ہیں...";
  try{
-  const [customers,deliveries]=await Promise.all([
+  const [customers,deliveries,bills]=await Promise.all([
    mpwFetchAllPages(()=>db.from("unregistered_monthly_customers").select("id,name,mobile,address,is_active,created_at").order("name").order("id")),
-   mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,monthly_customer_id,delivery_date,bottles_delivered,damaged_caps").eq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}))
+   mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,monthly_customer_id,delivery_date,bottles_delivered,damaged_caps").eq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false})),
+   mpwFetchAllPages(()=>db.from("unregistered_monthly_bills").select("customer_id,bill_month,bottles_19l,bottle_amount,damaged_caps,cap_amount,previous_balance,payments,advance_used,current_due,closing_advance").order("bill_month",{ascending:false}).order("customer_id"))
   ]);
   const monthlyDeliveryIds=deliveries.map(d=>Number(d.id));
   const collections=monthlyDeliveryIds.length
@@ -2971,6 +2972,8 @@ async function loadMonthlyUnregisteredLedger(){
    (customers.length?'<div class="tablewrap"><table><tr><th>گاہک</th><th>ڈلیوریاں</th><th>بوتلیں</th><th>کل چارجز</th><th>وصولی</th><th>بقایا</th><th>حالت</th><th>عمل</th></tr>'+
     customers.map(c=>{const g=grouped.get(Number(c.id))||{bottles:0,caps:0,due:0,collected:0,count:0};return '<tr><td><b>'+esc(c.name)+'</b><br><small>'+esc(c.mobile||"")+'</small></td><td>'+g.count+'</td><td>'+g.bottles+'</td><td>'+money(g.due)+'</td><td>'+money(g.collected)+'</td><td><b>'+money(Math.max(g.due-g.collected,0))+'</b></td><td>'+(c.is_active?"فعال":"غیر فعال")+'</td><td><button class="secondary" onclick="editMonthlyUnregisteredCustomer('+Number(c.id)+')">ترمیم</button><button class="secondary" onclick="setMonthlyUnregisteredCustomerActive('+Number(c.id)+','+(!c.is_active)+')">'+(c.is_active?"غیر فعال کریں":"فعال کریں")+'</button></td></tr>';}).join("")+
    '</table></div>':'<div class="customer-empty">ابھی کوئی ماہانہ کھاتہ موجود نہیں۔</div>')+'</div>'+
+   '<div class="card"><h3>ماہانہ بل اور بقایا</h3>'+
+   (bills.length?bills.slice(0,100).map(b=>{const c=customerById.get(Number(b.customer_id));return '<div class="u19-history-item"><div><b>'+esc(c?.name||"نامعلوم کھاتہ")+'</b><span>'+esc(b.bill_month)+' · '+Number(b.bottles_19l)+' بوتلیں · خراب ڈھکن '+Number(b.damaged_caps)+'</span></div><div><span>سابقہ: '+money(b.previous_balance)+' · اس ماہ: '+money(Number(b.bottle_amount)+Number(b.cap_amount))+' · وصولی: '+money(b.payments)+'</span><b>قابلِ ادائیگی: '+money(b.current_due)+'</b></div></div>';}).join(""):'<div class="customer-empty">ابھی ماہانہ بل تیار نہیں ہوئے۔ مہینہ مکمل ہونے پر خودکار بلنگ ہوگی۔</div>')+'</div>'+
    '<div class="card"><h3>حالیہ ماہانہ ڈلیوریاں</h3>'+
    (deliveries.length?deliveries.slice(0,100).map(d=>{const c=customerById.get(Number(d.monthly_customer_id));const collected=collectedByDelivery.get(Number(d.id))||0;const due=Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10;return '<div class="u19-history-item"><div><b>'+esc(c?.name||"نامعلوم کھاتہ")+'</b><span>'+esc(d.delivery_date)+' · '+Number(d.bottles_delivered)+' بوتلیں</span></div><div><span>وصولی: '+money(collected)+'</span><b>بقایا: '+money(Math.max(due-collected,0))+'</b></div></div>';}).join(""):'<div class="customer-empty">ابھی کوئی ماہانہ ڈلیوری درج نہیں۔</div>')+'</div>';
  }catch(e){box.textContent="ماہانہ کھاتے لوڈ نہیں ہوئے: "+(e.message||String(e));}
