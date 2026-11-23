@@ -2984,7 +2984,18 @@ async function loadMonthlyUnregisteredLedger(){
    const received=receivedByCustomer.get(id)||0,bill=billByCustomer.get(id),prior=priorBillByCustomer.get(id);
    let previousBalance=prior?Number(prior.current_due||0):0;
    let previousAdvance=prior?Number(prior.closing_advance||0):0;
-   if(!prior){
+   if(prior){
+    const priorMonthNextDate=new Date(Number(prior.bill_month.slice(0,4)),Number(prior.bill_month.slice(5,7)),1);
+    priorMonthNextDate.setMonth(priorMonthNextDate.getMonth()+1);
+    const priorMonthNext=priorMonthNextDate.getFullYear()+"-"+String(priorMonthNextDate.getMonth()+1).padStart(2,"0")+"-01";
+    const laterCharges=deliveries.filter(d=>Number(d.monthly_customer_id)===id&&d.delivery_date>=priorMonthNext&&d.delivery_date<monthStart)
+     .reduce((sum,d)=>sum+Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,0);
+    const laterPayments=collections.filter(r=>{const d=deliveryById.get(Number(r.delivery_id));return d&&Number(d.monthly_customer_id)===id&&r.received_date>=priorMonthNext&&r.received_date<monthStart;})
+     .reduce((sum,r)=>sum+Number(r.amount||0),0);
+    const priorDue=previousBalance,priorAdvance=previousAdvance;
+    previousBalance=Math.max(priorDue+laterCharges-priorAdvance-laterPayments,0);
+    previousAdvance=Math.max(priorAdvance+laterPayments-priorDue-laterCharges,0);
+   }else{
     const pastCharges=deliveries.filter(d=>Number(d.monthly_customer_id)===id&&d.delivery_date<monthStart)
      .reduce((sum,d)=>sum+Number(d.bottles_delivered||0)*100+Number(d.damaged_caps||0)*10,0);
     const pastPayments=collections.filter(r=>{const d=deliveryById.get(Number(r.delivery_id));return d&&Number(d.monthly_customer_id)===id&&r.received_date<monthStart;})
@@ -2996,13 +3007,14 @@ async function loadMonthlyUnregisteredLedger(){
    const advanceUsed=bill?Number(bill.advance_used||0):Math.min(previousAdvance,previousBalance+charges);
    const due=bill?Number(bill.current_due||0):Math.max(previousBalance+charges-previousAdvance-payments,0);
    const closingAdvance=bill?Number(bill.closing_advance||0):Math.max(previousAdvance+payments-previousBalance-charges,0);
-   return {c,g,charges,payments,previousBalance,advanceUsed,due,closingAdvance,bill};
+   const totalPayable=bill?Number(bill.previous_balance||0)+charges-Number(bill.advance_used||0):previousBalance+charges-advanceUsed;
+   return {c,g,charges,payments,previousBalance,advanceUsed,due,closingAdvance,totalPayable,bill};
   });
   $("umStatementMonth").value=selectedMonth;
   box.innerHTML='<div class="card"><h3>'+esc(selectedMonth)+' — ماہانہ مکمل حساب</h3>'+
    '<p class="muted">ہر ماہانہ غیر رجسٹرڈ گاہک کا حساب نام کے تحت یکجا ہے۔ بل بننے سے پہلے موجودہ مہینے کا حساب عبوری ہے؛ مہینہ بند ہونے پر محفوظ شدہ بل کا حتمی حساب دکھے گا۔</p>'+
-   (moneyRows.length?'<div class="tablewrap"><table><tr><th>گاہک</th><th>ڈلیوریاں / بوتلیں</th><th>ماہانہ چارجز</th><th>سابقہ بقایا</th><th>اس ماہ وصولی</th><th>اختتامی بقایا</th><th>ایڈوانس</th><th>بل</th><th>عمل</th></tr>'+
-    moneyRows.map(x=>'<tr><td><b>'+esc(x.c.name)+'</b><br><small>'+esc(x.c.mobile||"")+'</small></td><td>'+x.g.count+' / '+x.g.bottles+'<br><small>خراب ڈھکن: '+x.g.caps+'</small></td><td>'+money(x.charges)+'</td><td>'+money(x.previousBalance)+'</td><td>'+money(x.payments)+'</td><td><b>'+money(x.due)+'</b></td><td>'+money(x.closingAdvance)+'</td><td>'+(x.bill?'<span class="badge success">حتمی بل</span>':'<span class="muted">عبوری</span>')+'</td><td><button class="secondary" onclick="editMonthlyUnregisteredCustomer('+Number(x.c.id)+')">ترمیم</button><button id="umActive-'+Number(x.c.id)+'" class="secondary" onclick="setMonthlyUnregisteredCustomerActive('+Number(x.c.id)+','+(!x.c.is_active)+')">'+(x.c.is_active?"غیر فعال کریں":"فعال کریں")+'</button></td></tr>').join("")+
+   (moneyRows.length?'<div class="tablewrap"><table><tr><th>گاہک</th><th>ڈلیوریاں / بوتلیں</th><th>ماہانہ چارجز</th><th>سابقہ بقایا</th><th>کل قابلِ ادائیگی</th><th>اس ماہ وصولی</th><th>اختتامی بقایا</th><th>ایڈوانس</th><th>بل</th><th>عمل</th></tr>'+
+    moneyRows.map(x=>'<tr><td><b>'+esc(x.c.name)+'</b><br><small>'+esc(x.c.mobile||"")+'</small></td><td>'+x.g.count+' / '+x.g.bottles+'<br><small>خراب ڈھکن: '+x.g.caps+'</small></td><td>'+money(x.charges)+'</td><td>'+money(x.previousBalance)+'</td><td>'+money(x.totalPayable)+'</td><td>'+money(x.payments)+'</td><td><b>'+money(x.due)+'</b></td><td>'+money(x.closingAdvance)+'</td><td>'+(x.bill?'<span class="badge success">حتمی بل</span>':'<span class="muted">عبوری</span>')+'</td><td><button class="secondary" onclick="editMonthlyUnregisteredCustomer('+Number(x.c.id)+')">ترمیم</button><button id="umActive-'+Number(x.c.id)+'" class="secondary" onclick="setMonthlyUnregisteredCustomerActive('+Number(x.c.id)+','+(!x.c.is_active)+')">'+(x.c.is_active?"غیر فعال کریں":"فعال کریں")+'</button></td></tr>').join("")+
    '</table></div>':'<div class="customer-empty">ابھی کوئی ماہانہ کھاتہ موجود نہیں۔</div>')+
    '<p><b>کل ماہانہ چارجز:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.charges,0))+' &nbsp; <b>کل وصولی:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.payments,0))+' &nbsp; <b>کل اختتامی بقایا:</b> '+money(moneyRows.reduce((sum,x)=>sum+x.due,0))+'</p></div>'+
    '<div class="card"><h3>حالیہ وصولیاں</h3>'+
