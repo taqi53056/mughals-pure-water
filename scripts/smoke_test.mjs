@@ -1275,7 +1275,7 @@ try {
         unassigned_19l_delivery_collections: [],
         unregistered_monthly_bills: []
       };
-      const rpcCalls = [];
+      const rpcCalls = [], queryLog = [];
       window.db = {
         from(table) {
           const chain = {
@@ -1284,6 +1284,7 @@ try {
             contains() { return chain; }, range(from, to) { chain.rangeValues = [from, to]; return chain; },
             in(key, values) { chain.inFilter = [key, values]; return chain; }, is(key, value) { chain.filters.push([key, value]); return chain; }, limit() { return chain; }, update() { return chain; },
             then(resolve, reject) {
+              queryLog.push({ table, filters: chain.filters.slice(), inFilter: chain.inFilter ? [chain.inFilter[0], chain.inFilter[1].slice()] : null });
               let data = tables[table] || [];
               if (chain.filters.length) data = data.filter(row => chain.filters.every(([key, value]) => row[key] === value));
               if (chain.inFilter) data = data.filter(row => chain.inFilter[1].includes(row[chain.inFilter[0]]));
@@ -1338,6 +1339,12 @@ try {
         await window.loadMonthlyUnregisteredLedger();
         const selectedAccountVisible = document.querySelector("#umLedger").textContent.includes("Monthly Account Test");
         const selectedCustomerIsolation = !document.querySelector("#umLedger").textContent.includes("Second Monthly Account");
+        const monthlyDeliveryQueries = queryLog.filter(q => q.table === "unassigned_19l_deliveries" && q.filters.some(([key,value]) => key === "customer_classification" && value === "monthly"));
+        const monthlyBillQueries = queryLog.filter(q => q.table === "unregistered_monthly_bills");
+        const monthlyCollectionQueries = queryLog.filter(q => q.table === "unassigned_19l_delivery_collections");
+        const selectedCustomerDataScoped = monthlyDeliveryQueries.length > 0 && monthlyDeliveryQueries.every(q => q.filters.some(([key,value]) => key === "monthly_customer_id" && value === 5)) &&
+          monthlyBillQueries.length > 0 && monthlyBillQueries.every(q => q.filters.some(([key,value]) => key === "customer_id" && value === 5)) &&
+          monthlyCollectionQueries.every(q => q.inFilter?.[0] === "delivery_id" && q.inFilter[1].every(id => id === 11));
         const collectionCardVisible = !document.querySelector("#umCollectionCard").classList.contains("hidden") &&
           document.querySelector("#umCollectionAmount") !== null && document.querySelector("#umCollectionBottles") === null;
         const monthlyBillVisible = document.querySelector("#umLedger").textContent.includes("کل قابل ادائیگی") &&
@@ -1361,7 +1368,7 @@ try {
         const remainingBalanceShown = document.querySelector("#umLedger").textContent.includes("500");
         return {
           initialAccountHidden, newAccountCreationRedirect, registeredSignupExplained, monthlyFieldsShown, customerCreated,
-          selectedAccountVisible, selectedCustomerIsolation, collectionCardVisible, monthlyBillVisible, monthlyAccountActionVisible,
+          selectedAccountVisible, selectedCustomerIsolation, selectedCustomerDataScoped, collectionCardVisible, monthlyBillVisible, monthlyAccountActionVisible,
           unifiedHistoryTemporaryOnly,
           fullDuePrefilled, partialTotalAmountEntered,
           collectionUsesCustomerAndActualDate: collectionCall?.args?.p_customer_id === 5 &&
@@ -1380,7 +1387,7 @@ try {
     if (!monthlyAccountResult.initialAccountHidden || !monthlyAccountResult.newAccountCreationRedirect ||
         !monthlyAccountResult.registeredSignupExplained || !monthlyAccountResult.monthlyFieldsShown ||
         !monthlyAccountResult.customerCreated || !monthlyAccountResult.selectedAccountVisible ||
-        !monthlyAccountResult.selectedCustomerIsolation || !monthlyAccountResult.collectionCardVisible ||
+        !monthlyAccountResult.selectedCustomerIsolation || !monthlyAccountResult.selectedCustomerDataScoped || !monthlyAccountResult.collectionCardVisible ||
         !monthlyAccountResult.monthlyBillVisible || !monthlyAccountResult.monthlyAccountActionVisible ||
         !monthlyAccountResult.fullDuePrefilled || !monthlyAccountResult.partialTotalAmountEntered ||
         !monthlyAccountResult.collectionUsesCustomerAndActualDate || !monthlyAccountResult.remainingBalanceShown ||
