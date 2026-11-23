@@ -2996,7 +2996,8 @@ async function monthlyUnregisteredModule(){
  '<label for="umAddress">پتہ</label><input id="umAddress" maxlength="300" placeholder="علاقہ یا مکمل پتہ">'+
  '<button id="umCustomerSave" onclick="saveMonthlyUnregisteredCustomer()">گاہک محفوظ کریں</button>'+
  '<button id="umCustomerCancel" class="secondary hidden" onclick="cancelMonthlyUnregisteredCustomerEdit()">منسوخ کریں</button></div>'+
- '<div class="card"><h3>ماہانہ گاہک کی نئی ڈلیوری</h3>'+
+ '<div class="card"><p class="muted">نئی روزانہ ڈلیوری مشترکہ 19L ڈلیوری سینٹر سے درج کریں۔ یہاں ماہانہ کھاتے، وصولیاں اور اسٹیٹمنٹ برقرار رہیں گے۔</p><button class="secondary" onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھولیں</button></div>'+
+ '<div class="card hidden"><h3>ماہانہ گاہک کی نئی ڈلیوری</h3>'+
  '<label for="umDeliveryCustomer">ماہانہ گاہک *</label><select id="umDeliveryCustomer"><option value="">گاہک منتخب کریں</option></select>'+
  '<label for="umDeliveryDate">ڈلیوری کی تاریخ *</label><input id="umDeliveryDate" type="date" value="'+today()+'">'+
  '<label for="umWorker">ڈلیوری کس نے کی؟ *</label><select id="umWorker"><option value="owner">مالک نے خود</option><option value="worker">مزدور نے</option></select>'+
@@ -3231,8 +3232,8 @@ async function saveMonthlyUnregisteredCollection(){
 async function unassigned19lModule(){
  setTitle("بغیر گاہک 19L سپلائی");
  $("moduleBody").innerHTML=
- '<p class="muted u19-intro">یہ حصہ صرف ایک وقتی، غیر رجسٹرڈ سپلائی کے لیے ہے۔ ماہانہ کھاتے والی سپلائی یہاں درج نہ کریں۔ رقم ملنے پر نیچے وصولی درج کریں۔</p>'+
- '<div class="card"><h3>نئی غیر منسلک سپلائی</h3>'+
+ '<p class="muted u19-intro">یہ صفحہ عارضی سپلائی کی وصولیوں اور ہسٹری کے لیے ہے۔ نئی ڈلیوری روزانہ کے مشترکہ 19L ڈلیوری سینٹر سے درج کریں۔</p><button class="secondary" onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھولیں</button>'+
+ '<div class="card hidden"><h3>نئی غیر منسلک سپلائی</h3>'+
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
  '<label for="u19Worker">سپلائی کس نے کی؟ *</label><select id="u19Worker" required><option value="" selected disabled>سپلائی کرنے والا منتخب کریں</option><option value="owner">مالک نے خود سپلائی کی</option><option value="worker">مزدور نے سپلائی کی</option></select><div id="u19WorkerPicker" class="hidden"><label for="u19WorkerId">مزدور منتخب کریں *</label><select id="u19WorkerId" required><option value="">ورکر لوڈ ہو رہا ہے...</option></select></div>'+
  '<label for="u19Bottles">سپلائی کی گئی بھری 19L بوتلیں</label><input id="u19Bottles" type="number" min="1" step="1" inputmode="numeric" value="" placeholder="بوتلوں کی تعداد">'+
@@ -3253,7 +3254,7 @@ async function unassigned19lModule(){
 async function loadUnassigned19lHistory(){
  const box=$("u19History");if(!box)return;
  try{
-  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
+  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
   if(error)throw error;
   const ids=(data||[]).map(r=>Number(r.id));
   const receipts=await mpwFetchByIdBatches(ids,batch=>
@@ -3265,7 +3266,7 @@ async function loadUnassigned19lHistory(){
     const received=collected.get(Number(r.id))||0;
     const due=Number(r.bottles_delivered||0)*100+Number(r.damaged_caps||0)*10;
     const remaining=Math.max(due-received,0);
-    return '<div class="u19-history-item"><div><b>'+esc(r.delivery_date)+'</b><span>'+Number(r.bottles_delivered)+' بھری بوتلیں</span></div><div><span>وصولی: '+money(received)+'</span><b>بقایا: '+money(remaining)+'</b></div></div>';
+    return '<div class="u19-history-item"><div><b>'+esc(r.details||r.delivery_date)+'</b><span>'+esc(r.delivery_date)+' · '+Number(r.bottles_delivered)+' بھری بوتلیں</span></div><div><span>وصولی: '+money(received)+'</span><b>بقایا: '+money(remaining)+'</b></div></div>';
    }).join("")+
    ((data||[]).length?'':'<p class="muted">ابھی کوئی سپلائی درج نہیں ہوئی۔</p>')+
    '</div>';
@@ -3274,13 +3275,13 @@ async function loadUnassigned19lHistory(){
 async function loadUnassigned19lCollectionOptions(){
  const sel=$("u19CollectionDelivery");if(!sel)return;
  try{
-  const deliveries=await mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}));
+  const deliveries=await mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}));
   const ids=deliveries.map(d=>Number(d.id));
   const receipts=await mpwFetchByIdBatches(ids,batch=>
    db.from("unassigned_19l_delivery_collections").select("delivery_id,amount").in("delivery_id",batch).order("id"));
   const totals=new Map();receipts.forEach(r=>totals.set(Number(r.delivery_id),(totals.get(Number(r.delivery_id))||0)+Number(r.amount)));
   const pending=(deliveries||[]).map(d=>({d,remaining:Number(d.bottles_delivered)*100+Number(d.damaged_caps||0)*10-(totals.get(Number(d.id))||0)})).filter(x=>x.remaining>0);
-  sel.innerHTML='<option value="">سپلائی منتخب کریں</option>'+pending.map(x=>'<option value="'+x.d.id+'">'+esc(x.d.delivery_date)+' — '+Number(x.d.bottles_delivered)+' بوتلیں — بقایا '+money(x.remaining)+'</option>').join("");
+  sel.innerHTML='<option value="">سپلائی منتخب کریں</option>'+pending.map(x=>'<option value="'+x.d.id+'">'+esc(x.d.details||"وقتی سپلائی")+' — '+esc(x.d.delivery_date)+' — '+Number(x.d.bottles_delivered)+' بوتلیں — بقایا '+money(x.remaining)+'</option>').join("");
  }catch(e){sel.innerHTML='<option value="">وصولی فہرست لوڈ نہیں ہوئی</option>';msg("وصولی کی فہرست لوڈ نہیں ہوئی: "+(e.message||String(e)));}
 }
 async function saveUnassigned19lCollection(){
