@@ -279,8 +279,7 @@ button.secondary{background:#f0f5f0;color:#174d39;border:1px solid #dce7dc;box-s
 #app>.card:first-child{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 19px;border-top:3px solid var(--mp-gold)}
 #app>.card:first-child #welcome{font-size:17px;font-weight:800}#app>.card:first-child #role{margin-inline-start:auto}#app>.card:first-child button{width:auto;min-width:105px;margin:0}
 #adminPanel,#customerPanel{min-width:0}#adminPanel #dashboard,#adminPanel #module,#customerPanel>.card{min-width:0;border-radius:21px}
-#adminPanel #module{padding:clamp(16px,2.4vw,28px)}#moduleTitle{padding-bottom:12px;border-bottom:1px solid #e8eee7;margin-bottom:15px}
-#moduleBody{min-width:0}#moduleBody h3,#moduleTable h3{margin:18px 0 10px;padding-right:11px;border-right:3px solid var(--mp-gold);line-height:1.6}
+#adminPanel #module{padding:clamp(16px,2.4vw,28px)}#moduleTitle{padding-bottom:12px;border-bottom:1px solid #e8eee7;margin-bottom:15px}#moduleBody h3,#moduleTable h3{margin:18px 0 10px;padding-right:11px;border-right:3px solid var(--mp-gold);line-height:1.6}
 #moduleBody .muted{line-height:1.85}#moduleBody>p.muted{padding:11px 14px;background:#f4f8f3;border:1px solid #e7eee5;border-radius:13px}
 #moduleBody input:not([type=checkbox]),#moduleBody select,#moduleBody textarea{width:100%;max-width:100%;margin:7px 0}
 #moduleBody button,#module button{width:auto;min-width:112px;min-height:45px;padding:10px 15px;margin:6px 5px 6px 0}
@@ -317,14 +316,14 @@ tr:nth-child(even) td{background:#fbfcfa}#moduleTable button{width:auto;min-widt
  #customerPanel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
  #customerPanel>.card{margin:0}#customerPanel>.card:nth-child(n){grid-column:span 1}
 }
-@media(min-width:700px) and (max-width:1099px){#adminPanel #homeTiles{grid-template-columns:repeat(3,minmax(0,1fr))}#adminPanel #dashboard,#adminPanel #module{grid-column:1/-1}#customerPanel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+@media(min-width:700px) and (max-width:1099px){#customerPanel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
 @media(max-width:699px){
  header{padding:17px 13px}.wrap{padding:11px}.card{padding:15px;border-radius:17px}
  #adminPanel #homeTiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
  #adminPanel #homeTiles .tile{min-height:88px;padding:12px;font-size:14px;border-radius:15px}#adminPanel #homeTiles .tile{align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:7px}#adminPanel #homeTiles .tile:before{margin:0;width:34px;height:34px;flex-basis:34px;font-size:19px}
- #adminPanel #module{padding:14px}#moduleBody button,#module button{min-width:0;min-height:44px;padding:9px 12px;font-size:14px}
- #moduleBody .card{padding:13px}#moduleTable table{min-width:600px;font-size:13px}#moduleTable td,#moduleTable th{padding:9px 8px}
- #todaySummary{gap:8px}#todaySummary .stat{padding:11px;min-height:74px;font-size:13px}#todaySummary .stat b{font-size:18px}
+ #adminPanel #module{padding:14px}
+ #moduleBody .card{padding:13px}#moduleTable table{min-width:600px;font-size:13px}
+ #todaySummary{gap:8px}#todaySummary .stat{padding:11px;min-height:74px;font-size:13px}
  #customerPanel>.card{margin:10px 0;padding:14px}#customerPanel #myAccount{grid-template-columns:1fr}#customerPanel #myDeliveries table{min-width:700px}
  #app>.card:first-child{padding:12px 13px}#app>.card:first-child #role{margin-inline-start:0}
 }
