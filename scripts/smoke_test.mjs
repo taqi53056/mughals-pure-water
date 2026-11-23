@@ -1344,9 +1344,9 @@ try {
           document.querySelector("#umLedger").textContent.includes("اختتامی بقایا") &&
           document.querySelector("#umStatementMonth")?.value === "2026-11";
         const monthlyAccountActionVisible = document.querySelector("#umActive-5") !== null;
+        if (!document.querySelector("#moduleTable")) document.querySelector("#moduleBody").insertAdjacentHTML("beforeend", '<div id="moduleTable"></div>');
         document.querySelector("#moduleTable").innerHTML = "";
         await window.loadUnifiedNonRegisteredHistory();
-        if (!document.querySelector("#moduleTable")) document.querySelector("#moduleBody").insertAdjacentHTML("beforeend", '<div id="moduleTable"></div>');
         const unifiedHistoryText = document.querySelector("#unifiedNonRegisteredHistory")?.textContent || "";
         const unifiedHistoryTemporaryOnly = unifiedHistoryText.includes("Temporary Only") &&
           !unifiedHistoryText.includes("Monthly Account Test") && !unifiedHistoryText.includes("Pending Review");
