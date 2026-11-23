@@ -1977,21 +1977,27 @@ function cancelCustomerEdit(){
  $("customerEditForm")?.classList.add("hidden");
 }
 
+const customerProfileSaveInFlight=new Set();
 async function saveCustomer(){
- if(!editingId){msg("ترمیم کے لیے پہلے فہرست سے گاہک منتخب کریں۔");return}
+ const customerId=Number(editingId);
+ if(!Number.isSafeInteger(customerId)||customerId<=0){msg("ترمیم کے لیے پہلے فہرست سے گاہک منتخب کریں۔");return}
+ if(customerProfileSaveInFlight.has(customerId))return;
  const name=$("cName").value.trim();
  if(!name){msg("گاہک کا نام لازمی ہے۔");return}
  const mobileInput=$("cMobile").value.trim();
  const mobile=mobileInput?normalizePkMobile(mobileInput):null;
  if(mobileInput&&!mobile){msg("موبائل نمبر درست درج کریں؛ مثال: 03001234567 یا +923001234567۔");$("cMobile").focus();return}
  const payload={name,mobile,address:$("cAddress").value.trim()||null};
- const r=await db.from("customers").update(payload).eq("id",editingId);
- if(r.error){
-  if(r.error.code==="23505"&&/mobile/i.test(r.error.message||""))msg("یہ موبائل نمبر پہلے سے کسی دوسرے کسٹمر کے ساتھ منسلک ہے۔");
-  else msg("تبدیلیاں محفوظ نہیں ہوئیں: "+r.error.message);
-  return;
- }
- editingId=null;msg("گاہک کی معلومات اپڈیٹ ہوگئیں۔",true);await customersModule();
+ const button=$("customerSaveButton");customerProfileSaveInFlight.add(customerId);if(button)button.disabled=true;
+ try{
+  const {data,error}=await db.from("customers").update(payload).eq("id",customerId).select("id").maybeSingle();
+  if(error)throw error;
+  if(!data)throw new Error("کسٹمر کا ریکارڈ اپڈیٹ نہیں ہوا؛ فہرست تازہ کرکے دوبارہ کوشش کریں۔");
+  editingId=null;msg("گاہک کی معلومات اپڈیٹ ہوگئیں۔",true);await customersModule();
+ }catch(e){
+  if(e?.code==="23505"&&/mobile/i.test(e.message||""))msg("یہ موبائل نمبر پہلے سے کسی دوسرے کسٹمر کے ساتھ منسلک ہے۔");
+  else msg("تبدیلیاں محفوظ نہیں ہوئیں: "+(e?.message||String(e)));
+ }finally{customerProfileSaveInFlight.delete(customerId);if(button)button.disabled=false;}
 }
 
 /* مشترکہ گاہک فہرست — ماہانہ بل اور ڈلیوری دونوں اسی سے بھرتے ہیں */
@@ -3194,21 +3200,25 @@ async function loadMonthlyUnregisteredLedger(){
  }catch(e){box.textContent="ماہانہ کھاتے لوڈ نہیں ہوئے: "+(e.message||String(e));}
 }
 
+const monthlyCustomerProfileSaveInFlight=new Set();
 async function saveMonthlyUnregisteredCustomer(){
- if(!monthlyUnregisteredCustomerEditingId){msg("نیا ماہانہ کھاتہ گاہکوں کے مرکزی صفحے سے بنائیں۔");return;}
+ const customerId=Number(monthlyUnregisteredCustomerEditingId);
+ if(!Number.isSafeInteger(customerId)||customerId<=0){msg("نیا ماہانہ کھاتہ گاہکوں کے مرکزی صفحے سے بنائیں۔");return;}
+ if(monthlyCustomerProfileSaveInFlight.has(customerId))return;
  const name=$("umName").value.trim(),mobile=$("umMobile").value.trim(),address=$("umAddress").value.trim();
  if(name.length<2){msg("گاہک کا نام کم از کم دو حروف میں درج کریں۔");return;}
  if(mobile&&!normalizePkMobile(mobile)){msg("موبائل نمبر درست درج کریں۔");return;}
- const button=$("umCustomerSave");if(button?.disabled)return;if(button)button.disabled=true;
+ const button=$("umCustomerSave");monthlyCustomerProfileSaveInFlight.add(customerId);if(button)button.disabled=true;
  try{
-  const {error}=await db.from("unregistered_monthly_customers").update({name,mobile:mobile?normalizePkMobile(mobile):null,address:address||null}).eq("id",monthlyUnregisteredCustomerEditingId);
+  const {data,error}=await db.from("unregistered_monthly_customers").update({name,mobile:mobile?normalizePkMobile(mobile):null,address:address||null}).eq("id",customerId).select("id").maybeSingle();
   if(error)throw error;
+  if(!data)throw new Error("ماہانہ گاہک کا ریکارڈ اپڈیٹ نہیں ہوا؛ فہرست تازہ کرکے دوبارہ کوشش کریں۔");
   monthlyUnregisteredCustomerEditingId=null;
   $("umCustomerEditCard")?.classList.add("hidden");
   $("umName").value="";$("umMobile").value="";$("umAddress").value="";
   msg("ماہانہ گاہک کا کھاتہ محفوظ ہوگیا۔",true);await loadMonthlyUnregisteredLedger();
- }catch(e){msg("ماہانہ گاہک محفوظ نہیں ہوا: "+(e.message||String(e)));}
- finally{if(button)button.disabled=false;}
+ }catch(e){msg("ماہانہ گاہک محفوظ نہیں ہوا: "+(e?.message||String(e)));}
+ finally{monthlyCustomerProfileSaveInFlight.delete(customerId);if(button)button.disabled=false;}
 }
 
 async function editMonthlyUnregisteredCustomer(id){
