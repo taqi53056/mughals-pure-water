@@ -83,7 +83,9 @@ for (const [category, expected] of Object.entries(expectedModulesByCategory)) {
     throw new Error("Admin " + category + " navigation is missing or misclassifying a module: " + actual.join(", "));
   }
 }
-const filterNav = adminHome.match(/<nav class="admin-module-filter"[\\s\\S]*?<\\/nav>/)?.[0] || "";
+const filterNavStart = adminHome.indexOf('<nav class="admin-module-filter"');
+const filterNavEnd = adminHome.indexOf("</nav>", filterNavStart);
+const filterNav = filterNavStart >= 0 && filterNavEnd > filterNavStart ? adminHome.slice(filterNavStart, filterNavEnd + 6) : "";
 const filterValues = [...filterNav.matchAll(/data-filter="([^"]+)"/g)].map(([, value]) => value);
 if (JSON.stringify(filterValues) !== JSON.stringify(["operations", "inventory", "finance", "management", "all"])) {
   throw new Error("Admin navigation must provide daily, stock, finance, management and all filters in order");
