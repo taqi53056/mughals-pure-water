@@ -199,8 +199,8 @@ if 'onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھول
     fail("Redundant delivery-center navigation buttons should not be repeated on legacy account pages")
 if 'id="customerAccountType"' not in source or 'id="newMonthlyCreateButton"' not in source:
     fail("Customer creation must offer registered vs monthly account classification.")
-if 'if(!monthlyUnregisteredCustomerEditingId){msg("نیا ماہانہ کھاتہ گاہکوں کے مرکزی صفحے سے بنائیں۔");return;}' not in source:
-    fail("Monthly account creation must be centralized in the customer module.")
+if "const customerId=Number(monthlyUnregisteredCustomerEditingId);" not in source or 'msg("نیا ماہانہ کھاتہ گاہکوں کے مرکزی صفحے سے بنائیں۔")' not in source:
+    fail("Monthly account creation must remain centralized in the customer module.")
 if 'onclick="archiveCustomer(' in source or 'آرکائیو / مستقل حذف</button>' in source:
     fail("Permanent customer archive must remain disabled until explicit data-retention approval.")
 if 'آرکائیو / مستقل حذف (فی الحال بند)</button>' not in source:
@@ -225,3 +225,22 @@ if 'if(c.diff>0&&!confirm(' in source or 'if(c.caps>0&&!confirm(' in source:
     fail("19L delivery still has separate repeated confirmation dialogs")
 
 print("PASS: app shell files, unique IDs, local assets, onclick handlers, manifest JSON, inline JavaScript, Service Worker syntax, legacy branding, and 19L delivery UX guards.")
+
+if "const customerProfileSaveInFlight=new Set();" not in source or "customerProfileSaveInFlight.delete(customerId)" not in source:
+    fail("Registered customer profile edits must prevent overlapping requests and release their guard.")
+if "const monthlyCustomerProfileSaveInFlight=new Set();" not in source or "monthlyCustomerProfileSaveInFlight.delete(customerId)" not in source:
+    fail("Monthly customer profile edits must prevent overlapping requests and release their guard.")
+if '.update(payload).eq("id",customerId).select("id").maybeSingle()' not in source or '.update({name,mobile:mobile?normalizePkMobile(mobile):null,address:address||null}).eq("id",customerId).select("id").maybeSingle()' not in source:
+    fail("Customer profile edits must verify that the target row was updated.")
+
+if 'id="customerSaveButton"' not in source:
+    fail("Registered customer save button must be available for in-flight disabling.")
+
+if 'id="newMonthlyStartDate" type="date" value="${today()}"' not in source:
+    fail("Monthly unregistered customer creation must capture an effective start date.")
+if "p_start_date:startDate" not in source or "address,startDate" not in source:
+    fail("Monthly account creation request identity and RPC must include the effective start date.")
+if 'select("id,name,mobile,address,start_date,is_active,created_at")' not in source:
+    fail("Monthly account ledger must load the effective start date.")
+if "آغاز: " not in source:
+    fail("Monthly account statement must display the effective start date.")
