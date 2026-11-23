@@ -88,7 +88,7 @@ const tileModulePairs = tileElementsForMapping.map(tile => {
   return [module, category];
 }).filter(([module, category]) => module && category);
 const actualModulesByCategory = Object.fromEntries(Object.keys(expectedModulesByCategory).map(category => [
-  category, tileModulePairs.filter(([, module, tileCategory]) => tileCategory === category).map(([, module]) => module).sort()
+  category, tileModulePairs.filter(([module, tileCategory]) => tileCategory === category).map(([module]) => module).sort()
 ]));
 for (const [category, expected] of Object.entries(expectedModulesByCategory)) {
   const actual = actualModulesByCategory[category] || [];
