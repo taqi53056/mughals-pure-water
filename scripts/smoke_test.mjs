@@ -67,6 +67,53 @@ if (categoryCounts.operations !== 6 || categoryCounts.inventory !== 4 ||
     categoryCounts.finance !== 4 || categoryCounts.management !== 7) {
   throw new Error("Admin modules must be grouped into 6 daily, 4 stock, 4 finance and 7 management actions");
 }
+const expectedModulesByCategory = {
+  operations: ["delivery", "monthlyAccounts", "sales", "labor", "counterWater", "unassigned19l"],
+  inventory: ["raw", "finished", "tanker", "returns"],
+  finance: ["finance", "expenses", "income", "ownerWithdrawals"],
+  management: ["customers", "billing", "workers", "complaints", "audit", "settings", "monthClose"]
+};
+const tileElementsForMapping = [...adminHome.matchAll(/<div class="tile [^"]*"[^>]*>/g)].map(([tile]) => tile);
+const tileModulePairs = tileElementsForMapping.map(tile => {
+  const marker = 'onclick="openModule(';
+  const markerStart = tile.indexOf(marker);
+  const moduleEnd = tile.indexOf(')"', markerStart);
+  const categoryMarker = 'data-category="';
+  const categoryStart = tile.indexOf(categoryMarker);
+  const categoryEnd = tile.indexOf('"', categoryStart + categoryMarker.length);
+  const module = markerStart >= 0 && moduleEnd > markerStart
+    ? tile.slice(markerStart + marker.length, moduleEnd).replaceAll("'", "") : "";
+  const category = categoryStart >= 0 && categoryEnd > categoryStart
+    ? tile.slice(categoryStart + categoryMarker.length, categoryEnd) : "";
+  return [module, category];
+}).filter(([module, category]) => module && category);
+const actualModulesByCategory = Object.fromEntries(Object.keys(expectedModulesByCategory).map(category => [
+  category, tileModulePairs.filter(([module, tileCategory]) => tileCategory === category).map(([module]) => module).sort()
+]));
+for (const [category, expected] of Object.entries(expectedModulesByCategory)) {
+  const actual = actualModulesByCategory[category] || [];
+  if (JSON.stringify(actual) !== JSON.stringify([...expected].sort())) {
+    throw new Error("Admin " + category + " navigation is missing or misclassifying a module: " + actual.join(", "));
+  }
+}
+const filterNavStart = adminHome.indexOf('<nav class="admin-module-filter"');
+const filterNavEnd = adminHome.indexOf("</nav>", filterNavStart);
+const filterNav = filterNavStart >= 0 && filterNavEnd > filterNavStart ? adminHome.slice(filterNavStart, filterNavEnd + 6) : "";
+const filterValues = [...filterNav.matchAll(/data-filter="([^"]+)"/g)].map(([, value]) => value);
+if (JSON.stringify(filterValues) !== JSON.stringify(["operations", "inventory", "finance", "management", "all"])) {
+  throw new Error("Admin navigation must provide daily, stock, finance, management and all filters in order");
+}
+const openModuleStart = appSource.indexOf("function openModule(name)");
+const openModuleEnd = appSource.indexOf("/* گاہک */", openModuleStart);
+const openModuleSource = openModuleStart >= 0 && openModuleEnd > openModuleStart
+  ? appSource.slice(openModuleStart, openModuleEnd) : "";
+for (const modules of Object.values(expectedModulesByCategory)) {
+  for (const module of modules) {
+    if (!openModuleSource.includes('name==="' + module + '"')) {
+      throw new Error("Admin tile has no matching module handler: " + module);
+    }
+  }
+}
 const monthlyUnregisteredTile = adminHome.match(/<div class="tile [^"]*"[^>]*aria-label="ماہانہ غیر رجسٹرڈ کھاتے"[^>]*data-category="([^"]+)"/);
 if (!monthlyUnregisteredTile || monthlyUnregisteredTile[1] !== "operations") {
   throw new Error("Unregistered monthly accounts must appear in daily operations");
@@ -666,6 +713,40 @@ try {
 
     await page.goto("http://localhost:4173/index.html", { waitUntil: "load" });
     await page.locator("#loginForm").waitFor({ state: "visible" });
+
+    const navigationFilterResult = await page.evaluate(() => {
+      const tiles = [...document.querySelectorAll("#homeTiles .tile")];
+      const filters = [...document.querySelectorAll("#homeTiles .admin-module-filter [data-filter]")].map(button => button.dataset.filter);
+      filterAdminModules("operations");
+      const operations = tiles.filter(tile => tile.style.display !== "none");
+      const operationsCorrect = operations.length === 6 && operations.every(tile => tile.dataset.category === "operations");
+      filterAdminModules("inventory");
+      const inventory = tiles.filter(tile => tile.style.display !== "none");
+      const inventoryCorrect = inventory.length === 4 && inventory.every(tile => tile.dataset.category === "inventory");
+      filterAdminModules("finance");
+      const finance = tiles.filter(tile => tile.style.display !== "none");
+      const financeCorrect = finance.length === 4 && finance.every(tile => tile.dataset.category === "finance");
+      filterAdminModules("management");
+      const management = tiles.filter(tile => tile.style.display !== "none");
+      const managementCorrect = management.length === 7 && management.every(tile => tile.dataset.category === "management");
+      filterAdminModules("all");
+      const all = tiles.filter(tile => tile.style.display !== "none");
+      return {
+        filters: filters.join(","),
+        operationsCorrect,
+        inventoryCorrect,
+        financeCorrect,
+        managementCorrect,
+        allVisible: all.length,
+        allRestored: all.every(tile => tile.getAttribute("aria-hidden") === "false")
+      };
+    });
+    if (navigationFilterResult.filters !== "operations,inventory,finance,management,all" ||
+        !navigationFilterResult.operationsCorrect || !navigationFilterResult.inventoryCorrect ||
+        !navigationFilterResult.financeCorrect || !navigationFilterResult.managementCorrect ||
+        navigationFilterResult.allVisible !== 21 || !navigationFilterResult.allRestored) {
+      failures.push(`Admin navigation filters do not correctly show all category modules: ${JSON.stringify(navigationFilterResult)}`);
+    }
 
     const state = await page.evaluate(() => ({
       title: document.title,
