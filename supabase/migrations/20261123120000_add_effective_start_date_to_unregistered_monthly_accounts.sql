@@ -129,7 +129,9 @@ begin
   end if;
 
   if p_delivery_date is null or p_delivery_date < v_customer.start_date then
-    raise exception 'سپلائی کی تاریخ ماہانہ کھاتے کے آغاز ('||v_customer.start_date::text||') سے پہلے نہیں ہو سکتی۔' using errcode='22023';
+    raise exception using
+      message = 'سپلائی کی تاریخ ماہانہ کھاتے کے آغاز ('||v_customer.start_date::text||') سے پہلے نہیں ہو سکتی۔',
+      errcode = '22023';
   end if;
 
   v_result:=public.record_unassigned_19l_delivery(
