@@ -1454,10 +1454,6 @@ const ADMIN_SEARCH_ALIASES={
  audit:["آڈٹ","کس نے تبدیلی کی","تبدیلیوں کا ریکارڈ"],
  settings:["ترتیبات","ریٹ","قیمت","ریٹ تبدیل","سیٹنگ"]
 };
-function useAdminSearchShortcut(query){
- const input=$("adminQuickSearch");if(!input)return;
- input.value=query;searchAdminModules(query);input.focus();
-}
 function normalizeAdminSearchText(value){
  return String(value||"").toLocaleLowerCase()
   .replace(/[ًٌٍَُِّْٰـ]/g,"")
@@ -3738,11 +3734,6 @@ async function readTodayRows(table,columns,dateColumn,date){
   const {data,error}=await db.from(table).select(columns).eq(dateColumn,date);
   return {rows:data||[],error:error||null};
  }catch(error){return {rows:[],error};}
-}
-async function sumTable(table,column,datecol,date){
- const result=await readTodayRows(table,column,datecol,date);
- if(result.error)throw result.error;
- return result.rows.reduce((n,row)=>n+(Number(row[column])||0),0);
 }
 async function loadTodaySummary(){
  const el=$("todaySummary");if(!el)return;
