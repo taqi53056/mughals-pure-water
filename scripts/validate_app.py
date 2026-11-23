@@ -203,8 +203,10 @@ if "const customerId=Number(monthlyUnregisteredCustomerEditingId);" not in sourc
     fail("Monthly account creation must remain centralized in the customer module.")
 if 'onclick="archiveCustomer(' in source or 'آرکائیو / مستقل حذف</button>' in source:
     fail("Permanent customer archive must remain disabled until explicit data-retention approval.")
-if 'آرکائیو / مستقل حذف (فی الحال بند)</button>' not in source:
-    fail("Disabled permanent customer archive control is missing.")
+if 'آرکائیو / مستقل حذف (فی الحال بند)</button>' in source:
+    fail("Disabled permanent customer archive control must not clutter the customer list.")
+if "shareCustomerTestWhatsApp" in source or "shareCustomerTestSMS" in source or "رابطہ ٹیسٹ کریں" in source:
+    fail("Test-only customer contact buttons must not appear in the production interface.")
 if 'async function archiveCustomer(id){\n msg("مستقل کسٹمر آرکائیو فی الحال بند ہے' not in source:
     fail("Permanent customer archive handler must fail closed before any destructive request.")
 if "const customerStatusInFlight=new Set();" not in source or "customerStatusInFlight.delete(customerId)" not in source:
