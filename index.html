@@ -1753,7 +1753,7 @@ function renderCustomers(){
     <button class="secondary" onclick="showCustomerFullAccount(${Number(c.id)})">مکمل اکاؤنٹ</button>
     <button onclick="editCustomer(${Number(c.id)})">معلومات درست کریں</button>
     <button class="secondary" onclick="${accessHandler}(${Number(c.id)})">${accessAction}</button>
-    <button class="danger-button" onclick="archiveCustomer(${Number(c.id)})">آرکائیو / مستقل حذف</button>
+    <button class="danger-button" type="button" disabled title="مستقل آرکائیو فی الحال محفوظ ریکارڈ پالیسی کے تحت بند ہے">آرکائیو / مستقل حذف (فی الحال بند)</button>
    </div>
   </article>`;
  }).join("")+"</div>";
@@ -1919,6 +1919,8 @@ async function loadCustomerArchiveHistory(){
   :"ابھی کوئی کسٹمر آرکائیو نہیں ہوا۔";
 }
 async function archiveCustomer(id){
+ msg("مستقل کسٹمر آرکائیو فی الحال بند ہے تاکہ ڈیلیوری، ادائیگی، بل اور آڈٹ ریکارڈ محفوظ رہیں۔");
+ return;
  const customer=customerList.find(c=>Number(c.id)===Number(id));
  if(!customer)return;
  const warning="یہ مستقل کارروائی ہے۔ "+(customer.name||"اس کسٹمر")+" کی ذاتی معلومات، لاگ اِن، ڈلیوری، ادائیگی، بل، اطلاعات، پش سبسکرپشن اور شکایات حذف ہوں گی۔ صرف غیر شناختی مالی خلاصہ باقی رہے گا۔";

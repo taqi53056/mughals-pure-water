@@ -201,6 +201,12 @@ if 'id="customerAccountType"' not in source or 'id="newMonthlyCreateButton"' not
     fail("Customer creation must offer registered vs monthly account classification.")
 if 'if(!monthlyUnregisteredCustomerEditingId){msg("نیا ماہانہ کھاتہ گاہکوں کے مرکزی صفحے سے بنائیں۔");return;}' not in source:
     fail("Monthly account creation must be centralized in the customer module.")
+if 'onclick="archiveCustomer(' in source or 'آرکائیو / مستقل حذف</button>' in source:
+    fail("Permanent customer archive must remain disabled until explicit data-retention approval.")
+if 'آرکائیو / مستقل حذف (فی الحال بند)</button>' not in source:
+    fail("Disabled permanent customer archive control is missing.")
+if 'async function archiveCustomer(id){\n msg("مستقل کسٹمر آرکائیو فی الحال بند ہے' not in source:
+    fail("Permanent customer archive handler must fail closed before any destructive request.")
 if "counterCapsSold" in source or "caps_sold:" in source:
     fail("Counter cap sales must not require a daily count or manual entry")
 if "const capsUsed=customerCapsUsed+unassignedCapsUsed;" not in source:
