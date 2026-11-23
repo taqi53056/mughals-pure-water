@@ -199,8 +199,8 @@ if 'onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھول
     fail("Redundant delivery-center navigation buttons should not be repeated on legacy account pages")
 if 'id="customerAccountType"' not in source or 'id="newMonthlyCreateButton"' not in source:
     fail("Customer creation must offer registered vs monthly account classification.")
-if 'if(!monthlyUnregisteredCustomerEditingId){msg("نیا ماہانہ کھاتہ گاہکوں کے مرکزی صفحے سے بنائیں۔");return;}' not in source:
-    fail("Monthly account creation must be centralized in the customer module.")
+if "const customerId=Number(monthlyUnregisteredCustomerEditingId);" not in source or 'msg("نیا ماہانہ کھاتہ گاہکوں کے مرکزی صفحے سے بنائیں۔")' not in source:
+    fail("Monthly account creation must remain centralized in the customer module.")
 if 'onclick="archiveCustomer(' in source or 'آرکائیو / مستقل حذف</button>' in source:
     fail("Permanent customer archive must remain disabled until explicit data-retention approval.")
 if 'آرکائیو / مستقل حذف (فی الحال بند)</button>' not in source:
