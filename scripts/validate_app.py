@@ -225,3 +225,10 @@ if 'if(c.diff>0&&!confirm(' in source or 'if(c.caps>0&&!confirm(' in source:
     fail("19L delivery still has separate repeated confirmation dialogs")
 
 print("PASS: app shell files, unique IDs, local assets, onclick handlers, manifest JSON, inline JavaScript, Service Worker syntax, legacy branding, and 19L delivery UX guards.")
+
+if "const customerProfileSaveInFlight=new Set();" not in source or "customerProfileSaveInFlight.delete(customerId)" not in source:
+    fail("Registered customer profile edits must prevent overlapping requests and release their guard.")
+if "const monthlyCustomerProfileSaveInFlight=new Set();" not in source or "monthlyCustomerProfileSaveInFlight.delete(customerId)" not in source:
+    fail("Monthly customer profile edits must prevent overlapping requests and release their guard.")
+if '.update(payload).eq("id",customerId).select("id").maybeSingle()' not in source or '.update({name,mobile:mobile?normalizePkMobile(mobile):null,address:address||null}).eq("id",customerId).select("id").maybeSingle()' not in source:
+    fail("Customer profile edits must verify that the target row was updated.")
