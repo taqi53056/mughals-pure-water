@@ -200,14 +200,14 @@ if "ایک ہی دن میں ایک گاہک کی متعدد ڈلیوریاں" in
 if "async function loadSelectedDelivery()" not in source or "window.currentDeliveryRecordId" not in source:
     fail("delivery edit-in-place guard is missing")
 
-tile_routes = re.findall(r'<div class="tile\\b[^>]*onclick="openModule\\(\\'([A-Za-z]+)\\'\\)"', source)
+tile_routes = re.findall(r"""<div class="tile\b[^>]*onclick="openModule\('([A-Za-z]+)'\)""", source)
 if not tile_routes or len(tile_routes) != len(set(tile_routes)):
     fail("Admin home tiles contain missing or duplicate module routes.")
 open_module_start = source.find("function openModule(name)")
-open_module_end = source.find("\\n}", open_module_start)
+open_module_end = source.find("\n}", open_module_start)
 open_module_body = source[open_module_start:open_module_end if open_module_end > open_module_start else open_module_start + 5000]
 for route in tile_routes:
-    if f'name=="{route}"' not in open_module_body and not (route == "finance" and 'name==="finance"' in open_module_body):
+    if f'name==="{route}"' not in open_module_body:
         fail("Admin home tile points to an unregistered module: " + route)
 if "async function readBillSummary(" not in source:
     fail("read-only bill summary helper is missing")
