@@ -1287,6 +1287,54 @@ try {
       failures.push("Monthly unregistered account, delivery, or collection workflow is not functioning correctly");
     }
 
+    const ownerWithdrawalResult = await page.evaluate(async () => {
+      const originalDb = window.db;
+      const originalConfirm = window.confirm;
+      const rows = [
+        { id: 1, entry_date: "2026-11-15", counterparty: "M. Muzamil Mughal", amount: 50, category: "ذاتی", payment_method: "cash", withdrawal_source: "counter_cash" },
+        { id: 2, entry_date: "2026-11-17", counterparty: "M. Rafi Mughal", amount: 50, category: "پرانا", payment_method: "cash", withdrawal_source: "counter_cash" },
+        { id: 3, entry_date: "2026-11-17", counterparty: "M.Taqi Mughal", amount: 1040, category: "ذاتی", payment_method: "cash", withdrawal_source: "counter_cash" },
+        { id: 4, entry_date: "2026-11-15", counterparty: "M.Usama Mughal", amount: 200, category: "ذاتی", payment_method: "cash", withdrawal_source: null }
+      ];
+      window.db = {
+        from(table) {
+          const chain = {
+            select() { return chain; },
+            eq() { return chain; },
+            gte() { return chain; },
+            lte() { return chain; },
+            order() { return chain; },
+            then(resolve, reject) {
+              return Promise.resolve({ data: table === "business_finance_ledger" ? rows : [], error: null }).then(resolve, reject);
+            }
+          };
+          return chain;
+        }
+      };
+      window.confirm = () => true;
+      try {
+        await window.ownerWithdrawalsModule();
+        const summary = document.querySelector("#ownerWithdrawalSummary")?.textContent || "";
+        const history = document.querySelector("#ownerWithdrawalHistory")?.textContent || "";
+        return {
+          ownerCards: document.querySelectorAll("#ownerWithdrawalSummary .owner-recipient-card").length,
+          legacyTotalShown: summary.includes("تین مالکان کے علاوہ پرانا ریکارڈ"),
+          legacyNamePreservedInHistory: history.includes("M. Rafi Mughal"),
+          legacyNameNotPromotedToOwnerCard: !summary.includes("M. Rafi Mughal"),
+          unclassifiedSourceShown: summary.includes("ماخذ درج نہیں")
+        };
+      } finally {
+        window.db = originalDb;
+        window.confirm = originalConfirm;
+      }
+    });
+    if (ownerWithdrawalResult.ownerCards !== 3 || !ownerWithdrawalResult.legacyTotalShown ||
+        !ownerWithdrawalResult.legacyNamePreservedInHistory ||
+        !ownerWithdrawalResult.legacyNameNotPromotedToOwnerCard ||
+        !ownerWithdrawalResult.unclassifiedSourceShown) {
+      failures.push("Owner withdrawal summary must show only three permanent owners while preserving legacy records and unknown sources");
+    }
+
     const labelResult = await page.evaluate(() => {
       const body = document.querySelector("#moduleBody");
       body.innerHTML = '<div><input id="rawPurchaseQty" type="number" placeholder="مقدار"></div>' +
