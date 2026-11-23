@@ -1612,7 +1612,22 @@ async function openModule(name){
 async function customersModule(){
  setTitle("گاہکوں کا ریکارڈ");
  $("moduleBody").innerHTML=`
- <p class="muted">نئے گاہک خود رجسٹریشن کریں گے۔ منظوری کے بعد ہی انہیں بل اور ڈلیوری نظر آئے گی۔</p>
+ <p class="muted">نئے رجسٹرڈ گاہک خود ایپ میں رجسٹریشن کریں گے؛ ماہانہ غیر رجسٹرڈ کھاتہ ایڈمن یہاں بنا سکتا ہے۔ دونوں کی ڈلیوری ایک ہی روزانہ 19L سینٹر سے درج ہوگی۔</p>
+ <div class="card" id="customerCreateCard">
+  <h3>نیا گاہک / نیا کھاتہ</h3>
+  <label for="customerAccountType">اکاؤنٹ کی قسم *</label>
+  <select id="customerAccountType" onchange="handleCustomerAccountTypeChange()">
+   <option value="registered">رجسٹرڈ کسٹمر — ایپ لاگ اِن</option>
+   <option value="monthly">ماہانہ غیر رجسٹرڈ — ایڈمن کھاتہ</option>
+  </select>
+  <div id="registeredAccountInfo" class="stat">رجسٹرڈ کسٹمر اپنا نام، موبائل، پتہ، ای میل اور پاس ورڈ دے کر ایپ کے رجسٹریشن فارم سے درخواست بھیجے گا۔ درخواست یہاں منظوری کے لیے آئے گی؛ اس طرح اس کا لاگ اِن اور ذاتی پورٹل درست طور پر منسلک رہے گا۔</div>
+  <div id="monthlyAccountCreateFields" class="hidden">
+   <label for="newMonthlyName">گاہک کا نام *</label><input id="newMonthlyName" maxlength="120" placeholder="پورا نام">
+   <label for="newMonthlyMobile">موبائل نمبر</label><input id="newMonthlyMobile" maxlength="30" inputmode="tel" placeholder="مثلاً 03001234567">
+   <label for="newMonthlyAddress">پتہ</label><input id="newMonthlyAddress" maxlength="300" placeholder="علاقہ یا مکمل پتہ">
+   <button id="newMonthlyCreateButton" onclick="createMonthlyCustomerFromCustomerModule()">ماہانہ کھاتہ بنائیں</button>
+  </div>
+ </div>
  <div class="card"><h3>منظوری کے منتظر گاہک</h3><div id="pendingCustomers">فہرست لوڈ ہو رہی ہے...</div></div>
  <div class="card"><h3>آرکائیو شدہ گاہک — صرف غیر شناختی مالی خلاصہ</h3><div id="customerArchiveJobs">آرکائیو کام لوڈ ہو رہے ہیں...</div><div id="customerArchiveHistory">آرکائیو ہسٹری لوڈ ہو رہی ہے...</div></div>
  <input id="customerSearch" placeholder="نام، Customer ID یا موبائل تلاش کریں" oninput="renderCustomers()">
@@ -1633,6 +1648,35 @@ async function customersModule(){
  </div>`;
  await loadCustomers();
  await loadCustomerArchiveHistory();
+}
+
+function handleCustomerAccountTypeChange(){
+ const monthly=$("customerAccountType")?.value==="monthly";
+ $("monthlyAccountCreateFields")?.classList.toggle("hidden",!monthly);
+ $("registeredAccountInfo")?.classList.toggle("hidden",monthly);
+}
+
+async function createMonthlyCustomerFromCustomerModule(){
+ const name=$("newMonthlyName")?.value.trim()||"";
+ const mobileInput=$("newMonthlyMobile")?.value.trim()||"";
+ const address=$("newMonthlyAddress")?.value.trim()||"";
+ if($("customerAccountType")?.value!=="monthly"){msg("پہلے ماہانہ غیر رجسٹرڈ اکاؤنٹ منتخب کریں۔");return;}
+ if(name.length<2||name.length>120){msg("گاہک کا نام کم از کم دو حروف اور زیادہ سے زیادہ 120 حروف میں درج کریں۔");$("newMonthlyName")?.focus();return;}
+ const mobile=mobileInput?normalizePkMobile(mobileInput):null;
+ if(mobileInput&&!mobile){msg("موبائل نمبر درست درج کریں۔");$("newMonthlyMobile")?.focus();return;}
+ if(address.length>300){msg("پتہ 300 حروف سے زیادہ نہیں ہو سکتا۔");return;}
+ const button=$("newMonthlyCreateButton");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const signature=[name,mobile||"",address].join("|");
+  const requestId=mpwPendingRequestId("unregistered-monthly-customer",signature);
+  const {data,error}=await db.rpc("create_unregistered_monthly_customer",{p_name:name,p_mobile:mobile,p_address:address||null,p_request_id:requestId});
+  if(error)throw error;
+  if(!data?.id)throw new Error("ماہانہ کھاتہ محفوظ ہونے کی تصدیق نہیں ہوئی۔");
+  mpwClearPendingRequestId("unregistered-monthly-customer");
+  $("newMonthlyName").value="";$("newMonthlyMobile").value="";$("newMonthlyAddress").value="";
+  msg("ماہانہ غیر رجسٹرڈ کھاتہ بن گیا۔ اب یہ مشترکہ 19L ڈلیوری سینٹر میں دستیاب ہوگا۔",true);
+ }catch(e){msg("ماہانہ کھاتہ نہیں بنا: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
 
 async function loadCustomers(){
@@ -2991,7 +3035,8 @@ async function monthlyUnregisteredModule(){
  monthlyUnregisteredCustomerEditingId=null;
  $("moduleBody").innerHTML=
  '<p class="muted">یہ ان ماہانہ گاہکوں کا الگ کھاتہ ہے جن کا ایپ لاگ اِن اکاؤنٹ نہیں۔ ڈلیوری اور وصولی کی تاریخ الگ محفوظ ہوگی؛ ان کی ماہانہ وصولیاں روزانہ کاؤنٹر کیش سے منہا نہیں ہوں گی۔</p>'+
- '<div class="card"><h3 id="umCustomerFormTitle">نیا ماہانہ گاہک</h3>'+
+ '<div class="card"><p class="muted">نیا ماہانہ کھاتہ بنانے کے لیے گاہکوں کے مرکزی صفحے میں اکاؤنٹ کی قسم منتخب کریں۔ یہاں صرف موجودہ ماہانہ کھاتے کی معلومات درست کی جائیں گی۔</p><button class="secondary" onclick="openModule(\'customers\')">گاہکوں کے مرکزی صفحے پر جائیں</button></div>'+
+ '<div id="umCustomerEditCard" class="card hidden"><h3 id="umCustomerFormTitle">ماہانہ گاہک کی معلومات درست کریں</h3>'+
  '<label for="umName">گاہک کا نام *</label><input id="umName" maxlength="120" placeholder="پورا نام">'+
  '<label for="umMobile">موبائل نمبر</label><input id="umMobile" maxlength="30" inputmode="tel" placeholder="مثلاً 03001234567">'+
  '<label for="umAddress">پتہ</label><input id="umAddress" maxlength="300" placeholder="علاقہ یا مکمل پتہ">'+
@@ -3134,23 +3179,16 @@ async function loadMonthlyUnregisteredLedger(){
 }
 
 async function saveMonthlyUnregisteredCustomer(){
+ if(!monthlyUnregisteredCustomerEditingId){msg("نیا ماہانہ کھاتہ گاہکوں کے مرکزی صفحے سے بنائیں۔");return;}
  const name=$("umName").value.trim(),mobile=$("umMobile").value.trim(),address=$("umAddress").value.trim();
  if(name.length<2){msg("گاہک کا نام کم از کم دو حروف میں درج کریں۔");return;}
  if(mobile&&!normalizePkMobile(mobile)){msg("موبائل نمبر درست درج کریں۔");return;}
  const button=$("umCustomerSave");if(button?.disabled)return;if(button)button.disabled=true;
  try{
-  if(monthlyUnregisteredCustomerEditingId){
-   const {error}=await db.from("unregistered_monthly_customers").update({name,mobile:mobile?normalizePkMobile(mobile):null,address:address||null}).eq("id",monthlyUnregisteredCustomerEditingId);
-   if(error)throw error;
-   monthlyUnregisteredCustomerEditingId=null;
-   $("umCustomerFormTitle").textContent="نیا ماہانہ گاہک";$("umCustomerSave").textContent="گاہک محفوظ کریں";$("umCustomerCancel").classList.add("hidden");
-  }else{
-   const signature=[name,mobile?normalizePkMobile(mobile):"",address].join("|");
-   const requestId=mpwPendingRequestId("unregistered-monthly-customer",signature);
-   const {data,error}=await db.rpc("create_unregistered_monthly_customer",{p_name:name,p_mobile:mobile?normalizePkMobile(mobile):null,p_address:address||null,p_request_id:requestId});
-   if(error)throw error;if(!data?.id)throw new Error("گاہک محفوظ ہونے کی تصدیق نہیں ہوئی۔");
-   mpwClearPendingRequestId("unregistered-monthly-customer");
-  }
+  const {error}=await db.from("unregistered_monthly_customers").update({name,mobile:mobile?normalizePkMobile(mobile):null,address:address||null}).eq("id",monthlyUnregisteredCustomerEditingId);
+  if(error)throw error;
+  monthlyUnregisteredCustomerEditingId=null;
+  $("umCustomerEditCard")?.classList.add("hidden");
   $("umName").value="";$("umMobile").value="";$("umAddress").value="";
   msg("ماہانہ گاہک کا کھاتہ محفوظ ہوگیا۔",true);await loadMonthlyUnregisteredLedger();
  }catch(e){msg("ماہانہ گاہک محفوظ نہیں ہوا: "+(e.message||String(e)));}
@@ -3161,6 +3199,7 @@ async function editMonthlyUnregisteredCustomer(id){
  const {data,error}=await db.from("unregistered_monthly_customers").select("id,name,mobile,address").eq("id",id).single();
  if(error){msg("گاہک کی معلومات لوڈ نہیں ہوئیں: "+error.message);return;}
  monthlyUnregisteredCustomerEditingId=Number(data.id);
+ $("umCustomerEditCard")?.classList.remove("hidden");
  $("umName").value=data.name||"";$("umMobile").value=data.mobile||"";$("umAddress").value=data.address||"";
  $("umCustomerFormTitle").textContent="ماہانہ گاہک کی معلومات درست کریں";
  $("umCustomerSave").textContent="تبدیلیاں محفوظ کریں";$("umCustomerCancel").classList.remove("hidden");
@@ -3170,7 +3209,8 @@ async function editMonthlyUnregisteredCustomer(id){
 function cancelMonthlyUnregisteredCustomerEdit(){
  monthlyUnregisteredCustomerEditingId=null;
  $("umName").value="";$("umMobile").value="";$("umAddress").value="";
- $("umCustomerFormTitle").textContent="نیا ماہانہ گاہک";$("umCustomerSave").textContent="گاہک محفوظ کریں";$("umCustomerCancel").classList.add("hidden");
+ $("umCustomerEditCard")?.classList.add("hidden");
+ $("umCustomerFormTitle").textContent="ماہانہ گاہک کی معلومات درست کریں";$("umCustomerSave").textContent="گاہک محفوظ کریں";$("umCustomerCancel").classList.add("hidden");
 }
 
 async function setMonthlyUnregisteredCustomerActive(id,active){
