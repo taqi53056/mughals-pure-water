@@ -134,6 +134,8 @@ for required in (
     "async function saveMonthlyUnregisteredCollection()",
     'db.from("unregistered_monthly_bills")',
     "ماہانہ بل اور بقایا",
+    "حالیہ وصولیاں",
+    "received_date",
     "customer_classification",
 ):
     if required not in source:
