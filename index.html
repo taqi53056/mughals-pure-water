@@ -3138,8 +3138,7 @@ async function saveUnassigned19lDelivery(){
  const date=$("u19Date").value,actor=$("u19Worker").value,isOwner=actor==="owner",worker=isOwner?null:Number($("u19WorkerId").value),bottles=Number($("u19Bottles").value),empties=Number($("u19Empties").value||0),damagedCaps=Number($("u19DamagedCaps").value||0);
  if(!date||!["owner","worker"].includes(actor)||(!isOwner&&(!Number.isInteger(worker)||worker<=0))||!Number.isInteger(bottles)||bottles<=0||!Number.isInteger(empties)||empties<0||empties>bottles||!Number.isInteger(damagedCaps)||damagedCaps<0){msg("سپلائی کرنے والا، مزدور (اگر لاگو ہو)، تاریخ اور مقدار درست منتخب/درج کریں۔");return;}
  if(date>today()){msg("مستقبل کی تاریخ پر سپلائی درج نہیں ہو سکتی۔");return;}
- const labor=isOwner?0:bottles*20,ownerSaving=isOwner?bottles*20:0;
- if(!confirm("تصدیق کریں:\nتاریخ: "+date+"\nسپلائی: "+(isOwner?"مالک نے خود":"مزدور")+"\nبوتلیں: "+bottles+"\nورکر مزدوری: "+money(labor)+"\nمالک کی بچائی گئی مزدوری: "+money(ownerSaving)+"\nیہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
+ if(!confirm("تصدیق کریں:\nتاریخ: "+date+"\nسپلائی: "+(isOwner?"مالک نے خود":"مزدور")+"\nبوتلیں: "+bottles+"\nیہ ماہانہ کسٹمر اکاؤنٹ میں شامل نہیں ہوگی۔ کیا محفوظ کریں؟"))return;
  const button=$("u19SaveButton");if(button?.disabled)return;if(button)button.disabled=true;
  const signature=[date,actor,worker,bottles,empties,damagedCaps].join("|");
  const requestId=mpwPendingRequestId("unassigned19l",signature);
@@ -3151,9 +3150,8 @@ async function saveUnassigned19lDelivery(){
   if(error)throw error;
   if(!data?.id)throw new Error("محفوظ اندراج کی تصدیق موصول نہیں ہوئی۔");
   mpwClearPendingRequestId("unassigned19l");
-  msg("غیر منسلک سپلائی محفوظ ہوگئی۔ "+(isOwner?"مالک کی بچائی گئی مزدوری "+money(data.owner_labor_saving)+" درج ہے۔":"ورکر مزدوری "+money(data.labor_amount)+" لیجر میں درج ہوگئی۔"),true);
+  msg("غیر منسلک سپلائی محفوظ ہوگئی۔",true);
   $("u19Worker").value="";$("u19WorkerPicker").classList.add("hidden");$("u19WorkerId").required=false;$("u19Bottles").value="";$("u19Empties").value="0";$("u19DamagedCaps").value="0";
-  updateUnassigned19lLabor();
   await Promise.all([loadUnassigned19lHistory(),loadUnassigned19lCollectionOptions(),loadTankerPurchases(),loadTodaySummary(),runReport()]);
  }catch(e){msg("سپلائی محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
