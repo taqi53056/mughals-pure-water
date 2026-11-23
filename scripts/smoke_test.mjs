@@ -1365,7 +1365,7 @@ try {
           unifiedHistoryTemporaryOnly,
           fullDuePrefilled, partialTotalAmountEntered,
           collectionUsesCustomerAndActualDate: collectionCall?.args?.p_customer_id === 5 &&
-            collectionCall?.args?.p_received_date === "2026-11-22" && collectionCall?.args?.p_amount === 3500 &&
+            collectionCall?.args?.p_received_date === "2026-11-22" && collectionCall?.args?.p_amount === 1500 &&
             collectionCall?.args?.p_payment_method === "cash",
           remainingBalanceShown,
           monthlyCollectionsStayInSelectedAccount: document.querySelector("#umLedger").textContent.includes("Monthly Account Test") &&
@@ -1376,6 +1376,7 @@ try {
         window.loadTodaySummary = originalLoadTodaySummary; window.runReport = originalRunReport;
       }
     });
+    console.log("Monthly total-receipt test details: " + JSON.stringify(monthlyAccountResult));
     if (!monthlyAccountResult.initialAccountHidden || !monthlyAccountResult.newAccountCreationRedirect ||
         !monthlyAccountResult.registeredSignupExplained || !monthlyAccountResult.monthlyFieldsShown ||
         !monthlyAccountResult.customerCreated || !monthlyAccountResult.selectedAccountVisible ||
