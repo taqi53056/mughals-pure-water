@@ -3646,7 +3646,7 @@ async function loadTodaySummary(){
    '<div class="stat">کاؤنٹر پانی کی تخمینی لاگت: <b>'+money(water.estimated_counter_water_cost||0)+'</b></div>'+
    (dailyReport.missing_costs?.length?'<div class="warning">لاگت کی کمی: '+dailyReport.missing_costs.map(esc).join("، ")+'</div>':"")+
    (dailyReport.notes?'<div class="warning">'+esc(dailyReport.notes)+'</div>':"")+
-   (Number(water.unassigned_delivery_cash_unclassified||0)>0?'<div class="warning">غیر منسلک سپلائی کی وصولی باقی ہے۔ اگر رقم وصول ہو چکی ہے تو مخصوص سپلائی ماڈیول میں متعلقہ ریکارڈ کے تحت وصولی درج کریں؛ یہ مالی وصولی خودکار درج ہوگی اور منافع دوبارہ نہیں بڑھے گا۔</div>':"")+
+   (Number(water.unassigned_delivery_cash_unclassified||0)>0?'<div class="warning">ایک وقتی غیر منسلک سپلائی کی وصولی باقی ہے۔ اگر رقم وصول ہو چکی ہے تو مخصوص سپلائی ماڈیول میں متعلقہ ریکارڈ کے تحت وصولی درج کریں؛ یہ مالی وصولی خودکار درج ہوگی اور منافع دوبارہ نہیں بڑھے گا۔</div>':"")+
    (expensesR.rows.length===0&&!expensesR.error?'<div class="warning">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>':"");
  }
  const errorHtml=dailyErrors.length?'<div class="warning">کچھ معلومات لوڈ نہیں ہوئیں: '+dailyErrors.map(([name,error])=>esc(name)+': '+esc(error.message||"خرابی")).join("؛ ")+'۔ باقی دستیاب سرگرمی دکھائی جا رہی ہے۔</div>':"";
@@ -3698,7 +3698,7 @@ async function loadExecutiveDashboard(){
   const water=segments["19L"]||{},finished=segments.finished_goods||{},shared=segments.shared||{};
   const fmt=n=>money(Number(n)||0),fmtNullable=n=>n==null?"—":fmt(n);
   const unassignedCashflowWarning=Number(water.unassigned_delivery_cash_unclassified||0)>0
-   ?'<div class="warning"><b>غیر منسلک سپلائی کی وصولی باقی ہے:</b> '+fmt(water.unassigned_delivery_cash_unclassified)+' کی وصولی اس مدت میں درج نہیں۔ اگر رقم وصول ہو چکی ہے تو مخصوص سپلائی ماڈیول میں متعلقہ ریکارڈ کے تحت وصولی درج کریں؛ مالی وصولی خودکار درج ہوگی اور منافع دوبارہ نہیں بڑھے گا۔ اگر رقم وصول نہیں ہوئی تو وصولی درج نہ کریں۔</div>'
+   ?'<div class="warning"><b>ایک وقتی غیر منسلک سپلائی کی وصولی باقی ہے:</b> '+fmt(water.unassigned_delivery_cash_unclassified)+' کی وصولی اس مدت میں درج نہیں۔ اگر رقم وصول ہو چکی ہے تو مخصوص سپلائی ماڈیول میں متعلقہ ریکارڈ کے تحت وصولی درج کریں؛ مالی وصولی خودکار درج ہوگی اور منافع دوبارہ نہیں بڑھے گا۔ اگر رقم وصول نہیں ہوئی تو وصولی درج نہ کریں۔</div>'
    :"";
   const revenue=Number(water.revenue||0)+Number(finished.revenue||0);
   const net=Number(segments.net_profit||0);
@@ -3725,7 +3725,7 @@ async function loadExecutiveDashboard(){
    ["کل فروخت / آمدن",fmt(revenue),"19L + تیار مال کی فروخت"],
    ["سیکشن کنٹریبیوشن",fmt(contribution),"براہِ راست سیکشن اخراجات کے بعد"],
    ["تخمینی خالص منافع / نقصان",fmt(net),report.net_profit_is_estimated?"کاؤنٹر پانی کے لیٹر کے تخمینے سمیت":"درج شدہ اعداد کے مطابق"],
-   ["کل قابلِ وصول",fmt(data.receivables),"گاہک بل، غیر منسلک سپلائی، منظور شدہ دکانوں کا ادھار اور دیے گئے قرض؛ بوتل ضمانت الگ"],
+   ["کل قابلِ وصول",fmt(data.receivables),"گاہک بل، ایک وقتی و ماہانہ 19L کھاتے، پرانے غیر درجہ بند ریکارڈ، دکانوں کا ادھار اور دیے گئے قرض؛ بوتل ضمانت الگ"],
    ["مدت کی وصولیاں",fmt(data.recorded_collections),"نقد فروخت، کسٹمر/دکان ادھار وصولی، بوتل ضمانت اور دیگر درج شدہ وصولیاں"],
    ["مالکین کی نکاسی",fmt(data.owner_withdrawals),"منافع کے خرچ میں شامل نہیں"]
   ];
@@ -3797,7 +3797,9 @@ async function loadExecutiveDashboard(){
      <div class="exec-line"><span>درج شدہ نقد آمدن</span><b>${fmt(data.recorded_collections)}</b></div>
      <div class="exec-line"><span>درج شدہ نقد اخراجات</span><b>${fmt(data.recorded_cash_outflows)}</b></div>
      <div class="exec-line exec-net"><span>درج شدہ خالص نقد حرکت</span><b>${fmt(data.recorded_net_cash_movement)}</b></div>
-     <div class="exec-line"><span>غیر منسلک 19L قابلِ وصول</span><b>${fmt(data.unassigned_receivables)}</b></div>
+     <div class="exec-line"><span>ایک وقتی 19L بقایا</span><b>${fmt(data.unassigned_receivables)}</b></div>
+     <div class="exec-line"><span>ماہانہ غیر رجسٹرڈ کھاتوں کا بقایا</span><b>${fmt(data.monthly_unregistered_receivables)}</b></div>
+     <div class="exec-line"><span>پرانے غیر درجہ بند 19L بقایا</span><b>${fmt(data.historical_pending_19l_receivables)}</b></div>
      <div class="exec-line"><span>درج شدہ واجب الادا (ورکر + قرض)</span><b>${fmt(data.payables)}</b></div>
      <div class="exec-line"><span>ورکر بقایا</span><b>${fmt(data.worker_payables)}</b></div>
      <div class="exec-line"><span>فعال گاہک</span><b>${Number(data.active_customers)||0}</b></div>
