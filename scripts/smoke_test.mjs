@@ -1250,11 +1250,16 @@ try {
         document.querySelector("#umDeliveryCustomer").value = "5";
         document.querySelector("#umDeliveryDate").value = "2026-11-22";
         document.querySelector("#umWorker").value = "owner";
-        document.querySelector("#umBottles").value = "2";
-        document.querySelector("#umEmpties").value = "0";
+        document.querySelector("#umBottles").value = "1";
+        document.querySelector("#umEmpties").value = "2";
         document.querySelector("#umCaps").value = "0";
         await window.saveMonthlyUnregisteredDelivery();
+        const invalidBottleExchangeBlocked = !rpcCalls.some(call => call.name === "record_monthly_unregistered_delivery");
+        document.querySelector("#umBottles").value = "2";
+        document.querySelector("#umEmpties").value = "1";
+        await window.saveMonthlyUnregisteredDelivery();
         const deliveryCall = rpcCalls.find(call => call.name === "record_monthly_unregistered_delivery");
+        const monthlyAccountActionVisible = document.querySelector("#umActive-5") !== null;
 
         document.querySelector("#umCollectionDelivery").value = "11";
         document.querySelector("#umCollectionDate").value = "2026-11-22";
@@ -1267,6 +1272,8 @@ try {
           initialPaymentOption,
           monthlyBillVisible,
           customerCreated,
+          invalidBottleExchangeBlocked,
+          monthlyAccountActionVisible,
           deliveryLinkedToMonthlyCustomer: deliveryCall?.args?.p_customer_id === 5 &&
             deliveryCall?.args?.p_bottles_delivered === 2 && deliveryCall?.args?.p_performed_by_owner === true,
           collectionUsesActualDateAndMethod: collectionCall?.args?.p_received_date === "2026-11-22" &&
@@ -1281,7 +1288,9 @@ try {
       }
     });
     if (!monthlyAccountResult.initialAccountVisible || !monthlyAccountResult.initialPaymentOption ||
-        !monthlyAccountResult.monthlyBillVisible || !monthlyAccountResult.customerCreated || !monthlyAccountResult.deliveryLinkedToMonthlyCustomer ||
+        !monthlyAccountResult.monthlyBillVisible || !monthlyAccountResult.customerCreated ||
+        !monthlyAccountResult.invalidBottleExchangeBlocked || !monthlyAccountResult.monthlyAccountActionVisible ||
+        !monthlyAccountResult.deliveryLinkedToMonthlyCustomer ||
         !monthlyAccountResult.collectionUsesActualDateAndMethod ||
         !monthlyAccountResult.monthlyCollectionsStayInSeparateModule) {
       failures.push("Monthly unregistered account, delivery, or collection workflow is not functioning correctly");
