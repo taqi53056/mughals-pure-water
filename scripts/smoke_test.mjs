@@ -73,7 +73,20 @@ const expectedModulesByCategory = {
   finance: ["finance", "expenses", "income", "ownerWithdrawals"],
   management: ["customers", "billing", "workers", "complaints", "audit", "settings", "monthClose"]
 };
-const tileModulePairs = [...adminHome.matchAll(/<div class="tile [^"]*"[^>]*onclick="openModule\\('([^']+)'\\)"[^>]*data-category="([^"]+)"/g)];
+const tileElementsForMapping = [...adminHome.matchAll(/<div class="tile [^"]*"[^>]*>/g)].map(([tile]) => tile);
+const tileModulePairs = tileElementsForMapping.map(tile => {
+  const marker = 'onclick="openModule(';
+  const markerStart = tile.indexOf(marker);
+  const moduleEnd = tile.indexOf(')"', markerStart);
+  const categoryMarker = 'data-category="';
+  const categoryStart = tile.indexOf(categoryMarker);
+  const categoryEnd = tile.indexOf('"', categoryStart + categoryMarker.length);
+  const module = markerStart >= 0 && moduleEnd > markerStart
+    ? tile.slice(markerStart + marker.length, moduleEnd).replaceAll("'", "") : "";
+  const category = categoryStart >= 0 && categoryEnd > categoryStart
+    ? tile.slice(categoryStart + categoryMarker.length, categoryEnd) : "";
+  return [module, category];
+}).filter(([module, category]) => module && category);
 const actualModulesByCategory = Object.fromEntries(Object.keys(expectedModulesByCategory).map(category => [
   category, tileModulePairs.filter(([, module, tileCategory]) => tileCategory === category).map(([, module]) => module).sort()
 ]));
