@@ -1959,38 +1959,65 @@ function customerOptions(list){
 
 /* 19L ڈلیوری */
 async function deliveryModule(){
- setTitle("19L ڈلیوری");
- let list;
- try{list=await getActiveCustomers()}catch(e){msg("گاہک لوڈ نہیں ہوئے: "+e.message);return}
- $("moduleBody").innerHTML=`
- <p class="muted">ہر الگ سپلائی کا الگ اندراج کریں۔ ہر بھری 19L بوتل کی قیمت Rs.100 ہے؛ خالی بوتل واپس نہ آنے سے پانی کی قیمت ختم نہیں ہوتی۔</p>
- <label for="dCustomer">گاہک منتخب کریں</label>
- <select id="dCustomer" required onchange="loadSelectedDelivery()">${customerOptions(list)}</select>
- <label for="dWorker">ڈیلیوری کس نے کی؟</label><select id="dWorker" onchange="markDeliveryDirty();calcDelivery()"><option value="">ورکر مقرر نہیں — مزدوری/بچت شمار نہیں ہوگی</option></select><p class="muted">مالک خود ڈلیوری کرے تو مالک منتخب کریں؛ ہر بھری بوتل پر Rs.20 ممکنہ بچت ہوگی۔ ملازم منتخب کریں تو Rs.20 حقیقی مزدوری اس کے لیجر میں جائے گی۔ خالی انتخاب صرف غیر منسوب ڈلیوری ہے، اس پر نہ مزدوری بنے گی نہ مالک کی بچت۔</p>
- <label for="dDate">ڈلیوری کی تاریخ</label>
- <input id="dDate" type="date" value="${today()}" required onchange="loadSelectedDelivery()">
- <label for="dOut">دی گئی بھری بوتلیں</label>
- <input id="dOut" type="number" min="1" step="1" inputmode="numeric" placeholder="مثال: 12" required oninput="markDeliveryDirty();calcDelivery()">
- <label for="dOwn">ان میں گاہک کی اپنی بوتلیں</label>
- <input id="dOwn" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="عام طور پر 0؛ اپنی بوتلیں ہوں تو تعداد" oninput="markDeliveryDirty();calcDelivery()">
- <p class="muted">گاہک کی اپنی بوتلیں بھی Rs.100 فی بوتل بل میں شامل ہوں گی؛ کمپنی کے اسٹاک میں شامل نہیں ہوں گی۔</p>
- <label for="dBack">واپس آنے والی کمپنی کی خالی بوتلیں (نہ ہوں تو 0)</label>
- <input id="dBack" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="واپس آنے والی خالی بوتلوں کی تعداد" oninput="markDeliveryDirty();calcDelivery()">
- <label for="dCaps">خراب ڈھکن (نہ ہوں تو 0)</label>
- <input id="dCaps" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="خراب ڈھکنوں کی تعداد؛ فی ڈھکن Rs.10" oninput="markDeliveryDirty();calcDelivery()">
- <div class="stat">خراب ڈھکنوں کی رقم: <b id="dCapAmount">Rs. 0</b></div>
- <div class="stat">کامیاب بوتلیں: <b id="dSuccess">0</b></div>
- <div class="stat">بوتلوں کا فرق: <b id="dDiff">0</b></div>
- <div class="stat">مزدور کی واجب الادا مزدوری: <b id="dLabor">Rs. 0</b></div><div class="stat">مالک کی ممکنہ بچت: <b id="dOwnerSaving">Rs. 0</b></div>
- <div id="dWarn" class="warning hidden">بوتلوں میں فرق ہے؛ اسی دن جانچیں۔</div>
- <button id="deliverySaveButton" onclick="saveDelivery()">ڈلیوری محفوظ کریں</button><button class="secondary" type="button" onclick="startNewDeliveryEntry()">اسی دن نئی ڈلیوری درج کریں</button>
- <p class="muted">ڈلیوری محفوظ ہونے کے بعد ہی پیغام تیار کیا جا سکے گا؛ پیغام فون میں کھلے گا، Send آپ کریں گے۔</p><button id="deliveryWhatsAppButton" class="secondary" disabled onclick="shareCurrentDeliveryWhatsApp()">WhatsApp پیغام تیار کریں</button><button id="deliverySMSButton" class="secondary" disabled onclick="shareCurrentDeliverySMS()">SMS پیغام تیار کریں</button>
- <button class="secondary" onclick="loadDailyDeliveries()">تمام ڈلیوریاں تازہ کریں</button>`;
+ setTitle("روزانہ 19L ڈلیوری سینٹر");
+ let registered=[],monthly=[];
+ try{
+  [registered,monthly]=await Promise.all([
+   getActiveCustomers(),
+   mpwFetchAllPages(()=>db.from("unregistered_monthly_customers").select("id,name,mobile,is_active").eq("is_active",true).order("name"))
+  ]);
+ }catch(e){msg("گاہکوں کی مشترکہ فہرست لوڈ نہیں ہوئی: "+(e?.message||String(e)));return;}
+ const options=
+  '<option value="">گاہک منتخب کریں</option>'+
+  '<optgroup label="رجسٹرڈ گاہک">'+registered.map(c=>'<option value="registered:'+Number(c.id)+'">'+esc(c.name)+' — '+esc(c.customer_code)+'</option>').join("")+'</optgroup>'+
+  '<optgroup label="ماہانہ غیر رجسٹرڈ کھاتے">'+monthly.map(c=>'<option value="monthly:'+Number(c.id)+'">'+esc(c.name)+(c.mobile?' — '+esc(c.mobile):'')+'</option>').join("")+'</optgroup>'+
+  '<option value="temporary">عارضی ادھار / وقتی سپلائی</option>';
+ $("moduleBody").innerHTML=
+  '<p class="module-intro">ایک ہی فارم سے رجسٹرڈ گاہک، ماہانہ کھاتہ یا عارضی ادھار منتخب کریں۔ نظام خود درست مالی کھاتے میں اندراج کرے گا؛ کسٹمر پورٹل اور ماہانہ بل الگ محفوظ رہیں گے۔</p>'+
+  '<label for="dRecipient">گاہک / وصول کنندہ *</label><select id="dRecipient" required onchange="handleUnifiedRecipientChange()">'+options+'</select>'+
+  '<div id="dTempNameWrap" class="hidden"><label for="dTempName">عارضی وصول کنندہ کا نام *</label><input id="dTempName" maxlength="120" placeholder="نام درج کریں؛ اسی نام سے بقایا وصولی تلاش ہوگی"></div>'+
+  '<select id="dCustomer" class="hidden" aria-hidden="true" tabindex="-1">'+customerOptions(registered)+'</select>'+
+  '<div id="dRecipientType" class="stat">پہلے گاہک یا سپلائی کی قسم منتخب کریں۔</div>'+
+  '<label for="dWorker">ڈلیوری کس نے کی؟</label><select id="dWorker" onchange="markDeliveryDirty();calcDelivery()"><option value="">ورکر مقرر نہیں</option></select>'+
+  '<p class="muted">مالک خود ڈلیوری کرے تو مالک منتخب کریں؛ ملازم منتخب کریں تو Rs.20 فی بھری بوتل اس کے لیجر میں جائے گا۔</p>'+
+  '<label for="dDate">ڈلیوری کی تاریخ</label><input id="dDate" type="date" value="'+today()+'" required onchange="loadSelectedDelivery()">'+
+  '<label for="dOut">دی گئی بھری بوتلیں</label><input id="dOut" type="number" min="1" step="1" inputmode="numeric" placeholder="مثال: 12" required oninput="markDeliveryDirty();calcDelivery()">'+
+  '<div id="dOwnWrap"><label for="dOwn">ان میں گاہک کی اپنی بوتلیں</label><input id="dOwn" type="number" min="0" step="1" inputmode="numeric" value="0" placeholder="عام طور پر 0؛ اپنی بوتلیں ہوں تو تعداد"><p class="muted">یہ سہولت صرف رجسٹرڈ گاہک کے ریکارڈ پر لاگو ہے۔</p></div>'+
+  '<label for="dBack">واپس آنے والی کمپنی کی خالی بوتلیں (نہ ہوں تو 0)</label><input id="dBack" type="number" min="0" step="1" inputmode="numeric" value="0" oninput="markDeliveryDirty();calcDelivery()">'+
+  '<label for="dCaps">خراب ڈھکن (نہ ہوں تو 0)</label><input id="dCaps" type="number" min="0" step="1" inputmode="numeric" value="0" oninput="markDeliveryDirty();calcDelivery()">'+
+  '<div class="stat">خراب ڈھکنوں کی رقم: <b id="dCapAmount">Rs. 0</b></div><div class="stat">کامیاب بوتلیں: <b id="dSuccess">0</b></div><div class="stat">بوتلوں کا فرق: <b id="dDiff">0</b></div>'+
+  '<div class="stat">مزدور کی واجب الادا مزدوری: <b id="dLabor">Rs. 0</b></div><div class="stat">مالک کی ممکنہ بچت: <b id="dOwnerSaving">Rs. 0</b></div>'+
+  '<div id="dWarn" class="warning hidden">بوتلوں میں فرق ہے؛ اسی دن جانچیں۔</div>'+
+  '<button id="deliverySaveButton" onclick="saveDelivery()">ڈلیوری محفوظ کریں</button><button class="secondary" type="button" onclick="startNewDeliveryEntry()">نئی ڈلیوری درج کریں</button>'+
+  '<p class="muted">WhatsApp اور SMS اطلاع صرف رجسٹرڈ گاہک کے لیے دستیاب ہے۔</p><button id="deliveryWhatsAppButton" class="secondary" disabled onclick="shareCurrentDeliveryWhatsApp()">WhatsApp پیغام تیار کریں</button><button id="deliverySMSButton" class="secondary" disabled onclick="shareCurrentDeliverySMS()">SMS پیغام تیار کریں</button>'+
+  '<button class="secondary" onclick="loadDailyDeliveries();loadUnifiedNonRegisteredHistory()">تمام ڈلیوریاں تازہ کریں</button>';
+ $("dOwnWrap").classList.add("hidden");
  await loadWorkerOptions();
  await loadSelectedDelivery();
  await loadDailyDeliveries();
+ await loadUnifiedNonRegisteredHistory();
 }
 
+function handleUnifiedRecipientChange(){
+ const value=$("dRecipient")?.value||"";
+ const type=value.split(":")[0],id=value.split(":")[1]||"";
+ const registered=type==="registered",monthly=type==="monthly",temporary=type==="temporary";
+ if($("dCustomer"))$("dCustomer").value=registered?id:"";
+ $("dOwnWrap")?.classList.toggle("hidden",!registered);
+ $("dTempNameWrap")?.classList.toggle("hidden",!temporary);
+ if($("dRecipientType")){
+  $("dRecipientType").textContent=registered?"رجسٹرڈ گاہک: انٹری اس کے ذاتی بل، تاریخ اور کسٹمر پورٹل میں جائے گی۔":
+   monthly?"ماہانہ کھاتہ: انٹری ایڈمن کے ماہانہ اسٹیٹمنٹ میں جائے گی؛ کسٹمر پورٹل نہیں بنے گا۔":
+   temporary?"عارضی ادھار: نام کے ساتھ وقتی بقایا درج ہوگا؛ وصولی الگ سے اسی سپلائی کے ساتھ منسلک ہوگی۔":"پہلے گاہک یا سپلائی کی قسم منتخب کریں۔";
+ }
+ const waDisabled=!registered;
+ ["deliveryWhatsAppButton","deliverySMSButton"].forEach(id=>{const b=$(id);if(b)b.disabled=true;});
+ if(waDisabled)setDeliverySavedState(false);
+ window.currentUnifiedRecipientType=type;
+ window.currentUnifiedRecipientId=Number(id)||null;
+ window.currentDeliveryRecordId=null;
+ loadSelectedDelivery();
+}
 async function loadWorkerOptions(selected=""){
  const sel=$("dWorker");if(!sel)return;
  const {data,error}=await db.from("workers").select("id,full_name,is_owner,work_categories").eq("is_active",true).order("full_name");
@@ -2054,6 +2081,11 @@ function deliveryConfirmationSummary(c){
 }
 
 async function saveDelivery(){
+ const recipient=$("dRecipient")?.value||"";
+ const recipientType=recipient.split(":")[0],recipientId=Number(recipient.split(":")[1])||null;
+ if(recipientType==="monthly"){await saveUnifiedMonthlyDelivery(recipientId);return;}
+ if(recipientType==="temporary"){await saveUnifiedTemporaryDelivery();return;}
+ if(recipientType!=="registered"){msg("گاہک یا سپلائی کی قسم منتخب کریں۔");return;}
  const id=$("dCustomer").value,date=$("dDate").value,c=calcDelivery();
  if(!id||!date){msg("گاہک اور تاریخ منتخب کریں۔");return}
  if(c.invalid){msg("گاہک کی اپنی بوتلوں کی تعداد کل بھری بوتلوں سے زیادہ نہیں ہوسکتی۔");return}
@@ -2133,7 +2165,7 @@ async function editCustomerDeliveryRecordById(id){
  if(error||!data){msg("ڈلیوری ریکارڈ نہیں ملا: "+(error?.message||""));return;}
  const customer=$("dCustomer");
  if(!customer||![...customer.options].some(o=>Number(o.value)===Number(data.customer_id))){msg("یہ گاہک فعال ڈلیوری فہرست میں نہیں؛ اکاؤنٹ کی حیثیت چیک کریں۔");return;}
- customer.value=String(data.customer_id);$("dDate").value=data.delivery_date;
+ customer.value=String(data.customer_id);if($("dRecipient"))$("dRecipient").value="registered:"+String(data.customer_id);handleUnifiedRecipientChange();$("dDate").value=data.delivery_date;
  window.currentDeliveryRecordId=Number(data.id);
  $("dOut").value=String(data.bottles_delivered);$("dOwn").value=String(data.customer_owned_bottles||0);$("dBack").value=String(data.empty_bottles_returned);$("dCaps").value=String(data.damaged_caps||0);
  if($("dWorker"))$("dWorker").value=data.worker_id?String(data.worker_id):(Number(data.owner_labor_saving)>0?String(window.deliveryOwnerId||""):"");
@@ -2156,6 +2188,82 @@ async function loadDailyDeliveries(){
 }
 
 
+
+async function saveUnifiedMonthlyDelivery(customerId){
+ const date=$("dDate").value,c=calcDelivery(),workerOption=$("dWorker")?.selectedOptions?.[0];
+ const isOwner=workerOption?.dataset.owner==="true",workerValue=$("dWorker")?.value||"";
+ const workerId=isOwner?null:Number(workerValue);
+ if(!customerId||!date){msg("ماہانہ کھاتہ اور تاریخ منتخب کریں۔");return;}
+ if(!isOwner&&(!Number.isInteger(workerId)||workerId<=0)){msg("ماہانہ کھاتے کی ڈلیوری کے لیے مالک یا مزدور منتخب کریں۔");return;}
+ if(!Number.isInteger(c.out)||c.out<=0||!Number.isInteger(c.back)||c.back<0||c.back>c.out||!Number.isInteger(c.caps)||c.caps<0){msg("بھری بوتلیں، واپس خالی بوتلیں اور خراب ڈھکن درست درج کریں۔");return;}
+ if(date>today()){msg("مستقبل کی تاریخ پر ڈلیوری درج نہیں ہو سکتی۔");return;}
+ if(!confirm("ماہانہ کھاتے میں "+c.out+" بھری بوتلیں، "+c.back+" واپس خالی بوتلیں اور "+c.caps+" خراب ڈھکن درج ہوں گے۔ چارج: "+money(c.out*100+c.caps*10)+". کیا محفوظ کریں؟"))return;
+ const button=$("deliverySaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const signature=[customerId,date,isOwner?"owner":workerId,c.out,c.back,c.caps].join("|");
+  const requestId=mpwPendingRequestId("monthly-unregistered-delivery",signature);
+  const {data,error}=await db.rpc("record_monthly_unregistered_delivery",{
+   p_customer_id:customerId,p_delivery_date:date,p_worker_id:workerId,
+   p_bottles_delivered:c.out,p_empty_bottles_returned:c.back,p_damaged_caps:c.caps,
+   p_performed_by_owner:isOwner,p_request_id:requestId
+  });
+  if(error)throw error;if(!data?.id)throw new Error("ڈلیوری محفوظ ہونے کی تصدیق نہیں ہوئی۔");
+  mpwClearPendingRequestId("monthly-unregistered-delivery");
+  $("dOut").value="";$("dBack").value="0";$("dCaps").value="0";calcDelivery();
+  msg("ماہانہ کھاتے کی ڈلیوری محفوظ ہوگئی۔",true);
+  await Promise.all([loadUnifiedNonRegisteredHistory(),loadTodaySummary(),runReport()]);
+ }catch(e){msg("ماہانہ ڈلیوری محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
+}
+
+async function saveUnifiedTemporaryDelivery(){
+ const date=$("dDate").value,c=calcDelivery(),name=$("dTempName")?.value.trim()||"";
+ const workerOption=$("dWorker")?.selectedOptions?.[0],isOwner=workerOption?.dataset.owner==="true";
+ const workerId=isOwner?null:Number($("dWorker")?.value||0);
+ if(name.length<2||name.length>120){msg("عارضی ادھار کے لیے وصول کنندہ کا درست نام درج کریں۔");return;}
+ if(!date||!["true","false"].includes(String(isOwner))||(!isOwner&&(!Number.isInteger(workerId)||workerId<=0))){msg("تاریخ اور ڈلیوری کرنے والا منتخب کریں۔");return;}
+ if(!Number.isInteger(c.out)||c.out<=0||!Number.isInteger(c.back)||c.back<0||c.back>c.out||!Number.isInteger(c.caps)||c.caps<0){msg("بھری بوتلیں، واپس خالی بوتلیں اور خراب ڈھکن درست درج کریں۔");return;}
+ if(date>today()){msg("مستقبل کی تاریخ پر سپلائی درج نہیں ہو سکتی۔");return;}
+ if(!confirm("عارضی ادھار درج ہوگا:\nوصول کنندہ: "+name+"\nبوتلیں: "+c.out+"\nواپس خالی: "+c.back+"\nخراب ڈھکن: "+c.caps+"\nقابلِ وصول رقم: "+money(c.out*100+c.caps*10)+"\nکیا محفوظ کریں؟"))return;
+ const button=$("deliverySaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const details="عارضی ادھار: "+name;
+  const signature=[date,workerId||"owner",c.out,c.back,c.caps,details].join("|");
+  const requestId=mpwPendingRequestId("unassigned19l",signature);
+  const {data,error}=await db.rpc("record_unassigned_19l_delivery",{
+   p_delivery_date:date,p_worker_id:workerId,p_bottles_delivered:c.out,
+   p_empty_bottles_returned:c.back,p_details:details,p_request_id:requestId,
+   p_damaged_caps:c.caps,p_performed_by_owner:isOwner
+  });
+  if(error)throw error;if(!data?.id)throw new Error("محفوظ اندراج کی تصدیق موصول نہیں ہوئی۔");
+  mpwClearPendingRequestId("unassigned19l");
+  $("dTempName").value="";$("dOut").value="";$("dBack").value="0";$("dCaps").value="0";calcDelivery();
+  msg("عارضی ادھار کا اندراج محفوظ ہوگیا۔ وصولی اسی سپلائی کے ساتھ منسلک ہوگی۔",true);
+  await Promise.all([loadUnifiedNonRegisteredHistory(),loadTodaySummary(),runReport()]);
+ }catch(e){msg("عارضی ادھار محفوظ نہیں ہوا: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
+}
+
+async function loadUnifiedNonRegisteredHistory(){
+ const host=$("moduleTable");if(!host)return;
+ host.querySelector("#unifiedNonRegisteredHistory")?.remove();
+ try{
+  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details,customer_classification,monthly_customer_id,performed_by_owner,worker_id").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(100);
+  if(error)throw error;
+  const monthlyIds=[...new Set((data||[]).filter(x=>x.customer_classification==="monthly"&&x.monthly_customer_id).map(x=>Number(x.monthly_customer_id)))];
+  let names=new Map();
+  if(monthlyIds.length){
+   const q=await db.from("unregistered_monthly_customers").select("id,name").in("id",monthlyIds);
+   if(q.error)throw q.error;names=new Map((q.data||[]).map(x=>[Number(x.id),x.name]));
+  }
+  const rows=(data||[]).map(x=>{
+   const monthly=x.customer_classification==="monthly";
+   const label=monthly?(names.get(Number(x.monthly_customer_id))||"ماہانہ کھاتہ"):(x.details||"وقتی سپلائی");
+   return '<tr><td>'+esc(x.delivery_date)+'</td><td>'+esc(monthly?"ماہانہ": "عارضی ادھار / وقتی")+'</td><td>'+esc(label)+'</td><td>'+Number(x.bottles_delivered||0)+'</td><td>'+Number(x.damaged_caps||0)+'</td><td>'+money(Number(x.bottles_delivered||0)*100+Number(x.damaged_caps||0)*10)+'</td></tr>';
+  }).join("");
+  host.insertAdjacentHTML("beforeend",'<div id="unifiedNonRegisteredHistory" class="card"><h3>ماہانہ اور عارضی سپلائی کی حالیہ ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>قسم</th><th>گاہک / نام</th><th>بوتلیں</th><th>خراب ڈھکن</th><th>چارج</th></tr>'+(rows||'<tr><td colspan="6">ابھی کوئی ریکارڈ نہیں۔</td></tr>')+'</table></div></div>');
+ }catch(e){host.insertAdjacentHTML("beforeend",'<p id="unifiedNonRegisteredHistory" class="error">ماہانہ / عارضی ہسٹری لوڈ نہیں ہوئی: '+esc(e?.message||String(e))+'</p>');}
+}
 
 /* ماہانہ بل */
 async function billingModule(){
@@ -2889,7 +2997,8 @@ async function monthlyUnregisteredModule(){
  '<label for="umAddress">پتہ</label><input id="umAddress" maxlength="300" placeholder="علاقہ یا مکمل پتہ">'+
  '<button id="umCustomerSave" onclick="saveMonthlyUnregisteredCustomer()">گاہک محفوظ کریں</button>'+
  '<button id="umCustomerCancel" class="secondary hidden" onclick="cancelMonthlyUnregisteredCustomerEdit()">منسوخ کریں</button></div>'+
- '<div class="card"><h3>ماہانہ گاہک کی نئی ڈلیوری</h3>'+
+ '<div class="card"><p class="muted">نئی روزانہ ڈلیوری مشترکہ 19L ڈلیوری سینٹر سے درج کریں۔ یہاں ماہانہ کھاتے، وصولیاں اور اسٹیٹمنٹ برقرار رہیں گے۔</p><button class="secondary" onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھولیں</button></div>'+
+ '<div class="card hidden"><h3>ماہانہ گاہک کی نئی ڈلیوری</h3>'+
  '<label for="umDeliveryCustomer">ماہانہ گاہک *</label><select id="umDeliveryCustomer"><option value="">گاہک منتخب کریں</option></select>'+
  '<label for="umDeliveryDate">ڈلیوری کی تاریخ *</label><input id="umDeliveryDate" type="date" value="'+today()+'">'+
  '<label for="umWorker">ڈلیوری کس نے کی؟ *</label><select id="umWorker"><option value="owner">مالک نے خود</option><option value="worker">مزدور نے</option></select>'+
@@ -3124,8 +3233,8 @@ async function saveMonthlyUnregisteredCollection(){
 async function unassigned19lModule(){
  setTitle("بغیر گاہک 19L سپلائی");
  $("moduleBody").innerHTML=
- '<p class="muted u19-intro">یہ حصہ صرف ایک وقتی، غیر رجسٹرڈ سپلائی کے لیے ہے۔ ماہانہ کھاتے والی سپلائی یہاں درج نہ کریں۔ رقم ملنے پر نیچے وصولی درج کریں۔</p>'+
- '<div class="card"><h3>نئی غیر منسلک سپلائی</h3>'+
+ '<p class="muted u19-intro">یہ صفحہ عارضی سپلائی کی وصولیوں اور ہسٹری کے لیے ہے۔ نئی ڈلیوری روزانہ کے مشترکہ 19L ڈلیوری سینٹر سے درج کریں۔</p><button class="secondary" onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھولیں</button>'+
+ '<div class="card hidden"><h3>نئی غیر منسلک سپلائی</h3>'+
  '<label for="u19Date">سپلائی کی تاریخ</label><input id="u19Date" type="date" value="'+today()+'">'+
  '<label for="u19Worker">سپلائی کس نے کی؟ *</label><select id="u19Worker" required><option value="" selected disabled>سپلائی کرنے والا منتخب کریں</option><option value="owner">مالک نے خود سپلائی کی</option><option value="worker">مزدور نے سپلائی کی</option></select><div id="u19WorkerPicker" class="hidden"><label for="u19WorkerId">مزدور منتخب کریں *</label><select id="u19WorkerId" required><option value="">ورکر لوڈ ہو رہا ہے...</option></select></div>'+
  '<label for="u19Bottles">سپلائی کی گئی بھری 19L بوتلیں</label><input id="u19Bottles" type="number" min="1" step="1" inputmode="numeric" value="" placeholder="بوتلوں کی تعداد">'+
@@ -3146,7 +3255,7 @@ async function unassigned19lModule(){
 async function loadUnassigned19lHistory(){
  const box=$("u19History");if(!box)return;
  try{
-  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
+  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
   if(error)throw error;
   const ids=(data||[]).map(r=>Number(r.id));
   const receipts=await mpwFetchByIdBatches(ids,batch=>
@@ -3158,7 +3267,7 @@ async function loadUnassigned19lHistory(){
     const received=collected.get(Number(r.id))||0;
     const due=Number(r.bottles_delivered||0)*100+Number(r.damaged_caps||0)*10;
     const remaining=Math.max(due-received,0);
-    return '<div class="u19-history-item"><div><b>'+esc(r.delivery_date)+'</b><span>'+Number(r.bottles_delivered)+' بھری بوتلیں</span></div><div><span>وصولی: '+money(received)+'</span><b>بقایا: '+money(remaining)+'</b></div></div>';
+    return '<div class="u19-history-item"><div><b>'+esc(r.details||r.delivery_date)+'</b><span>'+esc(r.delivery_date)+' · '+Number(r.bottles_delivered)+' بھری بوتلیں</span></div><div><span>وصولی: '+money(received)+'</span><b>بقایا: '+money(remaining)+'</b></div></div>';
    }).join("")+
    ((data||[]).length?'':'<p class="muted">ابھی کوئی سپلائی درج نہیں ہوئی۔</p>')+
    '</div>';
@@ -3167,13 +3276,13 @@ async function loadUnassigned19lHistory(){
 async function loadUnassigned19lCollectionOptions(){
  const sel=$("u19CollectionDelivery");if(!sel)return;
  try{
-  const deliveries=await mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}));
+  const deliveries=await mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details").neq("customer_classification","monthly").order("delivery_date",{ascending:false}).order("id",{ascending:false}));
   const ids=deliveries.map(d=>Number(d.id));
   const receipts=await mpwFetchByIdBatches(ids,batch=>
    db.from("unassigned_19l_delivery_collections").select("delivery_id,amount").in("delivery_id",batch).order("id"));
   const totals=new Map();receipts.forEach(r=>totals.set(Number(r.delivery_id),(totals.get(Number(r.delivery_id))||0)+Number(r.amount)));
   const pending=(deliveries||[]).map(d=>({d,remaining:Number(d.bottles_delivered)*100+Number(d.damaged_caps||0)*10-(totals.get(Number(d.id))||0)})).filter(x=>x.remaining>0);
-  sel.innerHTML='<option value="">سپلائی منتخب کریں</option>'+pending.map(x=>'<option value="'+x.d.id+'">'+esc(x.d.delivery_date)+' — '+Number(x.d.bottles_delivered)+' بوتلیں — بقایا '+money(x.remaining)+'</option>').join("");
+  sel.innerHTML='<option value="">سپلائی منتخب کریں</option>'+pending.map(x=>'<option value="'+x.d.id+'">'+esc(x.d.details||"وقتی سپلائی")+' — '+esc(x.d.delivery_date)+' — '+Number(x.d.bottles_delivered)+' بوتلیں — بقایا '+money(x.remaining)+'</option>').join("");
  }catch(e){sel.innerHTML='<option value="">وصولی فہرست لوڈ نہیں ہوئی</option>';msg("وصولی کی فہرست لوڈ نہیں ہوئی: "+(e.message||String(e)));}
 }
 async function saveUnassigned19lCollection(){

@@ -165,11 +165,23 @@ if "async function loadSelectedDelivery()" not in source or "window.currentDeliv
 if "async function readBillSummary(" not in source:
     fail("read-only bill summary helper is missing")
 
-for field_id in ("dCustomer", "dDate", "dOut", "dBack", "dCaps"):
+for field_id in ("dRecipient", "dDate", "dOut", "dBack", "dCaps"):
     if f'<label for="{field_id}">' not in source:
         fail("19L delivery field is missing its visible label: " + field_id)
 if "function deliveryConfirmationSummary(c)" not in source:
     fail("19L combined confirmation summary helper is missing")
+for required in (
+    "function handleUnifiedRecipientChange()",
+    "async function saveUnifiedMonthlyDelivery(",
+    "async function saveUnifiedTemporaryDelivery(",
+    'p_details:details',
+    'esc(x.d.details||"وقتی سپلائی")',
+    'id="unifiedNonRegisteredHistory"',
+):
+    if required not in source:
+        fail("Unified 19L delivery path is incomplete: " + required)
+if 'onclick="deliveryModule()">روزانہ 19L ڈلیوری سینٹر کھولیں' not in source:
+    fail("Legacy 19L account pages must route new entries to the unified delivery center")
 if "counterCapsSold" in source or "caps_sold:" in source:
     fail("Counter cap sales must not require a daily count or manual entry")
 if "const capsUsed=customerCapsUsed+unassignedCapsUsed;" not in source:
