@@ -2803,7 +2803,8 @@ async function tankerPurchaseModule(){
  '<label>ادائیگی کا طریقہ</label><select id="tankPaymentMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select></div>'+
  '<div id="tankerOpeningFields" class="hidden"><input id="tankOpeningLitres" type="number" min="0.01" step="0.01" placeholder="ابتدائی پانی کے لیٹر">'+
  '<input id="tankOpeningValue" type="number" min="0.01" step="0.01" placeholder="ابتدائی پانی کی کل مالیت (روپے)"></div>'+
- '<button id="tankSaveButton" onclick="saveTankerPurchase()">اندراج محفوظ کریں</button></div>';
+ '<button id="tankSaveButton" onclick="saveTankerPurchase()">اندراج محفوظ کریں</button></div>'+
+ '<div class="card"><h3>دکان کی ٹنکی کی حقیقی پیمائش</h3><p class="muted">ٹینکی کو ناپ کر موجودہ لیٹر درج کریں۔ اس سے نیا تصدیق شدہ بیلنس شروع ہوگا؛ پرانا فرق الگ محفوظ رہے گا۔</p><input id="tankMeasuredLitres" type="number" min="0" step="0.01" inputmode="decimal" placeholder="اس وقت ٹنکی میں موجود پانی (لیٹر)"><button id="tankMeasureSaveButton" onclick="saveWaterTankMeasurement()">حقیقی اسٹاک محفوظ کریں</button></div>';
  $("tankCount").addEventListener("input",updateTankerTotal);$("tankRate").addEventListener("input",updateTankerTotal);
  await loadTankerPurchases();
 }
@@ -2918,14 +2919,43 @@ async function loadTankerPurchases(){
  const shopBalance=shopAvailable-shopConsumed;
  const fillingBalance=fillingAvailable-fillingConsumed;
  const fmtLitres=n=>Number(n).toLocaleString("en-US",{maximumFractionDigits:2})+" لیٹر";
+ let physicalTank=null,physicalTankError=null;
+ try{const measured=await db.from("shop_water_tank_current_balance").select("*").maybeSingle();if(measured.error)throw measured.error;physicalTank=measured.data;}catch(e){physicalTankError=e?.message||String(e);}
+ const physicalCard=physicalTank?'<div class="stat"><b>دکان کی ٹنکی — آخری فزیکل پیمائش کے بعد موجودہ حساب</b><br><strong>'+fmtLitres(physicalTank.current_balance_litres)+'</strong><small>آخری ناپ: '+fmtLitres(physicalTank.measured_litres)+' — '+esc(physicalTank.measured_at)+'<br>ابتدائی فرق: '+fmtLitres(physicalTank.variance_litres)+'</small></div>':'<div class="stat warning"><b>فزیکل اسٹاک دستیاب نہیں</b><small>'+esc(physicalTankError||"ابھی کوئی پیمائش درج نہیں ہوئی۔")+'</small></div>';
  $("moduleTable").innerHTML=
  '<div class="grid">'+
- '<div class="stat"><b>دکان والی ٹنکی — 19L / 6L</b><br><strong>'+fmtLitres(shopBalance)+'</strong><small>کل دستیاب: '+fmtLitres(shopAvailable)+' — استعمال: '+fmtLitres(shopConsumed)+'</small></div>'+
+ physicalCard+
+ '<div class="stat"><b>دکان والی ٹنکی — پرانا لیجر تخمینہ (غیر مصدقہ)</b><br><strong>'+fmtLitres(shopBalance)+'</strong><small>کل درج دستیاب: '+fmtLitres(shopAvailable)+' — درج استعمال: '+fmtLitres(shopConsumed)+'</small></div>'+
  '<div class="stat"><b>پروڈکشن والی ٹنکی — 500ml / 1.5L</b><br><strong>'+fmtLitres(fillingBalance)+'</strong><small>کل دستیاب: '+fmtLitres(fillingAvailable)+' — استعمال: '+fmtLitres(fillingConsumed)+'</small></div>'+
  '</div><h3>ٹینکر خریداری اور ابتدائی پانی کی ہسٹری</h3><div class="tablewrap"><table><tr><th>تاریخ</th><th>اندراج</th><th>مقدار</th><th>فی ٹینکر / مالیت</th><th>کل رقم</th><th>ادائیگی / تفصیل</th></tr>'+
  (opening||[]).map(r=>'<tr><td>'+esc(r.as_of_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||esc(r.water_use))+' — ابتدائی اسٹاک</td><td>'+Number(r.litres)+' لیٹر</td><td>—</td><td>'+money(r.total_value)+'</td><td>—</td></tr>').join("")+
  (rows||[]).map(r=>'<tr><td>'+esc(r.purchase_date)+'</td><td>'+({"product_filling":"پروڈکشن والی ٹنکی — 500ml / 1.5L","shop_counter":"دکان والی ٹنکی — 19L / 6L"}[r.water_use]||esc(r.water_use))+' — خریداری</td><td>'+fmtLitres(Number(r.tanker_count)*1000)+'</td><td>'+money(r.rate_per_tanker)+'</td><td>'+money(r.total_amount)+'</td><td>'+({"cash":"نقد","bank":"بینک","jazzcash":"جاز کیش","easypaisa":"ایزی پیسہ","other":"دیگر"}[r.payment_method]||esc(r.payment_method||"—"))+(r.details?" — "+esc(r.details):"") +'</td></tr>').join("")+
  '</table></div>';
+}
+async function saveWaterTankMeasurement(){
+ const input=$("tankMeasuredLitres"),button=$("tankMeasureSaveButton");
+ const litres=Number(input?.value);
+ if(!input||input.value.trim()===""||!Number.isFinite(litres)||litres<0){msg("ٹینکی میں موجود درست لیٹر مقدار درج کریں۔");return;}
+ if(button?.disabled)return;
+ if(!confirm("کیا آپ نے دکان کی ٹنکی ناپ لی ہے اور "+litres+" لیٹر موجود ہونے کی تصدیق کرتے ہیں؟"))return;
+ if(button)button.disabled=true;
+ try{
+  const current=await db.from("shop_water_tank_current_balance").select("current_balance_litres").maybeSingle();
+  if(current.error)throw current.error;
+  if(!current.data)throw new Error("پہلے موجودہ لیجر بیلنس دستیاب ہونا ضروری ہے۔");
+  const result=await db.from("water_tank_measurements").insert({
+   measured_litres:litres,
+   ledger_litres:Number(current.data.current_balance_litres),
+   measurement_method:"manual_gauge",
+   note:"ایڈمن کی جانب سے دکان کی ٹنکی کی دستی فزیکل پیمائش۔",
+   entered_by:user?.id||null
+  }).select("id").single();
+  if(result.error)throw result.error;
+  input.value="";
+  msg("ٹینکی کی حقیقی پیمائش محفوظ ہوگئی۔ اب آئندہ آمد و اخراج اسی تصدیق شدہ مقدار سے شمار ہوگا۔",true);
+  await loadTankerPurchases();
+ }catch(e){msg("حقیقی اسٹاک محفوظ نہیں ہوا: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
 }
 async function getDaily19LWaterUsage(date){
  const [customers,unassigned]=await Promise.all([
