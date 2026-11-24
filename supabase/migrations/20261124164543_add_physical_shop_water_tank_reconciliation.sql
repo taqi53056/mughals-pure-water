@@ -112,7 +112,7 @@ insert into public.water_tank_measurements (
   measurement_method, note, entered_by
 )
 select
-  'shop_counter', now(), 1500, 3444.40, 'owner_reported',
+  'shop_counter', timestamptz '2026-11-24 16:45:43.896156+00', 1500, 3444.40, 'owner_reported',
   'مالک کی فراہم کردہ موجودہ فزیکل پیمائش 1,500 لیٹر۔ اس وقت درج شدہ لیجر 3,444.40 لیٹر تھا؛ 1,944.40 لیٹر کا فرق غیر مصنفہ/غیر مصالحت شدہ ہے، وجہ ثابت نہیں۔',
   null
 where not exists (
