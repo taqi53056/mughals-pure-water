@@ -23,6 +23,7 @@ MONTHLY_LINK_SECURITY_MIGRATION = ROOT / "supabase/migrations/20261123181628_sco
 MONTHLY_RECEIPT_HISTORY_MIGRATION = ROOT / "supabase/migrations/20261123182959_expose_admin_monthly_receipt_history.sql"
 MONTHLY_TOTAL_RECEIPT_MIGRATION = ROOT / "supabase/migrations/20261123183502_customer_level_monthly_receipts_without_delivery_allocations.sql"
 MONTHLY_RECEIPT_RECALC_MIGRATION = ROOT / "supabase/migrations/20261123183742_recalculate_monthly_bills_and_audit_customer_receipts.sql"
+IDEMPOTENCY_MIGRATION = ROOT / "supabase/migrations/20261124170906_require_idempotency_tokens_on_core_entries.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
@@ -55,7 +56,7 @@ class AppParser(HTMLParser):
 def fail(message):
     raise SystemExit("FAIL: " + message)
 
-if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION, MONTHLY_LINK_SECURITY_MIGRATION, MONTHLY_RECEIPT_HISTORY_MIGRATION, MONTHLY_TOTAL_RECEIPT_MIGRATION, MONTHLY_RECEIPT_RECALC_MIGRATION)):
+if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION, MONTHLY_LINK_SECURITY_MIGRATION, MONTHLY_RECEIPT_HISTORY_MIGRATION, MONTHLY_TOTAL_RECEIPT_MIGRATION, MONTHLY_RECEIPT_RECALC_MIGRATION, IDEMPOTENCY_MIGRATION)):
     fail("required app shell file is missing")
 
 source = HTML.read_text(encoding="utf-8")
@@ -178,6 +179,17 @@ for required in (
 ):
     if required not in monthly_receipt_recalc.lower():
         fail("Monthly receipt recalculation or audit trigger migration is incomplete: " + required)
+
+idempotency_migration = IDEMPOTENCY_MIGRATION.read_text(encoding="utf-8").lower()
+for required in (
+    "alter table public.production alter column request_id set not null",
+    "alter table public.product_sales alter column request_id set not null",
+    "alter table public.customer_19l_deliveries alter column request_id set not null",
+    "p_request_id is null",
+    "ہر پروڈکشن اندراج کے لیے منفرد درخواست شناخت لازمی ہے",
+):
+    if required not in idempotency_migration:
+        fail("Core entry idempotency protection is incomplete: " + required)
 
 creator_index_migration = MONTHLY_CREATOR_INDEX_MIGRATION.read_text(encoding="utf-8")
 if "unregistered_monthly_customers_entered_by_idx" not in creator_index_migration:
