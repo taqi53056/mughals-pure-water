@@ -19,6 +19,8 @@ alter table public.water_tank_measurements
 
 create unique index if not exists water_tank_measurements_request_id_uidx
   on public.water_tank_measurements(request_id);
+create index if not exists water_tank_measurements_entered_by_idx
+  on public.water_tank_measurements(entered_by);
 
 alter table public.water_tank_measurements enable row level security;
 revoke all on public.water_tank_measurements from anon, authenticated;
