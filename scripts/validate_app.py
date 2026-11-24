@@ -24,6 +24,7 @@ MONTHLY_RECEIPT_HISTORY_MIGRATION = ROOT / "supabase/migrations/20261123182959_e
 MONTHLY_TOTAL_RECEIPT_MIGRATION = ROOT / "supabase/migrations/20261123183502_customer_level_monthly_receipts_without_delivery_allocations.sql"
 MONTHLY_RECEIPT_RECALC_MIGRATION = ROOT / "supabase/migrations/20261123183742_recalculate_monthly_bills_and_audit_customer_receipts.sql"
 IDEMPOTENCY_MIGRATION = ROOT / "supabase/migrations/20261124170906_require_idempotency_tokens_on_core_entries.sql"
+SHOP_TANK_RECONCILIATION_MIGRATION = ROOT / "supabase/migrations/20261124175000_reconcile_shop_tank_by_effective_transaction_date.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
@@ -56,7 +57,7 @@ class AppParser(HTMLParser):
 def fail(message):
     raise SystemExit("FAIL: " + message)
 
-if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION, MONTHLY_LINK_SECURITY_MIGRATION, MONTHLY_RECEIPT_HISTORY_MIGRATION, MONTHLY_TOTAL_RECEIPT_MIGRATION, MONTHLY_RECEIPT_RECALC_MIGRATION, IDEMPOTENCY_MIGRATION)):
+if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION, MONTHLY_LINK_SECURITY_MIGRATION, MONTHLY_RECEIPT_HISTORY_MIGRATION, MONTHLY_TOTAL_RECEIPT_MIGRATION, MONTHLY_RECEIPT_RECALC_MIGRATION, IDEMPOTENCY_MIGRATION, SHOP_TANK_RECONCILIATION_MIGRATION)):
     fail("required app shell file is missing")
 
 source = HTML.read_text(encoding="utf-8")
@@ -190,6 +191,17 @@ for required in (
 ):
     if required not in idempotency_migration:
         fail("Core entry idempotency protection is incomplete: " + required)
+
+shop_tank_reconciliation_migration = SHOP_TANK_RECONCILIATION_MIGRATION.read_text(encoding="utf-8").lower()
+for required in (
+    "with (security_invoker=true)",
+    "t.purchase_date>(l.measured_at at time zone 'asia/karachi')::date",
+    "d.delivery_date>(l.measured_at at time zone 'asia/karachi')::date",
+    "c.sale_date>(l.measured_at at time zone 'asia/karachi')::date",
+    "p.production_date>(l.measured_at at time zone 'asia/karachi')::date",
+):
+    if required not in shop_tank_reconciliation_migration:
+        fail("Physical shop-tank balance must reconcile using effective transaction dates: " + required)
 
 creator_index_migration = MONTHLY_CREATOR_INDEX_MIGRATION.read_text(encoding="utf-8")
 if "unregistered_monthly_customers_entered_by_idx" not in creator_index_migration:
