@@ -1282,9 +1282,12 @@ try {
         unassigned_19l_deliveries: [
           { id: 11, monthly_customer_id: 5, customer_classification: "monthly", delivery_date: "2026-11-20", bottles_delivered: 20, empty_bottles_returned: 20, damaged_caps: 0, performed_by_owner: true, worker_id: null, details: "Smoke test monthly delivery" },
           { id: 12, monthly_customer_id: null, customer_classification: "one_time", delivery_date: "2026-11-21", bottles_delivered: 2, empty_bottles_returned: 0, damaged_caps: 0, performed_by_owner: true, worker_id: null, details: "Temporary Only" },
-          { id: 13, monthly_customer_id: null, customer_classification: "monthly_pending_review", delivery_date: "2026-11-22", bottles_delivered: 1, empty_bottles_returned: 0, damaged_caps: 0, performed_by_owner: true, worker_id: null, details: "Pending Review" }
+          { id: 13, monthly_customer_id: null, customer_classification: "monthly_pending_review", delivery_date: "2026-11-22", bottles_delivered: 1, empty_bottles_returned: 0, damaged_caps: 0, performed_by_owner: true, worker_id: null, details: "Pending Review" },
+          { id: 14, monthly_customer_id: null, customer_classification: "one_time", delivery_date: "2026-11-23", bottles_delivered: 1, empty_bottles_returned: 0, damaged_caps: 0, performed_by_owner: true, worker_id: null, details: "Pending Temporary" }
         ],
-        unassigned_19l_delivery_collections: [],
+        unassigned_19l_delivery_collections: [
+          { id: 1, delivery_id: 12, amount: 200, received_date: "2026-11-21", payment_method: "cash" }
+        ],
         unregistered_monthly_bills: []
       };
       const rpcCalls = [], queryLog = [], receiptRows = [];
@@ -1369,8 +1372,11 @@ try {
         const monthlyAccountActionVisible = document.querySelector("#umActive-5") !== null;
         document.querySelector("#moduleBody").insertAdjacentHTML("beforeend", '<div id="u19History"></div>');
         await window.loadUnassigned19lHistory();
-        const unifiedHistoryText = document.querySelector("#u19History .u19-history-list")?.textContent || "";
+        const unifiedHistoryText = document.querySelector("#u19History")?.textContent || "";
         const unifiedHistoryTemporaryOnly = unifiedHistoryText.includes("Temporary Only") &&
+          unifiedHistoryText.includes("مکمل وصول") &&
+          unifiedHistoryText.includes("Pending Temporary") &&
+          unifiedHistoryText.includes("بقایا") &&
           !unifiedHistoryText.includes("Monthly Account Test") && !unifiedHistoryText.includes("Pending Review");
         window.fillMonthlyUnregisteredFullDue();
         const fullDuePrefilled = document.querySelector("#umCollectionAmount").value === "2000.00";
