@@ -26,6 +26,7 @@ MONTHLY_RECEIPT_RECALC_MIGRATION = ROOT / "supabase/migrations/20261123183742_re
 IDEMPOTENCY_MIGRATION = ROOT / "supabase/migrations/20261124170906_require_idempotency_tokens_on_core_entries.sql"
 SHOP_TANK_RECONCILIATION_MIGRATION = ROOT / "supabase/migrations/20261124175000_reconcile_shop_tank_by_effective_transaction_date.sql"
 MONTHLY_REPORT_FIX_MIGRATION = ROOT / "supabase/migrations/20261125221500_fix_monthly_receipt_reporting.sql"
+SHARED_STICKER_YIELD_MIGRATION = ROOT / "supabase/migrations/20261125221700_align_shared_sticker_yield_1100.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
@@ -58,7 +59,7 @@ class AppParser(HTMLParser):
 def fail(message):
     raise SystemExit("FAIL: " + message)
 
-if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION, MONTHLY_LINK_SECURITY_MIGRATION, MONTHLY_RECEIPT_HISTORY_MIGRATION, MONTHLY_TOTAL_RECEIPT_MIGRATION, MONTHLY_RECEIPT_RECALC_MIGRATION, IDEMPOTENCY_MIGRATION, SHOP_TANK_RECONCILIATION_MIGRATION, MONTHLY_REPORT_FIX_MIGRATION)):
+if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION, MONTHLY_LINK_SECURITY_MIGRATION, MONTHLY_RECEIPT_HISTORY_MIGRATION, MONTHLY_TOTAL_RECEIPT_MIGRATION, MONTHLY_RECEIPT_RECALC_MIGRATION, IDEMPOTENCY_MIGRATION, SHOP_TANK_RECONCILIATION_MIGRATION, MONTHLY_REPORT_FIX_MIGRATION, SHARED_STICKER_YIELD_MIGRATION)):
     fail("required app shell file is missing")
 
 source = HTML.read_text(encoding="utf-8")
@@ -287,6 +288,11 @@ for required in (
         fail("Monthly receipt reporting fix is incomplete: " + required)
 if "water.monthly_account_cash_collected" not in source or "water.pending_review_delivery_cash_collected" not in source:
     fail("Executive dashboard must show monthly account and pending-review collections.")
+shared_sticker_migration = SHARED_STICKER_YIELD_MIGRATION.read_text(encoding="utf-8")
+if "1200" in shared_sticker_migration or shared_sticker_migration.count("1100") < 3:
+    fail("Shared 1.5L/6L sticker yield must be consistently 1,100 pieces per kg.")
+if "sticker_1_5l_6l:1100" not in source:
+    fail("Raw-material UI sticker yield must match the database stock guards.")
 one_time_history_start = source.find("async function loadUnassigned19lHistory(){")
 one_time_history_end = source.find("\nasync function loadUnassigned19lCollectionOptions", one_time_history_start)
 one_time_history_body = source[one_time_history_start:one_time_history_end if one_time_history_end > one_time_history_start else one_time_history_start + 8000]
