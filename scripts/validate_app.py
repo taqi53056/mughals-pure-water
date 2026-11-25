@@ -25,6 +25,7 @@ MONTHLY_TOTAL_RECEIPT_MIGRATION = ROOT / "supabase/migrations/20261123183502_cus
 MONTHLY_RECEIPT_RECALC_MIGRATION = ROOT / "supabase/migrations/20261123183742_recalculate_monthly_bills_and_audit_customer_receipts.sql"
 IDEMPOTENCY_MIGRATION = ROOT / "supabase/migrations/20261124170906_require_idempotency_tokens_on_core_entries.sql"
 SHOP_TANK_RECONCILIATION_MIGRATION = ROOT / "supabase/migrations/20261124175000_reconcile_shop_tank_by_effective_transaction_date.sql"
+MONTHLY_REPORT_FIX_MIGRATION = ROOT / "supabase/migrations/20261125221500_fix_monthly_receipt_reporting.sql"
 
 class AppParser(HTMLParser):
     def __init__(self):
@@ -57,7 +58,7 @@ class AppParser(HTMLParser):
 def fail(message):
     raise SystemExit("FAIL: " + message)
 
-if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION, MONTHLY_LINK_SECURITY_MIGRATION, MONTHLY_RECEIPT_HISTORY_MIGRATION, MONTHLY_TOTAL_RECEIPT_MIGRATION, MONTHLY_RECEIPT_RECALC_MIGRATION, IDEMPOTENCY_MIGRATION, SHOP_TANK_RECONCILIATION_MIGRATION)):
+if not all(path.exists() for path in (HTML, MANIFEST, SW, LOGO, DELIVERY_MIGRATION, MONTHLY_ACCOUNT_MIGRATION, MONTHLY_BILL_MIGRATION, MONTHLY_HISTORY_MIGRATION, MONTHLY_CREATOR_INDEX_MIGRATION, MONTHLY_BILL_AUDIT_MIGRATION, MONTHLY_LINK_SECURITY_MIGRATION, MONTHLY_RECEIPT_HISTORY_MIGRATION, MONTHLY_TOTAL_RECEIPT_MIGRATION, MONTHLY_RECEIPT_RECALC_MIGRATION, IDEMPOTENCY_MIGRATION, SHOP_TANK_RECONCILIATION_MIGRATION, MONTHLY_REPORT_FIX_MIGRATION)):
     fail("required app shell file is missing")
 
 source = HTML.read_text(encoding="utf-8")
@@ -276,6 +277,16 @@ for field_id in ("dRecipient", "dDate", "dOut", "dBack", "dCaps"):
         fail("19L delivery field is missing its visible label: " + field_id)
 if "function deliveryConfirmationSummary(c)" not in source:
     fail("19L combined confirmation summary helper is missing")
+monthly_report_fix = MONTHLY_REPORT_FIX_MIGRATION.read_text(encoding="utf-8")
+for required in (
+    "private.unregistered_monthly_customer_paid_before",
+    "pending_review_delivery_cash_collected",
+    "v_pending_review_receipts",
+):
+    if required not in monthly_report_fix:
+        fail("Monthly receipt reporting fix is incomplete: " + required)
+if "water.monthly_account_cash_collected" not in source or "water.pending_review_delivery_cash_collected" not in source:
+    fail("Executive dashboard must show monthly account and pending-review collections.")
 one_time_history_start = source.find("async function loadUnassigned19lHistory(){")
 one_time_history_end = source.find("\nasync function loadUnassigned19lCollectionOptions", one_time_history_start)
 one_time_history_body = source[one_time_history_start:one_time_history_end if one_time_history_end > one_time_history_start else one_time_history_start + 8000]
