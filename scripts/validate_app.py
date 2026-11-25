@@ -282,7 +282,9 @@ for required in (
     "async function saveUnifiedTemporaryDelivery(",
     'p_details:details',
     'esc(x.d.details||"وقتی سپلائی")',
-    'id="unifiedNonRegisteredHistory"',
+    "async function loadUnassigned19lHistory(){",
+    "عارضی ادھار — زیرِ وصولی",
+    "مکمل وصول شدہ ہسٹری",
 ):
     if required not in source:
         fail("Unified 19L delivery path is incomplete: " + required)
