@@ -27,14 +27,16 @@ if (!appSource.includes("totalPayable=bill?") ||
   throw new Error("Monthly unregistered customer-first statement and total-amount receipt controls are incomplete");
 }
 
-const unifiedHistoryStart = appSource.indexOf("async function loadUnifiedNonRegisteredHistory()");
-const unifiedHistoryEnd = appSource.indexOf("\n}", unifiedHistoryStart);
+const unifiedHistoryStart = appSource.indexOf("async function loadUnassigned19lHistory(){");
+const unifiedHistoryEnd = appSource.indexOf("\nasync function loadUnassigned19lCollectionOptions", unifiedHistoryStart);
 const unifiedHistorySource = unifiedHistoryStart >= 0 && unifiedHistoryEnd > unifiedHistoryStart
   ? appSource.slice(unifiedHistoryStart, unifiedHistoryEnd) : "";
 if (!unifiedHistorySource.includes('.eq("customer_classification","one_time")') ||
     unifiedHistorySource.includes('customer_classification==="monthly"') ||
-    !appSource.includes('.eq("customer_classification","one_time")')) {
-  throw new Error("Unassigned history must show only one-time supplies, never linked monthly deliveries");
+    !unifiedHistorySource.includes("عارضی ادھار — زیرِ وصولی") ||
+    !unifiedHistorySource.includes("مکمل وصول شدہ ہسٹری") ||
+    appSource.includes("async function loadUnifiedNonRegisteredHistory()")) {
+  throw new Error("Consolidated one-time receivables history must separate pending and settled records and exclude monthly deliveries");
 }
 const pendingReviewStart = appSource.indexOf("async function loadPendingMonthlyDeliveryLinks()");
 const pendingReviewEnd = appSource.indexOf("\n}\nasync function splitPendingMonthlyDelivery", pendingReviewStart);
