@@ -2058,12 +2058,12 @@ async function deliveryModule(){
   '<div id="dWarn" class="warning hidden">بوتلوں میں فرق ہے؛ اسی دن جانچیں۔</div>'+
   '<button id="deliverySaveButton" onclick="saveDelivery()">ڈلیوری محفوظ کریں</button><button class="secondary" type="button" onclick="startNewDeliveryEntry()">نئی ڈلیوری درج کریں</button>'+
   '<p class="muted">WhatsApp اور SMS اطلاع صرف رجسٹرڈ گاہک کے لیے دستیاب ہے۔</p><button id="deliveryWhatsAppButton" class="secondary" disabled onclick="shareCurrentDeliveryWhatsApp()">WhatsApp پیغام تیار کریں</button><button id="deliverySMSButton" class="secondary" disabled onclick="shareCurrentDeliverySMS()">SMS پیغام تیار کریں</button>'+
-  '<button class="secondary" onclick="loadDailyDeliveries();loadUnifiedNonRegisteredHistory()">تمام ڈلیوریاں تازہ کریں</button>';
+  '<button class="secondary" onclick="loadDailyDeliveries()">تمام ڈلیوریاں تازہ کریں</button>';
  $("dOwnWrap").classList.add("hidden");
  await loadWorkerOptions();
  await loadSelectedDelivery();
  await loadDailyDeliveries();
- await loadUnifiedNonRegisteredHistory();
+ 
 }
 
 function handleUnifiedRecipientChange(){
@@ -2279,7 +2279,7 @@ async function saveUnifiedMonthlyDelivery(customerId){
   mpwClearPendingRequestId("monthly-unregistered-delivery");
   $("dOut").value="";$("dBack").value="0";$("dCaps").value="0";calcDelivery();
   msg("ماہانہ کھاتے کی ڈلیوری محفوظ ہوگئی۔",true);
-  await Promise.all([loadUnifiedNonRegisteredHistory(),loadTodaySummary(),runReport()]);
+  await Promise.all([loadTodaySummary(),runReport()]);
  }catch(e){msg("ماہانہ ڈلیوری محفوظ نہیں ہوئی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
 }
@@ -2307,28 +2307,9 @@ async function saveUnifiedTemporaryDelivery(){
   mpwClearPendingRequestId("unassigned19l");
   $("dTempName").value="";$("dOut").value="";$("dBack").value="0";$("dCaps").value="0";calcDelivery();
   msg("عارضی ادھار کا اندراج محفوظ ہوگیا۔ وصولی اسی سپلائی کے ساتھ منسلک ہوگی۔",true);
-  await Promise.all([loadUnifiedNonRegisteredHistory(),loadTodaySummary(),runReport()]);
+  await Promise.all([loadTodaySummary(),runReport()]);
  }catch(e){msg("عارضی ادھار محفوظ نہیں ہوا: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
-}
-
-async function loadUnifiedNonRegisteredHistory(){
- const host=$("moduleTable");if(!host)return;
- host.querySelector("#unifiedNonRegisteredHistory")?.remove();
- try{
-  const {data,error}=await db.from("unassigned_19l_deliveries")
-   .select("id,delivery_date,bottles_delivered,damaged_caps,details")
-   .eq("customer_classification","one_time")
-   .order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(100);
-  if(error)throw error;
-  const rows=(data||[]).map(x=>
-   '<tr><td>'+esc(x.delivery_date)+'</td><td>عارضی ادھار / وقتی</td><td>'+esc(x.details||"وقتی سپلائی")+'</td><td>'+
-   Number(x.bottles_delivered||0)+'</td><td>'+Number(x.damaged_caps||0)+'</td><td>'+
-   money(Number(x.bottles_delivered||0)*100+Number(x.damaged_caps||0)*10)+'</td></tr>'
-  ).join("");
-  host.insertAdjacentHTML("beforeend",'<div id="unifiedNonRegisteredHistory" class="card"><h3>عارضی سپلائیوں کی حالیہ ہسٹری</h3><p class="muted">اس فہرست میں صرف وقتی سپلائیاں ہیں؛ ماہانہ کھاتوں کی سپلائیاں اپنے منتخب ماہانہ کھاتے میں دیکھی جا سکتی ہیں۔</p><div class="tablewrap"><table><tr><th>تاریخ</th><th>قسم</th><th>نام</th><th>بوتلیں</th><th>خراب ڈھکن</th><th>چارج</th></tr>'+
-   (rows||'<tr><td colspan="6">ابھی کوئی وقتی سپلائی درج نہیں۔</td></tr>')+'</table></div></div>');
- }catch(e){host.insertAdjacentHTML("beforeend",'<p id="unifiedNonRegisteredHistory" class="error">وقتی سپلائی ہسٹری لوڈ نہیں ہوئی: '+esc(e?.message||String(e))+'</p>');}
 }
 
 /* ماہانہ بل */
@@ -3340,15 +3321,21 @@ async function loadUnassigned19lHistory(){
    db.from("unassigned_19l_delivery_collections").select("delivery_id,amount").in("delivery_id",batch).order("id"));
   const collected=new Map();
   receipts.forEach(x=>collected.set(Number(x.delivery_id),(collected.get(Number(x.delivery_id))||0)+Number(x.amount)));
-  box.innerHTML='<h3>حالیہ سپلائیاں</h3><div class="u19-history-list">'+
-   (data||[]).map(r=>{
-    const received=collected.get(Number(r.id))||0;
-    const due=Number(r.bottles_delivered||0)*100+Number(r.damaged_caps||0)*10;
-    const remaining=Math.max(due-received,0);
-    return '<div class="u19-history-item"><div><b>'+esc(r.details||r.delivery_date)+'</b><span>'+esc(r.delivery_date)+' · '+Number(r.bottles_delivered)+' بھری بوتلیں</span></div><div><span>وصولی: '+money(received)+'</span><b>بقایا: '+money(remaining)+'</b></div></div>';
-   }).join("")+
-   ((data||[]).length?'':'<p class="muted">ابھی کوئی سپلائی درج نہیں ہوئی۔</p>')+
-   '</div>';
+  const items=(data||[]).map(r=>{
+   const received=collected.get(Number(r.id))||0;
+   const due=Number(r.bottles_delivered||0)*100+Number(r.damaged_caps||0)*10;
+   const remaining=Math.max(due-received,0);
+   return {r,received,due,remaining};
+  });
+  const renderItems=rows=>rows.map(({r,received,due,remaining})=>
+   '<div class="u19-history-item"><div><b>'+esc(r.details||r.delivery_date)+'</b><span>'+esc(r.delivery_date)+' · '+Number(r.bottles_delivered)+' بھری بوتلیں · کل رقم: '+money(due)+'</span></div><div><span>وصولی: '+money(received)+'</span><b>'+(remaining>0?'بقایا: '+money(remaining):'مکمل وصول')+'</b></div></div>'
+  ).join("");
+  const pending=items.filter(x=>x.remaining>0),settled=items.filter(x=>x.remaining===0);
+  box.innerHTML='<h3>عارضی ادھار — زیرِ وصولی</h3><div class="u19-history-list">'+
+   (renderItems(pending)||'<p class="muted">اس وقت کوئی بقایا ادھار نہیں۔</p>')+
+   '</div><details class="card"><summary>مکمل وصول شدہ ہسٹری ('+settled.length+')</summary><div class="u19-history-list">'+
+   (renderItems(settled)||'<p class="muted">ابھی کوئی مکمل وصول شدہ سپلائی نہیں۔</p>')+
+   '</div></details>';
  }catch(e){box.textContent="سپلائی ہسٹری لوڈ نہیں ہوئی: "+(e.message||String(e));}
 }
 async function loadUnassigned19lCollectionOptions(){
