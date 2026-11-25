@@ -3314,8 +3314,7 @@ async function linkPendingMonthlyDelivery(deliveryId){
 async function loadUnassigned19lHistory(){
  const box=$("u19History");if(!box)return;
  try{
-  const {data,error}=await db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details").eq("customer_classification","one_time").order("delivery_date",{ascending:false}).order("id",{ascending:false}).limit(50);
-  if(error)throw error;
+  const data=await mpwFetchAllPages(()=>db.from("unassigned_19l_deliveries").select("id,delivery_date,bottles_delivered,damaged_caps,details").eq("customer_classification","one_time").order("delivery_date",{ascending:false}).order("id",{ascending:false}));
   const ids=(data||[]).map(r=>Number(r.id));
   const receipts=await mpwFetchByIdBatches(ids,batch=>
    db.from("unassigned_19l_delivery_collections").select("delivery_id,amount").in("delivery_id",batch).order("id"));
