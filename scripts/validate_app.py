@@ -276,6 +276,11 @@ for field_id in ("dRecipient", "dDate", "dOut", "dBack", "dCaps"):
         fail("19L delivery field is missing its visible label: " + field_id)
 if "function deliveryConfirmationSummary(c)" not in source:
     fail("19L combined confirmation summary helper is missing")
+one_time_history_start = source.find("async function loadUnassigned19lHistory(){")
+one_time_history_end = source.find("\nasync function loadUnassigned19lCollectionOptions", one_time_history_start)
+one_time_history_body = source[one_time_history_start:one_time_history_end if one_time_history_end > one_time_history_start else one_time_history_start + 8000]
+if "mpwFetchAllPages" not in one_time_history_body or ".limit(50)" in one_time_history_body:
+    fail("One-time receivables history must not hide older unpaid deliveries behind a fixed row limit.")
 for required in (
     "function handleUnifiedRecipientChange()",
     "async function saveUnifiedMonthlyDelivery(",
