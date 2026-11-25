@@ -4023,6 +4023,8 @@ async function loadExecutiveDashboard(){
      <div class="exec-line exec-net"><span>درج شدہ خالص نقد حرکت</span><b>${fmt(data.recorded_net_cash_movement)}</b></div>
      <div class="exec-line"><span>ایک وقتی 19L بقایا</span><b>${fmt(data.unassigned_receivables)}</b></div>
      <div class="exec-line"><span>ماہانہ غیر رجسٹرڈ کھاتوں کا بقایا</span><b>${fmt(data.monthly_unregistered_receivables)}</b></div>
+     <div class="exec-line"><span>ماہانہ غیر رجسٹرڈ کھاتوں سے وصولی</span><b>${fmt(water.monthly_account_cash_collected)}</b></div>
+     <div class="exec-line"><span>ماہانہ کھاتے سے منسلک نہ ہونے والی سپلائیوں کی وصولی</span><b>${fmt(water.pending_review_delivery_cash_collected)}</b></div>
      <div class="exec-line"><span>پرانے غیر درجہ بند 19L بقایا</span><b>${fmt(data.historical_pending_19l_receivables)}</b></div>
      <div class="exec-line"><span>درج شدہ واجب الادا (ورکر + قرض)</span><b>${fmt(data.payables)}</b></div>
      <div class="exec-line"><span>ورکر بقایا</span><b>${fmt(data.worker_payables)}</b></div>
