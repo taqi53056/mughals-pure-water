@@ -1,5 +1,8 @@
 # MUGHAL'S PURE WATER — Release Readiness (2026-11-13)
 
+> **اہم تازہ اصلاح (2026-11-26):** یہ دستاویز اپنی تاریخ کی snapshot ہے۔ موجودہ 6L اصول مختلف ہے: ایک یونٹ ایک بوتل؛ ہر سیل میں اصل فی بوتل قیمت ایڈمن خود درج کرے گا، کوئی Rs.55 یا دوسری مقررہ کم از کم حد نہیں۔ موجودہ نافذ migrations: `20261126162500_remove_obsolete_six_litre_settings_price_floor.sql` اور `20261126163000_remove_obsolete_six_litre_sale_price_floor.sql`.
+
+
 ## Release changes now merged to `main`
 
 - 19L customer delivery records support multiple deliveries for the same customer on the same date.
