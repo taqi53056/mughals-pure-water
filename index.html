@@ -4329,7 +4329,7 @@ async function runReport(){
  }
 }
 /* مالک کی ذاتی نکاسی — کاروباری خرچ سے الگ */
-const OWNER_WITHDRAWAL_RECIPIENTS=Object.freeze(["M. Muzamil Mughal","M.Taqi Mughal","M.Usama Mughal"]);
+const OWNER_WITHDRAWAL_RECIPIENTS=Object.freeze(["M. Muzamil Mughal","M.Taqi Mughal","M.Usama Mughal","M. Rafi Mughal"]);
 async function ownerWithdrawalsModule(){
  setTitle("مالکان کی ذاتی نکاسی");
  const opts=OWNER_WITHDRAWAL_RECIPIENTS.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("");
@@ -4345,7 +4345,7 @@ async function ownerWithdrawalsModule(){
  '<label for="owDetails">اضافی وضاحت (اختیاری)</label><textarea id="owDetails" maxlength="500" placeholder="ضرورت ہو تو تفصیل لکھیں"></textarea>'+
  '<label for="owMethod">ادائیگی کا طریقہ</label><select id="owMethod"><option value="cash">نقد</option><option value="bank">بینک</option><option value="jazzcash">جاز کیش</option><option value="easypaisa">ایزی پیسہ</option><option value="other">دیگر</option></select>'+
  '<button id="owSave" onclick="saveOwnerWithdrawal()">نکاسی محفوظ کریں</button></div>'+
- '<div class="card"><div class="owner-section-head"><div><h3>ماہانہ خلاصہ</h3><p class="muted">تین مقررہ مالکان کا حساب؛ پرانے دیگر نام بھی ہسٹری میں محفوظ رہیں گے</p></div><span class="owner-month-tag" id="ownerMonthTag">'+today().slice(0,7)+'</span></div><div id="ownerWithdrawalSummary">ریکارڈ لوڈ ہو رہا ہے...</div></div>'+
+ '<div class="card"><div class="owner-section-head"><div><h3>ماہانہ خلاصہ</h3><p class="muted">تین ایڈمن اور ایک الگ نکاسی شریک کا حساب؛ پرانے دیگر نام ہسٹری میں محفوظ رہیں گے</p></div><span class="owner-month-tag" id="ownerMonthTag">'+today().slice(0,7)+'</span></div><div id="ownerWithdrawalSummary">ریکارڈ لوڈ ہو رہا ہے...</div></div>'+
  '<div class="card"><h3>نکاسی کی مکمل ہسٹری</h3><label for="owMonth">مطلوبہ مہینہ</label><input id="owMonth" type="month" value="'+today().slice(0,7)+'"><button class="secondary" onclick="loadOwnerWithdrawals()">مہینے کا حساب دکھائیں</button><div id="ownerWithdrawalHistory">ریکارڈ لوڈ ہو رہا ہے...</div></div>';
  await loadOwnerWithdrawals();
 }
@@ -4383,7 +4383,7 @@ async function loadOwnerWithdrawals(){
  if($("ownerMonthTag"))$("ownerMonthTag").textContent=month;
  if($("ownerWithdrawalSummary"))$("ownerWithdrawalSummary").innerHTML=
  '<div class="owner-total-panel"><small>اس مہینے کی مجموعی نکاسی</small><strong>'+money(grand)+'</strong><span>'+rows.length+' اندراجات</span></div>'+
- '<div class="worker-summary-grid"><div><small>کاؤنٹر کی نقد دراز</small><b>'+money(counterTotal)+'</b></div><div><small>500ml + 1.5L مشترکہ سیل</small><b>'+money(salesTotal)+'</b></div><div><small>ماخذ درج نہیں</small><b>'+money(unclassified)+'</b></div><div><small>تین مالکان کے علاوہ پرانا ریکارڈ</small><b>'+money(legacyRecipientTotal)+'</b></div></div>'+
+ '<div class="worker-summary-grid"><div><small>کاؤنٹر کی نقد دراز</small><b>'+money(counterTotal)+'</b></div><div><small>500ml + 1.5L مشترکہ سیل</small><b>'+money(salesTotal)+'</b></div><div><small>ماخذ درج نہیں</small><b>'+money(unclassified)+'</b></div><div><small>چار مقررہ وصول کنندگان کے علاوہ پرانا ریکارڈ</small><b>'+money(legacyRecipientTotal)+'</b></div></div>'+
  '<div class="owner-recipient-grid">'+recipients.map((name,i)=>'<div class="owner-recipient-card"><div class="owner-recipient-top"><span class="owner-recipient-icon">'+(i+1)+'</span><b>'+esc(name)+'</b></div><strong>'+money(totals[name])+'</strong><div class="owner-bar"><i style="width:'+Math.round(totals[name]/max*100)+'%"></i></div><small>'+(OWNER_WITHDRAWAL_RECIPIENTS.includes(name)?"ماہانہ نکاسی":"پرانا ہسٹری ریکارڈ")+'</small></div>').join("")+'</div>';
  if($("ownerWithdrawalHistory"))$("ownerWithdrawalHistory").innerHTML=rows.length?'<div class="owner-history-list">'+rows.map(r=>'<article class="owner-history-row"><div class="owner-history-date"><b>'+esc(r.entry_date)+'</b><small>'+esc(r.payment_method||"")+(r.withdrawal_source?' · '+(r.withdrawal_source==="counter_cash"?"کاؤنٹر کیش":"پروڈکٹ سیل"):' · ماخذ درج نہیں')+'</small></div><div class="owner-history-main"><b>'+esc(r.counterparty||"نام درج نہیں")+'</b><small>'+esc(r.category||"وجہ درج نہیں")+(r.details?' · '+esc(r.details):"")+'</small></div><strong>'+money(r.amount)+'</strong><button class="secondary" onclick="deleteOwnerWithdrawal('+Number(r.id)+',this)">حذف</button></article>').join("")+'</div>':'<div class="owner-empty">اس مہینے کوئی نکاسی درج نہیں ہوئی۔</div>';
 }
