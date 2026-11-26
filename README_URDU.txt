@@ -9,7 +9,7 @@ MUGHAL'S PURE WATER — مختصر ریلیز نوٹس
 - SW.js — cache اور offline shell
 - icon.svg، icon-192.png، icon-512.png — آئیکنز
 - MUGHALS_FINAL_OWNER_MIGRATION.sql — Owner/ورکر اجرت کی علیحدگی
-- MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کم از کم قیمت اور سیل RPC
+- MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — read-only قیمت verification؛ پرانی Rs.55 پابندی دوبارہ لاگو نہیں کرتی
 - MUGHALS_SECURITY_PERFORMANCE_REPAIR_20261109.sql — live Supabase security/performance repairs کا ریکارڈ
 - MUGHALS_RLS_POLICY_CONSOLIDATION_20261109.sql — final RLS policy consolidation اور invoker RPC hardening
 - MUGHALS_PRODUCT_PRICE_SETTINGS_GUARD_20261109.sql — bulk special price اور fixed pack/labor database guards؛ 6L کی قیمت ہر سیل پر ایڈمن منتخب کرتا ہے
