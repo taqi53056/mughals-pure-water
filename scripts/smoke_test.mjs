@@ -20,6 +20,9 @@ if (appSource.includes("updateUnassigned19lLabor") ||
     !appSource.includes('id="u19SaveButton" onclick="saveUnassigned19lDelivery()">سپلائی محفوظ کریں</button>')) {
   throw new Error("One-time supply entry still exposes obsolete labor UI or stale callbacks");
 }
+if (appSource.includes("مقررہ قیمت خود آئے گی") || !appSource.includes("ہر سیل کی اصل فی یونٹ قیمت درج کریں")) {
+  throw new Error("Sales module help must describe actual admin-entered per-sale pricing");
+}
 if (!appSource.includes("totalPayable=bill?") ||
     !appSource.includes("money(totalPayable)") || !appSource.includes("money(due)") ||
     !appSource.includes("monthlyUnregisteredSelectedMonth") || !appSource.includes("اس ماہ وصولی") ||
