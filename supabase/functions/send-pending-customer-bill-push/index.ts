@@ -38,6 +38,16 @@ Deno.serve(async (req: Request) => {
     console.error("VAPID keys are not configured for scheduled bill push");
     return json({ error: "Push server keys are not configured" }, 503);
   }
+  try {
+    webpush.setVapidDetails(
+      "https://taqi53056.github.io/mughals-pure-water/",
+      publicKey,
+      privateKey,
+    );
+  } catch (error) {
+    console.error("Scheduled bill-push VAPID configuration is invalid", String(error));
+    return json({ error: "Push server keys are invalid" }, 503);
+  }
 
   const { data: notifications, error: claimError } = await admin.rpc(
     "claim_pending_customer_bill_push",
@@ -50,12 +60,6 @@ Deno.serve(async (req: Request) => {
   if (!notifications?.length) {
     return json({ processed: 0, sent: 0, failed: 0, skipped: 0, vapid_configured: true });
   }
-
-  webpush.setVapidDetails(
-    "https://taqi53056.github.io/mughals-pure-water/",
-    publicKey,
-    privateKey,
-  );
 
   let sent = 0;
   let failed = 0;
