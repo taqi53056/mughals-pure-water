@@ -17,7 +17,7 @@ Security Advisor کی واحد وارننگ leaked-password protection ہے؛ م
 - SW.js — Service Worker؛ موجودہ cache version v24
 - icon.svg، icon-192.png، icon-512.png — ایپ آئیکنز
 - MUGHALS_FINAL_OWNER_MIGRATION.sql — Owner اور ورکر اجرت کی علیحدگی
-- MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — کارٹن قیمت کی کم از کم حد اور 5-parameter سیل RPC
+- MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql — پرانی قیمت مرمت فائل کی read-only verification؛ اسے دوبارہ چلانے سے ڈیٹا تبدیل نہیں ہوتا
 - MUGHALS_SECURITY_PERFORMANCE_REPAIR_20261109.sql — live Supabase پر لاگو اضافی security/performance repairs کا ریکارڈ
 - MUGHALS_RLS_POLICY_CONSOLIDATION_20261109.sql — final RLS policy consolidation اور invoker RPC hardening
 - MUGHALS_PRODUCT_PRICE_SETTINGS_GUARD_20261109.sql — 100+ کارٹن خصوصی قیمت اور مقررہ پیک سائز/مزدوری کے database guards؛ 6L کی فی سیل قیمت ایڈمن منتخب کرتا ہے
