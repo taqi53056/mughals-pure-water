@@ -3870,7 +3870,7 @@ async function loadTodaySummary(){
    '<div class="stat">کاؤنٹر پانی کی تخمینی لاگت: <b>'+money(water.estimated_counter_water_cost||0)+'</b></div>'+
    (dailyReport.missing_costs?.length?'<div class="warning">لاگت کی کمی: '+dailyReport.missing_costs.map(esc).join("، ")+'</div>':"")+
    (dailyReport.notes?'<div class="warning">'+esc(dailyReport.notes)+'</div>':"")+
-   (Number(water.unassigned_delivery_cash_unclassified||0)>0?'<div class="warning">ایک وقتی غیر منسلک سپلائی کی وصولی باقی ہے۔ اگر رقم وصول ہو چکی ہے تو مخصوص سپلائی ماڈیول میں متعلقہ ریکارڈ کے تحت وصولی درج کریں؛ یہ مالی وصولی خودکار درج ہوگی اور منافع دوبارہ نہیں بڑھے گا۔</div>':"")+
+   (Number(water.unassigned_delivery_cash_unclassified||0)>0?'<div class="warning">ایک وقتی سپلائی کا بقایا: <b>'+money(water.unassigned_delivery_cash_unclassified)+' روپے</b>۔ وصولی ملنے پر مخصوص سپلائی ماڈیول میں اسی اندراج کے تحت رقم درج کریں؛ مالی وصولی خودکار شامل ہوگی اور منافع دوبارہ نہیں بڑھے گا۔</div>':"")+
    (expensesR.rows.length===0&&!expensesR.error?'<div class="warning">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>':"");
  }
  const errorHtml=dailyErrors.length?'<div class="warning">کچھ معلومات لوڈ نہیں ہوئیں: '+dailyErrors.map(([name,error])=>esc(name)+': '+esc(error.message||"خرابی")).join("؛ ")+'۔ باقی دستیاب سرگرمی دکھائی جا رہی ہے۔</div>':"";
