@@ -3051,7 +3051,7 @@ async function saveCounterWaterSale(){
   }
   if(!saved?.id)throw new Error("روزانہ وصولی محفوظ ہونے کی تصدیق نہیں ہوئی۔");
   window.currentCounterWaterRecordId=Number(saved.id);
-  msg("مجموعی کاؤنٹر وصولی محفوظ ہوگئی؛ غیر منسلک وصولی اور الگ درج نقد مصنوعات منہا کرکے 19L کاؤنٹر رقم اور پانی کا تخمینہ خود بن گیا۔",true);
+  msg("19L کاؤنٹر وصولی محفوظ ہوگئی؛ اگر آج کی ایک وقتی سپلائی کی وصولی اس رقم میں شامل تھی تو وہ خود منہا ہوگئی۔ 500ml، 1.5L اور 6L کی الگ فروخت اس رقم میں شامل نہ کریں۔",true);
   await loadCounterWaterForDate();await loadTodaySummary();
  }catch(error){
   msg("روزانہ وصولی محفوظ نہیں ہوئی: "+(error?.message||String(error)));
