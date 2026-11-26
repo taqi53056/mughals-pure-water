@@ -1453,9 +1453,9 @@ try {
         const history = document.querySelector("#ownerWithdrawalHistory")?.textContent || "";
         return {
           ownerCards: document.querySelectorAll("#ownerWithdrawalSummary .owner-recipient-card").length,
-          legacyTotalShown: summary.includes("تین مالکان کے علاوہ پرانا ریکارڈ"),
+          legacyTotalShown: summary.includes("چار مقررہ وصول کنندگان کے علاوہ پرانا ریکارڈ"),
           legacyNamePreservedInHistory: history.includes("M. Rafi Mughal"),
-          legacyNameNotPromotedToOwnerCard: !summary.includes("M. Rafi Mughal"),
+          rafiIncludedAsRecipientCard: summary.includes("M. Rafi Mughal"),
           unclassifiedSourceShown: summary.includes("ماخذ درج نہیں")
         };
       } finally {
@@ -1463,9 +1463,9 @@ try {
         window.confirm = originalConfirm;
       }
     });
-    if (ownerWithdrawalResult.ownerCards !== 3 || !ownerWithdrawalResult.legacyTotalShown ||
+    if (ownerWithdrawalResult.ownerCards !== 4 || !ownerWithdrawalResult.legacyTotalShown ||
         !ownerWithdrawalResult.legacyNamePreservedInHistory ||
-        !ownerWithdrawalResult.legacyNameNotPromotedToOwnerCard ||
+        !ownerWithdrawalResult.rafiIncludedAsRecipientCard ||
         !ownerWithdrawalResult.unclassifiedSourceShown) {
       failures.push("Owner withdrawal summary must show only three permanent owners while preserving legacy records and unknown sources");
     }
