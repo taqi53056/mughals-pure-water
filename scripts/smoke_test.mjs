@@ -1208,6 +1208,7 @@ try {
       window.confirm = () => true;
       await window.settingsModule();
       const rendered = Boolean(document.querySelector("#psDefault_1") && document.querySelector("#psSpecial_1"));
+      const sixLiterSettingsNoFloor = document.querySelector("#settingsStatus")?.textContent.includes("کوئی مقررہ کم از کم حد نہیں") && document.querySelector("#settingsStatus")?.textContent.includes("ایڈمن فی سیل طے کرے گا");
       document.querySelector("#psDefault_1").value = "279";
       await window.saveProductSettings(1, "500ml");
       const belowFloorBlocked = updates.length === 0;
@@ -1244,7 +1245,7 @@ try {
       const sixLiterCustomPrice = document.querySelector("#saleUnitPrice").value;
       return {
         rendered,
-        sixLiterSettingsNoFloor: document.querySelector("#settingsStatus")?.textContent.includes("کوئی مقررہ کم از کم حد نہیں") && document.querySelector("#settingsStatus")?.textContent.includes("ایڈمن فی سیل طے کرے گا"),
+        sixLiterSettingsNoFloor,
         belowFloorBlocked,
         specialAboveDefaultBlocked,
         saved: updates.length === 1 && updates[0].table === "product_settings",
