@@ -2418,23 +2418,29 @@ async function saveBill(){
   };
   const {data:existing,error:lookupError}=await db.from("customer_notifications").select("id,message").eq("customer_id",Number(id)).eq("reference_key",notice.reference_key).limit(1);
   if(lookupError)throw lookupError;
-  let shouldPush=false;
+  let shouldPush=false,notificationId=null;
   if(existing?.length){
+   notificationId=Number(existing[0].id);
    shouldPush=existing[0].message!==notice.message;
    if(shouldPush){
-    const {error}=await db.from("customer_notifications").update({title:notice.title,message:notice.message,is_read:false,created_at:new Date().toISOString()}).eq("id",existing[0].id);
+    const {error}=await db.from("customer_notifications").update({title:notice.title,message:notice.message,is_read:false,created_at:new Date().toISOString()}).eq("id",notificationId);
     if(error)throw error;
    }
   }else{
-   const {error}=await db.from("customer_notifications").insert(notice);
+   const {data:created,error}=await db.from("customer_notifications").insert(notice).select("id").single();
    if(error)throw error;
+   notificationId=Number(created.id);
    shouldPush=true;
   }
   setBillSavedState(true);
   if(shouldPush){
    const push=await notifyCustomerPush(Number(id),notice.title,notice.message);
    if(push?.error||Number(push?.sent||0)<1)msg("بل محفوظ اور ایپ اطلاع درج ہوگئی، مگر موبائل Push نہیں پہنچی: "+(push?.error||push?.reason||"کوئی فعال موبائل کنکشن جواب نہیں دے رہا۔"));
-   else msg("بل محفوظ ہوگیا، ایپ اطلاع درج ہوئی اور موبائل Push بھی بھیج دی گئی۔",true);
+   else{
+    const {error:statusError}=await db.from("customer_notifications").update({push_sent_at:new Date().toISOString(),push_queue_eligible:false,push_error:null}).eq("id",notificationId);
+    if(statusError)msg("بل محفوظ اور Push بھیجی گئی، مگر ترسیل کا اسٹیٹس محفوظ نہیں ہوا؛ مہینہ بند ہونے پر دوبارہ Push آسکتی ہے: "+statusError.message);
+    else msg("بل محفوظ ہوگیا، ایپ اطلاع درج ہوئی اور موبائل Push بھی بھیج دی گئی۔",true);
+   }
   }else msg("بل کا حساب تازہ ہے؛ پہلے سے موجود اطلاع دوبارہ نہیں بھیجی گئی۔",true);
  }catch(e){msg("بل یا اطلاع مکمل نہیں ہوسکی: "+(e?.message||String(e)));}
  finally{if(button)button.disabled=false;}
