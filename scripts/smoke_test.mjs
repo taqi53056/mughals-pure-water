@@ -1256,6 +1256,8 @@ try {
         sixLiterDisabled,
         sixLiterMinAttribute,
         sixLiterFlexiblePriceAccepted,
+        sixLiterSaleMessage: document.querySelector("#moduleMsg")?.textContent || "",
+        sixLiterSaleDate: document.querySelector("#saleDate")?.value || "",
         sixLiterCustomPrice
       };
     });
