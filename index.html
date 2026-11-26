@@ -4063,7 +4063,7 @@ async function monthCloseModule(){
  const month=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
  setTitle("ماہانہ کلوزنگ اور مالی کنٹرول");
  $("moduleBody").innerHTML=`
-  <p class="muted">مہینہ بند کرنے سے پہلے بل، لاگت اور اسٹاک کی جانچ ہوگی۔ بند مہینے کے اصل ریکارڈ میں تبدیلی نہیں ہوگی؛ اصلاح موجودہ مہینے میں الگ اندراج سے ہوگی۔</p>
+  <p class="muted">مہینہ بند کرنے سے پہلے بل، لاگت اور اسٹاک کی جانچ ہوگی۔ بند مہینے کے اصل ریکارڈ میں تبدیلی نہیں ہوگی؛ اصلاح موجودہ مہینے میں الگ اندراج سے ہوگی۔ مہینہ بند ہوتے ہی رجسٹرڈ گاہکوں کے بل کی موبائل Push قطار میں جائے گی؛ ترسیل صرف ان فونز پر ہوگی جن پر Push فعال ہے۔</p>
   <div class="card"><label for="closeMonth">جس مہینے کو بند کرنا ہے</label><input id="closeMonth" type="month" value="${month}">
    <button onclick="previewMonthClose()">پہلے مکمل جانچ کریں</button>
    <div id="monthClosePreview" class="muted">پہلے جانچ چلائیں۔</div>
@@ -4116,7 +4116,7 @@ async function closeSelectedMonth(){
  try{
   const {data,error}=await db.rpc("close_business_month",{p_month_start:month+"-01",p_expenses_confirmed:true});
   if(error)throw error;
-  msg(data?.status==="already_closed"?"یہ مہینہ پہلے ہی بند ہے۔":"ماہانہ رپورٹ محفوظ اور مہینہ مستقل بند ہوگیا۔",true);
+  const queued=Number(data?.bill_push_queued)||0;const pushMessage=queued>0?queued+" گاہکوں کے بل کی موبائل Push قطار میں شامل ہوگئی۔":"اس مہینے کے لیے کوئی نئی بل Push باقی نہیں تھی۔";msg(data?.status==="already_closed"?"یہ مہینہ پہلے ہی بند ہے۔":"ماہانہ رپورٹ محفوظ اور مہینہ مستقل بند ہوگیا۔ "+pushMessage,true);
   await Promise.all([loadMonthCloseHistory(),previewMonthClose()]);
  }catch(e){msg("مہینہ بند نہیں ہوا: "+(e?.message||String(e)));if(button)button.disabled=false;}
 }
