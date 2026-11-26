@@ -1238,7 +1238,7 @@ try {
       document.querySelector("#saleQty").value = "1";
       document.querySelector("#saleUnitPrice").value = "54.99";
       await window.saveSale();
-      const sixLiterBelowFloorBlocked = saleRpcCalls === 0;
+      const sixLiterFlexiblePriceAccepted = saleRpcCalls === 1;
       document.querySelector("#saleUnitPrice").value = "60";
       window.salePricePreview(false);
       const sixLiterCustomPrice = document.querySelector("#saleUnitPrice").value;
@@ -1255,7 +1255,7 @@ try {
         sixLiterPriceStartsBlank,
         sixLiterDisabled,
         sixLiterMinAttribute,
-        sixLiterBelowFloorBlocked,
+        sixLiterFlexiblePriceAccepted,
         sixLiterCustomPrice
       };
     });
@@ -1270,9 +1270,9 @@ try {
       failures.push("Changing carton quantity must not overwrite the manually entered sale price");
     }
     if (!settingsResult.sixLiterPriceStartsBlank || settingsResult.sixLiterDisabled ||
-        settingsResult.sixLiterMinAttribute !== "55" || !settingsResult.sixLiterBelowFloorBlocked ||
+        settingsResult.sixLiterMinAttribute !== "0.01" || !settingsResult.sixLiterFlexiblePriceAccepted ||
         settingsResult.sixLiterCustomPrice !== "60") {
-      failures.push("6L sale must enforce the Rs.55 per-bottle minimum while allowing higher custom prices");
+      failures.push("6L sale must accept admin-selected positive prices below or above Rs.55");
     }
 
     const monthlyAccountResult = await page.evaluate(async () => {
