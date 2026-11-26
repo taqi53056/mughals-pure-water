@@ -1,0 +1,4 @@
+project_id = "tosxnmnqlufeuknrhxzr"
+
+[functions.send-pending-customer-bill-push]
+verify_jwt = false
