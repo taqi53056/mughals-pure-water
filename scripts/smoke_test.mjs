@@ -1183,7 +1183,7 @@ try {
         product_settings: [
           { id: 1, product_type: "500ml", unit_type: "carton", units_per_pack: 24, default_rate: 280, special_100_rate: 280, labor_per_unit: 10, is_active: true },
           { id: 2, product_type: "1.5L", unit_type: "carton", units_per_pack: 12, default_rate: 280, special_100_rate: 280, labor_per_unit: 10, is_active: true },
-          { id: 3, product_type: "6L", unit_type: "bottle", units_per_pack: 18, default_rate: 55, special_100_rate: null, labor_per_unit: 0, is_active: true }
+          { id: 3, product_type: "6L", unit_type: "bottle", units_per_pack: 1, default_rate: 0, special_100_rate: null, labor_per_unit: 0, is_active: true }
         ],
         profiles: [{ id: "admin-test", full_name: "Admin Test", role: "admin" }],
         workers: [{ id: 1, full_name: "Owner", is_active: true, is_owner: true }]
@@ -1238,12 +1238,13 @@ try {
       document.querySelector("#saleQty").value = "1";
       document.querySelector("#saleUnitPrice").value = "54.99";
       await window.saveSale();
-      const sixLiterFlexiblePriceAccepted = saleRpcCalls === 1;
+      const sixLiterFlexiblePriceAccepted = saleRpcCalls >= 1;
       document.querySelector("#saleUnitPrice").value = "60";
       window.salePricePreview(false);
       const sixLiterCustomPrice = document.querySelector("#saleUnitPrice").value;
       return {
         rendered,
+        sixLiterSettingsNoFloor: document.querySelector("#settingsStatus")?.textContent.includes("کوئی مقررہ کم از کم حد نہیں") && document.querySelector("#settingsStatus")?.textContent.includes("ایڈمن فی سیل طے کرے گا"),
         belowFloorBlocked,
         specialAboveDefaultBlocked,
         saved: updates.length === 1 && updates[0].table === "product_settings",
@@ -1263,6 +1264,7 @@ try {
     });
     console.log("6L flexible-price diagnostics:", JSON.stringify(settingsResult));
     if (!settingsResult.rendered) failures.push("Admin settings price controls did not render");
+    if (!settingsResult.sixLiterSettingsNoFloor) failures.push("6L settings must show admin-selected per-sale pricing without a fixed minimum");
     if (!settingsResult.belowFloorBlocked) failures.push("Admin settings allowed a carton price below Rs.280");
     if (!settingsResult.specialAboveDefaultBlocked) failures.push("Admin settings allowed a bulk special price above the default price");
     if (!settingsResult.saved || settingsResult.savedDefault !== 300 || settingsResult.savedSpecial !== 290) {
@@ -1274,7 +1276,7 @@ try {
     }
     if (!settingsResult.sixLiterPriceStartsBlank || settingsResult.sixLiterDisabled ||
         settingsResult.sixLiterMinAttribute !== "0.01" || !settingsResult.sixLiterFlexiblePriceAccepted ||
-        settingsResult.sixLiterCustomPrice !== "60") {
+        !settingsResult.sixLiterSaleMessage.includes("سیل محفوظ ہوگئی") || settingsResult.sixLiterCustomPrice !== "60") {
       failures.push("6L sale must accept admin-selected positive prices below or above Rs.55");
     }
 
