@@ -31,6 +31,9 @@ if (appSource.includes('id="finOwner"') || appSource.includes("toggleOwnerWithdr
 if (!appSource.includes("<h3>سرمایہ، قرض اور دیگر مالی اندراجات</h3>") || appSource.includes("<h3>سرمایہ، قرض یا مالک کی رقم</h3>")) {
   throw new Error("Finance form heading must not imply owner withdrawals are entered twice");
 }
+if (appSource.includes("product_cost_rates") || appSource.includes("saveProductCostRate") || appSource.includes("loadCostRateHistory")) {
+  throw new Error("Unused product-cost override/history code must not duplicate purchase-derived product costing");
+}
 const legacyPriceRepair = await readFile(resolve(ROOT, "MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql"), "utf8");
 if (!legacyPriceRepair.includes("READ-ONLY PRICE RULE VERIFICATION") ||
     /unit_price\s*>=\s*55|sale_rate\s*>=\s*55|THEN 55::numeric/i.test(legacyPriceRepair)) {
