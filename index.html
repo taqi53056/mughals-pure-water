@@ -4169,6 +4169,37 @@ async function loadMonthlySnapshots(){
  }).join("");
 }
 
+const FINANCE_CASHFLOW_TYPES=new Set(["capital_in","owner_withdrawal","loan_received","loan_repaid","loan_given","loan_collected","inventory_purchase","fixed_asset_purchase","fixed_asset_sale","interest_expense","interest_income"]);
+const FINANCE_PAYMENT_METHODS=new Set(["نقد","بینک","جاز کیش","ایزی پیسہ","دیگر","cash","bank","jazzcash","easypaisa","other"]);
+function isValidFinanceEntryPaymentMethod(entryType,paymentMethod){
+ if(["ادھار","credit","udhar"].includes(String(paymentMethod||"").trim().toLowerCase()))return false;
+ if(FINANCE_CASHFLOW_TYPES.has(entryType))return FINANCE_PAYMENT_METHODS.has(paymentMethod);
+ return !paymentMethod||FINANCE_PAYMENT_METHODS.has(paymentMethod);
+}
+async function saveFinanceEntry(){
+ const entry_date=$("finDate").value,entry_type=$("finType").value,amount=Number($("finAmount").value),category=$("finCategory").value.trim(),item_name=$("finItem").value.trim(),quantity=$("finQty").value===""?null:Number($("finQty").value),unit=$("finUnit").value.trim(),counterparty=$("finParty").value.trim(),payment_method=$("finMethod").value,details=$("finDetails").value.trim();
+ if(!isValidFinanceEntryPaymentMethod(entry_type,payment_method)){msg("اس مالی اندراج کے لیے درست نقد/بینک طریقہ منتخب کریں۔ ادھار کو نقد حرکت کے طور پر درج نہیں کیا جا سکتا۔");return;}
+ if(!entry_date||!Number.isFinite(amount)||amount<=0){msg("تاریخ اور درست رقم لازمی درج کریں۔");return}
+ if(quantity!==null&&(!Number.isFinite(quantity)||quantity<=0)){msg("مقدار درست درج کریں یا خالی چھوڑ دیں۔");return}
+ if(!confirmLargeEntry("مالی اندراج",amount,100000))return;
+ const button=$("finSaveButton");if(button?.disabled)return;if(button)button.disabled=true;
+ try{
+  const signature=[entry_date,entry_type,amount,category||"",item_name||"",quantity??"",unit||"",counterparty||"",payment_method||"",details||""].join("|");
+  const requestId=mpwPendingRequestId("finance-entry",signature);
+  const {data:saved,error}=await db.from("business_finance_ledger").upsert({entry_date,entry_type,amount,category:category||null,item_name:item_name||null,quantity,unit:unit||null,counterparty:counterparty||null,payment_method:payment_method||null,details:details||null,entered_by:user.id,request_id:requestId},{onConflict:"request_id",ignoreDuplicates:true}).select("id").maybeSingle();
+  if(error)throw error;
+  if(!saved){
+   const existing=await db.from("business_finance_ledger").select("id").eq("request_id",requestId).maybeSingle();
+   if(existing.error||!existing.data)throw existing.error||new Error("سابقہ مالی اندراج کی تصدیق نہیں ہوئی۔");
+  }
+  mpwClearPendingRequestId("finance-entry");
+  msg("مالی اندراج محفوظ ہوگیا۔",true);
+  for(const id of ["finAmount","finCategory","finItem","finQty","finUnit","finParty","finDetails"])$(id).value="";
+  $("finMethod").value="";await Promise.all([runReport(),loadFinanceLedger(),loadTodaySummary()]);
+ }catch(e){msg("مالی اندراج محفوظ نہیں ہوا: "+(e?.message||String(e)));}
+ finally{if(button)button.disabled=false;}
+}
+
 async function financeFetchAll(table,columns,dateColumn,start,end){
  let rows=[],offset=0;
  while(true){
