@@ -3870,7 +3870,7 @@ async function loadTodaySummary(){
    '<div class="stat">کاؤنٹر پانی کی تخمینی لاگت: <b>'+money(water.estimated_counter_water_cost||0)+'</b></div>'+
    (dailyReport.missing_costs?.length?'<div class="warning">لاگت کی کمی: '+dailyReport.missing_costs.map(esc).join("، ")+'</div>':"")+
    (dailyReport.notes?'<div class="warning">'+esc(dailyReport.notes)+'</div>':"")+
-   (Number(water.unassigned_delivery_cash_unclassified||0)>0?'<div class="warning">ایک وقتی سپلائی کا بقایا: <b>'+money(water.unassigned_delivery_cash_unclassified)+' روپے</b>۔ وصولی ملنے پر مخصوص سپلائی ماڈیول میں اسی اندراج کے تحت رقم درج کریں؛ مالی وصولی خودکار شامل ہوگی اور منافع دوبارہ نہیں بڑھے گا۔</div>':"")+
+   (Number(water.one_time_delivery_receivable||0)>0?'<div class="warning">ایک وقتی سپلائی کا بقایا: <b>'+money(water.one_time_delivery_receivable)+' روپے</b>۔ وصولی ملنے پر مخصوص سپلائی ماڈیول میں اسی اندراج کے تحت رقم درج کریں؛ مالی وصولی خودکار شامل ہوگی اور منافع دوبارہ نہیں بڑھے گا۔</div>':"")+
    (expensesR.rows.length===0&&!expensesR.error?'<div class="warning">آج اخراجات کی کوئی انٹری موجود نہیں۔ اگر پیٹرول، مرمت، کھانا یا کوئی اور خرچ ہوا ہے تو درج کریں؛ ورنہ تصدیق کریں کہ واقعی خرچ صفر تھا۔</div>':"");
  }
  const errorHtml=dailyErrors.length?'<div class="warning">کچھ معلومات لوڈ نہیں ہوئیں: '+dailyErrors.map(([name,error])=>esc(name)+': '+esc(error.message||"خرابی")).join("؛ ")+'۔ باقی دستیاب سرگرمی دکھائی جا رہی ہے۔</div>':"";
@@ -3921,8 +3921,8 @@ async function loadExecutiveDashboard(){
   const report=data?.profit_and_loss||{},segments=report.segments||{};
   const water=segments["19L"]||{},finished=segments.finished_goods||{},shared=segments.shared||{};
   const fmt=n=>money(Number(n)||0),fmtNullable=n=>n==null?"—":fmt(n);
-  const unassignedCashflowWarning=Number(water.unassigned_delivery_cash_unclassified||0)>0
-   ?'<div class="warning"><b>ایک وقتی غیر منسلک سپلائی کی وصولی باقی ہے:</b> '+fmt(water.unassigned_delivery_cash_unclassified)+' کی وصولی اس مدت میں درج نہیں۔ اگر رقم وصول ہو چکی ہے تو مخصوص سپلائی ماڈیول میں متعلقہ ریکارڈ کے تحت وصولی درج کریں؛ مالی وصولی خودکار درج ہوگی اور منافع دوبارہ نہیں بڑھے گا۔ اگر رقم وصول نہیں ہوئی تو وصولی درج نہ کریں۔</div>'
+  const unassignedCashflowWarning=Number(water.one_time_delivery_receivable||0)>0
+   ?'<div class="warning"><b>ایک وقتی سپلائی کا بقایا باقی ہے:</b> '+fmt(water.one_time_delivery_receivable)+' کا بقایا ابھی وصول نہیں ہوا۔ رقم ملنے پر مخصوص سپلائی ماڈیول میں اسی سپلائی کے ریکارڈ کے تحت وصولی درج کریں؛ اسے آمدن میں الگ سے دوبارہ درج نہ کریں۔</div>'
    :"";
   const revenue=Number(water.revenue||0)+Number(finished.revenue||0);
   const net=Number(segments.net_profit||0);
