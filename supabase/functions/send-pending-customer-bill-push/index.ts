@@ -8,6 +8,25 @@ function json(body: unknown, status = 200) {
   });
 }
 
+async function setPushResult(admin: ReturnType<typeof createClient>, notificationId: number, sent: boolean, errorMessage: string | null) {
+  const { error: rpcError } = await admin.rpc("mark_customer_bill_push_result", {
+    p_notification_id: notificationId,
+    p_sent: sent,
+    p_error: errorMessage,
+  });
+  if (!rpcError) return;
+
+  console.error("Push result RPC failed; attempting direct status update", rpcError.message);
+  const values = sent
+    ? { push_sent_at: new Date().toISOString(), push_queue_eligible: false, push_error: null }
+    : { push_error: String(errorMessage || "Push delivery failed").slice(0, 500) };
+  const { error: updateError } = await admin
+    .from("customer_notifications")
+    .update(values)
+    .eq("id", notificationId);
+  if (updateError) throw new Error("Could not record push result: " + updateError.message);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
@@ -90,21 +109,21 @@ Deno.serve(async (req: Request) => {
       .eq("is_active", true);
 
     if (subError) {
-      await admin.rpc("mark_customer_bill_push_result", {
-        p_notification_id: notificationId,
-        p_sent: false,
-        p_error: "Subscription lookup failed: " + subError.message,
-      });
+      try {
+        await setPushResult(admin, notificationId, false, "Subscription lookup failed: " + subError.message);
+      } catch (error) {
+        console.error("Could not record subscription lookup failure", String(error));
+      }
       failed++;
       continue;
     }
 
     if (!subscriptions?.length) {
-      await admin.rpc("mark_customer_bill_push_result", {
-        p_notification_id: notificationId,
-        p_sent: false,
-        p_error: "No active device subscription",
-      });
+      try {
+        await setPushResult(admin, notificationId, false, "No active device subscription");
+      } catch (error) {
+        console.error("Could not record missing subscription", String(error));
+      }
       failed++;
       continue;
     }
@@ -142,18 +161,19 @@ Deno.serve(async (req: Request) => {
     }
 
     if (customerSent > 0) {
-      await admin.rpc("mark_customer_bill_push_result", {
-        p_notification_id: notificationId,
-        p_sent: true,
-        p_error: null,
-      });
-      sent += customerSent;
+      try {
+        await setPushResult(admin, notificationId, true, null);
+        sent += customerSent;
+      } catch (error) {
+        console.error("Push was delivered but its status could not be saved", notificationId, String(error));
+        failed++;
+      }
     } else {
-      await admin.rpc("mark_customer_bill_push_result", {
-        p_notification_id: notificationId,
-        p_sent: false,
-        p_error: "Push delivery failed for all registered devices: " + failures.join(", "),
-      });
+      try {
+        await setPushResult(admin, notificationId, false, "Push delivery failed for all registered devices: " + failures.join(", "));
+      } catch (error) {
+        console.error("Could not record push delivery failure", notificationId, String(error));
+      }
       failed++;
     }
   }
