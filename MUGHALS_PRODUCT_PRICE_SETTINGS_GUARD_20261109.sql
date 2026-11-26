@@ -27,14 +27,16 @@ CHECK (
   OR
   (product_type='1.5L' AND unit_type='carton' AND units_per_pack=12 AND labor_per_unit=10)
   OR
-  (product_type='6L' AND unit_type='bottle' AND units_per_pack=18 AND labor_per_unit=0)
+  (product_type='6L' AND unit_type='bottle' AND units_per_pack=1 AND labor_per_unit=0)
 ) NOT VALID;
 ALTER TABLE public.product_settings
 VALIDATE CONSTRAINT product_settings_fixed_pack_labor_rules_check;
 
--- 6L is fixed at Rs.55 in the sale RPC and is therefore not editable here.
-ALTER TABLE public.product_settings
-ADD CONSTRAINT product_settings_6l_fixed_rate_check
-CHECK (product_type<>'6L' OR (default_rate=55 AND special_100_rate IS NULL)) NOT VALID;
-ALTER TABLE public.product_settings
-VALIDATE CONSTRAINT product_settings_6l_fixed_rate_check;
+-- 6L has no fixed/default selling price and no minimum price floor.
+-- The admin enters the actual positive unit price on every sale.
+-- Do not add a fixed-rate or minimum-price constraint for 6L.
+SELECT NOT EXISTS (
+  SELECT 1 FROM pg_constraint
+  WHERE conrelid='public.product_settings'::regclass
+    AND conname='product_settings_6l_fixed_rate_check'
+) AS obsolete_6l_fixed_rate_constraint_absent;
