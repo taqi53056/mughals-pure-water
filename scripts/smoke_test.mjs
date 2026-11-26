@@ -176,7 +176,7 @@ for (const required of [
   "netQualifier?' — '+netQualifier:''",
   "آج منافع و نقصان کی سرگرمی درج نہیں ہوئی",
   "مخصوص سپلائی ماڈیول میں اسی سپلائی کے ریکارڈ کے تحت وصولی درج کریں",
-  "مالی وصولی خودکار درج ہوگی اور منافع دوبارہ نہیں بڑھے گا",
+  "اسے آمدن میں الگ سے دوبارہ درج نہ کریں",
   'finished=segments.finished_goods||{}',
   'const net=Number(segments.net_profit||0)',
   'const previousNet=Number(previous.segments?.net_profit||0)',
