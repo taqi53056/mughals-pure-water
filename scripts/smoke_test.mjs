@@ -1259,6 +1259,7 @@ try {
         sixLiterCustomPrice
       };
     });
+    console.log("6L flexible-price diagnostics:", JSON.stringify(settingsResult));
     if (!settingsResult.rendered) failures.push("Admin settings price controls did not render");
     if (!settingsResult.belowFloorBlocked) failures.push("Admin settings allowed a carton price below Rs.280");
     if (!settingsResult.specialAboveDefaultBlocked) failures.push("Admin settings allowed a bulk special price above the default price");
