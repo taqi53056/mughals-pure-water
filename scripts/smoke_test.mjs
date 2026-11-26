@@ -1189,7 +1189,9 @@ try {
         workers: [{ id: 1, full_name: "Owner", is_active: true, is_owner: true }]
       };
       const updates = [];
+      let saleRpcCalls = 0;
       window.db = {
+        rpc() { saleRpcCalls += 1; return Promise.resolve({ data: { sale_id: 1, total_amount: 60 }, error: null }); },
         from(table) {
           const chain = {
             select() { return chain; },
@@ -1233,12 +1235,13 @@ try {
       const sixLiterPriceStartsBlank = document.querySelector("#saleUnitPrice").value === "";
       const sixLiterDisabled = document.querySelector("#saleUnitPrice").disabled;
       const sixLiterMinAttribute = document.querySelector("#saleUnitPrice").min;
+      document.querySelector("#saleQty").value = "1";
+      document.querySelector("#saleUnitPrice").value = "54.99";
+      await window.saveSale();
+      const sixLiterBelowFloorBlocked = saleRpcCalls === 0;
       document.querySelector("#saleUnitPrice").value = "60";
       window.salePricePreview(false);
       const sixLiterCustomPrice = document.querySelector("#saleUnitPrice").value;
-      document.querySelector("#saleUnitPrice").value = "0.01";
-      window.salePricePreview(false);
-      const sixLiterSmallPositivePrice = document.querySelector("#saleUnitPrice").value;
       return {
         rendered,
         belowFloorBlocked,
@@ -1252,8 +1255,8 @@ try {
         sixLiterPriceStartsBlank,
         sixLiterDisabled,
         sixLiterMinAttribute,
-        sixLiterCustomPrice,
-        sixLiterSmallPositivePrice
+        sixLiterBelowFloorBlocked,
+        sixLiterCustomPrice
       };
     });
     if (!settingsResult.rendered) failures.push("Admin settings price controls did not render");
@@ -1267,9 +1270,9 @@ try {
       failures.push("Changing carton quantity must not overwrite the manually entered sale price");
     }
     if (!settingsResult.sixLiterPriceStartsBlank || settingsResult.sixLiterDisabled ||
-        settingsResult.sixLiterMinAttribute !== "0.01" || settingsResult.sixLiterCustomPrice !== "60" ||
-        settingsResult.sixLiterSmallPositivePrice !== "0.01") {
-      failures.push("6L sale must accept an explicit positive per-bottle price without a fixed default floor");
+        settingsResult.sixLiterMinAttribute !== "55" || !settingsResult.sixLiterBelowFloorBlocked ||
+        settingsResult.sixLiterCustomPrice !== "60") {
+      failures.push("6L sale must enforce the Rs.55 per-bottle minimum while allowing higher custom prices");
     }
 
     const monthlyAccountResult = await page.evaluate(async () => {
