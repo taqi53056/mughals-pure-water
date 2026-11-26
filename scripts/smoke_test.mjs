@@ -23,6 +23,19 @@ if (appSource.includes("updateUnassigned19lLabor") ||
 if (appSource.includes("مقررہ قیمت خود آئے گی") || !appSource.includes("ہر سیل کی اصل فی یونٹ قیمت درج کریں")) {
   throw new Error("Sales module help must describe actual admin-entered per-sale pricing");
 }
+const legacyPriceRepair = await readFile(resolve(ROOT, "MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql"), "utf8");
+if (!legacyPriceRepair.includes("READ-ONLY PRICE RULE VERIFICATION") ||
+    /unit_price\\s*>=\\s*55|sale_rate\\s*>=\\s*55|THEN 55::numeric/i.test(legacyPriceRepair)) {
+  throw new Error("Legacy price repair script must not reintroduce the obsolete 6L Rs.55 floor");
+}
+const sixLiterSettingsFloorRepair = await readFile(resolve(ROOT, "supabase/migrations/20261126162500_remove_obsolete_six_litre_settings_price_floor.sql"), "utf8");
+const sixLiterSaleFloorRepair = await readFile(resolve(ROOT, "supabase/migrations/20261126163000_remove_obsolete_six_litre_sale_price_floor.sql"), "utf8");
+if (!sixLiterSettingsFloorRepair.includes("new.default_rate<0") ||
+    sixLiterSettingsFloorRepair.includes("new.default_rate<55") ||
+    !sixLiterSaleFloorRepair.includes("new.unit_price<=0") ||
+    sixLiterSaleFloorRepair.includes("new.unit_price<55")) {
+  throw new Error("Database migrations must preserve admin-selected positive 6L pricing without a Rs.55 floor");
+}
 if (!appSource.includes("totalPayable=bill?") ||
     !appSource.includes("money(totalPayable)") || !appSource.includes("money(due)") ||
     !appSource.includes("monthlyUnregisteredSelectedMonth") || !appSource.includes("اس ماہ وصولی") ||
