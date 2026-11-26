@@ -23,6 +23,11 @@ if (appSource.includes("updateUnassigned19lLabor") ||
 if (appSource.includes("مقررہ قیمت خود آئے گی") || !appSource.includes("ہر سیل کی اصل فی یونٹ قیمت درج کریں")) {
   throw new Error("Sales module help must describe actual admin-entered per-sale pricing");
 }
+if (appSource.includes('id="finOwner"') || appSource.includes("toggleOwnerWithdrawalField") ||
+    !appSource.includes("async function ownerWithdrawalsModule()") ||
+    !appSource.includes('if(name==="ownerWithdrawals")return ownerWithdrawalsModule()')) {
+  throw new Error("Owner withdrawals must have one dedicated entry module; duplicate finance-form controls must be removed");
+}
 const legacyPriceRepair = await readFile(resolve(ROOT, "MUGHALS_CARTON_PRICE_FLOOR_REPAIR.sql"), "utf8");
 if (!legacyPriceRepair.includes("READ-ONLY PRICE RULE VERIFICATION") ||
     /unit_price\s*>=\s*55|sale_rate\s*>=\s*55|THEN 55::numeric/i.test(legacyPriceRepair)) {
