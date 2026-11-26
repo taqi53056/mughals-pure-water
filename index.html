@@ -2990,7 +2990,7 @@ async function updateCounterWaterPreview(){
 async function counterWaterModule(){
  setTitle("روزانہ کاؤنٹر وصولی");
  $("moduleBody").innerHTML=
-  '<p class="muted">صرف آج کی مجموعی 19L کاؤنٹر وصولی درج کریں۔ 500ml، 1.5L اور 6L کی الگ فروخت اس رقم سے منہا نہیں ہوگی۔ صرف ایک وقتی غیر منسلک سپلائی کی وہ وصولی منہا ہوگی جو اس رقم میں شامل ہو۔ ماہانہ کھاتے کی وصولی کاؤنٹر سے کبھی منہا نہیں ہوگی۔</p>'+
+  '<p class="muted">صرف آج کی مجموعی 19L کاؤنٹر وصولی درج کریں۔ 500ml، 1.5L اور 6L کی الگ فروخت اس رقم سے منہا نہیں ہوگی۔ اسی دن وصول شدہ ایک وقتی سپلائی کی رقم اس مجموعی رقم میں لازماً شامل کریں؛ نظام اسے خود منہا کرے گا۔ ماہانہ کھاتے کی وصولی کاؤنٹر سے کبھی منہا نہیں ہوگی۔</p>'+
   '<div class="card"><label for="counterDate">تاریخ</label><input id="counterDate" type="date" value="'+today()+'">'+
   '<label for="counterAmount">آج کی مجموعی 19L کاؤنٹر وصولی (دکان کی فروخت + ایک وقتی وصول شدہ سپلائی، روپے)</label><input id="counterAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="مثلاً 1300">'+
   '<div id="counterWaterPreview" class="stat">رقم درج کرنے پر صرف ایک وقتی سپلائی کی وصولی منہا کرکے کاؤنٹر بوتلیں اور پانی خود تخمینہ ہوگا۔</div>'+
@@ -3051,7 +3051,7 @@ async function saveCounterWaterSale(){
   }
   if(!saved?.id)throw new Error("روزانہ وصولی محفوظ ہونے کی تصدیق نہیں ہوئی۔");
   window.currentCounterWaterRecordId=Number(saved.id);
-  msg("19L کاؤنٹر وصولی محفوظ ہوگئی؛ اگر آج کی ایک وقتی سپلائی کی وصولی اس رقم میں شامل تھی تو وہ خود منہا ہوگئی۔ 500ml، 1.5L اور 6L کی الگ فروخت اس رقم میں شامل نہ کریں۔",true);
+  msg("19L کاؤنٹر وصولی محفوظ ہوگئی؛ آج کی ایک وقتی سپلائی کی وصولی خود منہا ہوگئی۔ 500ml، 1.5L اور 6L کی الگ فروخت اس رقم میں شامل نہ کریں۔",true);
   await loadCounterWaterForDate();await loadTodaySummary();
  }catch(error){
   msg("روزانہ وصولی محفوظ نہیں ہوئی: "+(error?.message||String(error)));
