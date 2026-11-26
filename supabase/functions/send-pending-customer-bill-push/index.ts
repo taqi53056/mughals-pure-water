@@ -34,18 +34,6 @@ Deno.serve(async (req: Request) => {
   const publicKey = Deno.env.get("VAPID_PUBLIC_KEY") || "";
   const privateKey = Deno.env.get("VAPID_PRIVATE_KEY") || "";
 
-  const { count: pendingCount, error: pendingError } = await admin
-    .from("customer_notifications")
-    .select("id", { count: "exact", head: true })
-    .eq("push_queue_eligible", true)
-    .is("push_sent_at", null)
-    .lt("push_attempts", 3);
-  if (pendingError) {
-    console.error("Pending bill-push lookup failed", pendingError.message);
-    return json({ error: "Could not load pending bill notifications" }, 500);
-  }
-  if (!pendingCount) return json({ processed: 0, sent: 0, failed: 0, skipped: 0, vapid_configured: !!(publicKey && privateKey) });
-
   if (!publicKey || !privateKey) {
     console.error("VAPID keys are not configured for scheduled bill push");
     return json({ error: "Push server keys are not configured" }, 503);
@@ -58,6 +46,9 @@ Deno.serve(async (req: Request) => {
   if (claimError) {
     console.error("Pending bill-push claim failed", claimError.message);
     return json({ error: "Could not claim pending bill notifications" }, 500);
+  }
+  if (!notifications?.length) {
+    return json({ processed: 0, sent: 0, failed: 0, skipped: 0, vapid_configured: true });
   }
 
   webpush.setVapidDetails(
