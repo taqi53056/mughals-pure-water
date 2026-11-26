@@ -1,0 +1,166 @@
+import { createClient } from "npm:@supabase/supabase-js@2.49.8";
+import webpush from "npm:web-push@3.6.7";
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
+}
+
+Deno.serve(async (req: Request) => {
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+
+  const token = req.headers.get("x-internal-token") || "";
+  if (!token) return json({ error: "Unauthorized" }, 401);
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (!supabaseUrl || !serviceKey) return json({ error: "Push server configuration is incomplete" }, 503);
+
+  const admin = createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: validToken, error: tokenError } = await admin.rpc(
+    "verify_mpw_bill_push_cron_token",
+    { p_token: token },
+  );
+  if (tokenError || validToken !== true) {
+    console.error("Internal bill-push authentication failed", tokenError?.message || "Invalid token");
+    return json({ error: "Unauthorized" }, 401);
+  }
+
+  const { count: pendingCount, error: pendingError } = await admin
+    .from("customer_notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("push_queue_eligible", true)
+    .is("push_sent_at", null)
+    .lt("push_attempts", 3);
+  if (pendingError) {
+    console.error("Pending bill-push lookup failed", pendingError.message);
+    return json({ error: "Could not load pending bill notifications" }, 500);
+  }
+  if (!pendingCount) return json({ processed: 0, sent: 0, failed: 0, skipped: 0 });
+
+  const publicKey = Deno.env.get("VAPID_PUBLIC_KEY") || "";
+  const privateKey = Deno.env.get("VAPID_PRIVATE_KEY") || "";
+  if (!publicKey || !privateKey) {
+    console.error("VAPID keys are not configured for scheduled bill push");
+    return json({ error: "Push server keys are not configured" }, 503);
+  }
+
+  const { data: notifications, error: claimError } = await admin.rpc(
+    "claim_pending_customer_bill_push",
+    { p_limit: 50 },
+  );
+  if (claimError) {
+    console.error("Pending bill-push claim failed", claimError.message);
+    return json({ error: "Could not claim pending bill notifications" }, 500);
+  }
+
+  webpush.setVapidDetails(
+    "https://taqi53056.github.io/mughals-pure-water/",
+    publicKey,
+    privateKey,
+  );
+
+  let sent = 0;
+  let failed = 0;
+  let skipped = 0;
+
+  for (const notification of notifications || []) {
+    const notificationId = Number(notification.notification_id);
+    const customerId = Number(notification.customer_id);
+
+    const { data: customer, error: customerError } = await admin
+      .from("customers")
+      .select("id,is_active")
+      .eq("id", customerId)
+      .maybeSingle();
+
+    if (customerError || !customer || customer.is_active !== true) {
+      await admin.from("customer_notifications")
+        .update({ push_queue_eligible: false, push_error: "Customer is inactive or unavailable" })
+        .eq("id", notificationId);
+      skipped++;
+      continue;
+    }
+
+    const { data: subscriptions, error: subError } = await admin
+      .from("customer_push_subscriptions")
+      .select("id,endpoint,p256dh,auth")
+      .eq("customer_id", customerId)
+      .eq("is_active", true);
+
+    if (subError) {
+      await admin.rpc("mark_customer_bill_push_result", {
+        p_notification_id: notificationId,
+        p_sent: false,
+        p_error: "Subscription lookup failed: " + subError.message,
+      });
+      failed++;
+      continue;
+    }
+
+    if (!subscriptions?.length) {
+      await admin.rpc("mark_customer_bill_push_result", {
+        p_notification_id: notificationId,
+        p_sent: false,
+        p_error: "No active device subscription",
+      });
+      failed++;
+      continue;
+    }
+
+    const payload = JSON.stringify({
+      title: String(notification.title || "ماہانہ بل تیار ہے").slice(0, 120),
+      body: String(notification.message || "").slice(0, 1200),
+      url: "https://taqi53056.github.io/mughals-pure-water/",
+      tag: "mpw-bill-" + customerId + "-" + notificationId,
+    });
+
+    let customerSent = 0;
+    const failures: string[] = [];
+
+    for (const sub of subscriptions) {
+      try {
+        await webpush.sendNotification({
+          endpoint: sub.endpoint,
+          keys: { p256dh: sub.p256dh, auth: sub.auth },
+        }, payload, { TTL: 86400, urgency: "high" });
+        customerSent++;
+      } catch (error) {
+        const status = Number((error as { statusCode?: number })?.statusCode || 0);
+        failures.push(String(status || "network"));
+        console.error("Scheduled bill push failed", notificationId, status, String(error));
+
+        if (status === 404 || status === 410) {
+          const { error: deactivateError } = await admin
+            .from("customer_push_subscriptions")
+            .update({ is_active: false, updated_at: new Date().toISOString() })
+            .eq("id", sub.id);
+          if (deactivateError) console.error("Expired subscription cleanup failed", deactivateError.message);
+        }
+      }
+    }
+
+    if (customerSent > 0) {
+      await admin.rpc("mark_customer_bill_push_result", {
+        p_notification_id: notificationId,
+        p_sent: true,
+        p_error: null,
+      });
+      sent += customerSent;
+    } else {
+      await admin.rpc("mark_customer_bill_push_result", {
+        p_notification_id: notificationId,
+        p_sent: false,
+        p_error: "Push delivery failed for all registered devices: " + failures.join(", "),
+      });
+      failed++;
+    }
+  }
+
+  return json({ processed: (notifications || []).length, sent, failed, skipped });
+});
