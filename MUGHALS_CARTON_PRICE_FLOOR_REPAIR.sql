@@ -15,7 +15,7 @@ ORDER BY product_type;
 
 SELECT conrelid::regclass AS table_name,conname,pg_get_constraintdef(oid) AS definition
 FROM pg_constraint
-WHERE conrelid IN ('public.product_sales'::regclass,'public.product_settings'::regclass)
+WHERE conrelid IN ('public.product_sales'::regclass,'public.product_settings'::regclass,'public.sales'::regclass)
   AND pg_get_constraintdef(oid) ILIKE '%55%';
 
 SELECT n.nspname,p.proname,pg_get_function_identity_arguments(p.oid) AS arguments,
@@ -27,12 +27,20 @@ WHERE p.pronamespace IN ('public'::regnamespace,'private'::regnamespace)
     'enforce_product_sale_minimum_price',
     'enforce_product_settings_price_floor',
     'enforce_product_sale_price_floor',
-    'record_product_sale'
+    'record_product_sale',
+    'validate_sale',
+    'validate_special_sale'
   )
 ORDER BY n.nspname,p.proname,arguments;
 
 SELECT tgname,pg_get_triggerdef(oid) AS trigger_definition
 FROM pg_trigger
 WHERE tgrelid='public.product_sales'::regclass
+  AND NOT tgisinternal
+ORDER BY tgname;
+
+SELECT tgname,pg_get_triggerdef(oid) AS legacy_trigger_definition
+FROM pg_trigger
+WHERE tgrelid='public.sales'::regclass
   AND NOT tgisinternal
 ORDER BY tgname;
