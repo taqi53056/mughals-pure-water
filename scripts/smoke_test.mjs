@@ -111,6 +111,11 @@ for (const required of [
   if (!appSource.includes(required)) throw new Error("Today's activity midnight refresh/error handling is missing: " + required);
 }
 
+const supabaseCdnVersions = appSource.match(/@supabase\\/supabase-js@([0-9]+\\.[0-9]+\\.[0-9]+)/g) || [];
+if (supabaseCdnVersions.length < 2 || supabaseCdnVersions.some(value => !value.endsWith("@2.119.2"))) {
+  throw new Error("Supabase JS CDN primary and fallback must use the same exact tested version 2.119.2");
+}
+
 const loadAppStart = appSource.indexOf("async function loadApp()");
 const loadAppEnd = appSource.indexOf("// محفوظ Supabase سیشن", loadAppStart);
 const loadAppSource = loadAppStart >= 0 && loadAppEnd > loadAppStart
