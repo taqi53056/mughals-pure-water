@@ -100,6 +100,17 @@ const tileElements = [...adminHome.matchAll(/<div class="tile [^"]*"[^>]*>/g)].m
 if (tileElements.length !== 21 || tileElements.some(tile => !tile.includes('role="button"') || !tile.includes("onkeydown="))) {
   throw new Error("Every admin module tile must support keyboard activation");
 }
+for (const required of [
+  "function refreshTodaySummaryIfDateChanged()",
+  "window.__mpwTodaySummaryLoadedDate!==currentDate",
+  'window.setInterval(refreshTodaySummaryIfDateChanged,60000)',
+  'document.addEventListener("visibilitychange",refreshTodaySummaryIfDateChanged)',
+  'window.addEventListener("focus",refreshTodaySummaryIfDateChanged)',
+  "Today activity summary failed"
+]) {
+  if (!appSource.includes(required)) throw new Error("Today's activity midnight refresh/error handling is missing: " + required);
+}
+
 const loadAppStart = appSource.indexOf("async function loadApp()");
 const loadAppEnd = appSource.indexOf("// محفوظ Supabase سیشن", loadAppStart);
 const loadAppSource = loadAppStart >= 0 && loadAppEnd > loadAppStart
