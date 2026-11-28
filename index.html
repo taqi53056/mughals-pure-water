@@ -939,7 +939,7 @@ main.wrap{max-width:1840px;padding:24px 28px 44px}
 </section>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2"></script>
 <script>window.addEventListener("error",function(e){const m=document.getElementById("loginMsg");if(m)m.textContent="ایپ میں خرابی: "+(e.message||"JavaScript شروع نہیں ہوا");});</script>
 <script>
 const SUPABASE_URL="https://tosxnmnqlufeuknrhxzr.supabase.co";
@@ -951,7 +951,7 @@ function ensureSupabase(){
  if(db) return Promise.resolve(db);
  if(supabaseLoadPromise) return supabaseLoadPromise;
  supabaseLoadPromise=new Promise((resolve,reject)=>{
-  const sources=["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2","https://unpkg.com/@supabase/supabase-js@2"];
+  const sources=["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2","https://unpkg.com/@supabase/supabase-js@2.119.2"];
   let i=0;
   const tryNext=()=>{
    if(window.supabase){try{db=window.supabase.createClient(SUPABASE_URL,KEY);resolve(db);return}catch(e){reject(e);return}}
