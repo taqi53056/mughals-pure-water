@@ -119,6 +119,7 @@ table{width:100%;border-collapse:collapse;min-width:520px}td,th{padding:11px 10p
 #adminPanel #homeTiles .tile:nth-of-type(18):before{content:"⚙"}
 #adminPanel #homeTiles .tile:nth-of-type(19):before{content:"💰"}
 #adminPanel #homeTiles .tile:nth-of-type(20):before{content:"▣"}
+#adminPanel #homeTiles .tile:nth-of-type(21):before{content:"☷"}
 #adminPanel #dashboard,#adminPanel #module{min-width:0;border-radius:22px}
 #adminPanel #dashboard h2{display:flex;align-items:center;gap:10px}
 #adminPanel #dashboard h2:before{content:"";width:5px;height:25px;border-radius:5px;background:var(--gold)}
@@ -3792,6 +3793,7 @@ async function readTodayRows(table,columns,dateColumn,date){
 async function loadTodaySummary(){
  const el=$("todaySummary");if(!el)return;
  el.innerHTML='<p class="muted">آج کا ریکارڈ تازہ ہو رہا ہے...</p>';
+ try{
  const date=today();
  const dashboardTask=(async()=>{
   try{return await db.rpc("get_management_dashboard",{p_month_start:date,p_month_end:date});}
@@ -3906,6 +3908,24 @@ async function loadTodaySummary(){
   '<div class="stat">درج شدہ اخراجات: <b>'+(expenses===null?"ریکارڈ دستیاب نہیں":money(expenses)+" ("+expensesR.rows.length+" انٹریاں)")+'</b></div>'+
   '<div class="stat">دیگر آمدن (غیر منسلک 19L وصولی کے بغیر): <b>'+shown(income,money)+'</b></div>'+
   errorHtml+dailyPnlHtml;
+  window.__mpwTodaySummaryLoadedDate=date;
+ }catch(error){
+  console.error('Today activity summary failed',error);
+  el.innerHTML='<div class="warning">آج کی سرگرمی مکمل طور پر لوڈ نہیں ہو سکی۔ انٹرنیٹ چیک کرکے دوبارہ کوشش کریں۔</div>';
+ }
+}
+
+/* پاکستان کے مقامی دن کی تبدیلی پر آج کی سرگرمی خود تازہ کریں؛ tab واپس آنے پر بھی تاریخ چیک ہو۔ */
+function refreshTodaySummaryIfDateChanged(){
+ if(document.visibilityState==="hidden"||!user||myCustomer||$("app")?.dataset.portal!=="admin")return;
+ const currentDate=today();
+ if(window.__mpwTodaySummaryLoadedDate!==currentDate)loadTodaySummary();
+}
+if(!window.__mpwTodaySummaryRefreshInstalled){
+ window.__mpwTodaySummaryRefreshInstalled=true;
+ window.setInterval(refreshTodaySummaryIfDateChanged,60000);
+ document.addEventListener("visibilitychange",refreshTodaySummaryIfDateChanged);
+ window.addEventListener("focus",refreshTodaySummaryIfDateChanged);
 }
 
 function monthDateRange(month){
